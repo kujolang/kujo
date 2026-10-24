@@ -10,8 +10,11 @@ a target to test, not a guarantee. This document explains the execution order;
 - **Builtin argument reuse (`aa30071`).** [Evidence](BUILTIN_ARGUMENT_POOL_2026_10_24.md)
   records JIT QuickSort unique allocations 21,954→14,638 and requested bytes
   1,084,600→89,624. 1,095 library and 125 integration tests pass, including a
-  warmed zero-allocation builtin bridge regression. Release timing, current
-  all-50 checksums and peak-memory gates remain pending.
+  warmed zero-allocation builtin bridge regression. [Frozen release audit](BUILTIN_POOL_RELEASE_2026_10_24.md)
+  passes 150/150 test-size checksums, 28 paired timing and 8 memory samples.
+  Compared with 93e7caa, median paired speedup is 1.0265× VM and 1.0454× JIT;
+  CPU speed limits changed 100→71%, so controlled acceptance remains open.
+  Production/platform/competitive verification is still pending.
 
 - **Callback argument buffers (`1174b7b`).**
   [Allocation and semantic evidence](ARGUMENT_POOL_2026_10_24.md) records about

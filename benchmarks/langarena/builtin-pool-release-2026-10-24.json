@@ -1,0 +1,3214 @@
+{
+  "runtime_source_commit": "aa30071",
+  "baseline_runtime_source_commit": "93e7caa",
+  "scope": "Frozen release test-size checksums, QuickSort timings and two peak-memory samples per runtime/variant; not production, cloud or platform acceptance",
+  "binary_sha256": {
+    "before": "fce69af6cdc76d21d6e62000d33d5320a7335bcda287cee83923670e17ff984a",
+    "after": "5eb32077c48b63013e7ae03eed8d3207d0affa96a69ce303cc90cce9bcef22b0"
+  },
+  "source_sha256": {
+    "src/jit.rs": "3b339354bcb49b4270ebeaa1104e696814d9640a054da32f74ae6185c07e4a15",
+    "src/jit_disabled.rs": "44eef7bcdf902b2e44f6e7b67644feb80984a03a8667169692525afaa049feb6",
+    "src/vm.rs": "6c960c11158e72995ef42dc8913cb31ac97f352d5c7bda1e98ed60fa329e013d",
+    "src/native_owned.rs": "8007ec291272f8148f0e89316eefdd8d45594bf09c2e4d61f89784db34f9b860",
+    "src/bytecode.rs": "46837336371c2c02da1cdcaf5428e6ba8f8f2d819a02dc23b0807cd1f45d9560",
+    "src/interpreter/assignment.rs": "7acfabeb9e5a4e161c9a8ef618f0d0e0d7ab7035c993e85e32d97b62585f4438",
+    "Cargo.lock": "d7550237221e8fb2294d352f1e9f66e01a626212c8cfd42a4bb511f2d6204e39"
+  },
+  "input_sha256": {
+    "benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "benchmarks/langarena/test.json": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+    "benchmarks/langarena/probes/paired_root_pool.kujo": "67d2cd95aad080509e09c8bfbe93b02c8634c3bfe257ea53f4f0cc6c360d26b9"
+  },
+  "build_log": "warning: hiding a lifetime that's elided elsewhere is confusing\n  --> vendor/hyphenation-0.8.4/src/case_folding.rs:80:26\n   |\n80 | pub fn refold(original : &str) -> (Cow<str>, Vec<Shift>) {\n   |                          ^^^^      ^^^^^^^^ the same lifetime is hidden here\n   |                          |\n   |                          the lifetime is elided here\n   |\n   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing\n   = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default\nhelp: use `'_` for type paths\n   |\n80 | pub fn refold(original : &str) -> (Cow<'_, str>, Vec<Shift>) {\n   |                                        +++\n\nwarning: `hyphenation` (lib) generated 1 warning (run `cargo fix --lib -p hyphenation` to apply 1 suggestion)\nwarning: unused import: `SequentialWriter`\n --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28\n  |\n7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};\n  |                            ^^^^^^^^^^^^^^^^\n  |\n  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default\n\nwarning: trait `MustBeShareDummy` is never used\n   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7\n    |\n164 | trait MustBeShareDummy: Sync + Send {}\n    |       ^^^^^^^^^^^^^^^^\n    |\n    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)\n   Compiling kujolang v1.9.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)\nwarning: methods `compile`, `compile_function`, and `compile_function_with_info` are never used\n     --> src/jit.rs:10254:12\n      |\n 9732 | impl JitCompiler {\n      | ---------------- methods in this implementation\n...\n10254 |     pub fn compile(&mut self, chunk: &BytecodeChunk, offset: usize) -> Result<CompiledFn, String> {\n      |            ^^^^^^^\n...\n10999 |     pub fn compile_function(\n      |            ^^^^^^^^^^^^^^^^\n...\n11923 |     pub fn compile_function_with_info(\n      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^\n      |\n      = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\nwarning: `kujolang` (bin \"kujo\") generated 1 warning\n    Finished `release` profile [optimized] target(s) in 28m 21s\n",
+  "host_before": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-24 19:25:14 -0400 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 100\n",
+  "host_after": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-24 19:29:23 -0400 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 71\n",
+  "comparison": {
+    "binaries": [
+      "/tmp/kujo-local-return-2026-10-24/kujo",
+      "/tmp/kujo-builtin-release-2026-10-24/kujo"
+    ],
+    "results": [
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 6.908553275,
+        "passed": true,
+        "round": 1,
+        "stderr": "",
+        "stdout": "@comparison_ns 6908553275\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 11.232178711
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.304459499,
+        "passed": true,
+        "round": 1,
+        "stderr": "",
+        "stdout": "@comparison_ns 7304459499\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 11.806920768
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.250644573,
+        "passed": true,
+        "round": 1,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2250644573\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.238288304
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.152948891,
+        "passed": true,
+        "round": 1,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2152948891\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.032801456
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 8.187787693,
+        "passed": true,
+        "round": 2,
+        "stderr": "",
+        "stdout": "@comparison_ns 8187787693\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 13.5308358
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.075201135,
+        "passed": true,
+        "round": 2,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2075201135\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.29734334
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 1.942850601,
+        "passed": true,
+        "round": 2,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1942850601\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.667504488
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 7.97150602,
+        "passed": true,
+        "round": 2,
+        "stderr": "",
+        "stdout": "@comparison_ns 7971506020\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 12.874913626
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.327347689,
+        "passed": true,
+        "round": 3,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2327347689\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.293004976
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.551605696,
+        "passed": true,
+        "round": 3,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2551605696\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.487846705
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 10.190962598,
+        "passed": true,
+        "round": 3,
+        "stderr": "",
+        "stdout": "@comparison_ns 10190962598\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 16.990548675
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 9.342467083,
+        "passed": true,
+        "round": 3,
+        "stderr": "",
+        "stdout": "@comparison_ns 9342467083\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 15.389967655
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.085055023,
+        "passed": true,
+        "round": 4,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2085055023\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.981254655
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 8.926945533,
+        "passed": true,
+        "round": 4,
+        "stderr": "",
+        "stdout": "@comparison_ns 8926945533\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 14.195756173
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 9.493374665,
+        "passed": true,
+        "round": 4,
+        "stderr": "",
+        "stdout": "@comparison_ns 9493374665\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 15.364791365
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.652073578,
+        "passed": true,
+        "round": 4,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2652073578\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 5.002710452
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 9.775271008,
+        "passed": true,
+        "round": 5,
+        "stderr": "",
+        "stdout": "@comparison_ns 9775271008\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 16.016970068
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.765308791,
+        "passed": true,
+        "round": 5,
+        "stderr": "",
+        "stdout": "@comparison_ns 7765308791\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 13.872815574
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.003492165,
+        "passed": true,
+        "round": 5,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2003492165\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 3.78453752
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 1.924708075,
+        "passed": true,
+        "round": 5,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1924708075\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.608206516
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.605825175,
+        "passed": true,
+        "round": 6,
+        "stderr": "",
+        "stdout": "@comparison_ns 7605825175\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 12.33512061
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.116593841,
+        "passed": true,
+        "round": 6,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2116593841\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 3.999058098
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.071817704,
+        "passed": true,
+        "round": 6,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2071817704\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.880341453
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 7.940042963,
+        "passed": true,
+        "round": 6,
+        "stderr": "",
+        "stdout": "@comparison_ns 7940042963\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 13.051873637
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.142965372,
+        "passed": true,
+        "round": 7,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2142965372\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.053965764
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.042587596,
+        "passed": true,
+        "round": 7,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2042587596\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.816770244
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 7.901485724,
+        "passed": true,
+        "round": 7,
+        "stderr": "",
+        "stdout": "@comparison_ns 7901485724\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 12.897084372
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.697590205,
+        "passed": true,
+        "round": 7,
+        "stderr": "",
+        "stdout": "@comparison_ns 7697590205\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 12.811979452
+      }
+    ],
+    "rounds": 7
+  },
+  "timing_summary": {
+    "vm": {
+      "before_median_seconds": 7.97150602,
+      "after_median_seconds": 7.765308791,
+      "paired_speedups": [
+        0.945799381315729,
+        0.973584845979225,
+        1.0908213545160852,
+        0.9403342697420023,
+        1.25883867224051,
+        1.0439423442309137,
+        1.0264882272984028
+      ],
+      "paired_median_speedup": 1.0264882272984028,
+      "pairs_favoring_after": 4
+    },
+    "jit": {
+      "before_median_seconds": 2.142965372,
+      "after_median_seconds": 2.071817704,
+      "paired_speedups": [
+        1.0453776131929555,
+        1.068121827757563,
+        0.9121110258722357,
+        1.2719441687366926,
+        1.040933007464002,
+        1.0216120061690523,
+        1.0491424584172397
+      ],
+      "paired_median_speedup": 1.0453776131929555,
+      "pairs_favoring_after": 6
+    }
+  },
+  "checksums": {
+    "vm": {
+      "binary": "/tmp/kujo-builtin-release-2026-10-24/kujo",
+      "config": "benchmarks/langarena/test.json",
+      "results": [
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "elapsed_ns": 59254856.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Obj",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91135\n@profile create-done ns=282430\n@profile prepare-done ns=437390\n@profile warmup-1 ns=1154400\n@profile warmup-done ns=1304908\n@profile run-1 ns=1973155\n@profile run-2 ns=2614693\n@profile run-3 ns=3263953\nBinarytrees::Obj: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "elapsed_ns": 61887173.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Arena",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90277\n@profile create-done ns=280796\n@profile prepare-done ns=436543\n@profile warmup-1 ns=1268387\n@profile warmup-done ns=1419961\n@profile run-1 ns=2170112\n@profile run-2 ns=2910190\n@profile run-3 ns=3647283\nBinarytrees::Arena: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 216705289.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Array",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89649\n@profile create-done ns=279681\n@profile prepare-done ns=435968\n@profile warmup-1 ns=54299472\n@profile warmup-done ns=54483681\n@profile run-1 ns=104572013\n@profile run-2 ns=158021043\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 181779480.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Recursion",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=65649\n@profile create-done ns=205167\n@profile prepare-done ns=317448\n@profile warmup-1 ns=44540125\n@profile warmup-done ns=44801590\n@profile run-1 ns=90279598\n@profile run-2 ns=134346379\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "elapsed_ns": 403986418.0,
+          "exitcode": 0,
+          "name": "Matmul::Single",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=63682\n@profile create-done ns=6101097\n@profile prepare-done ns=6213924\n@profile warmup-1 ns=90563854\n@profile warmup-done ns=90688935\n@profile run-1 ns=177784134\n@profile run-2 ns=263830312\n@profile run-3 ns=351008949\nMatmul::Single: OK 720656960\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "elapsed_ns": 212030450.0,
+          "exitcode": 0,
+          "name": "Matmul::T4",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=63523\n@profile create-done ns=7680724\n@profile prepare-done ns=7878861\n@profile warmup-1 ns=44823268\n@profile warmup-done ns=44942678\n@profile run-1 ns=83349718\n@profile run-2 ns=122427881\n@profile run-3 ns=161344475\nMatmul::T4: OK 2420334760\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "elapsed_ns": 198910382.0,
+          "exitcode": 0,
+          "name": "Matmul::T8",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=67262\n@profile create-done ns=8074951\n@profile prepare-done ns=8267010\n@profile warmup-1 ns=44475762\n@profile warmup-done ns=44597106\n@profile run-1 ns=78739998\n@profile run-2 ns=114388192\n@profile run-3 ns=149616168\nMatmul::T8: OK 4014223764\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "elapsed_ns": 217631831.0,
+          "exitcode": 0,
+          "name": "Matmul::T16",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=68893\n@profile create-done ns=9132767\n@profile prepare-done ns=9321152\n@profile warmup-1 ns=45803372\n@profile warmup-done ns=45962551\n@profile run-1 ns=88221060\n@profile run-2 ns=131453757\n@profile run-3 ns=169019790\nMatmul::T16: OK 418055336\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "elapsed_ns": 201604934.0,
+          "exitcode": 0,
+          "name": "Base64::Encode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=64454\n@profile create-done ns=200912\n@profile prepare-done ns=350441\n@profile warmup-1 ns=505846\n@profile warmup-163 ns=2856661\n@profile warmup-326 ns=5270170\n@profile warmup-489 ns=7590228\n@profile warmup-652 ns=10013175\n@profile warmup-815 ns=12495424\n@profile warmup-978 ns=14959969\n@profile warmup-1141 ns=17503073\n@profile warmup-1304 ns=20357481\n@profile warmup-1467 ns=23251629\n@profile warmup-1630 ns=25666005\n@profile warmup-1638 ns=25888266\n@profile warmup-done ns=25993343\n@profile run-1 ns=26129580\n@profile run-819 ns=39250403\n@profile run-1638 ns=52035650\n@profile run-2457 ns=63995062\n@profile run-3276 ns=76123852\n@profile run-4095 ns=88722734\n@profile run-4914 ns=101125552\n@profile run-5733 ns=114103190\n@profile run-6552 ns=126765777\n@profile run-7371 ns=139726994\n@profile run-8190 ns=152057010\n@profile run-8192 ns=152205152\nBase64::Encode: OK 3894061047\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "elapsed_ns": 203417021.0,
+          "exitcode": 0,
+          "name": "Base64::Decode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=65925\n@profile create-done ns=203134\n@profile prepare-done ns=360041\n@profile warmup-1 ns=605854\n@profile warmup-163 ns=3157401\n@profile warmup-326 ns=6326527\n@profile warmup-489 ns=8699744\n@profile warmup-652 ns=11188973\n@profile warmup-815 ns=13643432\n@profile warmup-978 ns=16149581\n@profile warmup-1141 ns=19317906\n@profile warmup-1304 ns=22390422\n@profile warmup-1467 ns=24750829\n@profile warmup-1630 ns=27183792\n@profile warmup-1638 ns=27400041\n@profile warmup-done ns=27502384\n@profile run-1 ns=27636920\n@profile run-819 ns=39525286\n@profile run-1638 ns=52130443\n@profile run-2457 ns=65508030\n@profile run-3276 ns=77791684\n@profile run-4095 ns=90360432\n@profile run-4914 ns=102061465\n@profile run-5733 ns=114543182\n@profile run-6552 ns=126601717\n@profile run-7371 ns=139621547\n@profile run-8190 ns=151896079\n@profile run-8192 ns=152048035\nBase64::Decode: OK 732348015\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "elapsed_ns": 52930413.0,
+          "exitcode": 0,
+          "name": "Json::Generate",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=64976\n@profile create-done ns=553144\n@profile prepare-done ns=667153\n@profile warmup-1 ns=853231\n@profile warmup-done ns=957372\n@profile run-1 ns=1102184\n@profile run-2 ns=1236518\n@profile run-3 ns=1368784\nJson::Generate: OK 4\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "elapsed_ns": 49110188.0,
+          "exitcode": 0,
+          "name": "Json::ParseDom",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=64798\n@profile create-done ns=209517\n@profile prepare-done ns=767297\n@profile warmup-1 ns=1178082\n@profile warmup-done ns=1287412\n@profile run-1 ns=1652716\n@profile run-2 ns=2006041\n@profile run-3 ns=2359276\nJson::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "elapsed_ns": 49718118.0,
+          "exitcode": 0,
+          "name": "Json::ParseMapping",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=93563\n@profile create-done ns=280660\n@profile prepare-done ns=1167540\n@profile warmup-1 ns=1856395\n@profile warmup-done ns=1998281\n@profile run-1 ns=2531945\n@profile run-2 ns=2967339\n@profile run-3 ns=3401759\nJson::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "elapsed_ns": 65013444.0,
+          "exitcode": 0,
+          "name": "CSV::Parse",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=64417\n@profile create-done ns=205167\n@profile prepare-done ns=773429\n@profile warmup-1 ns=1549034\n@profile warmup-done ns=1661118\n@profile run-1 ns=2241905\n@profile run-2 ns=2810341\n@profile run-3 ns=3294647\nCSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "elapsed_ns": 70264602.0,
+          "exitcode": 0,
+          "name": "Etc::Sieve",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=77424\n@profile create-done ns=274557\n@profile prepare-done ns=402369\n@profile warmup-1 ns=5053081\n@profile warmup-done ns=5198239\n@profile run-1 ns=8790625\n@profile run-2 ns=12385448\n@profile run-3 ns=15668469\nEtc::Sieve: OK 4660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "elapsed_ns": 6605371395.0,
+          "exitcode": 0,
+          "name": "Etc::TextRaytracer",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91043\n@profile create-done ns=282706\n@profile prepare-done ns=437925\n@profile warmup-1 ns=1645995854\n@profile warmup-done ns=1646157622\n@profile run-1 ns=3236190896\n@profile run-2 ns=4837907779\n@profile run-3 ns=6533592492\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "elapsed_ns": 11400336562.0,
+          "exitcode": 0,
+          "name": "Etc::NeuralNet",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=87580\n@profile create-done ns=274118\n@profile prepare-done ns=1290412\n@profile warmup-1 ns=3723786851\n@profile warmup-done ns=3723941621\n@profile run-1 ns=7479345236\n@profile run-2 ns=11343174480\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "elapsed_ns": 958637260.0,
+          "exitcode": 0,
+          "name": "Etc::CacheSimulation",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89827\n@profile create-done ns=285702\n@profile prepare-done ns=442202\n@profile warmup-1 ns=147964218\n@profile warmup-done ns=148137636\n@profile run-1 ns=432279218\n@profile run-2 ns=885290478\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "elapsed_ns": 135607970.0,
+          "exitcode": 0,
+          "name": "Etc::GameOfLife",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=97241\n@profile create-done ns=18362533\n@profile prepare-done ns=23975149\n@profile warmup-1 ns=36870392\n@profile warmup-done ns=37021760\n@profile run-1 ns=50540340\n@profile run-2 ns=64467946\n@profile run-3 ns=78210025\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "elapsed_ns": 110791794.0,
+          "exitcode": 0,
+          "name": "Etc::Words",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=97103\n@profile create-done ns=291017\n@profile prepare-done ns=32881944\n@profile warmup-1 ns=36939311\n@profile warmup-done ns=37070253\n@profile run-1 ns=41991926\n@profile run-2 ns=46184083\nEtc::Words: OK 580539813\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "elapsed_ns": 71734018.0,
+          "exitcode": 0,
+          "name": "Etc::LogParser",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=84711\n@profile create-done ns=263311\n@profile prepare-done ns=726879\n@profile warmup-1 ns=7280038\n@profile warmup-done ns=7449756\n@profile run-1 ns=7821000\n@profile run-2 ns=8164371\nEtc::LogParser: OK 117\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "elapsed_ns": 68909879.0,
+          "exitcode": 0,
+          "name": "Template::Regex",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89492\n@profile create-done ns=279232\n@profile prepare-done ns=745486\n@profile warmup-1 ns=3822805\n@profile warmup-done ns=3983119\n@profile run-1 ns=6098616\n@profile run-2 ns=8150044\nTemplate::Regex: OK 1554169905\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "elapsed_ns": 89032063.0,
+          "exitcode": 0,
+          "name": "Template::Parse",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89047\n@profile create-done ns=276091\n@profile prepare-done ns=695108\n@profile warmup-1 ns=8067945\n@profile warmup-done ns=8223712\n@profile run-1 ns=16551926\n@profile run-2 ns=24509842\nTemplate::Parse: OK 917360148\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "elapsed_ns": 11676629988.0,
+          "exitcode": 0,
+          "name": "Sort::Quick",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=473601\n@profile create-done ns=1337604\n@profile prepare-done ns=924911158\n@profile warmup-1 ns=4598235434\n@profile warmup-done ns=4598387575\n@profile run-1 ns=8134687206\n@profile run-2 ns=11607494997\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "elapsed_ns": 33706967145.0,
+          "exitcode": 0,
+          "name": "Sort::Merge",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=88412\n@profile create-done ns=298476\n@profile prepare-done ns=905616353\n@profile warmup-1 ns=10964734530\n@profile warmup-done ns=10964902153\n@profile run-1 ns=21392795119\n@profile run-2 ns=33638286631\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "elapsed_ns": 1508286846.0,
+          "exitcode": 0,
+          "name": "Sort::Self",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=103912\n@profile create-done ns=321204\n@profile prepare-done ns=1198693747\n@profile warmup-1 ns=1288427479\n@profile warmup-done ns=1288618047\n@profile run-1 ns=1362674907\n@profile run-2 ns=1435439373\nSort::Self: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 81485006.0,
+          "exitcode": 0,
+          "name": "Graph::BFS",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=106455\n@profile create-done ns=328759\n@profile prepare-done ns=4891741\n@profile warmup-1 ns=6852484\n@profile warmup-done ns=7034903\n@profile run-1 ns=9062346\n@profile run-2 ns=11003937\n@profile run-3 ns=12919430\nGraph::BFS: OK 20\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 82109509.0,
+          "exitcode": 0,
+          "name": "Graph::DFS",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=104656\n@profile create-done ns=500576\n@profile prepare-done ns=5630818\n@profile warmup-1 ns=8575496\n@profile warmup-done ns=8749870\n@profile run-1 ns=11511536\n@profile run-2 ns=14217676\n@profile run-3 ns=16971336\nGraph::DFS: OK 28\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "elapsed_ns": 79305541.0,
+          "exitcode": 0,
+          "name": "Graph::AStar",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=111865\n@profile create-done ns=342612\n@profile prepare-done ns=4796764\n@profile warmup-1 ns=7041473\n@profile warmup-done ns=7218174\n@profile run-1 ns=9369068\n@profile run-2 ns=11503664\n@profile run-3 ns=13594805\nGraph::AStar: OK 36\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "elapsed_ns": 176865314.0,
+          "exitcode": 0,
+          "name": "Hash::SHA256",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=103225\n@profile create-done ns=319244\n@profile prepare-done ns=15466045\n@profile warmup-1 ns=38825755\n@profile warmup-done ns=39018598\n@profile run-1 ns=60028142\n@profile run-2 ns=82851994\n@profile run-3 ns=104897572\nHash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "elapsed_ns": 337472126.0,
+          "exitcode": 0,
+          "name": "Hash::CRC32",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=101096\n@profile create-done ns=311927\n@profile prepare-done ns=15189815\n@profile warmup-1 ns=75965341\n@profile warmup-done ns=76180704\n@profile run-1 ns=135991494\n@profile run-2 ns=199580278\n@profile run-3 ns=263239656\nHash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "elapsed_ns": 115359178.0,
+          "exitcode": 0,
+          "name": "Calculator::Ast",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=142368\n@profile create-done ns=428135\n@profile prepare-done ns=945683\n@profile warmup-1 ns=11721483\n@profile warmup-done ns=11930129\n@profile run-1 ns=22241251\n@profile run-2 ns=33518333\n@profile run-3 ns=45135826\nCalculator::Ast: OK 774028720\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "elapsed_ns": 373679373.0,
+          "exitcode": 0,
+          "name": "Calculator::Interpreter",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=106420\n@profile create-done ns=327068\n@profile prepare-done ns=23818693\n@profile warmup-1 ns=26367474\n@profile warmup-2 ns=28857793\n@profile warmup-4 ns=34107814\n@profile warmup-6 ns=39678757\n@profile warmup-8 ns=44474202\n@profile warmup-10 ns=49991156\n@profile warmup-12 ns=54810484\n@profile warmup-14 ns=59517874\n@profile warmup-16 ns=65311237\n@profile warmup-18 ns=70005890\n@profile warmup-20 ns=74870488\n@profile warmup-done ns=75060764\n@profile run-1 ns=77493626\n@profile run-10 ns=99324095\n@profile run-20 ns=123172260\n@profile run-30 ns=144744591\n@profile run-40 ns=168772791\n@profile run-50 ns=191555960\n@profile run-60 ns=213247663\n@profile run-70 ns=236757266\n@profile run-80 ns=259835068\n@profile run-90 ns=284386995\n@profile run-100 ns=309100952\nCalculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "elapsed_ns": 2826430296.0,
+          "exitcode": 0,
+          "name": "Maze::Generator",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=106749\n@profile create-done ns=584068141\n@profile prepare-done ns=584284728\n@profile warmup-1 ns=1241144981\n@profile warmup-done ns=1241340014\n@profile run-1 ns=1942152727\n@profile run-2 ns=2662501585\nMaze::Generator: OK 2309652669\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "elapsed_ns": 2204448483.0,
+          "exitcode": 0,
+          "name": "Maze::BFS",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=138236\n@profile create-done ns=932723619\n@profile prepare-done ns=1588692067\n@profile warmup-1 ns=1763272802\n@profile warmup-done ns=1763479631\n@profile run-1 ns=1938071583\n@profile run-2 ns=2113614314\nMaze::BFS: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "elapsed_ns": 2588367405.0,
+          "exitcode": 0,
+          "name": "Maze::AStar",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=111039\n@profile create-done ns=605684254\n@profile prepare-done ns=1250001875\n@profile warmup-1 ns=1664273496\n@profile warmup-done ns=1664673225\n@profile run-1 ns=2076723471\n@profile run-2 ns=2499889476\nMaze::AStar: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "elapsed_ns": 101252667.0,
+          "exitcode": 0,
+          "name": "CLBG::Fannkuchredux",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=115358\n@profile create-done ns=353717\n@profile prepare-done ns=552889\n@profile warmup-1 ns=8020609\n@profile warmup-done ns=8224332\n@profile run-1 ns=15911562\n@profile run-2 ns=24052388\n@profile run-3 ns=32269354\nCLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "elapsed_ns": 530402387.0,
+          "exitcode": 0,
+          "name": "CLBG::Mandelbrot",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=113732\n@profile create-done ns=376750\n@profile prepare-done ns=588588\n@profile warmup-1 ns=113628343\n@profile warmup-done ns=113872339\n@profile run-1 ns=225083649\n@profile run-2 ns=337289150\n@profile run-3 ns=451480835\nCLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "elapsed_ns": 1348254315.0,
+          "exitcode": 0,
+          "name": "CLBG::Nbody",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=114246\n@profile create-done ns=440483\n@profile prepare-done ns=1032050\n@profile warmup-1 ns=426090675\n@profile warmup-done ns=426300081\n@profile run-1 ns=845154035\n@profile run-2 ns=1274406413\nCLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "elapsed_ns": 1065096913.0,
+          "exitcode": 0,
+          "name": "CLBG::Spectralnorm",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=112394\n@profile create-done ns=584012\n@profile prepare-done ns=784352\n@profile warmup-1 ns=84603603\n@profile warmup-2 ns=167269151\n@profile warmup-done ns=167479452\n@profile run-1 ns=250815387\n@profile run-2 ns=334698803\n@profile run-3 ns=416692665\n@profile run-4 ns=498983139\n@profile run-5 ns=580724055\n@profile run-6 ns=662690366\n@profile run-7 ns=743758345\n@profile run-8 ns=824392730\n@profile run-9 ns=906038984\n@profile run-10 ns=987527186\nCLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "elapsed_ns": 308605855.0,
+          "exitcode": 0,
+          "name": "Compress::BWTEncode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=113152\n@profile create-done ns=349445\n@profile prepare-done ns=916664\n@profile warmup-1 ns=59139727\n@profile warmup-done ns=59340217\n@profile run-1 ns=118798195\n@profile run-2 ns=175838192\n@profile run-3 ns=232148106\nCompress::BWTEncode: OK 200\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "elapsed_ns": 144223619.0,
+          "exitcode": 0,
+          "name": "Compress::BWTDecode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=112184\n@profile create-done ns=352366\n@profile prepare-done ns=57558655\n@profile warmup-1 ns=60653241\n@profile warmup-done ns=60853029\n@profile run-1 ns=63876411\n@profile run-2 ns=66907380\n@profile run-3 ns=69923373\nCompress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "elapsed_ns": 103292816.0,
+          "exitcode": 0,
+          "name": "Compress::HuffEncode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=128036\n@profile create-done ns=411576\n@profile prepare-done ns=1079901\n@profile warmup-1 ns=7649728\n@profile warmup-done ns=7852703\n@profile run-1 ns=14560291\n@profile run-2 ns=20775706\n@profile run-3 ns=26484438\nCompress::HuffEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "elapsed_ns": 94977924.0,
+          "exitcode": 0,
+          "name": "Compress::HuffDecode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=115935\n@profile create-done ns=354428\n@profile prepare-done ns=6788681\n@profile warmup-1 ns=10217510\n@profile warmup-done ns=10419451\n@profile run-1 ns=14005428\n@profile run-2 ns=18260837\n@profile run-3 ns=22097771\nCompress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "elapsed_ns": 107670958.0,
+          "exitcode": 0,
+          "name": "Compress::ArithEncode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=114960\n@profile create-done ns=353713\n@profile prepare-done ns=954281\n@profile warmup-1 ns=8098071\n@profile warmup-done ns=8295083\n@profile run-1 ns=16585762\n@profile run-2 ns=23524536\n@profile run-3 ns=30611248\nCompress::ArithEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "elapsed_ns": 136337750.0,
+          "exitcode": 0,
+          "name": "Compress::ArithDecode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=147662\n@profile create-done ns=414658\n@profile prepare-done ns=8317929\n@profile warmup-1 ns=20832011\n@profile warmup-done ns=21037631\n@profile run-1 ns=33434662\n@profile run-2 ns=44758350\n@profile run-3 ns=56173402\nCompress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "elapsed_ns": 99385436.0,
+          "exitcode": 0,
+          "name": "Compress::LZWEncode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=115671\n@profile create-done ns=354710\n@profile prepare-done ns=989461\n@profile warmup-1 ns=6275407\n@profile warmup-done ns=6475195\n@profile run-1 ns=11671987\n@profile run-2 ns=18234177\n@profile run-3 ns=23398792\nCompress::LZWEncode: OK 208\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "elapsed_ns": 87071716.0,
+          "exitcode": 0,
+          "name": "Compress::LZWDecode",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=117528\n@profile create-done ns=363327\n@profile prepare-done ns=6808765\n@profile warmup-1 ns=9413320\n@profile warmup-done ns=9780720\n@profile run-1 ns=12221052\n@profile run-2 ns=14322124\n@profile run-3 ns=17061192\nCompress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "elapsed_ns": 88121958.0,
+          "exitcode": 0,
+          "name": "Distance::Jaro",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=117196\n@profile create-done ns=361763\n@profile prepare-done ns=2368443\n@profile warmup-1 ns=5531335\n@profile warmup-done ns=5727165\n@profile run-1 ns=9455296\nDistance::Jaro: OK 7020\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "elapsed_ns": 170592174.0,
+          "exitcode": 0,
+          "name": "Distance::NGram",
+          "runtime": "vm",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=115519\n@profile create-done ns=357326\n@profile prepare-done ns=15302408\n@profile warmup-1 ns=54426246\n@profile warmup-done ns=54633977\n@profile run-1 ns=90964107\nDistance::NGram: OK 42\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        }
+      ],
+      "runtime": "vm"
+    },
+    "interpreter": {
+      "binary": "/tmp/kujo-builtin-release-2026-10-24/kujo",
+      "config": "benchmarks/langarena/test.json",
+      "results": [
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "elapsed_ns": 82998441.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Obj",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=36688\n@profile create-done ns=110564\n@profile prepare-done ns=144875\n@profile warmup-1 ns=1047429\n@profile warmup-done ns=1074342\n@profile run-1 ns=1779199\n@profile run-2 ns=2459583\n@profile run-3 ns=3139006\nBinarytrees::Obj: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "elapsed_ns": 90065699.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Arena",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=37754\n@profile create-done ns=111387\n@profile prepare-done ns=143943\n@profile warmup-1 ns=2394862\n@profile warmup-done ns=2422883\n@profile run-1 ns=4455619\n@profile run-2 ns=6728282\n@profile run-3 ns=8878381\nBinarytrees::Arena: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 249563589.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Array",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=35851\n@profile create-done ns=107781\n@profile prepare-done ns=139755\n@profile warmup-1 ns=59614646\n@profile warmup-done ns=59657333\n@profile run-1 ns=117502797\n@profile run-2 ns=175469125\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 266051793.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Recursion",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=37028\n@profile create-done ns=106649\n@profile prepare-done ns=138454\n@profile warmup-1 ns=61009101\n@profile warmup-done ns=61050103\n@profile run-1 ns=121686242\n@profile run-2 ns=183286507\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "elapsed_ns": 560370361.0,
+          "exitcode": 0,
+          "name": "Matmul::Single",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=35153\n@profile create-done ns=9512275\n@profile prepare-done ns=9572728\n@profile warmup-1 ns=129494407\n@profile warmup-done ns=129540202\n@profile run-1 ns=247914457\n@profile run-2 ns=367194334\n@profile run-3 ns=486332108\nMatmul::Single: OK 720656960\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "elapsed_ns": 277145178.0,
+          "exitcode": 0,
+          "name": "Matmul::T4",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=36897\n@profile create-done ns=9463934\n@profile prepare-done ns=9511446\n@profile warmup-1 ns=55261515\n@profile warmup-done ns=55295881\n@profile run-1 ns=105209640\n@profile run-2 ns=152342632\n@profile run-3 ns=200120366\nMatmul::T4: OK 2420334760\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "elapsed_ns": 269940680.0,
+          "exitcode": 0,
+          "name": "Matmul::T8",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=35625\n@profile create-done ns=10732442\n@profile prepare-done ns=10785588\n@profile warmup-1 ns=59049319\n@profile warmup-done ns=59088935\n@profile run-1 ns=103185012\n@profile run-2 ns=148412167\n@profile run-3 ns=197141877\nMatmul::T8: OK 4014223764\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "elapsed_ns": 312612540.0,
+          "exitcode": 0,
+          "name": "Matmul::T16",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=34870\n@profile create-done ns=10360279\n@profile prepare-done ns=10400460\n@profile warmup-1 ns=66586663\n@profile warmup-done ns=66621990\n@profile run-1 ns=121949056\n@profile run-2 ns=176116439\n@profile run-3 ns=231959247\nMatmul::T16: OK 418055336\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "elapsed_ns": 636553671.0,
+          "exitcode": 0,
+          "name": "Base64::Encode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=46044\n@profile create-done ns=140725\n@profile prepare-done ns=359739\n@profile warmup-1 ns=549635\n@profile warmup-163 ns=11007228\n@profile warmup-326 ns=19178930\n@profile warmup-489 ns=27289343\n@profile warmup-652 ns=35959161\n@profile warmup-815 ns=45232408\n@profile warmup-978 ns=54942010\n@profile warmup-1141 ns=63506876\n@profile warmup-1304 ns=72821814\n@profile warmup-1467 ns=81262293\n@profile warmup-1630 ns=89942361\n@profile warmup-1638 ns=90401981\n@profile warmup-done ns=90427848\n@profile run-1 ns=90557416\n@profile run-819 ns=138025680\n@profile run-1638 ns=182311367\n@profile run-2457 ns=231721511\n@profile run-3276 ns=279048615\n@profile run-4095 ns=324342035\n@profile run-4914 ns=369430934\n@profile run-5733 ns=416131195\n@profile run-6552 ns=460923838\n@profile run-7371 ns=505725288\n@profile run-8190 ns=552975557\n@profile run-8192 ns=553132466\nBase64::Encode: OK 3894061047\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "elapsed_ns": 635860338.0,
+          "exitcode": 0,
+          "name": "Base64::Decode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=46919\n@profile create-done ns=131576\n@profile prepare-done ns=410278\n@profile warmup-1 ns=616611\n@profile warmup-163 ns=10182803\n@profile warmup-326 ns=19585102\n@profile warmup-489 ns=27766897\n@profile warmup-652 ns=37102896\n@profile warmup-815 ns=45231092\n@profile warmup-978 ns=53350223\n@profile warmup-1141 ns=61991291\n@profile warmup-1304 ns=70825805\n@profile warmup-1467 ns=81262891\n@profile warmup-1630 ns=91670046\n@profile warmup-1638 ns=92122502\n@profile warmup-done ns=92147332\n@profile run-1 ns=92261916\n@profile run-819 ns=137387866\n@profile run-1638 ns=182180104\n@profile run-2457 ns=228274460\n@profile run-3276 ns=273567381\n@profile run-4095 ns=320533306\n@profile run-4914 ns=369213744\n@profile run-5733 ns=413877054\n@profile run-6552 ns=459635703\n@profile run-7371 ns=506268496\n@profile run-8190 ns=551575003\n@profile run-8192 ns=551720182\nBase64::Decode: OK 732348015\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "elapsed_ns": 83768709.0,
+          "exitcode": 0,
+          "name": "Json::Generate",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=39776\n@profile create-done ns=727894\n@profile prepare-done ns=893586\n@profile warmup-1 ns=1178686\n@profile warmup-done ns=1205399\n@profile run-1 ns=1404108\n@profile run-2 ns=1565160\n@profile run-3 ns=1718636\nJson::Generate: OK 4\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "elapsed_ns": 83758085.0,
+          "exitcode": 0,
+          "name": "Json::ParseDom",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=55089\n@profile create-done ns=175653\n@profile prepare-done ns=1297741\n@profile warmup-1 ns=2169987\n@profile warmup-done ns=2208008\n@profile run-1 ns=2962312\n@profile run-2 ns=3704879\n@profile run-3 ns=4364795\nJson::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "elapsed_ns": 84275898.0,
+          "exitcode": 0,
+          "name": "Json::ParseMapping",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=38713\n@profile create-done ns=119140\n@profile prepare-done ns=1086790\n@profile warmup-1 ns=1910642\n@profile warmup-done ns=1939195\n@profile run-1 ns=2668880\n@profile run-2 ns=3378250\n@profile run-3 ns=4077877\nJson::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "elapsed_ns": 91348971.0,
+          "exitcode": 0,
+          "name": "CSV::Parse",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=36563\n@profile create-done ns=107758\n@profile prepare-done ns=968161\n@profile warmup-1 ns=1748432\n@profile warmup-done ns=1776432\n@profile run-1 ns=2440930\n@profile run-2 ns=3089359\n@profile run-3 ns=3730351\nCSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "elapsed_ns": 98155147.0,
+          "exitcode": 0,
+          "name": "Etc::Sieve",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=37932\n@profile create-done ns=110351\n@profile prepare-done ns=143942\n@profile warmup-1 ns=4623929\n@profile warmup-done ns=4665905\n@profile run-1 ns=9507091\n@profile run-2 ns=13730172\n@profile run-3 ns=17863635\nEtc::Sieve: OK 4660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "elapsed_ns": 10947052928.0,
+          "exitcode": 0,
+          "name": "Etc::TextRaytracer",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=37755\n@profile create-done ns=112571\n@profile prepare-done ns=146708\n@profile warmup-1 ns=2805872941\n@profile warmup-done ns=2805913939\n@profile run-1 ns=5517887953\n@profile run-2 ns=8175158477\n@profile run-3 ns=10867176876\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "elapsed_ns": 20938226261.0,
+          "exitcode": 0,
+          "name": "Etc::NeuralNet",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=34401\n@profile create-done ns=101333\n@profile prepare-done ns=1097122\n@profile warmup-1 ns=7372648256\n@profile warmup-done ns=7372687060\n@profile run-1 ns=14136249686\n@profile run-2 ns=20858519653\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "elapsed_ns": 478605574.0,
+          "exitcode": 0,
+          "name": "Etc::CacheSimulation",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=45917\n@profile create-done ns=117929\n@profile prepare-done ns=146176\n@profile warmup-1 ns=64007657\n@profile warmup-done ns=64056237\n@profile run-1 ns=214456068\n@profile run-2 ns=406594384\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "elapsed_ns": 150728509.0,
+          "exitcode": 0,
+          "name": "Etc::GameOfLife",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=73063\n@profile create-done ns=16914125\n@profile prepare-done ns=21505789\n@profile warmup-1 ns=36018264\n@profile warmup-done ns=36052817\n@profile run-1 ns=48826760\n@profile run-2 ns=62164295\n@profile run-3 ns=76917431\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "elapsed_ns": 123612634.0,
+          "exitcode": 0,
+          "name": "Etc::Words",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=32849\n@profile create-done ns=97922\n@profile prepare-done ns=33410168\n@profile warmup-1 ns=38701307\n@profile warmup-done ns=38769069\n@profile run-1 ns=43527727\n@profile run-2 ns=47919382\nEtc::Words: OK 580539813\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "elapsed_ns": 75565187.0,
+          "exitcode": 0,
+          "name": "Etc::LogParser",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=44739\n@profile create-done ns=111267\n@profile prepare-done ns=758985\n@profile warmup-1 ns=6924393\n@profile warmup-done ns=6950349\n@profile run-1 ns=7213058\n@profile run-2 ns=7443776\nEtc::LogParser: OK 117\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "elapsed_ns": 84664109.0,
+          "exitcode": 0,
+          "name": "Template::Regex",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=31921\n@profile create-done ns=98850\n@profile prepare-done ns=651582\n@profile warmup-1 ns=3188731\n@profile warmup-done ns=3219312\n@profile run-1 ns=5170154\n@profile run-2 ns=7106776\nTemplate::Regex: OK 1554169905\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "elapsed_ns": 96227570.0,
+          "exitcode": 0,
+          "name": "Template::Parse",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=32778\n@profile create-done ns=95798\n@profile prepare-done ns=593212\n@profile warmup-1 ns=6676493\n@profile warmup-done ns=6699361\n@profile run-1 ns=13677575\n@profile run-2 ns=19775072\nTemplate::Parse: OK 917360148\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "elapsed_ns": 29944908535.0,
+          "exitcode": 0,
+          "name": "Sort::Quick",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=32137\n@profile create-done ns=95362\n@profile prepare-done ns=950994415\n@profile warmup-1 ns=11275802688\n@profile warmup-done ns=11275837675\n@profile run-1 ns=20935875228\n@profile run-2 ns=29875882091\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "elapsed_ns": 47472430405.0,
+          "exitcode": 0,
+          "name": "Sort::Merge",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27994\n@profile create-done ns=83178\n@profile prepare-done ns=833104067\n@profile warmup-1 ns=16196950082\n@profile warmup-done ns=16196989912\n@profile run-1 ns=31933831434\n@profile run-2 ns=47397519122\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "elapsed_ns": 1109985181.0,
+          "exitcode": 0,
+          "name": "Sort::Self",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27421\n@profile create-done ns=79657\n@profile prepare-done ns=831361531\n@profile warmup-1 ns=907907105\n@profile warmup-done ns=907947516\n@profile run-1 ns=976126091\n@profile run-2 ns=1041479889\nSort::Self: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 71386342.0,
+          "exitcode": 0,
+          "name": "Graph::BFS",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27773\n@profile create-done ns=80759\n@profile prepare-done ns=3392504\n@profile warmup-1 ns=4562933\n@profile warmup-done ns=4583366\n@profile run-1 ns=5677379\n@profile run-2 ns=6741512\n@profile run-3 ns=7850832\nGraph::BFS: OK 20\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 82271316.0,
+          "exitcode": 0,
+          "name": "Graph::DFS",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=31208\n@profile create-done ns=93864\n@profile prepare-done ns=3551071\n@profile warmup-1 ns=5829331\n@profile warmup-done ns=5862558\n@profile run-1 ns=7949253\n@profile run-2 ns=9752000\n@profile run-3 ns=11514931\nGraph::DFS: OK 28\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "elapsed_ns": 83565852.0,
+          "exitcode": 0,
+          "name": "Graph::AStar",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28118\n@profile create-done ns=81679\n@profile prepare-done ns=3781972\n@profile warmup-1 ns=6785740\n@profile warmup-done ns=6806983\n@profile run-1 ns=9981794\n@profile run-2 ns=14118134\n@profile run-3 ns=16964326\nGraph::AStar: OK 36\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "elapsed_ns": 145283685.0,
+          "exitcode": 0,
+          "name": "Hash::SHA256",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28381\n@profile create-done ns=82703\n@profile prepare-done ns=8549014\n@profile warmup-1 ns=26890676\n@profile warmup-done ns=26927124\n@profile run-1 ns=44624852\n@profile run-2 ns=62538926\n@profile run-3 ns=79685122\nHash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "elapsed_ns": 233313173.0,
+          "exitcode": 0,
+          "name": "Hash::CRC32",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28077\n@profile create-done ns=86299\n@profile prepare-done ns=9153683\n@profile warmup-1 ns=48641457\n@profile warmup-done ns=48671619\n@profile run-1 ns=88594572\n@profile run-2 ns=128931177\n@profile run-3 ns=168587177\nHash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "elapsed_ns": 110658314.0,
+          "exitcode": 0,
+          "name": "Calculator::Ast",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=29680\n@profile create-done ns=89939\n@profile prepare-done ns=444243\n@profile warmup-1 ns=13689981\n@profile warmup-done ns=13749292\n@profile run-1 ns=26598430\n@profile run-2 ns=40273353\n@profile run-3 ns=52723134\nCalculator::Ast: OK 774028720\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "elapsed_ns": 1155953085.0,
+          "exitcode": 0,
+          "name": "Calculator::Interpreter",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27120\n@profile create-done ns=82959\n@profile prepare-done ns=27433725\n@profile warmup-1 ns=36127199\n@profile warmup-2 ns=45664804\n@profile warmup-4 ns=62542620\n@profile warmup-6 ns=80146851\n@profile warmup-8 ns=97436239\n@profile warmup-10 ns=115010866\n@profile warmup-12 ns=131499602\n@profile warmup-14 ns=149436570\n@profile warmup-16 ns=167557069\n@profile warmup-18 ns=184746168\n@profile warmup-20 ns=202673235\n@profile warmup-done ns=202702679\n@profile run-1 ns=211646568\n@profile run-10 ns=290920712\n@profile run-20 ns=379098625\n@profile run-30 ns=468311899\n@profile run-40 ns=554930961\n@profile run-50 ns=643955786\n@profile run-60 ns=731419744\n@profile run-70 ns=818939293\n@profile run-80 ns=906554056\n@profile run-90 ns=996596921\n@profile run-100 ns=1086659077\nCalculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "elapsed_ns": 2077886566.0,
+          "exitcode": 0,
+          "name": "Maze::Generator",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=32179\n@profile create-done ns=394908908\n@profile prepare-done ns=394952656\n@profile warmup-1 ns=957843331\n@profile warmup-done ns=957963483\n@profile run-1 ns=1462742438\n@profile run-2 ns=1955359799\nMaze::Generator: OK 2309652669\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "elapsed_ns": 1369259312.0,
+          "exitcode": 0,
+          "name": "Maze::BFS",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28020\n@profile create-done ns=402263287\n@profile prepare-done ns=932509905\n@profile warmup-1 ns=1052034921\n@profile warmup-done ns=1052081846\n@profile run-1 ns=1171547407\n@profile run-2 ns=1288735667\nMaze::BFS: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "elapsed_ns": 2481541057.0,
+          "exitcode": 0,
+          "name": "Maze::AStar",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28273\n@profile create-done ns=395918833\n@profile prepare-done ns=923424017\n@profile warmup-1 ns=1422400343\n@profile warmup-done ns=1422430717\n@profile run-1 ns=1908555577\n@profile run-2 ns=2404820682\nMaze::AStar: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "elapsed_ns": 92579956.0,
+          "exitcode": 0,
+          "name": "CLBG::Fannkuchredux",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28577\n@profile create-done ns=84757\n@profile prepare-done ns=122975\n@profile warmup-1 ns=6868436\n@profile warmup-done ns=6893158\n@profile run-1 ns=14824634\n@profile run-2 ns=21455618\n@profile run-3 ns=28291564\nCLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "elapsed_ns": 326142908.0,
+          "exitcode": 0,
+          "name": "CLBG::Mandelbrot",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28601\n@profile create-done ns=90123\n@profile prepare-done ns=114370\n@profile warmup-1 ns=61263258\n@profile warmup-done ns=61290897\n@profile run-1 ns=133794964\n@profile run-2 ns=194383410\n@profile run-3 ns=255617609\nCLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "elapsed_ns": 849424188.0,
+          "exitcode": 0,
+          "name": "CLBG::Nbody",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=46016\n@profile create-done ns=230784\n@profile prepare-done ns=728529\n@profile warmup-1 ns=260096871\n@profile warmup-done ns=260131165\n@profile run-1 ns=518124329\n@profile run-2 ns=781159779\nCLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "elapsed_ns": 780450306.0,
+          "exitcode": 0,
+          "name": "CLBG::Spectralnorm",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=29770\n@profile create-done ns=244885\n@profile prepare-done ns=271163\n@profile warmup-1 ns=61276601\n@profile warmup-2 ns=120288739\n@profile warmup-done ns=120350639\n@profile run-1 ns=180508673\n@profile run-2 ns=239337643\n@profile run-3 ns=298548069\n@profile run-4 ns=357772662\n@profile run-5 ns=417305867\n@profile run-6 ns=478816431\n@profile run-7 ns=537997076\n@profile run-8 ns=596717582\n@profile run-9 ns=655758509\n@profile run-10 ns=713794460\nCLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "elapsed_ns": 115113121.0,
+          "exitcode": 0,
+          "name": "Compress::BWTEncode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27331\n@profile create-done ns=84540\n@profile prepare-done ns=446525\n@profile warmup-1 ns=15067012\n@profile warmup-done ns=15094549\n@profile run-1 ns=28252025\n@profile run-2 ns=42002264\n@profile run-3 ns=56457531\nCompress::BWTEncode: OK 200\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "elapsed_ns": 82760423.0,
+          "exitcode": 0,
+          "name": "Compress::BWTDecode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27355\n@profile create-done ns=81776\n@profile prepare-done ns=15016463\n@profile warmup-1 ns=16819223\n@profile warmup-done ns=16840209\n@profile run-1 ns=18578308\n@profile run-2 ns=20287341\n@profile run-3 ns=21999129\nCompress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "elapsed_ns": 87491686.0,
+          "exitcode": 0,
+          "name": "Compress::HuffEncode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27752\n@profile create-done ns=84375\n@profile prepare-done ns=448059\n@profile warmup-1 ns=6555501\n@profile warmup-done ns=6577324\n@profile run-1 ns=12545650\n@profile run-2 ns=19342832\n@profile run-3 ns=25315004\nCompress::HuffEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "elapsed_ns": 86270759.0,
+          "exitcode": 0,
+          "name": "Compress::HuffDecode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=29401\n@profile create-done ns=86920\n@profile prepare-done ns=6599228\n@profile warmup-1 ns=8894829\n@profile warmup-done ns=8916137\n@profile run-1 ns=11396250\n@profile run-2 ns=14370152\n@profile run-3 ns=16697812\nCompress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "elapsed_ns": 96784077.0,
+          "exitcode": 0,
+          "name": "Compress::ArithEncode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27659\n@profile create-done ns=81939\n@profile prepare-done ns=452082\n@profile warmup-1 ns=7332977\n@profile warmup-done ns=7354622\n@profile run-1 ns=14389729\n@profile run-2 ns=21921995\n@profile run-3 ns=29420526\nCompress::ArithEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "elapsed_ns": 107454763.0,
+          "exitcode": 0,
+          "name": "Compress::ArithDecode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=34389\n@profile create-done ns=87019\n@profile prepare-done ns=7576700\n@profile warmup-1 ns=16510165\n@profile warmup-done ns=16539469\n@profile run-1 ns=24967967\n@profile run-2 ns=33687847\n@profile run-3 ns=43229224\nCompress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "elapsed_ns": 77561358.0,
+          "exitcode": 0,
+          "name": "Compress::LZWEncode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=37519\n@profile create-done ns=111506\n@profile prepare-done ns=539193\n@profile warmup-1 ns=4164512\n@profile warmup-done ns=4185062\n@profile run-1 ns=7864308\n@profile run-2 ns=11425035\n@profile run-3 ns=16076708\nCompress::LZWEncode: OK 208\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "elapsed_ns": 74296593.0,
+          "exitcode": 0,
+          "name": "Compress::LZWDecode",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28441\n@profile create-done ns=88098\n@profile prepare-done ns=4151649\n@profile warmup-1 ns=5309397\n@profile warmup-done ns=5329853\n@profile run-1 ns=6425579\n@profile run-2 ns=7502530\n@profile run-3 ns=8575190\nCompress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "elapsed_ns": 68488669.0,
+          "exitcode": 0,
+          "name": "Distance::Jaro",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=27250\n@profile create-done ns=82224\n@profile prepare-done ns=1334209\n@profile warmup-1 ns=4112554\n@profile warmup-done ns=4133925\n@profile run-1 ns=6848743\nDistance::Jaro: OK 7020\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "elapsed_ns": 128669612.0,
+          "exitcode": 0,
+          "name": "Distance::NGram",
+          "runtime": "interpreter",
+          "status": "passed",
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=28255\n@profile create-done ns=88002\n@profile prepare-done ns=9555755\n@profile warmup-1 ns=38899308\n@profile warmup-done ns=38932886\n@profile run-1 ns=66654711\nDistance::NGram: OK 42\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        }
+      ],
+      "runtime": "interpreter"
+    },
+    "jit": {
+      "binary": "/tmp/kujo-builtin-release-2026-10-24/kujo",
+      "config": "benchmarks/langarena/test.json",
+      "results": [
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "elapsed_ns": 94030372.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Obj",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=124203\n@profile create-done ns=363315\n@profile prepare-done ns=541052\n@profile warmup-1 ns=1553825\n@profile warmup-done ns=1762440\n@profile run-1 ns=2702869\n@profile run-2 ns=3464516\n@profile run-3 ns=34302094\nBinarytrees::Obj: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "elapsed_ns": 153181899.0,
+          "exitcode": 0,
+          "name": "Binarytrees::Arena",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=147061\n@profile create-done ns=378224\n@profile prepare-done ns=546528\n@profile warmup-1 ns=1467745\n@profile warmup-done ns=1622840\n@profile run-1 ns=2439735\n@profile run-2 ns=3240260\n@profile run-3 ns=85085469\nBinarytrees::Arena: OK 124\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 376912144.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Array",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=103370\n@profile create-done ns=315648\n@profile prepare-done ns=490506\n@profile warmup-1 ns=227257912\n@profile warmup-done ns=227418794\n@profile run-1 ns=258956730\n@profile run-2 ns=294698085\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "elapsed_ns": 285341388.0,
+          "exitcode": 0,
+          "name": "Brainfuck::Recursion",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90598\n@profile create-done ns=274699\n@profile prepare-done ns=430358\n@profile warmup-1 ns=149571074\n@profile warmup-done ns=149754482\n@profile run-1 ns=185209388\n@profile run-2 ns=221627458\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "elapsed_ns": 272132340.0,
+          "exitcode": 0,
+          "name": "Matmul::Single",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90733\n@profile create-done ns=28601340\n@profile prepare-done ns=28789584\n@profile warmup-1 ns=137588857\n@profile warmup-done ns=137752443\n@profile run-1 ns=149942356\n@profile run-2 ns=194821153\n@profile run-3 ns=207193167\nMatmul::Single: OK 720656960\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "elapsed_ns": 348108118.0,
+          "exitcode": 0,
+          "name": "Matmul::T4",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91374\n@profile create-done ns=30547796\n@profile prepare-done ns=30755738\n@profile warmup-1 ns=110522882\n@profile warmup-done ns=110685886\n@profile run-1 ns=155657766\n@profile run-2 ns=243814543\n@profile run-3 ns=288700679\nMatmul::T4: OK 2420334760\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "elapsed_ns": 349525457.0,
+          "exitcode": 0,
+          "name": "Matmul::T8",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=135781\n@profile create-done ns=28834464\n@profile prepare-done ns=29129269\n@profile warmup-1 ns=106498695\n@profile warmup-done ns=106666081\n@profile run-1 ns=147455767\n@profile run-2 ns=238401850\n@profile run-3 ns=278739315\nMatmul::T8: OK 4014223764\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "elapsed_ns": 368702700.0,
+          "exitcode": 0,
+          "name": "Matmul::T16",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=93095\n@profile create-done ns=29768779\n@profile prepare-done ns=29963504\n@profile warmup-1 ns=113311997\n@profile warmup-done ns=113479981\n@profile run-1 ns=159991561\n@profile run-2 ns=254952869\n@profile run-3 ns=307209466\nMatmul::T16: OK 418055336\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "elapsed_ns": 395612929.0,
+          "exitcode": 0,
+          "name": "Base64::Encode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=93991\n@profile create-done ns=287070\n@profile prepare-done ns=497652\n@profile warmup-1 ns=727901\n@profile warmup-163 ns=70083004\n@profile warmup-326 ns=73351178\n@profile warmup-489 ns=76547583\n@profile warmup-652 ns=80322041\n@profile warmup-815 ns=84101953\n@profile warmup-978 ns=87270957\n@profile warmup-1141 ns=90816037\n@profile warmup-1304 ns=94296977\n@profile warmup-1467 ns=97552647\n@profile warmup-1630 ns=100712473\n@profile warmup-1638 ns=101024083\n@profile warmup-done ns=101175275\n@profile run-1 ns=101380282\n@profile run-819 ns=167613731\n@profile run-1638 ns=184374282\n@profile run-2457 ns=201286096\n@profile run-3276 ns=218481674\n@profile run-4095 ns=235767026\n@profile run-4914 ns=252099373\n@profile run-5733 ns=269238325\n@profile run-6552 ns=286503766\n@profile run-7371 ns=303789069\n@profile run-8190 ns=320074881\n@profile run-8192 ns=320295123\nBase64::Encode: OK 3894061047\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "elapsed_ns": 404396064.0,
+          "exitcode": 0,
+          "name": "Base64::Decode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=109721\n@profile create-done ns=359513\n@profile prepare-done ns=623983\n@profile warmup-1 ns=888055\n@profile warmup-163 ns=70851733\n@profile warmup-326 ns=74578783\n@profile warmup-489 ns=78527899\n@profile warmup-652 ns=81775942\n@profile warmup-815 ns=84977452\n@profile warmup-978 ns=88225871\n@profile warmup-1141 ns=91429679\n@profile warmup-1304 ns=94636576\n@profile warmup-1467 ns=97848218\n@profile warmup-1630 ns=101081329\n@profile warmup-1638 ns=101400672\n@profile warmup-done ns=101551784\n@profile run-1 ns=101762571\n@profile run-819 ns=169644371\n@profile run-1638 ns=187093305\n@profile run-2457 ns=204651597\n@profile run-3276 ns=221106692\n@profile run-4095 ns=238532271\n@profile run-4914 ns=255756264\n@profile run-5733 ns=272998979\n@profile run-6552 ns=289731766\n@profile run-7371 ns=307793997\n@profile run-8190 ns=325492888\n@profile run-8192 ns=325710847\nBase64::Decode: OK 732348015\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "elapsed_ns": 270116142.0,
+          "exitcode": 0,
+          "name": "Json::Generate",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=92968\n@profile create-done ns=34697526\n@profile prepare-done ns=34957264\n@profile warmup-1 ns=204774772\n@profile warmup-done ns=204951726\n@profile run-1 ns=205184651\n@profile run-2 ns=205395501\n@profile run-3 ns=205592756\nJson::Generate: OK 4\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "elapsed_ns": 273829426.0,
+          "exitcode": 0,
+          "name": "Json::ParseDom",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=92454\n@profile create-done ns=289018\n@profile prepare-done ns=32328252\n@profile warmup-1 ns=210724684\n@profile warmup-done ns=210896103\n@profile run-1 ns=211462263\n@profile run-2 ns=211999640\n@profile run-3 ns=213888079\nJson::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "elapsed_ns": 276760095.0,
+          "exitcode": 0,
+          "name": "Json::ParseMapping",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=118752\n@profile create-done ns=338632\n@profile prepare-done ns=36042113\n@profile warmup-1 ns=210048344\n@profile warmup-done ns=210218163\n@profile run-1 ns=210847066\n@profile run-2 ns=211412540\n@profile run-3 ns=213088727\nJson::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "elapsed_ns": 273365980.0,
+          "exitcode": 0,
+          "name": "CSV::Parse",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=92878\n@profile create-done ns=282167\n@profile prepare-done ns=91859095\n@profile warmup-1 ns=203894152\n@profile warmup-done ns=204076796\n@profile run-1 ns=204741033\n@profile run-2 ns=205361424\n@profile run-3 ns=207022575\nCSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "elapsed_ns": 155597562.0,
+          "exitcode": 0,
+          "name": "Etc::Sieve",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91574\n@profile create-done ns=280172\n@profile prepare-done ns=441594\n@profile warmup-1 ns=92065527\n@profile warmup-done ns=92232134\n@profile run-1 ns=93641273\n@profile run-2 ns=94999549\n@profile run-3 ns=96348889\nEtc::Sieve: OK 4660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "elapsed_ns": 6008160050.0,
+          "exitcode": 0,
+          "name": "Etc::TextRaytracer",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=92433\n@profile create-done ns=281939\n@profile prepare-done ns=444249\n@profile warmup-1 ns=1697569765\n@profile warmup-done ns=1697750183\n@profile run-1 ns=3114441449\n@profile run-2 ns=4518465758\n@profile run-3 ns=5936432211\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "elapsed_ns": 9182313304.0,
+          "exitcode": 0,
+          "name": "Etc::NeuralNet",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=95013\n@profile create-done ns=289690\n@profile prepare-done ns=89262298\n@profile warmup-1 ns=3364354643\n@profile warmup-done ns=3364546797\n@profile run-1 ns=6260077037\n@profile run-2 ns=9085921461\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "elapsed_ns": 1001107785.0,
+          "exitcode": 0,
+          "name": "Etc::CacheSimulation",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=88912\n@profile create-done ns=278523\n@profile prepare-done ns=548036\n@profile warmup-1 ns=275421918\n@profile warmup-done ns=275627973\n@profile run-1 ns=523762936\n@profile run-2 ns=939529473\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "elapsed_ns": 245878106.0,
+          "exitcode": 0,
+          "name": "Etc::GameOfLife",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89837\n@profile create-done ns=64764240\n@profile prepare-done ns=80524008\n@profile warmup-1 ns=139948351\n@profile warmup-done ns=140180230\n@profile run-1 ns=149669695\n@profile run-2 ns=158014945\n@profile run-3 ns=166289075\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "elapsed_ns": 196792148.0,
+          "exitcode": 0,
+          "name": "Etc::Words",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89845\n@profile create-done ns=272682\n@profile prepare-done ns=60949975\n@profile warmup-1 ns=126323854\n@profile warmup-done ns=126476817\n@profile run-1 ns=130834385\n@profile run-2 ns=135651594\nEtc::Words: OK 580539813\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "elapsed_ns": 243776139.0,
+          "exitcode": 0,
+          "name": "Etc::LogParser",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89885\n@profile create-done ns=274471\n@profile prepare-done ns=151930447\n@profile warmup-1 ns=177495915\n@profile warmup-done ns=177659629\n@profile run-1 ns=178005535\n@profile run-2 ns=178329062\nEtc::LogParser: OK 117\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "elapsed_ns": 160181991.0,
+          "exitcode": 0,
+          "name": "Template::Regex",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89012\n@profile create-done ns=273041\n@profile prepare-done ns=79329575\n@profile warmup-1 ns=82207312\n@profile warmup-done ns=82381237\n@profile run-1 ns=85337598\n@profile run-2 ns=87774326\nTemplate::Regex: OK 1554169905\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "elapsed_ns": 179497703.0,
+          "exitcode": 0,
+          "name": "Template::Parse",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89520\n@profile create-done ns=272544\n@profile prepare-done ns=81688069\n@profile warmup-1 ns=90553985\n@profile warmup-done ns=90718087\n@profile run-1 ns=99231873\n@profile run-2 ns=106850453\nTemplate::Parse: OK 917360148\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "elapsed_ns": 3697923730.0,
+          "exitcode": 0,
+          "name": "Sort::Quick",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=148584\n@profile create-done ns=401784\n@profile prepare-done ns=657298115\n@profile warmup-1 ns=1682649594\n@profile warmup-done ns=1682844461\n@profile run-1 ns=2647747963\n@profile run-2 ns=3620723996\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "elapsed_ns": 13779682719.0,
+          "exitcode": 0,
+          "name": "Sort::Merge",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=98045\n@profile create-done ns=293065\n@profile prepare-done ns=639593047\n@profile warmup-1 ns=4926963462\n@profile warmup-done ns=4927130168\n@profile run-1 ns=9287673706\n@profile run-2 ns=13709000892\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "elapsed_ns": 912974102.0,
+          "exitcode": 0,
+          "name": "Sort::Self",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=114374\n@profile create-done ns=306602\n@profile prepare-done ns=660978681\n@profile warmup-1 ns=729220183\n@profile warmup-done ns=729397442\n@profile run-1 ns=786094099\n@profile run-2 ns=847615202\nSort::Self: OK 2548773\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 247514126.0,
+          "exitcode": 0,
+          "name": "Graph::BFS",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=96092\n@profile create-done ns=301276\n@profile prepare-done ns=118431876\n@profile warmup-1 ns=184481644\n@profile warmup-done ns=184639775\n@profile run-1 ns=185759856\n@profile run-2 ns=187206802\n@profile run-3 ns=188713904\nGraph::BFS: OK 20\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "elapsed_ns": 277981788.0,
+          "exitcode": 0,
+          "name": "Graph::DFS",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89936\n@profile create-done ns=286439\n@profile prepare-done ns=114449032\n@profile warmup-1 ns=201925940\n@profile warmup-done ns=202090252\n@profile run-1 ns=203888746\n@profile run-2 ns=205647776\n@profile run-3 ns=207406402\nGraph::DFS: OK 28\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "elapsed_ns": 386589237.0,
+          "exitcode": 0,
+          "name": "Graph::AStar",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=103758\n@profile create-done ns=321788\n@profile prepare-done ns=111609912\n@profile warmup-1 ns=321213018\n@profile warmup-done ns=321384219\n@profile run-1 ns=322738460\n@profile run-2 ns=324169161\n@profile run-3 ns=325490481\nGraph::AStar: OK 36\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "elapsed_ns": 416032575.0,
+          "exitcode": 0,
+          "name": "Hash::SHA256",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=232603\n@profile create-done ns=451385\n@profile prepare-done ns=31019270\n@profile warmup-1 ns=310624474\n@profile warmup-done ns=310793239\n@profile run-1 ns=323737253\n@profile run-2 ns=338118967\n@profile run-3 ns=351275807\nHash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "elapsed_ns": 511987540.0,
+          "exitcode": 0,
+          "name": "Hash::CRC32",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89453\n@profile create-done ns=271809\n@profile prepare-done ns=31573925\n@profile warmup-1 ns=335907039\n@profile warmup-done ns=336094151\n@profile run-1 ns=374588691\n@profile run-2 ns=413114237\n@profile run-3 ns=450798975\nHash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "elapsed_ns": 555096706.0,
+          "exitcode": 0,
+          "name": "Calculator::Ast",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=105462\n@profile create-done ns=324818\n@profile prepare-done ns=261755529\n@profile warmup-1 ns=472002643\n@profile warmup-done ns=472194900\n@profile run-1 ns=480683936\n@profile run-2 ns=488502208\n@profile run-3 ns=495629282\nCalculator::Ast: OK 774028720\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "elapsed_ns": 882241264.0,
+          "exitcode": 0,
+          "name": "Calculator::Interpreter",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=88498\n@profile create-done ns=270366\n@profile prepare-done ns=432071378\n@profile warmup-1 ns=473150135\n@profile warmup-2 ns=476198638\n@profile warmup-4 ns=482082053\n@profile warmup-6 ns=571377504\n@profile warmup-8 ns=579165273\n@profile warmup-10 ns=582678161\n@profile warmup-12 ns=586463655\n@profile warmup-14 ns=592869875\n@profile warmup-16 ns=596213206\n@profile warmup-18 ns=599492591\n@profile warmup-20 ns=603960975\n@profile warmup-done ns=604153341\n@profile run-1 ns=606000419\n@profile run-10 ns=619923620\n@profile run-20 ns=635128482\n@profile run-30 ns=651670407\n@profile run-40 ns=667924337\n@profile run-50 ns=682481336\n@profile run-60 ns=698947705\n@profile run-70 ns=715431119\n@profile run-80 ns=732580888\n@profile run-90 ns=747078830\n@profile run-100 ns=767006155\nCalculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "elapsed_ns": 2320659114.0,
+          "exitcode": 0,
+          "name": "Maze::Generator",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89572\n@profile create-done ns=432910114\n@profile prepare-done ns=433106403\n@profile warmup-1 ns=968800634\n@profile warmup-done ns=968964883\n@profile run-1 ns=1415343995\n@profile run-2 ns=2163825880\nMaze::Generator: OK 2309652669\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "elapsed_ns": 1538460797.0,
+          "exitcode": 0,
+          "name": "Maze::BFS",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90613\n@profile create-done ns=440826424\n@profile prepare-done ns=951367199\n@profile warmup-1 ns=1241529045\n@profile warmup-done ns=1241696416\n@profile run-1 ns=1335804983\n@profile run-2 ns=1425208683\nMaze::BFS: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "elapsed_ns": 1961371816.0,
+          "exitcode": 0,
+          "name": "Maze::AStar",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90476\n@profile create-done ns=414132642\n@profile prepare-done ns=859702159\n@profile warmup-1 ns=1439287085\n@profile warmup-done ns=1439422670\n@profile run-1 ns=1648201315\n@profile run-2 ns=1856003338\nMaze::AStar: OK 6771\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "elapsed_ns": 299449190.0,
+          "exitcode": 0,
+          "name": "CLBG::Fannkuchredux",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=115547\n@profile create-done ns=374517\n@profile prepare-done ns=531529\n@profile warmup-1 ns=228801791\n@profile warmup-done ns=229001998\n@profile run-1 ns=231250458\n@profile run-2 ns=233190446\n@profile run-3 ns=234986412\nCLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "elapsed_ns": 377575768.0,
+          "exitcode": 0,
+          "name": "CLBG::Mandelbrot",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=95123\n@profile create-done ns=289317\n@profile prepare-done ns=460296\n@profile warmup-1 ns=290192496\n@profile warmup-done ns=290421911\n@profile run-1 ns=296085031\n@profile run-2 ns=301019611\n@profile run-3 ns=306285491\nCLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "elapsed_ns": 1014848673.0,
+          "exitcode": 0,
+          "name": "CLBG::Nbody",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=90178\n@profile create-done ns=342670\n@profile prepare-done ns=150798181\n@profile warmup-1 ns=608203559\n@profile warmup-done ns=608341994\n@profile run-1 ns=774795487\n@profile run-2 ns=943614654\nCLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "elapsed_ns": 454219451.0,
+          "exitcode": 0,
+          "name": "CLBG::Spectralnorm",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91023\n@profile create-done ns=7289782\n@profile prepare-done ns=7457339\n@profile warmup-1 ns=68161459\n@profile warmup-2 ns=105156975\n@profile warmup-done ns=105338637\n@profile run-1 ns=135223384\n@profile run-2 ns=164131560\n@profile run-3 ns=190300600\n@profile run-4 ns=216638351\n@profile run-5 ns=242272288\n@profile run-6 ns=266220030\n@profile run-7 ns=291264943\n@profile run-8 ns=316273753\n@profile run-9 ns=341781147\n@profile run-10 ns=366483761\nCLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "elapsed_ns": 462087882.0,
+          "exitcode": 0,
+          "name": "Compress::BWTEncode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=106099\n@profile create-done ns=315563\n@profile prepare-done ns=19371820\n@profile warmup-1 ns=162319011\n@profile warmup-done ns=162467150\n@profile run-1 ns=324576278\n@profile run-2 ns=365603691\n@profile run-3 ns=403852895\nCompress::BWTEncode: OK 200\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "elapsed_ns": 363935268.0,
+          "exitcode": 0,
+          "name": "Compress::BWTDecode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=105261\n@profile create-done ns=302170\n@profile prepare-done ns=185191585\n@profile warmup-1 ns=303663034\n@profile warmup-done ns=303826556\n@profile run-1 ns=304902352\n@profile run-2 ns=305954297\n@profile run-3 ns=307146175\nCompress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "elapsed_ns": 162411513.0,
+          "exitcode": 0,
+          "name": "Compress::HuffEncode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=94236\n@profile create-done ns=529343\n@profile prepare-done ns=20591012\n@profile warmup-1 ns=94535974\n@profile warmup-done ns=94702286\n@profile run-1 ns=98249756\n@profile run-2 ns=101760948\n@profile run-3 ns=105094625\nCompress::HuffEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "elapsed_ns": 207071225.0,
+          "exitcode": 0,
+          "name": "Compress::HuffDecode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89660\n@profile create-done ns=270736\n@profile prepare-done ns=96355047\n@profile warmup-1 ns=137680055\n@profile warmup-done ns=137868160\n@profile run-1 ns=140504321\n@profile run-2 ns=142771205\n@profile run-3 ns=144887257\nCompress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "elapsed_ns": 308124179.0,
+          "exitcode": 0,
+          "name": "Compress::ArithEncode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=91597\n@profile create-done ns=276997\n@profile prepare-done ns=20062486\n@profile warmup-1 ns=237389492\n@profile warmup-done ns=237590082\n@profile run-1 ns=241110750\n@profile run-2 ns=244236951\n@profile run-3 ns=247240673\nCompress::ArithEncode: OK 56\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "elapsed_ns": 584478864.0,
+          "exitcode": 0,
+          "name": "Compress::ArithDecode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=102611\n@profile create-done ns=300840\n@profile prepare-done ns=241677195\n@profile warmup-1 ns=507822334\n@profile warmup-done ns=508004434\n@profile run-1 ns=513334117\n@profile run-2 ns=518967808\n@profile run-3 ns=523968981\nCompress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "elapsed_ns": 177259910.0,
+          "exitcode": 0,
+          "name": "Compress::LZWEncode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89456\n@profile create-done ns=272216\n@profile prepare-done ns=19858271\n@profile warmup-1 ns=102045396\n@profile warmup-done ns=102223210\n@profile run-1 ns=105723015\n@profile run-2 ns=109179553\n@profile run-3 ns=112983547\nCompress::LZWEncode: OK 208\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "elapsed_ns": 242497005.0,
+          "exitcode": 0,
+          "name": "Compress::LZWDecode",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89211\n@profile create-done ns=269932\n@profile prepare-done ns=99972430\n@profile warmup-1 ns=173531802\n@profile warmup-done ns=173709326\n@profile run-1 ns=175360385\n@profile run-2 ns=176864694\n@profile run-3 ns=178350651\nCompress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "elapsed_ns": 396199414.0,
+          "exitcode": 0,
+          "name": "Distance::Jaro",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=89055\n@profile create-done ns=272171\n@profile prepare-done ns=74778240\n@profile warmup-1 ns=330084649\n@profile warmup-done ns=330291097\n@profile run-1 ns=334904673\nDistance::Jaro: OK 7020\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        },
+        {
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "elapsed_ns": 270005206.0,
+          "exitcode": 0,
+          "name": "Distance::NGram",
+          "runtime": "jit",
+          "status": "passed",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "@profile create-start ns=93913\n@profile create-done ns=286931\n@profile prepare-done ns=71696206\n@profile warmup-1 ns=185881256\n@profile warmup-done ns=186084455\n@profile run-1 ns=207529300\nDistance::NGram: OK 42\nSummary: 1, 1, 0\n",
+          "stdout_truncated": false,
+          "timeout_ms": 600000
+        }
+      ],
+      "runtime": "jit"
+    }
+  },
+  "build_checkout_commit": "13d04484515c93ebac750d5504b486580fcce50e",
+  "baseline_identity_evidence": "local-return-release-2026-10-24.json",
+  "structural_and_semantic_evidence": "builtin-argument-pool-2026-10-24.json",
+  "rss_samples": [
+    {
+      "trial": "rss-1-after-jit.stderr",
+      "maximum_resident_bytes": 51257344,
+      "peak_memory_footprint_bytes": 45887488,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        3.69 real         3.64 user         0.04 sys\n            51257344  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16788  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                 322  involuntary context switches\n         24536306805  instructions retired\n         11696797139  cycles elapsed\n            45887488  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-1-after-vm.stderr",
+      "maximum_resident_bytes": 49741824,
+      "peak_memory_footprint_bytes": 46280704,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "       13.06 real        12.98 user         0.05 sys\n            49741824  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               13109  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                1084  involuntary context switches\n         60492728507  instructions retired\n         39082172124  cycles elapsed\n            46280704  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-1-before-jit.stderr",
+      "maximum_resident_bytes": 52842496,
+      "peak_memory_footprint_bytes": 47697920,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        4.20 real         4.14 user         0.05 sys\n            52842496  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16723  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                 540  involuntary context switches\n         25934859243  instructions retired\n         12351526926  cycles elapsed\n            47697920  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-1-before-vm.stderr",
+      "maximum_resident_bytes": 54382592,
+      "peak_memory_footprint_bytes": 50929664,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "       12.47 real        12.39 user         0.05 sys\n            54382592  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               14235  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                1136  involuntary context switches\n         60555131517  instructions retired\n         39406975580  cycles elapsed\n            50929664  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-2-after-jit.stderr",
+      "maximum_resident_bytes": 50864128,
+      "peak_memory_footprint_bytes": 44818432,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        3.92 real         3.86 user         0.05 sys\n            50864128  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               16610  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                 339  involuntary context switches\n         24513701165  instructions retired\n         11703312794  cycles elapsed\n            44818432  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-2-after-vm.stderr",
+      "maximum_resident_bytes": 54337536,
+      "peak_memory_footprint_bytes": 50913280,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "       12.52 real        12.44 user         0.05 sys\n            54337536  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               14235  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                1014  involuntary context switches\n         60361875008  instructions retired\n         39001698996  cycles elapsed\n            50913280  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-2-before-jit.stderr",
+      "maximum_resident_bytes": 53108736,
+      "peak_memory_footprint_bytes": 47046656,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        3.80 real         3.74 user         0.04 sys\n            53108736  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               15631  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                 417  involuntary context switches\n         25994514186  instructions retired\n         12391647366  cycles elapsed\n            47046656  peak memory footprint\n"
+    },
+    {
+      "trial": "rss-2-before-vm.stderr",
+      "maximum_resident_bytes": 54239232,
+      "peak_memory_footprint_bytes": 50794496,
+      "stdout": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stderr": "       12.35 real        12.04 user         0.06 sys\n            54239232  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               14204  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                1789  involuntary context switches\n         60617408080  instructions retired\n         39701597980  cycles elapsed\n            50794496  peak memory footprint\n"
+    }
+  ],
+  "rss_limit": "Two samples per runtime/variant; descriptive only. Cumulative allocation bytes are not peak resident memory."
+}

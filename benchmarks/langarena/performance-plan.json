@@ -57,7 +57,8 @@
         "local-return-release-2026-10-24.json",
         "native-argument-pool-2026-10-24.json",
         "builtin-argument-pool-2026-10-24.json",
-        "CALLABLE_MARSHALLING_2026_10_24.md"
+        "CALLABLE_MARSHALLING_2026_10_24.md",
+        "builtin-pool-release-2026-10-24.json"
       ]
     },
     {
@@ -156,14 +157,17 @@
         "checksums-2026-10-24-native-scalar-array-release.json",
         "checksums-2026-10-24-native-positional-release.json",
         "checksums-2026-10-24-native-root-cache-release.json",
-        "production-paused-2026-10-24.json"
+        "production-paused-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ]
     },
     {
       "id": "regression_gates",
       "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "builtin-pool-release-2026-10-24.json"
+      ]
     },
     {
       "id": "competitive_targets",
@@ -183,11 +187,11 @@
   "benchmarks": [
     {
       "name": "Binarytrees::Obj",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -219,7 +223,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -245,11 +250,11 @@
     },
     {
       "name": "Binarytrees::Arena",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -281,7 +286,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -307,11 +313,11 @@
     },
     {
       "name": "Brainfuck::Array",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -343,7 +349,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -369,11 +376,11 @@
     },
     {
       "name": "Brainfuck::Recursion",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -405,7 +412,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -431,11 +439,11 @@
     },
     {
       "name": "Matmul::Single",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -467,7 +475,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -493,11 +502,11 @@
     },
     {
       "name": "Matmul::T4",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -529,7 +538,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -555,11 +565,11 @@
     },
     {
       "name": "Matmul::T8",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -591,7 +601,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -617,11 +628,11 @@
     },
     {
       "name": "Matmul::T16",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -653,7 +664,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -679,11 +691,11 @@
     },
     {
       "name": "Base64::Encode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -715,7 +727,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -741,11 +754,11 @@
     },
     {
       "name": "Base64::Decode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -777,7 +790,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -803,11 +817,11 @@
     },
     {
       "name": "Json::Generate",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -839,7 +853,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -865,11 +880,11 @@
     },
     {
       "name": "Json::ParseDom",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -901,7 +916,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -927,11 +943,11 @@
     },
     {
       "name": "Json::ParseMapping",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -963,7 +979,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -989,11 +1006,11 @@
     },
     {
       "name": "CSV::Parse",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1025,7 +1042,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1051,11 +1069,11 @@
     },
     {
       "name": "Etc::Sieve",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1087,7 +1105,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1113,11 +1132,11 @@
     },
     {
       "name": "Etc::TextRaytracer",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1149,7 +1168,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1175,11 +1195,11 @@
     },
     {
       "name": "Etc::NeuralNet",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1211,7 +1231,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1237,11 +1258,11 @@
     },
     {
       "name": "Etc::CacheSimulation",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1273,7 +1294,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1299,11 +1321,11 @@
     },
     {
       "name": "Etc::GameOfLife",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1335,7 +1357,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1361,11 +1384,11 @@
     },
     {
       "name": "Etc::Words",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1397,7 +1420,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1423,11 +1447,11 @@
     },
     {
       "name": "Etc::LogParser",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1459,7 +1483,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1485,11 +1510,11 @@
     },
     {
       "name": "Template::Regex",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1521,7 +1546,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1547,11 +1573,11 @@
     },
     {
       "name": "Template::Parse",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1583,7 +1609,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1609,11 +1636,11 @@
     },
     {
       "name": "Sort::Quick",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "Mapped post-fix sample at50f8357: allocation/value movement, indexed reads/root bookkeeping and environment lookup remain visible. Counts include startup/warmup/idle threads, not CPU percentages.",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1645,7 +1672,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1671,11 +1699,11 @@
     },
     {
       "name": "Sort::Merge",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1707,7 +1735,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1733,11 +1762,11 @@
     },
     {
       "name": "Sort::Self",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1769,7 +1798,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1795,11 +1825,11 @@
     },
     {
       "name": "Graph::BFS",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1831,7 +1861,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1857,11 +1888,11 @@
     },
     {
       "name": "Graph::DFS",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1893,7 +1924,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1919,11 +1951,11 @@
     },
     {
       "name": "Graph::AStar",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1955,7 +1987,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1981,11 +2014,11 @@
     },
     {
       "name": "Hash::SHA256",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2017,7 +2050,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2043,11 +2077,11 @@
     },
     {
       "name": "Hash::CRC32",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2079,7 +2113,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2105,11 +2140,11 @@
     },
     {
       "name": "Calculator::Ast",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2141,7 +2176,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2167,11 +2203,11 @@
     },
     {
       "name": "Calculator::Interpreter",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2203,7 +2239,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2229,11 +2266,11 @@
     },
     {
       "name": "Maze::Generator",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2265,7 +2302,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2291,11 +2329,11 @@
     },
     {
       "name": "Maze::BFS",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2327,7 +2365,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2353,11 +2392,11 @@
     },
     {
       "name": "Maze::AStar",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2389,7 +2428,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2415,11 +2455,11 @@
     },
     {
       "name": "CLBG::Fannkuchredux",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2451,7 +2491,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2477,11 +2518,11 @@
     },
     {
       "name": "CLBG::Mandelbrot",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2513,7 +2554,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2539,11 +2581,11 @@
     },
     {
       "name": "CLBG::Nbody",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2575,7 +2617,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2601,11 +2644,11 @@
     },
     {
       "name": "CLBG::Spectralnorm",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2637,7 +2680,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2663,11 +2707,11 @@
     },
     {
       "name": "Compress::BWTEncode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2699,7 +2743,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2725,11 +2770,11 @@
     },
     {
       "name": "Compress::BWTDecode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2761,7 +2806,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2787,11 +2833,11 @@
     },
     {
       "name": "Compress::HuffEncode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2823,7 +2869,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2849,11 +2896,11 @@
     },
     {
       "name": "Compress::HuffDecode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2885,7 +2932,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2911,11 +2959,11 @@
     },
     {
       "name": "Compress::ArithEncode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2947,7 +2995,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2973,11 +3022,11 @@
     },
     {
       "name": "Compress::ArithDecode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3009,7 +3058,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3035,11 +3085,11 @@
     },
     {
       "name": "Compress::LZWEncode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3071,7 +3121,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3097,11 +3148,11 @@
     },
     {
       "name": "Compress::LZWDecode",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3133,7 +3184,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3159,11 +3211,11 @@
     },
     {
       "name": "Distance::Jaro",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3195,7 +3247,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3221,11 +3274,11 @@
     },
     {
       "name": "Distance::NGram",
-      "test_vm": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
-      "test_interpreter": "passed at50f8357 frozen release, unchanged test-size checksum and source/binary identity verified",
+      "test_vm": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at aa30071 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "50f8357 frozen release test-size checksum passed; fallback allowed. This run does not measure native kernel coverage or certify production performance.",
+      "jit_correctness_and_coverage": "aa30071 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3257,7 +3310,8 @@
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "builtin-pool-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3938,6 +3992,15 @@
       "scope": "Native generic indexed replacement, indexed loops and guarded pop/remove",
       "result": "1071library passed/8ignored;184integration passed with no exclusions; format/minimal build pass; unique storage and snapshot cost gates pass.158/165 static eligible bodies, not native time coverage or speed. New release checksum and production gates remain open.",
       "evidence": "native-pop-rebinding-2026-10-24.json"
+    },
+    {
+      "runtime_commit": "aa30071",
+      "build_checkout_commit": "13d04484515c93ebac750d5504b486580fcce50e",
+      "test_size_passes": 150,
+      "timing_samples": 28,
+      "rss_samples": 8,
+      "evidence": "builtin-pool-release-2026-10-24.json",
+      "limit": "CPU speed limit 100\u219271%; local directional timing only; production/platform/competitive gates open"
     }
   ],
   "review_pause": {
