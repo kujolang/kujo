@@ -5389,6 +5389,9 @@ struct BytecodeTranslator {
     get_return_int_func: Option<FuncRef>,
     /// Persist local slots back into VM locals on return (used for loop JIT)
     persist_locals_on_return: bool,
+    /// Whole-function VM calls discard local maps after successful returns.
+    /// Error/loop synchronization remains independent of this switch.
+    persist_successful_return_locals: bool,
 
     // Phase 7 Step 12: Direct JIT Recursion support
     /// Whether this function is compiled with direct-arg signature
@@ -5511,6 +5514,7 @@ impl BytecodeTranslator {
             int_dict_set_ptr_dense_int_func: None,
             int_dict_set_ptr_dense_int_full_func: None,
             persist_locals_on_return: true,
+            persist_successful_return_locals: true,
             direct_arg_mode: false,
             direct_arg_param: None,
             param_count: 0,
@@ -6228,7 +6232,9 @@ impl BytecodeTranslator {
 
     /// Persist local slots back to VM locals (used for loop JIT)
     fn persist_local_slots_to_vm(&self, builder: &mut FunctionBuilder) {
-        self.persist_local_slots(builder, false);
+        if self.persist_successful_return_locals {
+            self.persist_local_slots(builder, false);
+        }
     }
 
     fn persist_local_slots(&self, builder: &mut FunctionBuilder, all: bool) {
@@ -10977,13 +10983,14 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
-        self.compile_function_metadata(chunk, name).map(|result| result.0)
+        self.compile_function_metadata(chunk, name, true).map(|result| result.0)
     }
 
     fn compile_function_metadata(
         &mut self,
         chunk: &BytecodeChunk,
         name: &str,
+        persist_return_locals: bool,
     ) -> Result<(CompiledFn, bool), String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
@@ -11402,6 +11409,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
+            translator.persist_successful_return_locals = persist_return_locals;
             translator.literal_values = literal_values;
             translator.field_call_sites = chunk
                 .instructions
@@ -11899,9 +11907,28 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFnInfo, String> {
+        self.compile_function_info(chunk, name, true)
+    }
+
+    /// VM-managed whole functions have no continuation consuming their local map.
+    /// Keep standalone compilation and loop/script synchronization unchanged.
+    pub(crate) fn compile_function_for_vm(
+        &mut self,
+        chunk: &BytecodeChunk,
+        name: &str,
+    ) -> Result<CompiledFnInfo, String> {
+        self.compile_function_info(chunk, name, false)
+    }
+
+    fn compile_function_info(
+        &mut self,
+        chunk: &BytecodeChunk,
+        name: &str,
+        persist_return_locals: bool,
+    ) -> Result<CompiledFnInfo, String> {
         // First, compile the standard function
         let (standard_fn, supports_positional_arguments) =
-            self.compile_function_metadata(chunk, name)?;
+            self.compile_function_metadata(chunk, name, persist_return_locals)?;
 
         // Check if eligible for direct-arg optimization
         // Criteria: exactly 1 parameter, function contains self-recursion
@@ -13891,6 +13918,72 @@ mod tests {
                 assert!(capacity <= 6, "{repetitions} reads retained {capacity} roots");
                 assert_eq!(context.native_call_depth, 0);
                 assert!(stack.is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn vm_function_returns_skip_dead_locals_but_keep_standalone_and_error_state() {
+        for vm_managed in [false, true] {
+            for fail in [false, true] {
+                for return_none in [false, true] {
+                    let mut compiler = JitCompiler::new().unwrap();
+                    let mut chunk = BytecodeChunk::new();
+                    chunk.local_names = vec!["scratch".into()];
+                    chunk.local_binding_kinds = vec![BytecodeBindingKind::Mutable];
+                    chunk.local_count = 1;
+                    let value = chunk.add_constant(Constant::Int(41));
+                    let zero = chunk.add_constant(Constant::Int(0));
+                    chunk.emit(OpCode::LoadConst(value));
+                    chunk.emit(OpCode::DefineLocal(0));
+                    chunk.emit(OpCode::Pop);
+                    if fail {
+                        chunk.emit(OpCode::LoadConst(value));
+                        chunk.emit(OpCode::LoadConst(zero));
+                        chunk.emit(OpCode::Div);
+                        chunk.emit(OpCode::Pop);
+                    }
+                    if return_none {
+                        chunk.emit(OpCode::ReturnNone);
+                    } else {
+                        chunk.emit(OpCode::LoadLocal(0));
+                        chunk.emit(OpCode::Return);
+                    }
+                    let info = if vm_managed {
+                        compiler.compile_function_for_vm(&chunk, "dead_locals")
+                    } else {
+                        compiler.compile_function_with_info(&chunk, "dead_locals")
+                    }
+                    .unwrap();
+                    let mut names = HashMap::from([(
+                        BytecodeTranslator::hash_var_name("scratch"),
+                        "scratch".into(),
+                    )]);
+                    let mut locals = HashMap::new();
+                    let mut stack = Vec::new();
+                    let mut context = VMContext::new(&mut stack, &mut locals, std::ptr::null_mut());
+                    context.var_names_ptr = &mut names;
+                    let status = invoke_compiled_fn(info.fn_ptr, &mut context);
+                    assert_eq!(status != 0, fail);
+                    assert_eq!(context.runtime_error.is_some(), fail);
+                    if !fail {
+                        let returned = context.take_return_value(context.return_value);
+                        if return_none {
+                            assert!(matches!(returned, Value::Null));
+                        } else {
+                            assert!(matches!(returned, Value::Int(41)));
+                        }
+                    }
+                    assert_eq!(context.native_call_depth, 0);
+                    assert_eq!(context.owned_roots.storage_state().1, 0);
+                    assert!(stack.is_empty());
+                    if !vm_managed || fail {
+                        assert!(matches!(locals.get("scratch"), Some(Value::Int(41))));
+                    } else {
+                        assert!(locals.is_empty());
+                        assert_eq!(locals.capacity(), 0);
+                    }
+                }
             }
         }
     }

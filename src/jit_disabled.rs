@@ -221,6 +221,14 @@ impl JitCompiler {
         Err(Self::disabled_error())
     }
 
+    pub(crate) fn compile_function_for_vm(
+        &mut self,
+        chunk: &BytecodeChunk,
+        function_name: &str,
+    ) -> Result<CompiledFnInfo, String> {
+        self.compile_function_with_info(chunk, function_name)
+    }
+
     pub fn compile_script(
         &mut self,
         _chunk: &BytecodeChunk,

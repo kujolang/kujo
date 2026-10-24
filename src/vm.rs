@@ -958,7 +958,7 @@ impl VM {
             .jit_compiler
             .as_mut()
             .expect("JIT compiler initialized when JIT is enabled")
-            .compile_function_with_info(chunk, func_name.as_str())
+            .compile_function_for_vm(chunk, func_name.as_str())
             .map_err(|e| format!("Failed to JIT-compile function '{}': {}", func_name, e))?;
 
         self.compiled_functions.insert(func_name.clone(), info.fn_ptr);
@@ -4645,7 +4645,7 @@ impl VM {
                                         .jit_compiler
                                         .as_mut()
                                         .expect("JIT compiler initialized when JIT is enabled")
-                                        .compile_function_with_info(chunk, func_name)
+                                        .compile_function_for_vm(chunk, func_name)
                                     {
                                         Ok(info) => {
                                             if std::env::var("DEBUG_JIT").is_ok() {
