@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Discarded native function locals (`93e7caa`).**
+  [Allocation evidence](LOCAL_RETURN_2026_10_24.md) records 53% fewer requests
+  and 68% fewer requested bytes for the unique 8,192-element JIT QuickSort
+  diagnostic, with backing/snapshot behavior preserved. Successful VM-managed
+  native returns avoid constructing dead local maps; standalone, loop and
+  error synchronization remain intact. 1,090 library and 38 targeted integration
+  tests pass. Release timing/checksums and peak-memory verification are pending.
+
 - **Immutable dispatch facts (`16b96d5`).** [Diagnostic evidence](CALL_METADATA_2026_10_24.md)
   reproduces repeated instruction scans on native callbacks and verifies lazy,
   copy-on-write-invalidated metadata caching. 1,089 library tests and 29 targeted
