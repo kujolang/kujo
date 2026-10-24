@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Callback argument buffers (`1174b7b`).**
+  [Allocation and semantic evidence](ARGUMENT_POOL_2026_10_24.md) records about
+  50% fewer requests and 88% fewer cumulative requested bytes for the unique
+  8,192-element JIT QuickSort probe. Bounded empty-buffer reuse preserves active
+  call isolation, argument order and snapshots. 1,094 library and 44 targeted
+  integration tests pass; release, production and peak-memory gates remain open.
+
 - **Root storage identity (`9f401eb`).**
   [Integrated evidence](STORAGE_IDENTITY_2026_10_24.md) confirms 14,632 fewer
   allocation requests in the 8,192-element QuickSort probe, preserving snapshots
