@@ -17,7 +17,8 @@
       "scope": "Pin current builds and host conditions; sequential seven-sample VM/JIT/Goose/Rust comparisons, checksums, startup, total time and peak memory",
       "status": "in_progress",
       "evidence": [
-        "performance-baseline-2026-10-23.json"
+        "performance-baseline-2026-10-23.json",
+        "comparison-latest-2026-10-24.json"
       ]
     },
     {
@@ -152,7 +153,7 @@
       "scope": "Per-case targets against faster comparator: within 2x, then 1.25x, then repeatable wins; report all failures, worst gaps, startup and memory without selective aggregates",
       "status": "pending",
       "evidence": [
-
+        "comparison-latest-2026-10-24.json"
       ]
     },
     {
@@ -3884,6 +3885,7 @@
       "Native callback hot-call promotion",
       "Single-allocation native argument suffix transfer"
     ],
-    "remaining": "Full production completion, candidate revalidation after further changes, Goose/Rust competitive measurement, performance regression and supported-platform/release acceptance."
+    "remaining": "Full production completion, candidate revalidation after further changes, Goose/Rust competitive measurement, performance regression and supported-platform/release acceptance.",
+    "latest_comparison": "2026-10-24: measurement-only five-variant seven-round rerun,140checksums pass across four selected cases; all50competitive acceptance still pending."
   }
 }

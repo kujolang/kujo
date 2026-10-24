@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Latest five-variant comparison](COMPARISON_LATEST_2026_10_24.md) reruns the
+  original baseline, latest VM/JIT, Goose and Rust in seven rotating rounds:
+  140/140 checksum checks pass across four selected cases. Paired gains are
+  2.17x for VM JSON generation and 2.63x for JIT QuickSort versus baseline VM.
+  JIT QuickSort still takes approximately 153x Goose's and 175x Rust's time.
+  This measurement-only task does not resume implementation or establish an
+  all-50 competitive score; both pending runtime patches remain unapplied.
+
 - **Paused for user review on 2026-10-24.** The
   [root-cache release matrix](checksums-2026-10-24-native-root-cache-release.json)
   verifies all 150 unchanged test-size checksums on frozen `faf9f95`, with
