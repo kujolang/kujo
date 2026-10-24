@@ -7,6 +7,11 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Frozen production Matmul outcome](production-matmul-local-borrow-2026-10-24.json)
+  on `d777339` reached warmup completion but hit the unchanged 600-second process
+  deadline during measured work. Its checksum remains unverified. This diagnostic
+  run predates the scalar-read candidate and does not establish a speed comparison.
+
 - [Production scalar-read profile](native-scalar-index-profile-2026-10-24.json)
   on frozen `d777339` identifies indexed-read dispatch, value copying and scalar
   materialization as hot paths. The sample was taken during the first unchanged

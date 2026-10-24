@@ -1,0 +1,41 @@
+{
+  "scope": "Unchanged production Matmul::Single on frozen d777339 timed out at600seconds after completing warmup. No production checksum or speed acceptance. Predates scalar immediate-array read candidate.",
+  "source_commit": "d777339e23eb970b0c25148dbdac5dd2b5932fed",
+  "binary_sha256": "614a8a2e002ac4294622bbc7260b596ffffd39059adae3d6c565e653576a317c",
+  "report": {
+    "binary": "/tmp/kujo-native-local-borrow-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 600093046479.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "matmul-production-jit.json.case-4.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Matmul::Single",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=371029\n@profile create-done ns=1671221129\n@profile prepare-done ns=1671446325\n@profile warmup-1 ns=198677538617\n@profile warmup-2 ns=416638416830\n@profile warmup-done ns=416638737617\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "report_sha256": "0b9665c4e3329b1d65debb49712642efc1a45b03a66e45856c7d201053354bcf",
+  "profile_evidence": "native-scalar-index-profile-2026-10-24.json",
+  "limits": [
+    "Instrumented diagnostic run on loaded laptop; some execution overlapped debug verification builds.",
+    "Timeout is incomplete execution, not a wrong-checksum result."
+  ]
+}
