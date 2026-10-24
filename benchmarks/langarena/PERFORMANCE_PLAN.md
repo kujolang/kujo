@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Mapped production CPU profile](native-indexed-read-profile-2026-10-24.json)
+  retains the unchanged Matmul::Single production timeout on `7468173`: no
+  first warmup completion within 600 seconds. Matching binary UUID and linker-map
+  hashes support symbol attribution. Operand duplication, root bookkeeping and
+  memory copying are visible costs; sample counts include idle threads and are
+  not native-time percentages or competitive timing. Direct borrowing of live
+  SSA locals for indexed reads is the next measured candidate.
+
 - [Mapped borrowed-read release](checksums-2026-10-24-native-borrowed-read-release.json)
   passes 150 unchanged test-size checksums on `7468173`. Disk exhaustion
   interrupted the interpreter driver after 35 recorded passes; the remaining

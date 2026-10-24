@@ -1,0 +1,727 @@
+{
+  "schema_version": 1,
+  "scope": "Diagnostic production timeout and CPU sample; no competitive-speed claim or production pass.",
+  "profile": {
+    "scope": "Top-of-stack sample counts; not native-time percentages or competitive timings. Dynamic JIT addresses may remain unmapped.",
+    "source_commit": "746817343ab845d8a61fe810f49a6aef451479a8",
+    "binary_sha256": "ffadafc0aa087771940568afe1808cc0089a1323997baa5566359682f79c203f",
+    "map_sha256": "a055850e0369380e6bd14f3a1945514ef84597cb81899b9cb218c38a3b49bfcb",
+    "sample_sha256": "21cadaa78f4b767ce06cbf43ec40c9bca642744eb4565b57b7394f491599bf39",
+    "uuid": "50356B93-2E0D-3EB1-B03D-FE778EB99A07",
+    "rows": [
+      {
+        "label": "__ulock_wait  (in libsystem_kernel.dylib)",
+        "samples": 6520,
+        "mapped": false
+      },
+      {
+        "label": "_platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)",
+        "samples": 673,
+        "mapped": false
+      },
+      {
+        "label": "_jit_release_operand",
+        "samples": 111,
+        "mapped": true,
+        "offset": 285
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 91,
+        "mapped": true,
+        "offset": 334
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 83,
+        "mapped": true,
+        "offset": 253
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 82,
+        "mapped": true,
+        "offset": 520
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 65,
+        "mapped": true,
+        "offset": 39
+      },
+      {
+        "label": "_jit_duplicate_operand",
+        "samples": 61,
+        "mapped": true,
+        "offset": 140
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 54,
+        "mapped": true,
+        "offset": 1162
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 51,
+        "mapped": true,
+        "offset": 2284
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 47,
+        "mapped": true,
+        "offset": 118
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 41,
+        "mapped": true,
+        "offset": 256
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379e1bb]",
+        "samples": 37,
+        "mapped": false
+      },
+      {
+        "label": "_jit_duplicate_operand",
+        "samples": 30,
+        "mapped": true,
+        "offset": 143
+      },
+      {
+        "label": "_jit_release_operand",
+        "samples": 30,
+        "mapped": true,
+        "offset": 288
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 29,
+        "mapped": true,
+        "offset": 523
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 25,
+        "mapped": true,
+        "offset": 356
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 24,
+        "mapped": true,
+        "offset": 171
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 21,
+        "mapped": true,
+        "offset": 62
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 21,
+        "mapped": true,
+        "offset": 201
+      },
+      {
+        "label": "DYLD-STUB$$memcpy  (in kujo)",
+        "samples": 21,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 20,
+        "mapped": true,
+        "offset": 359
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 20,
+        "mapped": true,
+        "offset": 33
+      },
+      {
+        "label": "DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)",
+        "samples": 20,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 18,
+        "mapped": true,
+        "offset": 318
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 18,
+        "mapped": true,
+        "offset": 965
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 18,
+        "mapped": true,
+        "offset": 130
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6unlink17h80f898e0fc3bcc35E",
+        "samples": 18,
+        "mapped": true,
+        "offset": 116
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 17,
+        "mapped": true,
+        "offset": 169
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 16,
+        "mapped": true,
+        "offset": 8
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379ed0c]",
+        "samples": 15,
+        "mapped": false
+      },
+      {
+        "label": "_jit_duplicate_operand",
+        "samples": 15,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 15,
+        "mapped": true,
+        "offset": 1030
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 15,
+        "mapped": true,
+        "offset": 337
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 14,
+        "mapped": true,
+        "offset": 1146
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 14,
+        "mapped": true,
+        "offset": 659
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 14,
+        "mapped": true,
+        "offset": 10
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 13,
+        "mapped": true,
+        "offset": 201
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 12,
+        "mapped": true,
+        "offset": 1132
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 12,
+        "mapped": true,
+        "offset": 79
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 12,
+        "mapped": true,
+        "offset": 65
+      },
+      {
+        "label": "_jit_return_scalar_kind",
+        "samples": 10,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 10,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379c86c]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "_jit_duplicate_operand",
+        "samples": 9,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 9,
+        "mapped": true,
+        "offset": 130
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 71
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 221
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 68
+      },
+      {
+        "label": "_jit_release_operand",
+        "samples": 8,
+        "mapped": true,
+        "offset": 1
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 8,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 609
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 82
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379c630]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379c8e5]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 486
+      },
+      {
+        "label": "_jit_release_operand",
+        "samples": 7,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 7,
+        "mapped": true,
+        "offset": 17
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 41
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 33
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 64
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 988
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 1122
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 1291
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 1319
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 315
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 7
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 121
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 344
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 2298
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379c8c4]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379cad0]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 195
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 213
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 7
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 6,
+        "mapped": true,
+        "offset": 5
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 6,
+        "mapped": true,
+        "offset": 151
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 81
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 855
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 895
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 122
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 171
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 292
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379bec7]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fbb2379cb9a]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 820
+      },
+      {
+        "label": "_jit_return_scalar_kind",
+        "samples": 5,
+        "mapped": true,
+        "offset": 13
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 5,
+        "mapped": true,
+        "offset": 145
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 5,
+        "mapped": true,
+        "offset": 175
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 10
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 457
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 577
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 603
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 691
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 834
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 992
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1035
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1114
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1263
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1351
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 5
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 89
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 38
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 116
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 182
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 14
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 139
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 278
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 3729
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1
+      }
+    ]
+  },
+  "production_report": {
+    "binary": "/tmp/kujo-native-borrowed-read-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 600085974865.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "matmul-production-jit.json.case-4.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Matmul::Single",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'main' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'main':\n    0: LoadVar(\"args\")\n    1: Call(0)\n    2: DefineLocal(0)\n    3: Pop\n    4: LoadLocal(0)\n    5: LoadVar(\"len\")\n    6: Call(1)\n    7: LoadConst(0)\n    8: GreaterEqual\n    9: LoadConst(1)\n   10: LoadVar(\"assert\")\n   11: Call(2)\n   12: Pop\n   13: LoadConst(2)\n   14: IndexGetInPlace(0)\n   15: LoadVar(\"read_file\")\n   16: Call(1)\n   17: LoadVar(\"parse_json\")\n   18: Call(1)\n   19: DefineLocal(1)\n   20: Pop\n   21: LoadConst(3)\n   22: DefineLocal(2)\n   23: Pop\n   24: LoadLocal(0)\n   25: LoadVar(\"len\")\n   26: Call(1)\n   27: LoadConst(0)\n   28: GreaterThan\n   29: JumpIfFalse(36)\n   30: Pop\n   31: LoadConst(0)\n   32: IndexGetInPlace(0)\n   33: StoreLocal(2)\n   34: Pop\n   35: Jump(37)\n   36: Pop\n   37: LoadLocal(0)\n   38: LoadVar(\"len\")\n   39: Call(1)\n   40: LoadConst(4)\n   41: GreaterThan\n   42: JumpIfFalse(51)\n   43: Pop\n   44: LoadConst(5)\n   45: LoadConst(4)\n   46: IndexGetInPlace(0)\n   47: LoadConst(6)\n   48: Equal\n   49: And\n   50: Jump(53)\n   51: Pop\n   52: LoadConst(7)\n   53: DefineLocal(3)\n   54: Pop\n   55: LoadConst(2)\n   56: DefineLocal(4)\n   57: Pop\n   58: LoadConst(2)\n   59: DefineLocal(5)\n   60: Pop\n   61: LoadLocal(1)\n   62: LoadGlobal(\"__vm_for_iterable\")\n   63: Call(1)\n   64: StoreLocal(6)\n   65: Pop\n   66: LoadConst(2)\n   67: StoreLocal(7)\n   68: Pop\n   69: LoadLocal(6)\n   70: LoadLocal(7)\n   71: ForNext(460)\n   72: StoreLocal(8)\n   73: Pop\n   74: LoadConst(8)\n   75: IndexGetInPlace(8)\n   76: DefineLocal(9)\n   77: Pop\n   78: LoadLocal(2)\n   79: LoadConst(3)\n   80: NotEqual\n   81: JumpIfFalse(89)\n   82: Pop\n   83: LoadConst(5)\n   84: LoadLocal(9)\n   85: LoadLocal(2)\n   86: NotEqual\n   87: And\n   88: Jump(91)\n   89: Pop\n   90: LoadConst(7)\n   91: JumpIfFalse(94)\n   92: Pop\n   93: Jump(454)\n   94: Pop\n   95: LoadVar(\"registry\")\n   96: LoadLocal(9)\n   97: LoadVar(\"has_key\")\n   98: Call(2)\n   99: LoadConst(0)\n  100: NotEqual\n  101: JumpIfFalse(115)\n  102: Pop\n  103: LoadLocal(9)\n  104: LoadConst(9)\n  105: Add\n  106: LoadVar(\"print\")\n  107: Call(1)\n  108: Pop\n  109: LoadLocal(5)\n  110: LoadConst(0)\n  111: Add\n  112: StoreLocal(5)\n  113: Pop\n  114: Jump(454)\n  115: Pop\n  116: LoadVar(\"registry\")\n  117: LoadLocal(9)\n  118: IndexGet\n  119: DefineLocal(10)\n  120: Pop\n  121: LoadConst(2)\n  122: IndexGetInPlace(10)\n  123: DefineLocal(11)\n  124: Pop\n  125: LoadConst(0)\n  126: IndexGetInPlace(10)\n  127: DefineLocal(12)\n  128: Pop\n  129: LoadConst(4)\n  130: IndexGetInPlace(10)\n  131: DefineLocal(13)\n  132: Pop\n  133: LoadConst(10)\n  134: IndexGetInPlace(10)\n  135: DefineLocal(14)\n  136: Pop\n  137: BeginTry(437)\n  138: LoadConst(2)\n  139: DefineLocal(15)\n  140: Pop\n  141: LoadLocal(3)\n  142: JumpIfFalse(149)\n  143: Pop\n  144: LoadVar(\"time_ns\")\n  145: Call(0)\n  146: StoreLocal(15)\n  147: Pop\n  148: Jump(150)\n  149: Pop\n  150: LoadLocal(3)\n  151: LoadConst(11)\n  152: LoadLocal(15)\n  153: LoadVar(\"profile_checkpoint\")\n  154: Call(3)\n  155: Pop\n  156: LoadLocal(8)\n  157: LoadLocal(11)\n  158: Call(1)\n  159: DefineLocal(16)\n  160: Pop\n  161: LoadLocal(3)\n  162: LoadConst(12)\n  163: LoadLocal(15)\n  164: LoadVar(\"profile_checkpoint\")\n  165: Call(3)\n  166: Pop\n  167: LoadVar(\"reset_rng\")\n  168: Call(0)\n  169: Pop\n  170: LoadLocal(16)\n  171: LoadLocal(12)\n  172: ReleaseRebindLocal(16, 1)\n  173: Call(1)\n  174: StoreLocal(16)\n  175: Pop\n  176: LoadLocal(3)\n  177: LoadConst(13)\n  178: LoadLocal(15)\n  179: LoadVar(\"profile_checkpoint\")\n  180: Call(3)\n  181: Pop\n  182: LoadLocal(8)\n  183: LoadConst(14)\n  184: LoadConst(15)\n  185: IndexGetInPlace(8)\n  186: LoadConst(16)\n  187: Mul\n  188: LoadVar(\"to_int\")\n  189: Call(1)\n  190: LoadConst(0)\n  191: LoadVar(\"imax\")\n  192: Call(2)\n  193: LoadVar(\"get_default\")\n  194: Call(3)\n  195: DefineLocal(17)\n  196: Pop\n  197: LoadConst(2)\n  198: DefineLocal(18)\n  199: Pop\n  200: LoadLocal(13)\n  201: DefineLocal(19)\n  202: Pop\n  203: LoadLocal(10)\n  204: LoadVar(\"len\")\n  205: Call(1)\n  206: LoadConst(17)\n  207: GreaterThan\n  208: JumpIfFalse(215)\n  209: Pop\n  210: LoadConst(17)\n  211: IndexGetInPlace(10)\n  212: StoreLocal(19)\n  213: Pop\n  214: Jump(216)\n  215: Pop\n  216: LoadLocal(17)\n  217: LoadConst(18)\n  218: LoadVar(\"idiv\")\n  219: Call(2)\n  220: LoadConst(0)\n  221: LoadVar(\"imax\")\n  222: Call(2)\n  223: DefineLocal(20)\n  224: Pop\n  225: LoadLocal(18)\n  226: LoadLocal(17)\n  227: LessThan\n  228: JumpIfFalse(291)\n  229: Pop\n  230: LoadLocal(16)\n  231: LoadLocal(18)\n  232: LoadLocal(19)\n  233: TryAppendAssign(Local(16), 238)\n  234: ReleaseRebindLocal(16, 2)\n  235: Call(2)\n  236: StoreLocal(16)\n  237: Pop\n  238: LoadLocal(18)\n  239: LoadConst(0)\n  240: Add\n  241: StoreLocal(18)\n  242: Pop\n  243: LoadLocal(3)\n  244: JumpIfFalse(274)\n  245: Pop\n  246: LoadConst(5)\n  247: LoadLocal(18)\n  248: LoadConst(0)\n  249: Equal\n  250: JumpIfTrue(258)\n  251: Pop\n  252: LoadConst(7)\n  253: LoadLocal(18)\n  254: LoadLocal(17)\n  255: Equal\n  256: Or\n  257: Jump(260)\n  258: Pop\n  259: LoadConst(5)\n  260: JumpIfTrue(270)\n  261: Pop\n  262: LoadConst(7)\n  263: LoadLocal(18)\n  264: LoadLocal(20)\n  265: Mod\n  266: LoadConst(2)\n  267: Equal\n  268: Or\n  269: Jump(272)\n  270: Pop\n  271: LoadConst(5)\n  272: And\n  273: Jump(276)\n  274: Pop\n  275: LoadConst(7)\n  276: JumpIfFalse(289)\n  277: Pop\n  278: LoadConst(5)\n  279: LoadConst(19)\n  280: LoadLocal(18)\n  281: LoadVar(\"str\")\n  282: Call(1)\n  283: Add\n  284: LoadLocal(15)\n  285: LoadVar(\"profile_checkpoint\")\n  286: Call(3)\n  287: Pop\n  288: Jump(290)\n  289: Pop\n  290: JumpBack(225)\n  291: Pop\n  292: LoadLocal(3)\n  293: LoadConst(20)\n  294: LoadLocal(15)\n  295: LoadVar(\"profile_checkpoint\")\n  296: Call(3)\n  297: Pop\n  298: LoadVar(\"reset_rng\")\n  299: Call(0)\n  300: Pop\n  301: LoadConst(2)\n  302: StoreLocal(18)\n  303: Pop\n  304: LoadConst(15)\n  305: IndexGetInPlace(8)\n  306: LoadConst(18)\n  307: LoadVar(\"idiv\")\n  308: Call(2)\n  309: LoadConst(0)\n  310: LoadVar(\"imax\")\n  311: Call(2)\n  312: DefineLocal(21)\n  313: Pop\n  314: LoadLocal(18)\n  315: LoadConst(15)\n  316: IndexGetInPlace(8)\n  317: LessThan\n  318: JumpIfFalse(382)\n  319: Pop\n  320: LoadLocal(16)\n  321: LoadLocal(18)\n  322: LoadLocal(13)\n  323: TryAppendAssign(Local(16), 328)\n  324: ReleaseRebindLocal(16, 2)\n  325: Call(2)\n  326: StoreLocal(16)\n  327: Pop\n  328: LoadLocal(18)\n  329: LoadConst(0)\n  330: Add\n  331: StoreLocal(18)\n  332: Pop\n  333: LoadLocal(3)\n  334: JumpIfFalse(365)\n  335: Pop\n  336: LoadConst(5)\n  337: LoadLocal(18)\n  338: LoadConst(0)\n  339: Equal\n  340: JumpIfTrue(349)\n  341: Pop\n  342: LoadConst(7)\n  343: LoadLocal(18)\n  344: LoadConst(15)\n  345: IndexGetInPlace(8)\n  346: Equal\n  347: Or\n  348: Jump(351)\n  349: Pop\n  350: LoadConst(5)\n  351: JumpIfTrue(361)\n  352: Pop\n  353: LoadConst(7)\n  354: LoadLocal(18)\n  355: LoadLocal(21)\n  356: Mod\n  357: LoadConst(2)\n  358: Equal\n  359: Or\n  360: Jump(363)\n  361: Pop\n  362: LoadConst(5)\n  363: And\n  364: Jump(367)\n  365: Pop\n  366: LoadConst(7)\n  367: JumpIfFalse(380)\n  368: Pop\n  369: LoadConst(5)\n  370: LoadConst(21)\n  371: LoadLocal(18)\n  372: LoadVar(\"str\")\n  373: Call(1)\n  374: Add\n  375: LoadLocal(15)\n  376: LoadVar(\"profile_checkpoint\")\n  377: Call(3)\n  378: Pop\n  379: Jump(381)\n  380: Pop\n  381: JumpBack(314)\n  382: Pop\n  383: LoadLocal(16)\n  384: LoadLocal(14)\n  385: Call(1)\n  386: LoadVar(\"u32\")\n  387: Call(1)\n  388: DefineLocal(22)\n  389: Pop\n  390: LoadLocal(22)\n  391: LoadConst(22)\n  392: IndexGetInPlace(8)\n  393: Equal\n  394: JumpIfFalse(412)\n  395: Pop\n  396: LoadLocal(9)\n  397: LoadConst(23)\n  398: Add\n  399: LoadLocal(22)\n  400: LoadVar(\"str\")\n  401: Call(1)\n  402: Add\n  403: LoadVar(\"print\")\n  404: Call(1)\n  405: Pop\n  406: LoadLocal(4)\n  407: LoadConst(0)\n  408: Add\n  409: StoreLocal(4)\n  410: Pop\n  411: Jump(435)\n  412: Pop\n  413: LoadLocal(9)\n  414: LoadConst(24)\n  415: Add\n  416: LoadLocal(22)\n  417: LoadVar(\"str\")\n  418: Call(1)\n  419: Add\n  420: LoadConst(25)\n  421: Add\n  422: LoadConst(22)\n  423: IndexGetInPlace(8)\n  424: LoadVar(\"str\")\n  425: Call(1)\n  426: Add\n  427: LoadVar(\"print\")\n  428: Call(1)\n  429: Pop\n  430: LoadLocal(5)\n  431: LoadConst(0)\n  432: Add\n  433: StoreLocal(5)\n  434: Pop\n  435: EndTry\n  436: Jump(454)\n  437: BeginCatch(\"err\")\n  438: LoadLocal(9)\n  439: LoadConst(26)\n  440: Add\n  441: LoadVar(\"err\")\n  442: LoadVar(\"str\")\n  443: Call(1)\n  444: Add\n  445: LoadVar(\"print\")\n  446: Call(1)\n  447: Pop\n  448: LoadLocal(5)\n  449: LoadConst(0)\n  450: Add\n  451: StoreLocal(5)\n  452: Pop\n  453: EndCatch\n  454: LoadLocal(7)\n  455: LoadConst(0)\n  456: Add\n  457: StoreLocal(7)\n  458: Pop\n  459: JumpBack(69)\n  460: LoadConst(27)\n  461: LoadLocal(4)\n  462: LoadLocal(5)\n  463: Add\n  464: LoadVar(\"str\")\n  465: Call(1)\n  466: Add\n  467: LoadConst(28)\n  468: Add\n  469: LoadLocal(4)\n  470: LoadVar(\"str\")\n  471: Call(1)\n  472: Add\n  473: LoadConst(28)\n  474: Add\n  475: LoadLocal(5)\n  476: LoadVar(\"str\")\n  477: Call(1)\n  478: Add\n  479: LoadVar(\"print\")\n  480: Call(1)\n  481: Pop\n  482: LoadLocal(4)\n  483: LoadLocal(5)\n  484: Add\n  485: LoadConst(2)\n  486: GreaterThan\n  487: LoadConst(29)\n  488: LoadVar(\"assert\")\n  489: Call(2)\n  490: Pop\n  491: LoadLocal(5)\n  492: LoadConst(2)\n  493: LoadVar(\"assert_equal\")\n  494: Call(2)\n  495: Pop\n  496: ReturnNone\nJIT: Constants for 'main':\n    0: Int(1)\n    1: String(\"usage: port.kujo CONFIG [exact benchmark name]\")\n    2: Int(0)\n    3: String(\"\")\n    4: Int(2)\n    5: Bool(true)\n    6: String(\"--profile\")\n    7: Bool(false)\n    8: String(\"name\")\n    9: String(\": MISSING\")\n   10: Int(3)\n   11: String(\"create-start\")\n   12: String(\"create-done\")\n   13: String(\"prepare-done\")\n   14: String(\"warmup_iterations\")\n   15: String(\"iterations\")\n   16: Float(0.2)\n   17: Int(4)\n   18: Int(10)\n   19: String(\"warmup-\")\n   20: String(\"warmup-done\")\n   21: String(\"run-\")\n   22: String(\"checksum\")\n   23: String(\": OK \")\n   24: String(\": FAIL actual=\")\n   25: String(\" expected=\")\n   26: String(\": ERROR \")\n   27: String(\"Summary: \")\n   28: String(\", \")\n   29: String(\"no benchmark selected\")\nJIT: Failed to compile function 'main': Function 'main' contains unsupported opcodes\nJIT: Function 'matgen' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'matgen':\n    0: LoadConst(0)\n    1: LoadLocal(0)\n    2: Div\n    3: LoadLocal(0)\n    4: Div\n    5: DefineLocal(1)\n    6: Pop\n    7: MakeArray(0)\n    8: DefineLocal(2)\n    9: Pop\n   10: LoadConst(1)\n   11: DefineLocal(3)\n   12: Pop\n   13: LoadLocal(3)\n   14: LoadLocal(0)\n   15: LessThan\n   16: JumpIfFalse(66)\n   17: Pop\n   18: MakeArray(0)\n   19: DefineLocal(4)\n   20: Pop\n   21: LoadConst(1)\n   22: DefineLocal(5)\n   23: Pop\n   24: LoadLocal(5)\n   25: LoadLocal(0)\n   26: LessThan\n   27: JumpIfFalse(51)\n   28: Pop\n   29: LoadLocal(4)\n   30: LoadLocal(1)\n   31: LoadLocal(3)\n   32: LoadLocal(5)\n   33: Sub\n   34: Mul\n   35: LoadLocal(3)\n   36: LoadLocal(5)\n   37: Add\n   38: Mul\n   39: LoadVar(\"push\")\n   40: TryAppendAssign(Local(4), 45)\n   41: ReleaseRebindLocal(4, 2)\n   42: Call(2)\n   43: StoreLocal(4)\n   44: Pop\n   45: LoadLocal(5)\n   46: LoadConst(2)\n   47: Add\n   48: StoreLocal(5)\n   49: Pop\n   50: JumpBack(24)\n   51: Pop\n   52: LoadLocal(2)\n   53: LoadLocal(4)\n   54: LoadVar(\"push\")\n   55: TryAppendAssign(Local(2), 60)\n   56: ReleaseRebindLocal(2, 2)\n   57: Call(2)\n   58: StoreLocal(2)\n   59: Pop\n   60: LoadLocal(3)\n   61: LoadConst(2)\n   62: Add\n   63: StoreLocal(3)\n   64: Pop\n   65: JumpBack(13)\n   66: Pop\n   67: LoadLocal(2)\n   68: Return\nJIT: Constants for 'matgen':\n    0: Float(1.0)\n    1: Int(0)\n    2: Int(1)\nJIT: Created loop header block at PC 24 with 0 params\nJIT: Created loop header block at PC 13 with 0 params\nJIT: Function body extent: 0..69, blocks created: [60, 13, 17, 51, 28, 24, 41, 56, 66, 45]\nJIT: Allocated 4 local slots, optimization enabled: true\nJIT: Initialized parameter 'n' in SSA variable var6 (fast=false)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 2\nJIT: PC 2 OK, stack depth now: 1\nJIT: PC 3 OK, stack depth now: 2\nJIT: PC 4 OK, stack depth now: 1\nJIT: PC 5 OK, stack depth now: 1\nJIT: PC 6 OK, stack depth now: 0\nJIT: PC 7 OK, stack depth now: 1\nJIT: PC 8 OK, stack depth now: 1\nJIT: PC 9 OK, stack depth now: 0\nJIT: PC 10 OK, stack depth now: 1\nJIT: PC 11 OK, stack depth now: 1\nJIT: PC 12 OK, stack depth now: 0\nJIT: PC 13 OK, stack depth now: 1\nJIT: PC 14 OK, stack depth now: 2\nJIT: PC 15 OK, stack depth now: 1\nJIT: PC 16 OK, stack depth now: 1\nJIT: PC 17 OK, stack depth now: 0\nJIT: PC 18 OK, stack depth now: 1\nJIT: PC 19 OK, stack depth now: 1\nJIT: PC 20 OK, stack depth now: 0\nJIT: PC 21 OK, stack depth now: 1\nJIT: PC 22 OK, stack depth now: 1\nJIT: PC 23 OK, stack depth now: 0\nJIT: PC 24 OK, stack depth now: 1\nJIT: PC 25 OK, stack depth now: 2\nJIT: PC 26 OK, stack depth now: 1\nJIT: PC 27 OK, stack depth now: 1\nJIT: PC 28 OK, stack depth now: 0\nJIT: PC 29 OK, stack depth now: 1\nJIT: PC 30 OK, stack depth now: 2\nJIT: PC 31 OK, stack depth now: 3\nJIT: PC 32 OK, stack depth now: 4\nJIT: PC 33 OK, stack depth now: 3\nJIT: PC 34 OK, stack depth now: 2\nJIT: PC 35 OK, stack depth now: 3\nJIT: PC 36 OK, stack depth now: 4\nJIT: PC 37 OK, stack depth now: 3\nJIT: PC 38 OK, stack depth now: 2\nJIT: PC 39 OK, stack depth now: 3\nJIT: PC 40 OK, stack depth now: 0\nJIT: PC 41 OK, stack depth now: 3\nJIT: PC 42 OK, stack depth now: 1\nJIT: PC 43 OK, stack depth now: 1\nJIT: PC 44 OK, stack depth now: 0\nJIT: PC 45 OK, stack depth now: 1\nJIT: PC 46 OK, stack depth now: 2\nJIT: PC 47 OK, stack depth now: 1\nJIT: PC 48 OK, stack depth now: 1\nJIT: PC 49 OK, stack depth now: 0\nJIT: PC 50 OK, stack depth now: 0\nJIT: PC 51 OK, stack depth now: 0\nJIT: PC 52 OK, stack depth now: 1\nJIT: PC 53 OK, stack depth now: 2\nJIT: PC 54 OK, stack depth now: 3\nJIT: PC 55 OK, stack depth now: 0\nJIT: PC 56 OK, stack depth now: 3\nJIT: PC 57 OK, stack depth now: 1\nJIT: PC 58 OK, stack depth now: 1\nJIT: PC 59 OK, stack depth now: 0\nJIT: PC 60 OK, stack depth now: 1\nJIT: PC 61 OK, stack depth now: 2\nJIT: PC 62 OK, stack depth now: 1\nJIT: PC 63 OK, stack depth now: 1\nJIT: PC 64 OK, stack depth now: 0\nJIT: PC 65 OK, stack depth now: 0\nJIT: PC 66 OK, stack depth now: 0\nJIT: PC 67 OK, stack depth now: 1\nJIT: PC 68 OK, stack depth now: 0\nJIT: Late-sealing function block at PC 13\nJIT: Late-sealing function block at PC 24\nJIT: Checking self-recursion for 'matgen'\nJIT: No self-recursion found in 'matgen'\nJIT: Successfully compiled function 'matgen'\nJIT: Retrying current call to 'matgen' with native code\nJIT: Function 'mat_run' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'mat_run':\n    0: LoadLocal(0)\n    1: ReleaseDeadLocal(0)\n    2: DefineLocal(2)\n    3: Pop\n    4: LoadConst(0)\n    5: IndexGetInPlace(2)\n    6: LoadConst(1)\n    7: IndexGet\n    8: DefineLocal(3)\n    9: Pop\n   10: MakeArray(0)\n   11: DefineLocal(4)\n   12: Pop\n   13: LoadConst(2)\n   14: DefineLocal(5)\n   15: Pop\n   16: LoadLocal(5)\n   17: LoadLocal(3)\n   18: LessThan\n   19: JumpIfFalse(38)\n   20: Pop\n   21: LoadLocal(4)\n   22: LoadLocal(3)\n   23: LoadConst(3)\n   24: LoadVar(\"vector\")\n   25: Call(2)\n   26: LoadVar(\"push\")\n   27: TryAppendAssign(Local(4), 32)\n   28: ReleaseRebindLocal(4, 2)\n   29: Call(2)\n   30: StoreLocal(4)\n   31: Pop\n   32: LoadLocal(5)\n   33: LoadConst(4)\n   34: Add\n   35: StoreLocal(5)\n   36: Pop\n   37: JumpBack(16)\n   38: Pop\n   39: LoadConst(2)\n   40: StoreLocal(5)\n   41: Pop\n   42: LoadLocal(5)\n   43: LoadLocal(3)\n   44: LessThan\n   45: JumpIfFalse(78)\n   46: Pop\n   47: LoadConst(2)\n   48: DefineLocal(6)\n   49: Pop\n   50: LoadLocal(6)\n   51: LoadLocal(3)\n   52: LessThan\n   53: JumpIfFalse(71)\n   54: Pop\n   55: LoadConst(5)\n   56: IndexGetInPlace(2)\n   57: LoadLocal(5)\n   58: IndexGet\n   59: LoadLocal(6)\n   60: IndexGet\n   61: LoadLocal(6)\n   62: LoadLocal(5)\n   63: UpdateBindingPath(Local(4), [None, None])\n   64: Pop\n   65: LoadLocal(6)\n   66: LoadConst(4)\n   67: Add\n   68: StoreLocal(6)\n   69: Pop\n   70: JumpBack(50)\n   71: Pop\n   72: LoadLocal(5)\n   73: LoadConst(4)\n   74: Add\n   75: StoreLocal(5)\n   76: Pop\n   77: JumpBack(42)\n   78: Pop\n   79: MakeArray(0)\n   80: DefineLocal(7)\n   81: Pop\n   82: LoadConst(0)\n   83: IndexGetInPlace(2)\n   84: LoadConst(6)\n   85: IndexGet\n   86: DefineLocal(8)\n   87: Pop\n   88: LoadLocal(8)\n   89: LoadConst(7)\n   90: Equal\n   91: JumpIfFalse(104)\n   92: Pop\n   93: LoadConst(8)\n   94: IndexGetInPlace(2)\n   95: LoadLocal(4)\n   96: LoadConst(2)\n   97: LoadLocal(3)\n   98: MakeArray(4)\n   99: LoadVar(\"mat_rows\")\n  100: Call(1)\n  101: StoreLocal(7)\n  102: Pop\n  103: Jump(232)\n  104: Pop\n  105: LoadConst(9)\n  106: DefineLocal(9)\n  107: Pop\n  108: LoadLocal(8)\n  109: LoadConst(10)\n  110: Equal\n  111: JumpIfFalse(117)\n  112: Pop\n  113: LoadConst(11)\n  114: StoreLocal(9)\n  115: Pop\n  116: Jump(118)\n  117: Pop\n  118: LoadLocal(8)\n  119: LoadConst(12)\n  120: Equal\n  121: JumpIfFalse(127)\n  122: Pop\n  123: LoadConst(13)\n  124: StoreLocal(9)\n  125: Pop\n  126: Jump(128)\n  127: Pop\n  128: LoadLocal(3)\n  129: LoadLocal(9)\n  130: Add\n  131: LoadConst(4)\n  132: Sub\n  133: LoadLocal(9)\n  134: LoadVar(\"idiv\")\n  135: Call(2)\n  136: DefineLocal(10)\n  137: Pop\n  138: MakeArray(0)\n  139: DefineLocal(11)\n  140: Pop\n  141: LoadConst(2)\n  142: StoreLocal(5)\n  143: Pop\n  144: LoadLocal(5)\n  145: LoadLocal(9)\n  146: LessThan\n  147: JumpIfFalse(177)\n  148: Pop\n  149: LoadLocal(11)\n  150: LoadConst(8)\n  151: IndexGetInPlace(2)\n  152: LoadLocal(4)\n  153: LoadLocal(5)\n  154: LoadLocal(10)\n  155: Mul\n  156: LoadLocal(5)\n  157: LoadConst(4)\n  158: Add\n  159: LoadLocal(10)\n  160: Mul\n  161: LoadLocal(3)\n  162: LoadVar(\"imin\")\n  163: Call(2)\n  164: MakeArray(4)\n  165: LoadVar(\"push\")\n  166: TryAppendAssign(Local(11), 171)\n  167: ReleaseRebindLocal(11, 2)\n  168: Call(2)\n  169: StoreLocal(11)\n  170: Pop\n  171: LoadLocal(5)\n  172: LoadConst(4)\n  173: Add\n  174: StoreLocal(5)\n  175: Pop\n  176: JumpBack(144)\n  177: Pop\n  178: LoadLocal(11)\n  179: LoadVar(\"mat_worker\")\n  180: LoadLocal(9)\n  181: LoadVar(\"parallel_map\")\n  182: Call(3)\n  183: Await\n  184: DefineLocal(12)\n  185: Pop\n  186: LoadLocal(12)\n  187: LoadGlobal(\"__vm_for_iterable\")\n  188: Call(1)\n  189: StoreLocal(13)\n  190: Pop\n  191: LoadConst(2)\n  192: StoreLocal(14)\n  193: Pop\n  194: LoadLocal(13)\n  195: LoadLocal(14)\n  196: ForNext(232)\n  197: StoreLocal(15)\n  198: Pop\n  199: LoadLocal(15)\n  200: LoadGlobal(\"__vm_for_iterable\")\n  201: Call(1)\n  202: StoreLocal(16)\n  203: Pop\n  204: LoadConst(2)\n  205: StoreLocal(17)\n  206: Pop\n  207: LoadLocal(16)\n  208: LoadLocal(17)\n  209: ForNext(226)\n  210: StoreLocal(18)\n  211: Pop\n  212: LoadLocal(7)\n  213: LoadLocal(18)\n  214: LoadVar(\"push\")\n  215: TryAppendAssign(Local(7), 220)\n  216: ReleaseRebindLocal(7, 2)\n  217: Call(2)\n  218: StoreLocal(7)\n  219: Pop\n  220: LoadLocal(17)\n  221: LoadConst(4)\n  222: Add\n  223: StoreLocal(17)\n  224: Pop\n  225: JumpBack(207)\n  226: LoadLocal(14)\n  227: LoadConst(4)\n  228: Add\n  229: StoreLocal(14)\n  230: Pop\n  231: JumpBack(194)\n  232: LoadLocal(3)\n  233: LoadConst(14)\n  234: LoadVar(\"idiv\")\n  235: Call(2)\n  236: DefineLocal(19)\n  237: Pop\n  238: LoadConst(15)\n  239: IndexGetInPlace(2)\n  240: LoadLocal(19)\n  241: IndexGetInPlace(7)\n  242: LoadLocal(19)\n  243: IndexGet\n  244: LoadVar(\"checksum_float\")\n  245: Call(1)\n  246: Add\n  247: LoadVar(\"u32\")\n  248: Call(1)\n  249: LoadConst(15)\n  250: IndexSetInPlace(2)\n  251: Pop\n  252: LoadLocal(2)\n  253: Return\nJIT: Constants for 'mat_run':\n    0: String(\"cfg\")\n    1: String(\"n\")\n    2: Int(0)\n    3: Float(0.0)\n    4: Int(1)\n    5: String(\"b\")\n    6: String(\"name\")\n    7: String(\"Matmul::Single\")\n    8: String(\"a\")\n    9: Int(4)\n   10: String(\"Matmul::T8\")\n   11: Int(8)\n   12: String(\"Matmul::T16\")\n   13: Int(16)\n   14: Int(2)\n   15: String(\"result\")\nJIT: Failed to compile function 'mat_run': Function 'mat_run' contains unsupported opcodes\nJIT: Function 'vector' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'vector':\n    0: MakeArray(0)\n    1: DefineLocal(2)\n    2: Pop\n    3: LoadConst(0)\n    4: DefineLocal(3)\n    5: Pop\n    6: LoadLocal(3)\n    7: LoadLocal(0)\n    8: LessThan\n    9: JumpIfFalse(25)\n   10: Pop\n   11: LoadLocal(2)\n   12: LoadLocal(1)\n   13: LoadVar(\"push\")\n   14: TryAppendAssign(Local(2), 19)\n   15: ReleaseRebindLocal(2, 2)\n   16: Call(2)\n   17: StoreLocal(2)\n   18: Pop\n   19: LoadLocal(3)\n   20: LoadConst(1)\n   21: Add\n   22: StoreLocal(3)\n   23: Pop\n   24: JumpBack(6)\n   25: Pop\n   26: LoadLocal(2)\n   27: Return\nJIT: Constants for 'vector':\n    0: Int(0)\n    1: Int(1)\nJIT: Created loop header block at PC 6 with 0 params\nJIT: Function body extent: 0..28, blocks created: [6, 25, 10, 19, 15]\nJIT: Allocated 3 local slots, optimization enabled: true\nJIT: Initialized parameter 'n' in SSA variable var2 (fast=false)\nJIT: Initialized parameter 'value' in SSA variable var4 (fast=false)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 1\nJIT: PC 2 OK, stack depth now: 0\nJIT: PC 3 OK, stack depth now: 1\nJIT: PC 4 OK, stack depth now: 1\nJIT: PC 5 OK, stack depth now: 0\nJIT: PC 6 OK, stack depth now: 1\nJIT: PC 7 OK, stack depth now: 2\nJIT: PC 8 OK, stack depth now: 1\nJIT: PC 9 OK, stack depth now: 1\nJIT: PC 10 OK, stack depth now: 0\nJIT: PC 11 OK, stack depth now: 1\nJIT: PC 12 OK, stack depth now: 2\nJIT: PC 13 OK, stack depth now: 3\nJIT: PC 14 OK, stack depth now: 0\nJIT: PC 15 OK, stack depth now: 3\nJIT: PC 16 OK, stack depth now: 1\nJIT: PC 17 OK, stack depth now: 1\nJIT: PC 18 OK, stack depth now: 0\nJIT: PC 19 OK, stack depth now: 1\nJIT: PC 20 OK, stack depth now: 2\nJIT: PC 21 OK, stack depth now: 1\nJIT: PC 22 OK, stack depth now: 1\nJIT: PC 23 OK, stack depth now: 0\nJIT: PC 24 OK, stack depth now: 0\nJIT: PC 25 OK, stack depth now: 0\nJIT: PC 26 OK, stack depth now: 1\nJIT: PC 27 OK, stack depth now: 0\nJIT: Late-sealing function block at PC 6\nJIT: Successfully compiled function 'vector'\nJIT: Retrying current call to 'vector' with native code\nJIT: Created loop header block at PC 16 with 0 params\nJIT: Created loop header block at PC 50 with 0 params\nJIT: Created loop header block at PC 42 with 0 params\nJIT: Created loop header block at PC 144 with 0 params\nJIT: Created loop header block at PC 207 with 0 params\nJIT: Created loop header block at PC 194 with 0 params\nJIT: Function body extent: 0..254, blocks created: [232, 127, 28, 50, 210, 46, 54, 220, 78, 32, 38, 104, 71, 112, 207, 92, 167, 171, 128, 16, 42, 117, 177, 226, 216, 148, 194, 118, 122, 144, 197, 20]\nJIT: Allocated 20 local slots, optimization enabled: true\nJIT: Translating PC 16 LoadLocal(5) (stack depth 0)\nJIT: Translating PC 17 LoadLocal(3) (stack depth 1)\nJIT: Translating PC 18 LessThan (stack depth 2)\nJIT: Translating PC 19 JumpIfFalse(38) (stack depth 1)\nJIT: Translating PC 20 Pop (stack depth 1)\nJIT: Translating PC 21 LoadLocal(4) (stack depth 0)\nJIT: Translating PC 22 LoadLocal(3) (stack depth 1)\nJIT: Translating PC 23 LoadConst(3) (stack depth 2)\nJIT: Translating PC 24 LoadVar(\"vector\") (stack depth 3)\nJIT: Translating PC 25 Call(2) (stack depth 4)\nJIT: Translating PC 28 ReleaseRebindLocal(4, 2) (stack depth 4)\nJIT: Translating PC 29 Call(2) (stack depth 4)\nJIT: Translating PC 32 LoadLocal(5) (stack depth 4)\nJIT: Translating PC 33 LoadConst(4) (stack depth 5)\nJIT: Translating PC 34 Add (stack depth 6)\nJIT: Translating PC 35 StoreLocal(5) (stack depth 5)\nJIT: Translating PC 36 Pop (stack depth 5)\nJIT: Translating PC 37 JumpBack(16) (stack depth 4)\nJIT: Unexpected compilation failure at offset 16: Translation failed at PC 37: Inconsistent JIT stack depth at PC 16: 4, expected 0\nJIT: Created loop header block at PC 50 with 0 params\nJIT: Created loop header block at PC 42 with 0 params\nJIT: Created loop header block at PC 144 with 0 params\nJIT: Created loop header block at PC 207 with 0 params\nJIT: Created loop header block at PC 194 with 0 params\nJIT: Function body extent: 0..254, blocks created: [38, 167, 226, 117, 122, 28, 194, 220, 16, 128, 46, 20, 148, 92, 71, 144, 177, 232, 32, 210, 104, 78, 118, 127, 42, 171, 216, 112, 50, 197, 54, 207]\nJIT: Allocated 20 local slots, optimization enabled: true\nJIT: Translating PC 50 LoadLocal(6) (stack depth 0)\nJIT: Translating PC 51 LoadLocal(3) (stack depth 1)\nJIT: Translating PC 52 LessThan (stack depth 2)\nJIT: Translating PC 53 JumpIfFalse(71) (stack depth 1)\nJIT: Translating PC 54 Pop (stack depth 1)\nJIT: Translating PC 55 LoadConst(5) (stack depth 0)\nJIT: Translating PC 56 IndexGetInPlace(2) (stack depth 1)\nJIT: Translating PC 57 LoadLocal(5) (stack depth 1)\nJIT: Translating PC 58 IndexGet (stack depth 2)\nJIT: Translating PC 59 LoadLocal(6) (stack depth 1)\nJIT: Translating PC 60 IndexGet (stack depth 2)\nJIT: Translating PC 61 LoadLocal(6) (stack depth 1)\nJIT: Translating PC 62 LoadLocal(5) (stack depth 2)\nJIT: Translating PC 63 UpdateBindingPath(Local(4), [None, None]) (stack depth 3)\nJIT: Translating PC 64 Pop (stack depth 1)\nJIT: Translating PC 65 LoadLocal(6) (stack depth 0)\nJIT: Translating PC 66 LoadConst(4) (stack depth 1)\nJIT: Translating PC 67 Add (stack depth 2)\nJIT: Translating PC 68 StoreLocal(6) (stack depth 1)\nJIT: Translating PC 69 Pop (stack depth 1)\nJIT: Translating PC 70 JumpBack(50) (stack depth 0)\nJIT: Translating PC 71 Pop (stack depth 1)\nJIT: Late-sealing block at PC 38\nJIT: Late-sealing block at PC 167\nJIT: Late-sealing block at PC 226\nJIT: Late-sealing block at PC 117\nJIT: Late-sealing block at PC 122\nJIT: Late-sealing block at PC 28\nJIT: Late-sealing block at PC 194\nJIT: Late-sealing block at PC 220\nJIT: Late-sealing block at PC 16\nJIT: Late-sealing block at PC 128\nJIT: Late-sealing block at PC 46\nJIT: Late-sealing block at PC 20\nJIT: Late-sealing block at PC 148\nJIT: Late-sealing block at PC 92\nJIT: Late-sealing block at PC 144\nJIT: Late-sealing block at PC 177\nJIT: Late-sealing block at PC 232\nJIT: Late-sealing block at PC 32\nJIT: Late-sealing block at PC 210\nJIT: Late-sealing block at PC 104\nJIT: Late-sealing block at PC 78\nJIT: Late-sealing block at PC 118\nJIT: Late-sealing block at PC 127\nJIT: Late-sealing block at PC 42\nJIT: Late-sealing block at PC 171\nJIT: Late-sealing block at PC 216\nJIT: Late-sealing block at PC 112\nJIT: Late-sealing block at PC 50\nJIT: Late-sealing block at PC 197\nJIT: Late-sealing block at PC 207\nJIT: Compiled loop (50..=70)\nJIT: Successfully compiled hot loop starting at offset 50 - EXECUTING NOW!\nJIT: Executing compiled loop (50..=70)\nJIT: Execution completed successfully!\nJIT: Created loop header block at PC 50 with 0 params\nJIT: Created loop header block at PC 42 with 0 params\nJIT: Created loop header block at PC 144 with 0 params\nJIT: Created loop header block at PC 207 with 0 params\nJIT: Created loop header block at PC 194 with 0 params\nJIT: Function body extent: 0..254, blocks created: [226, 148, 32, 232, 78, 104, 54, 50, 122, 127, 220, 171, 210, 194, 207, 128, 216, 118, 16, 46, 20, 167, 177, 42, 144, 112, 71, 92, 38, 28, 117, 197]\nJIT: Allocated 20 local slots, optimization enabled: true\nJIT: Translating PC 42 LoadLocal(5) (stack depth 0)\nJIT: Translating PC 43 LoadLocal(3) (stack depth 1)\nJIT: Translating PC 44 LessThan (stack depth 2)\nJIT: Translating PC 45 JumpIfFalse(78) (stack depth 1)\nJIT: Translating PC 46 Pop (stack depth 1)\nJIT: Translating PC 47 LoadConst(2) (stack depth 0)\nJIT: Translating PC 48 DefineLocal(6) (stack depth 1)\nJIT: Translating PC 49 Pop (stack depth 1)\nJIT: Translating PC 50 LoadLocal(6) (stack depth 0)\nJIT: Translating PC 51 LoadLocal(3) (stack depth 1)\nJIT: Translating PC 52 LessThan (stack depth 2)\nJIT: Translating PC 53 JumpIfFalse(71) (stack depth 1)\nJIT: Translating PC 54 Pop (stack depth 1)\nJIT: Translating PC 55 LoadConst(5) (stack depth 0)\nJIT: Translating PC 56 IndexGetInPlace(2) (stack depth 1)\nJIT: Translating PC 57 LoadLocal(5) (stack depth 1)\nJIT: Translating PC 58 IndexGet (stack depth 2)\nJIT: Translating PC 59 LoadLocal(6) (stack depth 1)\nJIT: Translating PC 60 IndexGet (stack depth 2)\nJIT: Translating PC 61 LoadLocal(6) (stack depth 1)\nJIT: Translating PC 62 LoadLocal(5) (stack depth 2)\nJIT: Translating PC 63 UpdateBindingPath(Local(4), [None, None]) (stack depth 3)\nJIT: Translating PC 64 Pop (stack depth 1)\nJIT: Translating PC 65 LoadLocal(6) (stack depth 0)\nJIT: Translating PC 66 LoadConst(4) (stack depth 1)\nJIT: Translating PC 67 Add (stack depth 2)\nJIT: Translating PC 68 StoreLocal(6) (stack depth 1)\nJIT: Translating PC 69 Pop (stack depth 1)\nJIT: Translating PC 70 JumpBack(50) (stack depth 0)\nJIT: Translating PC 71 Pop (stack depth 1)\nJIT: Translating PC 72 LoadLocal(5) (stack depth 0)\nJIT: Translating PC 73 LoadConst(4) (stack depth 1)\nJIT: Translating PC 74 Add (stack depth 2)\nJIT: Translating PC 75 StoreLocal(5) (stack depth 1)\nJIT: Translating PC 76 Pop (stack depth 1)\nJIT: Translating PC 77 JumpBack(42) (stack depth 0)\nJIT: Translating PC 78 Pop (stack depth 1)\nJIT: Late-sealing block at PC 226\nJIT: Late-sealing block at PC 148\nJIT: Late-sealing block at PC 32\nJIT: Late-sealing block at PC 232\nJIT: Late-sealing block at PC 104\nJIT: Late-sealing block at PC 50\nJIT: Late-sealing block at PC 122\nJIT: Late-sealing block at PC 127\nJIT: Late-sealing block at PC 220\nJIT: Late-sealing block at PC 171\nJIT: Late-sealing block at PC 210\nJIT: Late-sealing block at PC 194\nJIT: Late-sealing block at PC 207\nJIT: Late-sealing block at PC 128\nJIT: Late-sealing block at PC 216\nJIT: Late-sealing block at PC 118\nJIT: Late-sealing block at PC 16\nJIT: Late-sealing block at PC 20\nJIT: Late-sealing block at PC 167\nJIT: Late-sealing block at PC 177\nJIT: Late-sealing block at PC 42\nJIT: Late-sealing block at PC 144\nJIT: Late-sealing block at PC 112\nJIT: Late-sealing block at PC 92\nJIT: Late-sealing block at PC 38\nJIT: Late-sealing block at PC 28\nJIT: Late-sealing block at PC 117\nJIT: Late-sealing block at PC 197\nJIT: Compiled loop (42..=77)\nJIT: Successfully compiled hot loop starting at offset 42 - EXECUTING NOW!\nJIT: Executing compiled loop (42..=77)\nJIT: Execution completed successfully!\nJIT: Function 'mat_rows' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'mat_rows':\n    0: LoadConst(0)\n    1: IndexGetInPlace(0)\n    2: DefineLocal(1)\n    3: Pop\n    4: LoadConst(1)\n    5: IndexGetInPlace(0)\n    6: DefineLocal(2)\n    7: Pop\n    8: LoadLocal(1)\n    9: LoadVar(\"len\")\n   10: Call(1)\n   11: DefineLocal(3)\n   12: Pop\n   13: MakeArray(0)\n   14: DefineLocal(4)\n   15: Pop\n   16: LoadConst(2)\n   17: IndexGetInPlace(0)\n   18: DefineLocal(5)\n   19: Pop\n   20: LoadLocal(5)\n   21: LoadConst(3)\n   22: IndexGetInPlace(0)\n   23: LessThan\n   24: JumpIfFalse(100)\n   25: Pop\n   26: LoadLocal(5)\n   27: IndexGetInPlace(1)\n   28: DefineLocal(6)\n   29: Pop\n   30: LoadLocal(3)\n   31: LoadConst(4)\n   32: LoadVar(\"vector\")\n   33: Call(2)\n   34: DefineLocal(7)\n   35: Pop\n   36: LoadConst(0)\n   37: DefineLocal(8)\n   38: Pop\n   39: LoadLocal(8)\n   40: LoadLocal(3)\n   41: LessThan\n   42: JumpIfFalse(85)\n   43: Pop\n   44: LoadLocal(8)\n   45: IndexGetInPlace(2)\n   46: DefineLocal(9)\n   47: Pop\n   48: LoadConst(4)\n   49: DefineLocal(10)\n   50: Pop\n   51: LoadConst(0)\n   52: DefineLocal(11)\n   53: Pop\n   54: LoadLocal(11)\n   55: LoadLocal(3)\n   56: LessThan\n   57: JumpIfFalse(74)\n   58: Pop\n   59: LoadLocal(10)\n   60: LoadLocal(11)\n   61: IndexGetInPlace(6)\n   62: LoadLocal(11)\n   63: IndexGetInPlace(9)\n   64: Mul\n   65: Add\n   66: StoreLocal(10)\n   67: Pop\n   68: LoadLocal(11)\n   69: LoadConst(1)\n   70: Add\n   71: StoreLocal(11)\n   72: Pop\n   73: JumpBack(54)\n   74: Pop\n   75: LoadLocal(10)\n   76: LoadLocal(8)\n   77: IndexSetInPlace(7)\n   78: Pop\n   79: LoadLocal(8)\n   80: LoadConst(1)\n   81: Add\n   82: StoreLocal(8)\n   83: Pop\n   84: JumpBack(39)\n   85: Pop\n   86: LoadLocal(4)\n   87: LoadLocal(7)\n   88: LoadVar(\"push\")\n   89: TryAppendAssign(Local(4), 94)\n   90: ReleaseRebindLocal(4, 2)\n   91: Call(2)\n   92: StoreLocal(4)\n   93: Pop\n   94: LoadLocal(5)\n   95: LoadConst(1)\n   96: Add\n   97: StoreLocal(5)\n   98: Pop\n   99: JumpBack(20)\n  100: Pop\n  101: LoadLocal(4)\n  102: Return\nJIT: Constants for 'mat_rows':\n    0: Int(0)\n    1: Int(1)\n    2: Int(2)\n    3: Int(3)\n    4: Float(0.0)\nJIT: Created loop header block at PC 54 with 0 params\nJIT: Created loop header block at PC 39 with 0 params\nJIT: Created loop header block at PC 20 with 0 params\nJIT: Function body extent: 0..103, blocks created: [43, 85, 25, 74, 39, 94, 90, 54, 58, 100, 20]\nJIT: Allocated 11 local slots, optimization enabled: true\nJIT: Initialized parameter 'job' in SSA variable var8 (fast=false)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 1\nJIT: PC 2 OK, stack depth now: 1\nJIT: PC 3 OK, stack depth now: 0\nJIT: PC 4 OK, stack depth now: 1\nJIT: PC 5 OK, stack depth now: 1\nJIT: PC 6 OK, stack depth now: 1\nJIT: PC 7 OK, stack depth now: 0\nJIT: PC 8 OK, stack depth now: 1\nJIT: PC 9 OK, stack depth now: 2\nJIT: PC 10 OK, stack depth now: 1\nJIT: PC 11 OK, stack depth now: 1\nJIT: PC 12 OK, stack depth now: 0\nJIT: PC 13 OK, stack depth now: 1\nJIT: PC 14 OK, stack depth now: 1\nJIT: PC 15 OK, stack depth now: 0\nJIT: PC 16 OK, stack depth now: 1\nJIT: PC 17 OK, stack depth now: 1\nJIT: PC 18 OK, stack depth now: 1\nJIT: PC 19 OK, stack depth now: 0\nJIT: PC 20 OK, stack depth now: 1\nJIT: PC 21 OK, stack depth now: 2\nJIT: PC 22 OK, stack depth now: 2\nJIT: PC 23 OK, stack depth now: 1\nJIT: PC 24 OK, stack depth now: 1\nJIT: PC 25 OK, stack depth now: 0\nJIT: PC 26 OK, stack depth now: 1\nJIT: PC 27 OK, stack depth now: 1\nJIT: PC 28 OK, stack depth now: 1\nJIT: PC 29 OK, stack depth now: 0\nJIT: PC 30 OK, stack depth now: 1\nJIT: PC 31 OK, stack depth now: 2\nJIT: PC 32 OK, stack depth now: 3\nJIT: PC 33 OK, stack depth now: 1\nJIT: PC 34 OK, stack depth now: 1\nJIT: PC 35 OK, stack depth now: 0\nJIT: PC 36 OK, stack depth now: 1\nJIT: PC 37 OK, stack depth now: 1\nJIT: PC 38 OK, stack depth now: 0\nJIT: PC 39 OK, stack depth now: 1\nJIT: PC 40 OK, stack depth now: 2\nJIT: PC 41 OK, stack depth now: 1\nJIT: PC 42 OK, stack depth now: 1\nJIT: PC 43 OK, stack depth now: 0\nJIT: PC 44 OK, stack depth now: 1\nJIT: PC 45 OK, stack depth now: 1\nJIT: PC 46 OK, stack depth now: 1\nJIT: PC 47 OK, stack depth now: 0\nJIT: PC 48 OK, stack depth now: 1\nJIT: PC 49 OK, stack depth now: 1\nJIT: PC 50 OK, stack depth now: 0\nJIT: PC 51 OK, stack depth now: 1\nJIT: PC 52 OK, stack depth now: 1\nJIT: PC 53 OK, stack depth now: 0\nJIT: PC 54 OK, stack depth now: 1\nJIT: PC 55 OK, stack depth now: 2\nJIT: PC 56 OK, stack depth now: 1\nJIT: PC 57 OK, stack depth now: 1\nJIT: PC 58 OK, stack depth now: 0\nJIT: PC 59 OK, stack depth now: 1\nJIT: PC 60 OK, stack depth now: 2\nJIT: PC 61 OK, stack depth now: 2\nJIT: PC 62 OK, stack depth now: 3\nJIT: PC 63 OK, stack depth now: 3\nJIT: PC 64 OK, stack depth now: 2\nJIT: PC 65 OK, stack depth now: 1\nJIT: PC 66 OK, stack depth now: 1\nJIT: PC 67 OK, stack depth now: 0\nJIT: PC 68 OK, stack depth now: 1\nJIT: PC 69 OK, stack depth now: 2\nJIT: PC 70 OK, stack depth now: 1\nJIT: PC 71 OK, stack depth now: 1\nJIT: PC 72 OK, stack depth now: 0\nJIT: PC 73 OK, stack depth now: 0\nJIT: PC 74 OK, stack depth now: 0\nJIT: PC 75 OK, stack depth now: 1\nJIT: PC 76 OK, stack depth now: 2\nJIT: PC 77 OK, stack depth now: 1\nJIT: PC 78 OK, stack depth now: 0\nJIT: PC 79 OK, stack depth now: 1\nJIT: PC 80 OK, stack depth now: 2\nJIT: PC 81 OK, stack depth now: 1\nJIT: PC 82 OK, stack depth now: 1\nJIT: PC 83 OK, stack depth now: 0\nJIT: PC 84 OK, stack depth now: 0\nJIT: PC 85 OK, stack depth now: 0\nJIT: PC 86 OK, stack depth now: 1\nJIT: PC 87 OK, stack depth now: 2\nJIT: PC 88 OK, stack depth now: 3\nJIT: PC 89 OK, stack depth now: 0\nJIT: PC 90 OK, stack depth now: 3\nJIT: PC 91 OK, stack depth now: 1\nJIT: PC 92 OK, stack depth now: 1\nJIT: PC 93 OK, stack depth now: 0\nJIT: PC 94 OK, stack depth now: 1\nJIT: PC 95 OK, stack depth now: 2\nJIT: PC 96 OK, stack depth now: 1\nJIT: PC 97 OK, stack depth now: 1\nJIT: PC 98 OK, stack depth now: 0\nJIT: PC 99 OK, stack depth now: 0\nJIT: PC 100 OK, stack depth now: 0\nJIT: PC 101 OK, stack depth now: 1\nJIT: PC 102 OK, stack depth now: 0\nJIT: Late-sealing function block at PC 39\nJIT: Late-sealing function block at PC 54\nJIT: Late-sealing function block at PC 20\nJIT: Checking self-recursion for 'mat_rows'\nJIT: No self-recursion found in 'mat_rows'\nJIT: Successfully compiled function 'mat_rows'\nJIT: Retrying current call to 'mat_rows' with native code\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=138188\n@profile create-done ns=3317436034\n@profile prepare-done ns=3317714005\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "limits": [
+    "Loaded laptop; DEBUG_JIT and DEBUG_JIT_LOOP enabled.",
+    "No first warmup completion or checksum was obtained.",
+    "Top-stack counts include idle threads; not native-time percentages.",
+    "Predates fixed-dictionary COW implementation."
+  ],
+  "next_investigation": "Repeated IndexGetInPlace lowers through LoadLocal duplication followed by root release. Test direct borrowing of live SSA local operands, retaining named/captured fallbacks and value semantics.",
+  "artifacts": {
+    "matmul-production-jit.json": "033d5ac3c4175e0af76684545eaf766a72071cc61985f8ecd72668cdb653315a",
+    "matmul-production-sample.txt": "21cadaa78f4b767ce06cbf43ec40c9bca642744eb4565b57b7394f491599bf39",
+    "matmul-production-symbolized.json": "a90703fddd01dfd850d2ed79e355db35fd44454e68ce6f41bdb8ff70fd7bee82"
+  }
+}
