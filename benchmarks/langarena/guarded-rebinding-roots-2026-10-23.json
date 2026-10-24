@@ -1,0 +1,19 @@
+{
+  "scope": "Staged ownership prerequisite for native guarded rebinding; not connected to opcode lowering and not an end-to-end speed claim",
+  "baseline_commit": "ca251a7",
+  "source_sha256": "26f828ff674f287a562c64af38f75ec31ccc9cc25dfdbad71bd2edbdaa6ca891",
+  "contract_test": "tests/jit_guarded_rebinding_contracts.rs",
+  "verification": {
+    "ownership": "/tmp/kujo-rebinding-roots-fixed.log: all14 native ownership tests pass",
+    "allocation": "8 and128 guarded string appends preserve the same Arc allocation for a unique binding; adding a retained snapshot forces COW while preserving saved contents; two logical root slots, capacity at most4, zero live roots after frame exit",
+    "fallback": "Changed binding pointer restores original operand; identical handles do not enter guard; stale and foreign-frame roots reject before mutation",
+    "language": "/tmp/kujo-guarded-rebinding-contracts.log: interpreter/VM/JIT fallback pass 200-call string/array/shadowed builtin cases, RHS binding replacement, RHS failures and snapshots",
+    "format": "/tmp/kujo-rebinding-fmt.log: cargo fmt --check passes"
+  },
+  "limitations": [
+    "No native TryAppendAssign or TryStringAppendAssign lowering yet",
+    "New language contract asserts semantics, not native execution coverage",
+    "Current-frame target roots only; physical/global bindings and branch stack effects still need integration",
+    "No full-library or production acceptance from this staged helper"
+  ]
+}

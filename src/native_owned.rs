@@ -156,6 +156,36 @@ impl NativeCallRoots {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }
 
+    /// Temporarily move an evaluated snapshot out of its root so a guarded
+    /// rebinding can drop its artificial COW alias before writing. The guard
+    /// must leave the snapshot in Some on fallback, and consume it on success.
+    /// The root handle stays live in either case; callers release consumed
+    /// operand roots after taking the successful branch.
+    pub(crate) fn with_rebinding_snapshot(
+        &mut self,
+        target: i64,
+        original: i64,
+        guard: impl FnOnce(&mut Value, &mut Option<Value>) -> bool,
+    ) -> Result<bool, OwnershipError> {
+        // Validate both roots before moving anything. Distinct handles are
+        // required: a single root cannot be both binding and evaluated operand.
+        self.current_value_mut(target, OWNED)?;
+        self.current_value_mut(original, OWNED)?;
+        if target == original {
+            return Ok(false);
+        }
+        let value = std::mem::replace(self.current_value_mut(original, OWNED)?, Value::Null);
+        let mut snapshot = Some(value);
+        let applied = guard(self.current_value_mut(target, OWNED)?, &mut snapshot);
+        if let Some(value) = snapshot {
+            *self.current_value_mut(original, OWNED)? = value;
+            assert!(!applied, "successful rebinding must consume its snapshot");
+        } else {
+            assert!(applied, "fallback must preserve its snapshot");
+        }
+        Ok(applied)
+    }
+
     pub(crate) fn has_operator_methods(&self, payload: i64) -> Result<bool, OwnershipError> {
         self.values
             .get(Handle::from_payload(payload))
@@ -421,6 +451,91 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn guarded_rebinding_reuses_unique_storage_and_preserves_snapshots() {
+        for count in [8, 128] {
+            let mut roots = NativeCallRoots::default();
+            roots.enter().unwrap();
+            let (target, kind) = roots.encode(Value::Str(Arc::new(String::new()))).unwrap();
+            let pointer = match roots.current_value_mut(target, kind).unwrap() {
+                Value::Str(text) => Arc::as_ptr(text),
+                _ => unreachable!(),
+            };
+            let suffix = Value::Str(Arc::new("x".into()));
+            for _ in 0..count {
+                let original = roots.duplicate(target, kind).unwrap();
+                assert!(roots
+                    .with_rebinding_snapshot(target, original, |root, snapshot| {
+                        crate::interpreter::assignment::concat_string_rebinding(
+                            root, snapshot, &suffix,
+                        )
+                    })
+                    .unwrap());
+                assert!(matches!(roots.clone_value(original, kind).unwrap(), Value::Null));
+                roots.release(original, kind).unwrap();
+                assert!(
+                    matches!(roots.current_value_mut(target, kind).unwrap(), Value::Str(text) if Arc::as_ptr(text) == pointer)
+                );
+            }
+            let saved = roots.clone_value(target, kind).unwrap();
+            let original = roots.duplicate(target, kind).unwrap();
+            assert!(roots
+                .with_rebinding_snapshot(target, original, |root, snapshot| {
+                    crate::interpreter::assignment::concat_string_rebinding(root, snapshot, &suffix)
+                })
+                .unwrap());
+            assert!(matches!(&saved, Value::Str(text) if text.as_str() == "x".repeat(count)));
+            assert!(
+                matches!(roots.current_value_mut(target, kind).unwrap(), Value::Str(text) if Arc::as_ptr(text) != pointer && text.len() == count+1)
+            );
+            roots.leave().unwrap();
+            assert_eq!(roots.storage_state().1, 0);
+            assert_eq!(roots.values.slots.len(), 2);
+            assert!(roots.storage_state().2 <= 4);
+        }
+    }
+
+    #[test]
+    fn guarded_rebinding_fallback_and_invalid_roots_preserve_operands() {
+        let mut roots = NativeCallRoots::default();
+        roots.enter().unwrap();
+        let (target, kind) = roots.encode(Value::Str(Arc::new("new".into()))).unwrap();
+        let (original, _) = roots.encode(Value::Str(Arc::new("old".into()))).unwrap();
+        let suffix = Value::Str(Arc::new("tail".into()));
+        assert!(!roots
+            .with_rebinding_snapshot(target, original, |root, snapshot| {
+                crate::interpreter::assignment::concat_string_rebinding(root, snapshot, &suffix)
+            })
+            .unwrap());
+        assert!(
+            matches!(roots.clone_value(target, kind).unwrap(), Value::Str(text) if text.as_str() == "new")
+        );
+        assert!(
+            matches!(roots.clone_value(original, kind).unwrap(), Value::Str(text) if text.as_str() == "old")
+        );
+        assert!(!roots
+            .with_rebinding_snapshot(target, target, |_, _| panic!(
+                "aliased handles must not enter guard"
+            ))
+            .unwrap());
+        let stale = roots.duplicate(target, kind).unwrap();
+        roots.release(stale, kind).unwrap();
+        assert_eq!(
+            roots.with_rebinding_snapshot(stale, original, |_, _| panic!("invalid root")),
+            Err(OwnershipError::StaleHandle)
+        );
+        roots.enter().unwrap();
+        assert_eq!(
+            roots.with_rebinding_snapshot(target, original, |_, _| panic!("foreign frame")),
+            Err(OwnershipError::NotCurrentFrame)
+        );
+        roots.leave().unwrap();
+        assert!(
+            matches!(roots.clone_value(original, kind).unwrap(), Value::Str(text) if text.as_str() == "old")
+        );
+        roots.leave().unwrap();
+    }
 
     #[test]
     fn lazy_operand_duplicates_belong_to_the_current_scope() {
