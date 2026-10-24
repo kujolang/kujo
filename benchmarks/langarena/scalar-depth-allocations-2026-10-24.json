@@ -1,0 +1,72 @@
+{
+  "scope": "Shared scalar depth fast path eliminates traversal-stack allocations; container depth policy unchanged. No wall-clock or competitive claim.",
+  "source_parent": "229e4cf01dcb7cc051071b054a1582912b4e5f2b",
+  "baseline": {
+    "source_commit": "70c7beb14215446eb001d87a6b3d281b1dae6c90",
+    "scope": "Actual native append helper, warmed roots, unique preallocated array, scalar Int items; deterministic allocation counts, no elapsed-time claim",
+    "measurements": [
+      {
+        "appends": 8,
+        "allocations": 8,
+        "requested_bytes": 128
+      },
+      {
+        "appends": 128,
+        "allocations": 128,
+        "requested_bytes": 2048
+      },
+      {
+        "appends": 1024,
+        "allocations": 1024,
+        "requested_bytes": 16384
+      }
+    ],
+    "verification": "Every append returned success; every appended integer read back with native indexed helper; no runtime errors after native activation exit",
+    "cause_evidence": "jit_try_append calls VM::value_nesting_depth for each item; Value::walk_nesting_depth creates vec![(value,0)] even for leaf scalars",
+    "hashes": {
+      "/tmp/kujo-append-allocation-probe.rs": "c4ac139c141e04bb6de5ddf12863fe93bc06f0298f4f9dda398ae7317cd40522",
+      "/tmp/kujo-append-allocation-probe": "46205105dda751f06c1d84178ca090d2e8854355d2fceec9a7888eca77e94e57",
+      "/tmp/kujo-append-allocation-baseline.log": "8cc45a84fba06ee6910452599110c634fbe3091d465b2aa078f371962da411f5",
+      "src/interpreter/value.rs": "70ede8a1ee2928e6974cc04ef87958322e77c2ab7d0d0c9f4aebcfef16eb2174",
+      "src/jit.rs": "abf5726cc6345146871962f2409ce44bd2899878431b439b3bb44bbd452b913d"
+    },
+    "next": "After release freeze, avoid leaf traversal allocation and add deterministic allocation plus VM/interpreter semantic/depth regressions. Do not weaken nesting limits."
+  },
+  "after": [
+    {
+      "appends": 8,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "appends": 128,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "appends": 1024,
+      "allocations": 0,
+      "requested_bytes": 0
+    }
+  ],
+  "verification": {
+    "library_passed": 1072,
+    "library_ignored": 8,
+    "integration_passed": 56,
+    "both_runtimes": true,
+    "allocation_baseline_failure": "/tmp/kujo-scalar-append-test-baseline.log",
+    "allocation_regression": "tests/scalar_append_allocation.rs",
+    "semantics_regression": "tests/scalar_depth_semantics.rs",
+    "logs": [
+      "/tmp/kujo-scalar-depth-library.log",
+      "/tmp/kujo-scalar-depth-regressions.log"
+    ],
+    "format_passed": true,
+    "minimal_lib_check_passed": true
+  },
+  "source_sha256": {
+    "src/interpreter/value.rs": "9698993f11847fbf66910729af821f3dd35fa209399885fe4ed06a4a0fbc1f82",
+    "tests/scalar_append_allocation.rs": "4f827b689b4fb887f176521fad3f60d54b36bcf2634dd2edc8b0dbc55255c044",
+    "tests/scalar_depth_semantics.rs": "a2f014aa14558a608100128c111450d87ec8710d5198f404683ff499c7734eb9"
+  }
+}

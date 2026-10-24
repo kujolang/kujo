@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Scalar depth allocation checks](scalar-depth-allocations-2026-10-24.json)
+  reduce preallocated native scalar appends from one allocation per element to
+  zero at 8, 128 and 1,024 elements. Shared scalar depth checks bypass traversal
+  allocation; container checks retain their depth policy. The change passes
+  1,072 library tests (8 ignored) and 56 targeted integration tests, including
+  both-runtime snapshot semantics. This is allocation evidence, not speed acceptance.
+
 - [Archived production checkpoints](superseded-production-checkpoints-2026-10-24.json)
   retain 17 verified successful reports from superseded candidates. The earlier
   JIT matrix had 11 passes and 39 timeouts; its VM run stopped after 6 passes

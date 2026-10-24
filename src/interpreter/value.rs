@@ -1645,7 +1645,19 @@ impl std::fmt::Debug for Value {
 
 impl Value {
     pub(crate) fn nesting_depth(value: &Value) -> usize {
-        Self::walk_nesting_depth(value, || {})
+        // Scalar payloads have no nested Values. Avoid allocating a traversal
+        // stack on hot append/assignment paths; containers still use the full
+        // shared-allocation-aware walk and its existing depth policy.
+        match value {
+            Value::Int(_)
+            | Value::Float(_)
+            | Value::Bool(_)
+            | Value::Null
+            | Value::Str(_)
+            | Value::Secret(_)
+            | Value::Bytes(_) => 0,
+            _ => Self::walk_nesting_depth(value, || {}),
+        }
     }
 
     pub(crate) fn walk_nesting_depth(value: &Value, mut visit: impl FnMut()) -> usize {
@@ -2314,6 +2326,26 @@ impl Value {
 #[cfg(test)]
 mod struct_storage_regressions {
     use super::*;
+
+    #[test]
+    fn scalar_depth_fast_path_matches_full_walk_and_nested_depth() {
+        for leaf in [
+            Value::Int(i64::MAX),
+            Value::Float(f64::NAN),
+            Value::Bool(false),
+            Value::Null,
+            Value::Str(Arc::new("🙂".into())),
+            Value::Secret(Arc::new("fixture".into())),
+            Value::bytes(vec![0, 255]),
+        ] {
+            let mut visits = 0;
+            assert_eq!(Value::walk_nesting_depth(&leaf, || visits += 1), 0);
+            assert_eq!(visits, 1);
+            assert_eq!(Value::nesting_depth(&leaf), 0);
+            let nested = Value::array(vec![Value::array(vec![leaf])]);
+            assert_eq!(Value::nesting_depth(&nested), 2);
+        }
+    }
 
     #[test]
     fn struct_clones_share_fields_and_depth_walk_visits_shared_nodes_once() {
