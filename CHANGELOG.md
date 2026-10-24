@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse nested-value validation across native helper calls while preserving
+  snapshot isolation and restoring validation state after assignment errors.
+
 - Reuse unique parent and leaf nodes during checked pop and dictionary removal
   without dropping retained value snapshots or weakening nesting checks.
 

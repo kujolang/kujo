@@ -8360,6 +8360,30 @@ impl VM {
         self.exception_handlers.iter().any(|h| h.frame_offset == self.call_frames.len())
     }
 
+    #[cfg(test)]
+    pub(crate) fn native_path_depth_scan_count(&self) -> usize {
+        self.path_depth_valid.scan_count()
+    }
+
+    /// Temporarily transfer only the cache field, without borrowing other VM
+    /// fields referenced by the native context. No user callback may run while
+    /// the synchronous path helper owns this cache.
+    pub(crate) unsafe fn take_native_path_depth_cache(
+        vm: *mut Self,
+    ) -> crate::interpreter::assignment::DepthCache {
+        // SAFETY: caller supplies a live VM exclusively executing this helper.
+        unsafe { std::mem::take(&mut *std::ptr::addr_of_mut!((*vm).path_depth_valid)) }
+    }
+
+    pub(crate) unsafe fn restore_native_path_depth_cache(
+        vm: *mut Self,
+        cache: crate::interpreter::assignment::DepthCache,
+    ) {
+        // SAFETY: same live VM; the helper has ended all target borrows and has
+        // not invoked user code since taking this field.
+        unsafe { *std::ptr::addr_of_mut!((*vm).path_depth_valid) = cache };
+    }
+
     pub(crate) fn mutate_global_from_jit(
         &mut self,
         name: &str,

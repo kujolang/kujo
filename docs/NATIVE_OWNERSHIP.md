@@ -351,3 +351,11 @@ checks frame replacement on generator success and failure without dereferencing
 stale pointers.
 If a VM-owned context uses the global map as its local map, both aliases refresh
 together. Independently owned native locals remain untouched.
+
+Native checked path writes reuse the attached VM's depth cache across ephemeral
+callback contexts. The synchronous helper temporarily transfers only that field
+and restores it on success and error; it must not invoke user callbacks while
+holding the cache. Standalone contexts retain their own cache. Weak identities
+still invalidate after external writes, and retained snapshots still force COW.
+The 4096-element helper fixture requires one scan across 128 contexts, with
+readonly recovery and recursive caller snapshots covered independently.

@@ -290,6 +290,11 @@ pub(crate) struct DepthCache {
     scans: usize,
 }
 impl DepthCache {
+    #[cfg(test)]
+    pub(crate) fn scan_count(&self) -> usize {
+        self.scans
+    }
+
     // A Weak reference makes Arc::make_mut allocate even with one strong owner.
     // Discard only the identities about to be mutated, after reading their depth
     // bounds. Other cached identities retain automatic external-write invalidation.

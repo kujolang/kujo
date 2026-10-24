@@ -1,0 +1,45 @@
+{
+  "scope": "Deterministic nested-write validation scan counts across fresh native contexts; not competitive timing.",
+  "source_parent": "09975d94b512a2fedaaef735a04d8e4c8491b2d4",
+  "source_sha256": {
+    "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1",
+    "src/jit.rs": "9844773111bfc4f101b717c4eba892aaf821e8eef01a83e8435858e4692fd944",
+    "src/vm.rs": "00be748be1087c797e7ca299401909e328eb99cd145a1f496374afccad05890d",
+    "tests/jit_nested_paths.rs": "2f8421e0766e651c4768e1975618c91061b7837f931e1271312805eb071e5ab3"
+  },
+  "before": [
+    [
+      8,
+      8
+    ],
+    [
+      128,
+      128
+    ]
+  ],
+  "after": [
+    [
+      8,
+      1
+    ],
+    [
+      128,
+      1
+    ]
+  ],
+  "fixture": "4096-element nested row moved across 8/128 fresh native contexts sharing one VM; readonly errors restore cache; retained snapshots remain isolated.",
+  "mechanism": "Transfer the VM depth cache into the synchronous native path helper and restore on success/error, without user callbacks or whole-VM borrow overlap.",
+  "verification": {
+    "contracts": "1064 library passed, 8 ignored; 137 integration passed including interpreter/VM/JIT recursive snapshot regression",
+    "format": "cargo fmt --check passed",
+    "minimal": "cargo check --no-default-features --lib passed"
+  },
+  "logs": [
+    "/tmp/kujo-native-depth-cache-baseline.log",
+    "/tmp/kujo-native-depth-cache-fixed.log",
+    "/tmp/kujo-native-depth-cache-contracts.log",
+    "/tmp/kujo-native-depth-cache-fmt.log",
+    "/tmp/kujo-native-depth-cache-minimal.log"
+  ],
+  "remaining": "Unchanged Sort::Merge rerun, current all50 and production/competitive gates remain open."
+}

@@ -1341,6 +1341,14 @@ pub unsafe extern "C" fn jit_update_binding_path(
     operands: *const i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
+    // Native callback contexts are short-lived. Keep validated identities with
+    // their VM so recursive/helper calls do not rescan the whole payload. Move
+    // the cache out during mutation to avoid aliasing other VM field borrows.
+    let mut cache = if ctx.vm_ptr.is_null() {
+        std::mem::take(&mut ctx.path_depth_valid)
+    } else {
+        VM::take_native_path_depth_cache(ctx.vm_ptr.cast())
+    };
     let result = (|| {
         let name = ctx
             .var_names_ptr
@@ -1380,9 +1388,8 @@ pub unsafe extern "C" fn jit_update_binding_path(
             .owned_roots
             .clone_value(operands[offset], operands[offset + 1])
             .map_err(|error| format!("Native ownership error: {error:?}"))?;
-        let cache = &mut ctx.path_depth_valid;
         let operation = |root: &mut Value| {
-            crate::interpreter::assignment::update_checked(root, &path, value, cache)
+            crate::interpreter::assignment::update_checked(root, &path, value, &mut cache)
         };
         match location {
             0 => operation(
@@ -1427,6 +1434,11 @@ pub unsafe extern "C" fn jit_update_binding_path(
             _ => Err("Invalid native path location".into()),
         }
     })();
+    if ctx.vm_ptr.is_null() {
+        ctx.path_depth_valid = cache;
+    } else {
+        VM::restore_native_path_depth_cache(ctx.vm_ptr.cast(), cache);
+    }
     match result {
         Ok(()) => 0,
         Err(error) => {
@@ -11587,6 +11599,85 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_path_depth_cache_survives_helper_call_contexts() {
+        fn update(vm: &mut VM, root: Value, value: i64, binding_kind: i64) -> (Value, usize) {
+            let hash = BytecodeTranslator::hash_var_name("state");
+            let mut names = HashMap::from([(hash, "state".into())]);
+            let mut context = VMContext::new_with_vm(
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                vm as *mut VM as *mut std::ffi::c_void,
+            );
+            context.var_names_ptr = &mut names;
+            context.owned_roots.enter().unwrap();
+            let (payload, kind) = context.owned_roots.encode(root).unwrap();
+            let shape = vec![None, None];
+            let operands = [0, 0, 0, 0, value, 0];
+            // SAFETY: the VM, context, shape and operands are live for this synchronous call.
+            assert_eq!(
+                unsafe {
+                    jit_update_binding_path(
+                        &mut context,
+                        1,
+                        payload,
+                        kind,
+                        binding_kind,
+                        hash as i64,
+                        &shape,
+                        operands.as_ptr(),
+                    )
+                },
+                i64::from(binding_kind != 0),
+                "{:?}",
+                context.runtime_error
+            );
+            if binding_kind != 0 {
+                assert_eq!(
+                    context.runtime_error.as_deref(),
+                    Some("Cannot mutate immutable let binding: state")
+                );
+            }
+            let scans = context.path_depth_valid.scan_count();
+            let result = context.owned_roots.take_value(payload, kind).unwrap();
+            context.owned_roots.leave().unwrap();
+            (result, scans)
+        }
+        fn first(root: &Value) -> i64 {
+            let Value::Array(rows) = root else { panic!() };
+            let Value::Array(row) = &rows[0] else { panic!() };
+            let Value::Int(value) = row[0] else { panic!() };
+            value
+        }
+        let mut measurements = Vec::new();
+        for calls in [8, 128] {
+            let mut vm = VM::new();
+            let mut root = Value::array(vec![Value::array(vec![Value::Int(0); 4096])]);
+            let mut private_scans = 0;
+            for value in 0..calls {
+                let (updated, scans) = update(&mut vm, root, value as i64, 0);
+                root = updated;
+                private_scans += scans;
+            }
+            let total = private_scans + vm.native_path_depth_scan_count();
+            measurements.push((calls, total));
+            assert_eq!(first(&root), (calls - 1) as i64);
+            let before_error = vm.native_path_depth_scan_count();
+            let (unchanged, _) = update(&mut vm, root, -1, 1);
+            assert_eq!(vm.native_path_depth_scan_count(), before_error);
+            let (restored, _) = update(&mut vm, unchanged, (calls - 1) as i64, 0);
+            assert_eq!(vm.native_path_depth_scan_count(), before_error);
+            root = restored;
+            let snapshot = root.clone();
+            let (updated, _) = update(&mut vm, root, 999, 0);
+            assert_eq!(first(&snapshot), (calls - 1) as i64);
+            assert_eq!(first(&updated), 999);
+        }
+        eprintln!("native path depth scans across contexts: {measurements:?}");
+        assert!(measurements.iter().all(|(_, scans)| *scans <= 1), "{measurements:?}");
+    }
+
     #[test]
     fn compiled_nested_writes_release_operands_and_retain_path_metadata() {
         for repetitions in [8, 128] {

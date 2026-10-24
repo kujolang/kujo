@@ -52,7 +52,8 @@
         "call-frame-allocation-2026-10-23.json",
         "../../tests/bytecode_call_profile.rs",
         "checked-append-node-relocations-2026-10-24.json",
-        "checked-removal-node-relocations-2026-10-24.json"
+        "checked-removal-node-relocations-2026-10-24.json",
+        "native-depth-cache-2026-10-24.json"
       ]
     },
     {
@@ -3632,6 +3633,11 @@
       "scope": "frozen native nested-write JIT matrix",
       "result": "49 passed test-size checksums with identity/hashes and49measurement schemas verified. Sort::Merge timed out600s after preparation, with no usable measurement sidecar. Full50gate remains unpassed; loaded debug timings are diagnostic.",
       "evidence": "checksums-2026-10-24-native-path-write-jit-partial.json"
+    },
+    {
+      "scope": "VM-lifetime native nested-write validation cache",
+      "result": "128 helper contexts now require one scan instead of 128; semantic/cost and affected integration gates pass. No end-to-end speed claim.",
+      "evidence": "native-depth-cache-2026-10-24.json"
     }
   ]
 }

@@ -167,3 +167,26 @@ print("PASS")
         false,
     );
 }
+
+#[test]
+fn recursive_native_nested_writes_preserve_caller_snapshots() {
+    check(
+        r#"
+        func visit(input,left,right) {
+            mut state := input
+            if left >= right { state[0][left] = state[0][left] + 1 return state }
+            let middle := to_int((left + right) / 2)
+            state = visit(state,left,middle)
+            state = visit(state,middle + 1,right)
+            return state
+        }
+        let seed := [range(0,512)]
+        let result := visit(seed,0,511)
+        assert_equal(result,[range(1,513)])
+        assert_equal(seed,[range(0,512)])
+        print("PASS")
+        "#
+        .into(),
+        &["visit"],
+    );
+}
