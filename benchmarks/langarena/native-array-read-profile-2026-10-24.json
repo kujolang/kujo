@@ -1,0 +1,878 @@
+{
+  "scope": "Production Matmul::Single CPU sample on frozen3482e53 after scalar-array optimization. Run remains active; no checksum or competitive acceptance.",
+  "profile": {
+    "scope": "Top-of-stack sample counts; not native-time percentages or competitive timings. Dynamic JIT addresses may remain unmapped.",
+    "source_commit": "3482e532e95bf8338f2061c02be476ade6c6d604",
+    "binary_sha256": "076fa6d7abee5e0eac3787f9a4d6760d692e8657f2044a5a05941296cca5e4b8",
+    "map_sha256": "976e2478822512337deeaeb57c09bd0c6858e8cd1a0e05c9a793205a1ccb1ef8",
+    "sample_sha256": "59e41fe4587d6a1c39776ec6957ff6682ae885a051f6394affbfb666e2b4cd2c",
+    "uuid": "ED91D7B8-58C0-3D6F-82EC-BB77F7ADC7C6",
+    "rows": [
+      {
+        "label": "__ulock_wait  (in libsystem_kernel.dylib)",
+        "samples": 6746,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 726,
+        "mapped": true,
+        "offset": 717
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 133,
+        "mapped": true,
+        "offset": 592
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 97,
+        "mapped": true,
+        "offset": 763
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 79,
+        "mapped": true,
+        "offset": 547
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 72,
+        "mapped": true,
+        "offset": 673
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 70,
+        "mapped": true,
+        "offset": 144
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 65,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 55,
+        "mapped": true,
+        "offset": 185
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 48,
+        "mapped": true,
+        "offset": 165
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 44,
+        "mapped": true,
+        "offset": 136
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 40,
+        "mapped": true,
+        "offset": 742
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 36,
+        "mapped": true,
+        "offset": 581
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 33,
+        "mapped": true,
+        "offset": 169
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 32,
+        "mapped": true,
+        "offset": 1435
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 31,
+        "mapped": true,
+        "offset": 665
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 30,
+        "mapped": true,
+        "offset": 1
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 29,
+        "mapped": true,
+        "offset": 4
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 28,
+        "mapped": true,
+        "offset": 1337
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 28,
+        "mapped": true,
+        "offset": 1405
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 27,
+        "mapped": true,
+        "offset": 17
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f308]",
+        "samples": 26,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f133]",
+        "samples": 25,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 24,
+        "mapped": true,
+        "offset": 899
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 23,
+        "mapped": true,
+        "offset": 739
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 22,
+        "mapped": true,
+        "offset": 154
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 22,
+        "mapped": true,
+        "offset": 567
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 22,
+        "mapped": true,
+        "offset": 1431
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 20,
+        "mapped": true,
+        "offset": 727
+      },
+      {
+        "label": "_jit_return_scalar_kind",
+        "samples": 20,
+        "mapped": true,
+        "offset": 9
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 19,
+        "mapped": true,
+        "offset": 694
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 19,
+        "mapped": true,
+        "offset": 709
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 19,
+        "mapped": true,
+        "offset": 1413
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 19,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f298]",
+        "samples": 18,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 18,
+        "mapped": true,
+        "offset": 766
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 18,
+        "mapped": true,
+        "offset": 1390
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 17,
+        "mapped": true,
+        "offset": 85
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e898]",
+        "samples": 16,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f4b7]",
+        "samples": 16,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b011516]",
+        "samples": 16,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 16,
+        "mapped": true,
+        "offset": 54
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 16,
+        "mapped": true,
+        "offset": 620
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010bb3]",
+        "samples": 15,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 15,
+        "mapped": true,
+        "offset": 20
+      },
+      {
+        "label": "_jit_return_scalar_kind",
+        "samples": 15,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f43e]",
+        "samples": 14,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b011172]",
+        "samples": 14,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0115ca]",
+        "samples": 14,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f149]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f1f8]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f349]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f46c]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb37]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00ff1b]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010559]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b01097a]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0109cc]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0114d8]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b011582]",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 13,
+        "mapped": true,
+        "offset": 10
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 13,
+        "mapped": true,
+        "offset": 106
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 13,
+        "mapped": true,
+        "offset": 125
+      },
+      {
+        "label": "_platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)",
+        "samples": 13,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e90b]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f328]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f3c9]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f4fa]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb5f]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010580]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0105be]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0105ce]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010a89]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010b63]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b01161b]",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 12,
+        "mapped": true,
+        "offset": 8
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e999]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e9e4]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f13f]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f1b8]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f200]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f360]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00faf7]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb73]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00ff8e]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010548]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b0105a7]",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 11,
+        "mapped": true,
+        "offset": 574
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e991]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f1fc]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f371]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f520]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fae6]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00ff7b]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010566]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b011600]",
+        "samples": 10,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 10,
+        "mapped": true,
+        "offset": 35
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 10,
+        "mapped": true,
+        "offset": 121
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e890]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e989]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e9b1]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e9c2]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f077]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f14d]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f222]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f489]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f534]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fad9]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb1c]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010597]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010a47]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010af0]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010b89]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 38
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 61
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 604
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f11c]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f459]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb10]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b01091e]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010b7d]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 551
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e979]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00ed37]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f332]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f4a1]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb0b]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fec8]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010b9c]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 88
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 162
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e9c6]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f50e]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b010ace]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b011613]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 32
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 44
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 79
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 660
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e876]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00e9b5]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f2a0]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00f310]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00fb48]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7fd53b00ff63]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 99
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 114
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 119
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 669
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 752
+      }
+    ]
+  },
+  "top_totals": {
+    "__ulock_wait  (in libsystem_kernel.dylib)": 6746,
+    "_jit_indexed_read": 2126,
+    "_jit_runtime_failed": 75,
+    "_jit_return_scalar_kind": 35,
+    "???  (in <unknown binary>)  [0x7fd53b00f308]": 26,
+    "???  (in <unknown binary>)  [0x7fd53b00f133]": 25,
+    "???  (in <unknown binary>)  [0x7fd53b00f298]": 18,
+    "???  (in <unknown binary>)  [0x7fd53b00f4b7]": 16,
+    "???  (in <unknown binary>)  [0x7fd53b00e898]": 16,
+    "???  (in <unknown binary>)  [0x7fd53b011516]": 16,
+    "???  (in <unknown binary>)  [0x7fd53b010bb3]": 15,
+    "???  (in <unknown binary>)  [0x7fd53b00f43e]": 14,
+    "???  (in <unknown binary>)  [0x7fd53b011172]": 14,
+    "???  (in <unknown binary>)  [0x7fd53b0115ca]": 14,
+    "???  (in <unknown binary>)  [0x7fd53b00fb37]": 13
+  },
+  "phase_snapshot": "@profile create-start ns=92599\n@profile create-done ns=1784991840\n@profile prepare-done ns=1785268490\n@profile warmup-1 ns=88809005410\n@profile warmup-2 ns=188653782450\n@profile warmup-done ns=188654031100\n",
+  "layout": {
+    "value_bytes": 136,
+    "value_alignment": 8,
+    "f64_bytes": 8,
+    "evidence": "Standalone size_of on frozen matching-feature debug library; release disassembly independently uses 136-byte array element stride."
+  },
+  "disassembly": {
+    "symbol": "jit_indexed_read",
+    "start_address": "0x10106de80",
+    "size": "0x6B0",
+    "hot_offset": 717,
+    "observations": [
+      "Offsets547..597 perform validated root-slot lookup.",
+      "Offsets656..713 check Array and index bounds and address an element with stride136.",
+      "Offsets717..766 decode the scalar tag and select the return payload path."
+    ],
+    "raw_path": "/tmp/kujo-native-scalar-array-release-2026-10-24/indexed-read-disassembly.txt"
+  },
+  "hashes": {
+    "/tmp/kujo-native-scalar-array-release-2026-10-24/matmul-production-sample.txt": "59e41fe4587d6a1c39776ec6957ff6682ae885a051f6394affbfb666e2b4cd2c",
+    "/tmp/kujo-native-scalar-array-release-2026-10-24/indexed-read-disassembly.txt": "78ce4f51ade1422a774485bc5e66cba2f61c05de50ff1138342c7f2647bb0b8a",
+    "/tmp/kujo-value-layout.rs": "59c3fa163e906cdcdc6628dbf3013d88532a894e415df8110c139409d26acae0",
+    "/tmp/kujo-value-layout.log": "3e46eac59a2a7bd40db725333ded6ccc63d85dd3c235eceaad7a288a499535df",
+    "/tmp/libkujo-scalar-read-refined.rlib": "98e1b06c937e1e38abc2cf318ce4f0adf5fdf0d1252ee020100fde9eed86408a"
+  },
+  "limits": [
+    "Sample counts include idle threads; exclude ulock waits from any active denominator. Unmapped JIT addresses are not classified native coverage.",
+    "Sampling does not prove cache misses or isolate representation cost;136-byte generic scalar elements motivate further measured storage/loop investigation, not a speed prediction.",
+    "This build predates positional callback arguments8414e79. Production warmup progress is not measured-phase checksum acceptance.",
+    "Earlier d777339 timings differ in host load and concurrent work; no causal speedup ratio."
+  ]
+}

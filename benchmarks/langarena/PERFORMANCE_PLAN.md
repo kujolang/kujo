@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Post-scalar-read production profile](native-array-read-profile-2026-10-24.json)
+  on frozen `3482e53` still identifies indexed-read lookup, bounds and tag decoding
+  as hot work. Matching-map disassembly uses a 136-byte generic array-element
+  stride. This motivates measured investigation of guarded native array/loop
+  access; sample counts do not prove cache misses or predict speed. The run was
+  still active when recorded, so production checksum acceptance remains open.
+
 - [Positional native arguments](native-positional-arguments-2026-10-24.json)
   reduce warmed callback allocations from 5/8/12 to 3 at arities 1/4/8, and
   requested bytes from 1,580/2,236/3,540 to 916 per call. Compiler-proven SSA
