@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [post-constructor static audit](post-constructor-native-surfaces-2026-10-23.json)
+  scans the same 165 port function bodies. 72 report no unsupported opcode, up
+  from 39 at the owned-entry stage. Remaining first blockers include guarded
+  append (23), field reads (22) and `ForNext` (20). These are function-level
+  static results, not native execution, benchmark coverage or speed evidence.
+  Later unsupported instructions and runtime admission guards still require work.
+
 - The [owned-argument release candidate](owned-argument-entry-2026-10-23.json)
   committed at `f559179` passes all 50 unchanged test-size checksums in each of
   JIT, VM and interpreter modes (150/150). Runtime source and executable hashes,
