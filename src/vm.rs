@@ -8422,14 +8422,20 @@ impl VM {
                             && args.len() <= 4
                             && args.iter().all(|a| crate::native_scalar::encode(a).is_some());
 
-                        // ULTRA-FAST PATH: Skip HashMap entirely for simple immediate-valued functions
-                        // The JIT uses jit_get_arg to read parameters directly from VMContext
-                        // We only need the HashMap for functions with loops or >4 args
+                        // Immediate arguments use VMContext fields. Other values can
+                        // move positionally only when compiler metadata confirms that
+                        // every parameter is initialized through an ordered SSA slot.
+                        // Functions without that proof retain their named bindings.
                         let mut func_locals: HashMap<String, Value>;
-                        let use_empty_locals = use_fast_args && chunk.params.len() == args.len();
+                        let use_positional_args = !use_fast_args
+                            && self
+                                .compiled_fn_info
+                                .get(func_name)
+                                .is_some_and(|info| info.supports_positional_arguments);
+                        let use_empty_locals = use_fast_args || use_positional_args;
 
                         if use_empty_locals {
-                            // Ultra-fast: Use empty HashMap - JIT will use VMContext.argN
+                            // Parameters arrive through immediate fields or the owned vector.
                             func_locals = HashMap::new();
                         } else {
                             // Reserve parameter bindings once; avoid growth during call setup.
@@ -8578,8 +8584,19 @@ impl VM {
 
                         // Execute the compiled function!
                         // Lock is NOT held during execution to allow recursive calls
+                        #[cfg(feature = "runtime-jit")]
+                        if use_positional_args {
+                            vm_context
+                                .owned_roots
+                                .set_arguments(args)
+                                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+                        } else {
+                            drop(args);
+                        }
+                        #[cfg(not(feature = "runtime-jit"))]
                         drop(args);
                         let result_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
+
                         if let Some(error) = vm_context.runtime_error.take() {
                             return Err(error);
                         }
@@ -10301,6 +10318,41 @@ mod tests {
                     assert_eq!(result.as_ptr(), pointer, "unique argument copied at width {width}");
                 }
             }
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn compiled_positional_admission_preserves_named_parameter_fallback() {
+        let chunk = compile_chunk(
+            r#"
+            func positional(a) { return a }
+            func named(a) { a = [11]; return a }
+        "#,
+        );
+        assert_eq!(
+            chunk.constants.iter().filter(|c| matches!(c, Constant::Function(_))).count(),
+            2
+        );
+        for constant in &chunk.constants {
+            let Constant::Function(function_chunk) = constant else { continue };
+            let name = function_chunk.name.as_deref().unwrap();
+            let mut compiler = crate::jit::JitCompiler::new().unwrap();
+            let info = compiler.compile_function_with_info(function_chunk, name).unwrap();
+            assert_eq!(info.supports_positional_arguments, name == "positional", "{name}");
+            let function = Value::BytecodeFunction {
+                chunk: (**function_chunk).clone(),
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+            };
+            let mut vm = VM::new();
+            vm.set_jit_enabled(true);
+            assert!(vm.jit_compile_bytecode_function(&function).unwrap());
+            let result = vm
+                .call_function_from_jit(function, vec![Value::array(vec![Value::Int(7)])])
+                .unwrap();
+            let expected = if name == "positional" { 7 } else { 11 };
+            assert!(Value::equals(&result, &Value::array(vec![Value::Int(expected)])));
         }
     }
 

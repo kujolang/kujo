@@ -63,7 +63,8 @@
         "scalar-depth-allocations-2026-10-24.json",
         "native-borrowed-read-allocations-2026-10-24.json",
         "fixed-dictionary-cow-2026-10-24.json",
-        "native-scalar-array-reads-2026-10-24.json"
+        "native-scalar-array-reads-2026-10-24.json",
+        "native-positional-arguments-2026-10-24.json"
       ]
     },
     {
@@ -105,7 +106,8 @@
         "native-path-append-2026-10-24.json",
         "native-local-indexed-borrow-2026-10-24.json",
         "native-call-setup-reservation-2026-10-24.json",
-        "native-scalar-array-reads-2026-10-24.json"
+        "native-scalar-array-reads-2026-10-24.json",
+        "native-positional-arguments-2026-10-24.json"
       ]
     },
     {

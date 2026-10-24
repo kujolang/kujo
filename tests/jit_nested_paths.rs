@@ -677,3 +677,57 @@ print("PASS")
         &[],
     );
 }
+
+#[test]
+fn native_positional_arguments_preserve_order_aliases_loops_and_errors() {
+    check(
+        r#"
+func replace_parameter(a) { a = [11]; return a }
+func eight(a,b,c,d,e,f,g,h) { return a[0]+b+c+d+e+f+g+h }
+func identity_owned(a) { return a }
+func use_twice(a,b) {
+    mut first := a
+    first[0] = 99
+    return [first,b]
+}
+func loop_owned(a,n) {
+    mut total := 0
+    mut i := 0
+    while i < n { total += a[0]; i += 1 }
+    return total
+}
+func nested_owned(a,n) {
+    if n == 0 { return a }
+    return nested_owned(a,n-1)
+}
+func fails_owned(a,unused) { return a[99] }
+let original := [7,8]
+mut i := 0
+mut caught := 0
+while i < 150 {
+    assert_equal(replace_parameter(original),[11])
+    assert_equal(eight(original,1,2,3,4,5,6,7),35)
+    assert_equal(identity_owned(null),null)
+    assert_equal(identity_owned(original),[7,8])
+    assert_equal(use_twice(original,original),[[99,8],[7,8]])
+    assert_equal(loop_owned(original,5),35)
+    assert_equal(nested_owned(original,5),[7,8])
+    try { fails_owned(original,{"unused": [1,2]}) } except e { caught += 1 }
+    assert_equal(original,[7,8])
+    i += 1
+}
+assert_equal(caught,150)
+print("PASS")
+"#
+        .into(),
+        &[
+            "replace_parameter",
+            "eight",
+            "identity_owned",
+            "use_twice",
+            "loop_owned",
+            "nested_owned",
+            "fails_owned",
+        ],
+    );
+}

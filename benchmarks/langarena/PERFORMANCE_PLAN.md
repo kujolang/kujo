@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Positional native arguments](native-positional-arguments-2026-10-24.json)
+  reduce warmed callback allocations from 5/8/12 to 3 at arities 1/4/8, and
+  requested bytes from 1,580/2,236/3,540 to 916 per call. Compiler-proven SSA
+  initialization permits moving the incoming vector; other functions retain
+  named binding. All 1,082 library tests (8 ignored) and 152 integrations pass,
+  including named fallback, value semantics and allocation bounds. No elapsed
+  speed or current-candidate release/production acceptance is claimed.
+
 - [Frozen scalar-array release matrix](checksums-2026-10-24-native-scalar-array-release.json)
   verifies all 150 unchanged test-size checksums across JIT, VM and interpreter
   on `3482e53`. Binary, source, input and report identities are retained, with
@@ -38,7 +46,7 @@ a target to test, not a guarantee. This document explains the execution order;
   by reserving parameter-map capacity and borrowing cached function names.
   1,079 library tests (8 ignored) and 151 integration tests pass. This preserves
   the named-parameter path and value semantics; it is not a competitive timing
-  result. Positional owned-argument entry remains a separate candidate.
+  result. The positional transfer evidence above addresses eligible owned-argument calls.
 
 - [Current QuickSort CPU profile](native-call-boundary-profile-2026-10-24.json)
   preserves the unchanged checksum on `d777339`. Allocation, copying, native

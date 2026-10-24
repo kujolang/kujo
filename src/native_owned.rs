@@ -74,9 +74,38 @@ pub(crate) struct NativeOwnedValues {
 pub(crate) struct NativeCallRoots {
     values: NativeOwnedValues,
     depth: usize,
+    pending_arguments: Option<(usize, std::vec::IntoIter<Value>)>,
 }
 
 impl NativeCallRoots {
+    /// Move an incoming argument vector into this fresh call context. Generated
+    /// parameter initialization must consume every value once in declaration order.
+    /// Installation precedes the invocation wrapper scope and function-entry scope;
+    /// only that first function activation may consume these arguments.
+    pub(crate) fn set_arguments(&mut self, values: Vec<Value>) -> Result<(), OwnershipError> {
+        if self.depth != 0 || self.pending_arguments.is_some() {
+            return Err(OwnershipError::FrameOrder);
+        }
+        if !values.is_empty() {
+            self.pending_arguments = Some((0, values.into_iter()));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn take_argument(&mut self, index: i64) -> Option<Result<Value, OwnershipError>> {
+        let (next, values) = self.pending_arguments.as_mut()?;
+        // The invocation wrapper owns depth 1; generated function entry owns depth 2.
+        if self.depth != 2 || usize::try_from(index).ok() != Some(*next) {
+            return Some(Err(OwnershipError::FrameOrder));
+        }
+        let value = values.next().ok_or(OwnershipError::FrameOrder);
+        *next += 1;
+        if values.len() == 0 {
+            self.pending_arguments = None;
+        }
+        Some(value)
+    }
+
     pub(crate) fn depth(&self) -> usize {
         self.depth
     }
@@ -96,6 +125,9 @@ impl NativeCallRoots {
             self.values.leave_frame(token)?;
         }
         self.depth -= 1;
+        if self.depth == 0 {
+            self.pending_arguments = None;
+        }
         Ok(())
     }
 
@@ -512,6 +544,40 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn positional_arguments_move_once_and_drop_unconsumed_values_on_exit() {
+        let value = Arc::new(vec![Value::Int(7)]);
+        let weak = Arc::downgrade(&value);
+        let pointer = value.as_ptr();
+        let mut roots = NativeCallRoots::default();
+        roots.set_arguments(vec![Value::Null, Value::Array(value)]).unwrap();
+        assert!(matches!(roots.take_argument(0), Some(Err(OwnershipError::FrameOrder))));
+        roots.enter().unwrap(); // invocation boundary
+        assert!(matches!(roots.take_argument(0), Some(Err(OwnershipError::FrameOrder))));
+        roots.enter().unwrap(); // generated function activation
+        assert!(matches!(roots.take_argument(1), Some(Err(OwnershipError::FrameOrder))));
+        assert!(matches!(roots.take_argument(0), Some(Ok(Value::Null))));
+        roots.enter().unwrap();
+        assert!(matches!(roots.take_argument(1), Some(Err(OwnershipError::FrameOrder))));
+        roots.leave().unwrap();
+        let Value::Array(value) = roots.take_argument(1).unwrap().unwrap() else { panic!("array") };
+        assert_eq!(value.as_ptr(), pointer);
+        assert_eq!(Arc::strong_count(&value), 1);
+        assert!(roots.take_argument(1).is_none());
+        drop(value);
+        assert!(weak.upgrade().is_none());
+        roots.leave().unwrap();
+        roots.leave().unwrap();
+        let value = Arc::new(vec![Value::Int(9)]);
+        let weak = Arc::downgrade(&value);
+        roots.set_arguments(vec![Value::Array(value)]).unwrap();
+        roots.enter().unwrap();
+        assert!(matches!(roots.set_arguments(vec![]), Err(OwnershipError::FrameOrder)));
+        roots.leave().unwrap();
+        assert!(weak.upgrade().is_none());
+        assert!(roots.take_argument(0).is_none());
+    }
 
     #[test]
     fn borrowed_reads_preserve_root_identity_and_validate_lifetimes() {

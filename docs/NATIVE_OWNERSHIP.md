@@ -1,12 +1,19 @@
 # Experimental native owned-value lifetime mechanism
 
 Status: **typed owned arguments connected; broader native coverage and acceptance incomplete**.
-Eligible native functions now transfer named arguments into frame-local roots
-after frame entry. The caller drops temporary argument vectors before invocation,
-so those vectors and the callee's name map do not retain artificial COW aliases.
-Immediate-only calls retain their direct payload/kind path; mixed or owned calls
-use named transfer even when a cached function was originally called with scalars.
-Parameter initialization errors exit before body effects and release the frame.
+Native functions transfer arguments into frame-local roots after frame entry.
+The compiled callback bridge can move its incoming argument vector directly when
+compiler metadata proves that every parameter has an ordered SSA initializer.
+Each initializer consumes one value in declaration order. The invocation wrapper
+owns the first root scope and generated function entry owns the second; argument
+transfer is restricted to that first function activation. Invalid order or scope
+fails before body effects, and boundary cleanup drops unused arguments.
+
+Other entries retain named transfer. Their caller drops temporary argument vectors
+before invocation, so the vectors and callee name map do not retain artificial COW
+aliases. Eligible immediate-only calls retain their direct payload/kind path.
+Functions whose parameters lack SSA storage keep their named bindings; parameter
+reassignment and collection construction must not silently lose that fallback.
 
 Named assignment uses the tagged checked helper for both immediate and owned
 values. A collection constructor must not redirect a global write into the native

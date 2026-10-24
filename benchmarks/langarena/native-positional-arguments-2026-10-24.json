@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "scope": "Compiler-proven positional ownership transfer for compiled callbacks. Incoming Vec storage moves without parameter names/map allocation; named fallback and direct scalar arguments retained.",
+  "before": {
+    "scope": "Warmed compiled callback allocation baseline; inputs and compilation excluded; no elapsed-time claim",
+    "runtime_source_commit": "3482e53",
+    "rows": [
+      {
+        "arity": 1,
+        "calls": 1,
+        "allocations": 5,
+        "requested_bytes": 1580
+      },
+      {
+        "arity": 1,
+        "calls": 128,
+        "allocations": 640,
+        "requested_bytes": 202240
+      },
+      {
+        "arity": 4,
+        "calls": 1,
+        "allocations": 8,
+        "requested_bytes": 2236
+      },
+      {
+        "arity": 4,
+        "calls": 128,
+        "allocations": 1024,
+        "requested_bytes": 286208
+      },
+      {
+        "arity": 8,
+        "calls": 1,
+        "allocations": 12,
+        "requested_bytes": 3540
+      },
+      {
+        "arity": 8,
+        "calls": 128,
+        "allocations": 1536,
+        "requested_bytes": 453120
+      }
+    ],
+    "hashes": {
+      "/tmp/kujo-call-setup-allocation-probe.rs": "90dc0321b428e4976517c5806aa788c2451c2ade51b80e0b8a022987bca88ca7",
+      "/tmp/libkujo-scalar-read-refined.rlib": "98e1b06c937e1e38abc2cf318ce4f0adf5fdf0d1252ee020100fde9eed86408a",
+      "/tmp/kujo-positional-call-cost-before": "9a035a8ba8635e8ad56b10bebfba38fe0def82b88dd1564ff0ddb835d42ecc1d",
+      "/tmp/kujo-positional-call-before.log": "cf5dc16fd58030be545ac7dca4d3314c5145a8bef5d4288c416b7e523f1c6a58"
+    }
+  },
+  "after": [
+    {
+      "arity": 1,
+      "calls": 1,
+      "allocations": 3,
+      "requested_bytes": 916
+    },
+    {
+      "arity": 1,
+      "calls": 128,
+      "allocations": 384,
+      "requested_bytes": 117248
+    },
+    {
+      "arity": 4,
+      "calls": 1,
+      "allocations": 3,
+      "requested_bytes": 916
+    },
+    {
+      "arity": 4,
+      "calls": 128,
+      "allocations": 384,
+      "requested_bytes": 117248
+    },
+    {
+      "arity": 8,
+      "calls": 1,
+      "allocations": 3,
+      "requested_bytes": 916
+    },
+    {
+      "arity": 8,
+      "calls": 128,
+      "allocations": 384,
+      "requested_bytes": 117248
+    }
+  ],
+  "verification": {
+    "library_passed": 1082,
+    "library_ignored": 8,
+    "integration_passed": 152,
+    "failures": 0,
+    "allocation_bound": "At most 3 warmed allocations per call at arities 1/4/8 and 1/128 calls; final tightened test passed separately.",
+    "format": "passed",
+    "minimal_feature_library": "passed",
+    "semantics": "VM/interpreter/JIT order, aliases, owned returns, loops, recursion, caught errors, named fallback; explicit compiler eligibility; unique storage and snapshot preservation; unconsumed-argument cleanup."
+  },
+  "hashes": {
+    "src/jit.rs": "71ad2c75f3ba83f85bf4e154eeb4143422777a57c12dbbb58b4af7d561e5b677",
+    "src/jit_disabled.rs": "01a7bbbcce20518b169409c0c8334c3e673fb0bbc2abe35afb5a0b8c31823c1a",
+    "src/native_owned.rs": "4b24a5dc4dd3329c74630bb6ceaf7ae38ef53ff9c4bf2b80f76ee6e434c3fbda",
+    "src/vm.rs": "ebddb1fdc6fe192ed90116f67836287641a1b2e51b08ff3ae5cf57347a6932ee",
+    "tests/jit_nested_paths.rs": "f6fe24de286e9d78f437a954dd25cfb8f91046d7fc1438ae5192f62a29232062",
+    "tests/native_read_allocation.rs": "c87035915a08209d8d6c474fe0b5494b63b39d7d1521d53241e509d3215556b6",
+    "benchmarks/langarena/probes/native_call_setup.rs": "16cde745f6f95ea6d8c8429c659164ffcf95d08e23fffa617bf8956ae65df0bf",
+    "/tmp/libkujo-positional-arguments-after.rlib": "c11f7f9df5dd41abe1b9dbc3279ee931d0e7ba171b51f8896185f281c819a44a",
+    "/tmp/kujo-positional-call-cost-after": "13212c12cb48cd4dccb0c7316c7ae3d0c295913705705a84932767bef2a015f2",
+    "/tmp/kujo-positional-call-after.log": "91c544005f8c0af74b0a95196c296da23e6789d6c0630ec15a864e3b0759605c",
+    "/tmp/kujo-positional-library.log": "ac7dcd7b79692e14b867f53476f86b57f5bc0b9f949bbdc2bdfceb4bdc329061",
+    "/tmp/kujo-positional-regressions.log": "b4a30b324d7b98f3254a07a3b71b974509dd3343eee54d75ffce10d3fb3c2899",
+    "/tmp/kujo-positional-minimal.log": "814b7917fc1ce18af4c128a6f6386c533a0b8a8d3ee29b57621828fa4775a68a",
+    "/tmp/kujo-positional-allocation-final.log": "1783e21484b6f4da862135a188b84b9ac89e37fd2af4b71fb92bcb4dad65cae2"
+  },
+  "limitations": [
+    "Counts exclude compilation/input construction; no elapsed-speed claim.",
+    "Frozen3482e53 release150 checksums predate positional transfer; current-candidate release/production/competitive/platform gates remain open.",
+    "Captured or otherwise ineligible functions retain named/VM paths; static eligibility is not native execution coverage."
+  ],
+  "implementation_contract": "Install arguments in a fresh context. Invocation wrapper enters ownership depth1; generated function entry enters depth2. Consume exactly once in declaration order at depth2; drop leftovers on boundary exit. Compiler reports eligibility from actual SSA parameter initialization, not arity/type heuristics."
+}

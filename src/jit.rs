@@ -504,6 +504,8 @@ pub struct CompiledFnInfo {
     /// Whether this function is optimized for direct recursion
     #[allow(dead_code)]
     pub supports_direct_recursion: bool,
+    /// Every parameter is initialized through an ordered native SSA slot.
+    pub supports_positional_arguments: bool,
 }
 
 /// Type profile for a variable or operation
@@ -926,10 +928,22 @@ pub unsafe extern "C" fn jit_release_dead_local(
 pub unsafe extern "C" fn jit_take_parameter(
     ctx: *mut VMContext,
     name_hash: i64,
-    _unused: i64,
+    index: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
+    if let Some(argument) = ctx.owned_roots.take_argument(index) {
+        match argument.and_then(|value| ctx.owned_roots.encode(value)) {
+            Ok((payload, kind)) => {
+                ctx.return_value_kind = kind;
+                return payload;
+            }
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                return 0;
+            }
+        }
+    }
     let value = ctx
         .var_names_ptr
         .as_ref()
@@ -4254,7 +4268,7 @@ pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash:
         return 0;
     }
     if index >= ctx.arg_count {
-        return jit_take_parameter(ctx, name_hash, 0);
+        return jit_take_parameter(ctx, name_hash, index);
     }
     ctx.return_value_kind = ctx.arg_kinds[index as usize];
     [ctx.arg0, ctx.arg1, ctx.arg2, ctx.arg3][index as usize]
@@ -5983,10 +5997,10 @@ impl BytecodeTranslator {
                     // SLOW PATH: Load parameter value from HashMap via runtime call
                     let name_hash = Self::hash_var_name(param_name) as i64;
                     let name_hash_val = builder.ins().iconst(types::I64, name_hash);
-                    let zero = builder.ins().iconst(types::I64, 0);
+                    let index = builder.ins().iconst(types::I64, i as i64);
 
-                    // Transfer the parameter from func_locals into this native frame.
-                    let call = builder.ins().call(load_var_func, &[ctx, name_hash_val, zero]);
+                    // Transfer the ordered argument or named fallback into this frame.
+                    let call = builder.ins().call(load_var_func, &[ctx, name_hash_val, index]);
                     builder.inst_results(call)[0]
                 };
 
@@ -10834,6 +10848,14 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
+        self.compile_function_metadata(chunk, name).map(|result| result.0)
+    }
+
+    fn compile_function_metadata(
+        &mut self,
+        chunk: &BytecodeChunk,
+        name: &str,
+    ) -> Result<(CompiledFn, bool), String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
         let field_names = self.retain_field_names(chunk);
@@ -10864,6 +10886,7 @@ impl JitCompiler {
         // 5. Set function signature
         self.ctx.func.signature = sig;
 
+        let supports_positional_arguments;
         // 6. Build function body
         {
             let mut builder_ctx = FunctionBuilderContext::new();
@@ -11318,6 +11341,8 @@ impl JitCompiler {
             // Also allocate stack slots for function parameters
             // Parameters need slots so they can be accessed via the fast path
             translator.allocate_parameter_slots(&mut builder, &chunk.params);
+            supports_positional_arguments = translator.use_local_slots
+                && chunk.params.iter().all(|name| translator.local_variables.contains_key(name));
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
 
             let has_loop = chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
@@ -11475,7 +11500,7 @@ impl JitCompiler {
         // 9. Cast to our function type
         let compiled_fn = compiled_fn_from_code_ptr(code_ptr);
 
-        Ok(compiled_fn)
+        Ok((compiled_fn, supports_positional_arguments))
     }
 
     /// Compile a function with direct-arg signature for JIT recursion optimization
@@ -11744,7 +11769,8 @@ impl JitCompiler {
         name: &str,
     ) -> Result<CompiledFnInfo, String> {
         // First, compile the standard function
-        let standard_fn = self.compile_function(chunk, name)?;
+        let (standard_fn, supports_positional_arguments) =
+            self.compile_function_metadata(chunk, name)?;
 
         // Check if eligible for direct-arg optimization
         // Criteria: exactly 1 parameter, function contains self-recursion
@@ -11776,6 +11802,7 @@ impl JitCompiler {
             fn_with_arg: direct_fn,
             param_count: chunk.params.len(),
             supports_direct_recursion: direct_fn.is_some(),
+            supports_positional_arguments,
         };
 
         // Cache the info

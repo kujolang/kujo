@@ -194,7 +194,7 @@ fn warmed_compiled_call_setup_has_bounded_allocations() {
             }
             TRACK.with(|v| v.set(false));
             assert!(
-                ALLOCATIONS.with(Cell::get) <= calls * (arity + 4),
+                ALLOCATIONS.with(Cell::get) <= calls * 3,
                 "arity={arity} calls={calls} allocations={} bytes={}",
                 ALLOCATIONS.with(Cell::get),
                 REQUESTED_BYTES.with(Cell::get)

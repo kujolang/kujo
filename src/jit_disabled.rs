@@ -138,6 +138,8 @@ pub struct CompiledFnInfo {
     pub fn_with_arg: Option<CompiledFnWithArg>,
     pub param_count: usize,
     pub supports_direct_recursion: bool,
+    /// Every parameter is initialized through an ordered native SSA slot.
+    pub supports_positional_arguments: bool,
 }
 
 #[derive(Debug, Clone)]
