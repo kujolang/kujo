@@ -1,0 +1,62 @@
+{
+  "scope": "Native MakeStruct with retained metadata, tagged operands, VM field order and nesting checks",
+  "identity": {
+    "parent_commit": "001e734767f36ebff41515bf8e371b53633dab6d",
+    "scope": "Uncommitted native struct construction and loop owned-binding persistence candidate; diagnostic checksums only, no speed acceptance",
+    "source_sha256": {
+      "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+      "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250",
+      "tests/jit_struct_constructors.rs": "fd7cb6020191ed9c83b944236c46970ab27a417588fb41432a08c168476bda46",
+      "tests/jit_loop_owned_rebinding.rs": "f901ed9c8a396e4acb3bb94f0a8bd6c1ded50451b0b472d3b47e0846378f4979",
+      "tests/jit_loop_collection_contracts.rs": "ca3259e5329440e89f53f00f1d3e5c110e29105e772cb5d6a3ca41eeb2b8f6fb"
+    },
+    "paths": {
+      "binary": "/tmp/kujo-native-struct-2026-10-23/kujo",
+      "port": "/tmp/kujo-native-struct-2026-10-23/benchmarks/langarena/port.kujo",
+      "runner": "/tmp/kujo-native-struct-2026-10-23/benchmarks/langarena/profile.kujo",
+      "config": "/tmp/kujo-native-struct-2026-10-23/benchmarks/langarena/test.json",
+      "production_config": "/tmp/kujo-native-struct-2026-10-23/benchmarks/langarena/run.json",
+      "schema": "/tmp/kujo-native-struct-2026-10-23/schemas/runtime-measurements-v1.schema.json",
+      "driver": "/tmp/kujo-native-measurements-2026-10-23/kujo",
+      "validator": "/tmp/kujo-native-measurements-2026-10-23/validate",
+      "verification_script": "/tmp/kujo-native-struct-2026-10-23/verify-all.rb",
+      "orchestrator": "/tmp/kujo-native-struct-2026-10-23/run-matrix.sh"
+    },
+    "sha256": {
+      "binary": "d9d1d09c21fe595dd5ed3e307feb999c660feeeef00b8c2444a866caf894e2a6",
+      "port": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "runner": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+      "config": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+      "production_config": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+      "schema": "162970714aa734ef60ee0b8a75ae42fca6c5a25ac1558420040e8a5b57eb4da8",
+      "driver": "83ca999d5752e6aace8d14a80068e3261d781aba12f178206c0326053a8367e5",
+      "validator": "c3da4d584c5293b59e92badd02c3403871ae36f8fddf369ebf6ab87e20e49517",
+      "verification_script": "b17f6f6efff3b8e0e5fee0f62c8b97c58f01d44ae09a66c607d5fd8f71e12739",
+      "orchestrator": "488b2671cc251f2938c7f2f07c59f9ec6fa638843523fdaf7c21f9ffa8afb7dc"
+    }
+  },
+  "verification": {
+    "library_passed": 1049,
+    "library_ignored": 8,
+    "targeted_integrations": 24,
+    "initial_struct_unit_tests": 9,
+    "baseline": "Array-candidate binary passes semantic checks but fails compilation assertions for struct constructors",
+    "lifetime": "Metadata survives source chunk destruction; ordinary returned Values survive compiler destruction",
+    "storage": "8 and128 repeated constructions retain <=5 root slots and zero live roots/depth/VM stack",
+    "logs": {
+      "/tmp/kujo-native-struct-before.log": "c2c99280b11b5e024d0e945f7516ea9e7e5d9087549d6a104a4622889b236fd3",
+      "/tmp/kujo-native-struct-unit.log": "a7dd192701aea6e4fa7c7acd57bdec34b899cbe60d35d2f8cbb1d970d64f2517",
+      "/tmp/kujo-native-struct-contracts.log": "976ed3898f8fa3ff18ecbd82105c163e6965d4e4ea5ad816db1ca0c61ddc6274",
+      "/tmp/kujo-native-struct-fixed-contracts.log": "3b504b7cd239aebb0452e6ff8cada9d5f2216465a2571fb6b46998120d7fe900",
+      "/tmp/kujo-native-struct-library-serial.log": "dc41752945352cf6f0bbce9adae6c5355be0dd7e309d325b1c5df7f3a179731b",
+      "/tmp/kujo-native-struct-fmtcheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "dependency": "1adca31 fixes owned loop-slot persistence exposed by the new loop regression; original failed run retained",
+  "remaining": [
+    "Frozen candidate all50 matrix still running; no full checksum acceptance claim",
+    "Native field access/nested updates/spreads remain separate gaps",
+    "Release production/platform/controlled comparator gates remain open"
+  ],
+  "speed_claim": "None"
+}

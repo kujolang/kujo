@@ -3904,6 +3904,39 @@ pub extern "C" fn jit_make_array(ctx: *mut VMContext, count: i64) -> i64 {
     .unwrap_or(0)
 }
 
+type NativeStructShape = (String, Vec<String>);
+
+/// Construct a struct using immutable metadata retained by JitCompiler.
+#[no_mangle]
+pub extern "C" fn jit_make_struct(ctx: *mut VMContext, shape_ptr: i64) -> i64 {
+    with_vm_stack_mut(ctx, |vm_ctx, stack| {
+        if shape_ptr == 0 {
+            vm_ctx.runtime_error = Some("Missing native struct metadata".into());
+            return 0;
+        }
+        // SAFETY: generated code embeds Arc::as_ptr for metadata held by the
+        // compiler for the entire lifetime of its machine code.
+        let (name, names) = unsafe { &*(shape_ptr as *const NativeStructShape) };
+        let Some(start) = stack.len().checked_sub(names.len()) else {
+            vm_ctx.runtime_error = Some("Stack underflow".into());
+            return 0;
+        };
+        let mut fields = HashMap::with_capacity(names.len());
+        // Match VM insertion order, including bytecode with duplicate names.
+        for (name, value) in names.iter().rev().zip(stack.drain(start..).rev()) {
+            fields.insert(name.clone(), value);
+        }
+        let value = Value::Struct { name: name.clone(), fields: fields.into() };
+        if let Err(error) = VM::ensure_value_nesting_depth(&value, "building struct value") {
+            vm_ctx.runtime_error = Some(error);
+            return 0;
+        }
+        stack.push(value);
+        1
+    })
+    .unwrap_or(0)
+}
+
 /// Build a fixed-key dictionary. `keys_ptr` is Arc::as_ptr of a key vector
 /// retained by the JIT compiler for the entire lifetime of the generated code.
 /// Returns 1 after pushing the dictionary, or 0 with a runtime error.
@@ -3979,6 +4012,7 @@ pub struct JitCompiler {
     compiled_fn_info: HashMap<String, CompiledFnInfo>,
     // Key-vector allocations embedded in native instructions must outlive code.
     dictionary_keys: HashMap<usize, Arc<Vec<Arc<str>>>>,
+    struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
     append_strings: HashMap<usize, Arc<str>>,
     literal_values: HashMap<(u8, Vec<u8>), Arc<Value>>,
 }
@@ -4066,6 +4100,8 @@ struct BytecodeTranslator {
     /// Make dict function reference (for MakeDict opcode)
     make_dict_func: Option<FuncRef>,
     make_array_func: Option<FuncRef>,
+    make_struct_func: Option<FuncRef>,
+    struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
     /// Make dict with keys function reference (for MakeDictWithKeys opcode)
     make_dict_with_keys_func: Option<FuncRef>,
     /// Append const string in-place helper
@@ -4223,6 +4259,8 @@ impl BytecodeTranslator {
             dict_set_func: None,
             make_dict_func: None,
             make_array_func: None,
+            make_struct_func: None,
+            struct_shapes: HashMap::new(),
             make_dict_with_keys_func: None,
             append_const_string_in_place_func: None,
             append_const_char_in_place_func: None,
@@ -4380,6 +4418,7 @@ impl BytecodeTranslator {
             OpCode::IndexGetInPlace(_) => (1, 1), // Pop index, load var, push value
             OpCode::IndexSetInPlace(_) => (2, 0), // Pop index + value, modify variable in place
             OpCode::MakeArray(n) => (*n, 1),
+            OpCode::MakeStruct(_, fields) => (fields.len(), 1),
             OpCode::MakeDict(n) => (*n * 2, 1), // Pop N key-value pairs, push dict
             OpCode::MakeDictWithKeys(keys) => (keys.len(), 1), // Pop N values, push dict
 
@@ -4622,7 +4661,10 @@ impl BytecodeTranslator {
 
             if matches!(
                 instruction,
-                OpCode::MakeArray(_) | OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_)
+                OpCode::MakeArray(_)
+                    | OpCode::MakeStruct(_, _)
+                    | OpCode::MakeDict(_)
+                    | OpCode::MakeDictWithKeys(_)
             ) {
                 if let Some(next) = next_instruction {
                     match next {
@@ -5694,6 +5736,38 @@ impl BytecodeTranslator {
                 } else {
                     return Err("IndexSet requires context and dict_set function".to_string());
                 }
+            }
+
+            OpCode::MakeStruct(name, fields) => {
+                let ctx = self.ctx_param.ok_or("MakeStruct requires context")?;
+                let helper = self.make_struct_func.ok_or("MakeStruct requires helper")?;
+                let push = self.scalar_push_func.ok_or("MakeStruct requires tagged stack push")?;
+                let shape = self
+                    .struct_shapes
+                    .get(&(name.clone(), fields.clone()))
+                    .ok_or("MakeStruct requires retained metadata")?;
+                let pointer = Arc::as_ptr(shape) as i64;
+                let mut operands = Vec::with_capacity(fields.len());
+                for _ in 0..fields.len() {
+                    operands.push(self.pop_value()?);
+                }
+                for operand in operands.into_iter().rev() {
+                    let kind = self.scalar_kind(builder, operand);
+                    builder.ins().call(push, &[ctx, operand, kind]);
+                    self.release_operand(builder, operand);
+                }
+                let pointer = builder.ins().iconst(types::I64, pointer);
+                let call = builder.ins().call(helper, &[ctx, pointer]);
+                let success = builder.inst_results(call)[0];
+                let failed = builder.ins().icmp_imm(IntCC::Equal, success, 0);
+                let status = builder.ins().uextend(types::I64, failed);
+                self.exit_on_assignment_error(builder, status);
+                let pop = self.stack_pop_func.ok_or("MakeStruct requires tagged stack pop")?;
+                let call = builder.ins().call(pop, &[ctx]);
+                let value = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, value);
+                self.push_value(value);
+                return Ok(false);
             }
 
             OpCode::MakeArray(count) => {
@@ -7700,6 +7774,23 @@ impl JitCompiler {
             .collect()
     }
 
+    fn retain_struct_shapes(
+        &mut self,
+        chunk: &BytecodeChunk,
+    ) -> HashMap<NativeStructShape, Arc<NativeStructShape>> {
+        chunk
+            .instructions
+            .iter()
+            .filter_map(|instruction| {
+                let OpCode::MakeStruct(name, fields) = instruction else { return None };
+                let key = (name.clone(), fields.clone());
+                let shape =
+                    self.struct_shapes.entry(key.clone()).or_insert_with(|| Arc::new(key.clone()));
+                Some((key, Arc::clone(shape)))
+            })
+            .collect()
+    }
+
     fn retain_dictionary_keys(&mut self, chunk: &BytecodeChunk) {
         for instruction in &chunk.instructions {
             if let OpCode::AppendConstStringInPlace(_, text) = instruction {
@@ -7736,6 +7827,7 @@ impl JitCompiler {
             ("jit_append_local", 6, true),
             ("jit_append_result", 1, true),
             ("jit_stack_pop", 1, true),
+            ("jit_make_struct", 2, true),
             ("jit_make_array", 2, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
@@ -7773,6 +7865,7 @@ impl JitCompiler {
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_append_result" => translator.append_result_func = Some(function),
                 "jit_stack_pop" => translator.stack_pop_func = Some(function),
+                "jit_make_struct" => translator.make_struct_func = Some(function),
                 "jit_make_array" => translator.make_array_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
@@ -7903,6 +7996,7 @@ impl JitCompiler {
             "jit_dense_int_dict_int_full_set_ptr",
             jit_dense_int_dict_int_full_set_ptr as *const u8,
         );
+        builder.symbol("jit_make_struct", jit_make_struct as *const u8);
         builder.symbol("jit_make_array", jit_make_array as *const u8);
         builder.symbol("jit_make_dict", jit_make_dict as *const u8);
         builder.symbol("jit_make_dict_with_keys", jit_make_dict_with_keys as *const u8);
@@ -7925,6 +8019,7 @@ impl JitCompiler {
             type_profiles: HashMap::new(),
             compiled_fn_info: HashMap::new(),
             dictionary_keys: HashMap::new(),
+            struct_shapes: HashMap::new(),
             append_strings: HashMap::new(),
             literal_values: HashMap::new(),
         })
@@ -8054,7 +8149,10 @@ impl JitCompiler {
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
             OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
-            OpCode::MakeArray(_) | OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_) => true,
+            OpCode::MakeStruct(_, _)
+            | OpCode::MakeArray(_)
+            | OpCode::MakeDict(_)
+            | OpCode::MakeDictWithKeys(_) => true,
 
             // Everything else is unsupported - causes code to skip JIT
             // This includes: CallNative, Arrays, Dicts, Generators, Async, etc.
@@ -8098,6 +8196,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Clear previous context
@@ -8485,6 +8584,7 @@ impl JitCompiler {
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -8804,6 +8904,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // 1. Check if function is compilable
@@ -9216,6 +9317,7 @@ impl JitCompiler {
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -9445,6 +9547,7 @@ impl JitCompiler {
     ) -> Result<CompiledFnWithArg, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Validate: must have exactly one parameter
@@ -9500,6 +9603,7 @@ impl JitCompiler {
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -9764,6 +9868,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Check if script is compilable (all opcodes supported)
@@ -10111,6 +10216,7 @@ impl JitCompiler {
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -11027,6 +11133,82 @@ mod tests {
         assert_eq!(weak.strong_count(), 1);
         drop(result);
         assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
+    fn compiled_struct_metadata_outlives_chunk_with_bounded_roots() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.params.push("item".into());
+            chunk.local_names.push("item".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.local_count = 1;
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::MakeStruct("Holder".into(), vec!["value".into()]));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadLocal(0));
+            chunk.emit(OpCode::MakeStruct("Holder".into(), vec!["value".into()]));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "struct_lifetime").unwrap();
+            let weak = Arc::downgrade(compiler.struct_shapes.values().next().unwrap());
+            drop(chunk);
+            assert_eq!(weak.strong_count(), 1);
+            let item = Value::array(vec![Value::Bool(true), Value::Int(7)]);
+            let mut locals = HashMap::from([("item".into(), item.clone())]);
+            let mut names =
+                HashMap::from([(BytecodeTranslator::hash_var_name("item"), "item".into())]);
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, &mut locals, std::ptr::null_mut());
+            context.var_names_ptr = &mut names;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            let result = context.take_return_value(context.return_value);
+            assert!(
+                matches!(&result, Value::Struct { name, fields } if name == "Holder" && Value::equals(&fields["value"], &item))
+            );
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 5, "{repetitions} constructions retained {capacity} roots");
+            assert_eq!(context.native_call_depth, 0);
+            assert!(stack.is_empty());
+            drop(compiler);
+            assert!(weak.upgrade().is_none());
+            assert!(matches!(&result, Value::Struct { name, .. } if name == "Holder"));
+        }
+    }
+
+    #[test]
+    fn struct_helper_preserves_vm_field_order_prefix_and_depth_errors() {
+        let shape: Arc<NativeStructShape> = Arc::new(("Pair".into(), vec!["x".into(), "x".into()]));
+        let pointer = Arc::as_ptr(&shape) as i64;
+        let mut stack = vec![Value::Int(99), Value::Int(1), Value::Int(2)];
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        assert_eq!(jit_make_struct(&mut context, pointer), 1);
+        assert!(
+            matches!(stack.pop().unwrap(), Value::Struct { name, fields } if name == "Pair" && matches!(fields["x"], Value::Int(1)))
+        );
+        assert_eq!(jit_make_struct(&mut context, pointer), 0);
+        assert_eq!(context.runtime_error.take().as_deref(), Some("Stack underflow"));
+        assert_eq!(jit_make_struct(&mut context, 0), 0);
+        assert_eq!(context.runtime_error.take().as_deref(), Some("Missing native struct metadata"));
+        assert!(matches!(stack.as_slice(), [Value::Int(99)]));
+        let shape: Arc<NativeStructShape> = Arc::new(("Holder".into(), vec!["value".into()]));
+        let mut levels = vec![Value::Int(7)];
+        for _ in 0..crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+            levels.push(Value::array(vec![levels.last().unwrap().clone()]));
+        }
+        stack.push(levels.last().unwrap().clone());
+        assert_eq!(jit_make_struct(&mut context, Arc::as_ptr(&shape) as i64), 0);
+        assert!(context.runtime_error.take().unwrap().contains("building struct value"));
+        assert!(matches!(stack.as_slice(), [Value::Int(99)]));
+        while levels.pop().is_some() {}
     }
 
     #[test]

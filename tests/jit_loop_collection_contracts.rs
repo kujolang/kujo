@@ -37,6 +37,29 @@ fn check(source: &str) {
 }
 
 #[test]
+fn loop_struct_literals_preserve_owned_values_after_native_entry() {
+    check(
+        r#"
+        struct Pair { left: any, right: any }
+        func once() {
+            mut i := 0
+            mut last := Pair { left: -1, right: false }
+            let snapshot := last
+            while i < 200 {
+                last = Pair { left: i, right: true }
+                i += 1
+            }
+            return [last,snapshot]
+        }
+        let result := once()
+        assert_equal(result[0],Pair { left: 199, right: true })
+        assert_equal(result[1],Pair { left: -1, right: false })
+        print("PASS")
+        "#,
+    );
+}
+
+#[test]
 fn loop_array_literals_preserve_types_after_native_entry() {
     check(
         r#"

@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile struct construction in experimental native functions and loops,
+  retaining constructor metadata and preserving field order, value semantics
+  and nesting limits.
+
 - Persist owned native-loop locals back to physical VM slots on normal exits
   and caught errors, preserving updated array/dictionary values and snapshots.
 

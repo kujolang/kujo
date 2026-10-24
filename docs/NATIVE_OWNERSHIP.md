@@ -37,6 +37,13 @@ normal and exceptional exits persist current values to physical VM slots; update
 do not stop at the temporary name map. Integer-map fast paths retain their separate
 physical-slot access. Regressions cover arrays/dictionaries and retained snapshots.
 
+Struct construction retains immutable name/field metadata in the compiler for
+the lifetime of generated code. Typed elements become ordinary struct Values;
+construction follows VM insertion order and nesting checks. Tests cover metadata
+outliving its bytecode chunk, recursive builders, mixed fields, snapshots, native
+loop replacement and bounded roots. Field reads and nested updates remain separate
+native-coverage gaps. See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
+
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.
 
