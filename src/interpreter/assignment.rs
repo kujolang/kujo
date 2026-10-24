@@ -305,7 +305,9 @@ impl DepthCache {
                 Value::Struct { fields, .. } => {
                     self.structs.remove(&(Arc::as_ptr(fields) as usize));
                 }
-                Value::Array(items) | Value::DenseIntDict(items) => {
+                Value::Array(items)
+                | Value::DenseIntDict(items)
+                | Value::FixedDict { values: items, .. } => {
                     self.arrays.remove(&(Arc::as_ptr(items) as usize));
                 }
                 Value::Dict(items) => {
@@ -327,7 +329,9 @@ impl DepthCache {
             Value::Struct { fields, .. } => {
                 self.structs.insert(Arc::as_ptr(fields) as usize, (Arc::downgrade(fields), bound));
             }
-            Value::Array(items) | Value::DenseIntDict(items) => {
+            Value::Array(items)
+            | Value::DenseIntDict(items)
+            | Value::FixedDict { values: items, .. } => {
                 self.arrays.insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
             }
             Value::Dict(items) => {
@@ -341,28 +345,54 @@ impl DepthCache {
             _ => {}
         }
     }
+    fn cached_depth(&self, root: &Value) -> Option<usize> {
+        match root {
+            Value::Struct { fields, .. } => {
+                self.structs.get(&(Arc::as_ptr(fields) as usize)).map(|e| e.1)
+            }
+            Value::Array(items)
+            | Value::DenseIntDict(items)
+            | Value::FixedDict { values: items, .. } => {
+                self.arrays.get(&(Arc::as_ptr(items) as usize)).map(|e| e.1)
+            }
+            Value::Dict(items) => {
+                self.dictionaries.get(&(Arc::as_ptr(items) as usize)).map(|e| e.1)
+            }
+            Value::IntDict(items) => {
+                self.integer_dictionaries.get(&(Arc::as_ptr(items) as usize)).map(|e| e.1)
+            }
+            _ => None,
+        }
+    }
     fn depth(&mut self, root: &Value) -> usize {
-        let mut work = vec![(root, 0)];
+        if let Some(bound) = self.cached_depth(root) {
+            return bound;
+        }
+        if !matches!(root, Value::FixedDict { .. }) {
+            #[cfg(test)]
+            {
+                self.scans += 1;
+            }
+            let bound = Value::nesting_depth(root);
+            self.remember(root, bound);
+            return bound;
+        }
+        // Fresh fixed wrappers must still reuse validated child depths. Shared
+        // fixed subgraphs now need per-walk identities to avoid DAG expansion.
+        let mut work = vec![(root, 0usize)];
+        let mut seen = std::collections::HashMap::<usize, usize>::new();
         let mut depth = 0;
         while let Some((value, offset)) = work.pop() {
             depth = depth.max(offset);
-            let cached = match value {
-                Value::Struct { fields, .. } => {
-                    self.structs.get(&(Arc::as_ptr(fields) as usize)).map(|e| e.1)
-                }
-                Value::Array(a) | Value::DenseIntDict(a) => {
-                    self.arrays.get(&(Arc::as_ptr(a) as usize)).map(|e| e.1)
-                }
-                Value::Dict(d) => self.dictionaries.get(&(Arc::as_ptr(d) as usize)).map(|e| e.1),
-                Value::IntDict(d) => {
-                    self.integer_dictionaries.get(&(Arc::as_ptr(d) as usize)).map(|e| e.1)
-                }
-                _ => None,
-            };
-            if let Some(bound) = cached {
+            if let Some(bound) = self.cached_depth(value) {
                 depth = depth.max(offset + bound);
             } else if let Value::FixedDict { values, .. } = value {
-                work.extend(values.iter().map(|v| (v, offset + 1)));
+                let identity = Arc::as_ptr(values) as usize;
+                if seen.get(&identity).is_some_and(|previous| *previous >= offset) {
+                    continue;
+                }
+                seen.insert(identity, offset);
+                work.extend(values.iter().map(|child| (child, offset + 1)));
             } else {
                 #[cfg(test)]
                 {
@@ -373,6 +403,7 @@ impl DepthCache {
                 depth = depth.max(offset + bound);
             }
         }
+        self.remember(root, depth);
         depth
     }
     fn remember_path(&mut self, root: &Value, path: &[Access], bound: usize) {
@@ -794,7 +825,9 @@ fn collection_child<'a>(root: &'a Value, access: &Access) -> Option<&'a Value> {
 }
 fn collection_child_mut<'a>(root: &'a mut Value, access: &Access) -> Option<&'a mut Value> {
     match root {
-        Value::FixedDict { keys, values } => values.get_mut(fixed_collection_index(keys, access)?),
+        Value::FixedDict { keys, values } => {
+            Arc::make_mut(values).get_mut(fixed_collection_index(keys, access)?)
+        }
         Value::IntDict(map) => Arc::make_mut(map).get_mut(&collection_index(access)?),
         Value::DenseIntDict(values) => {
             Arc::make_mut(values).get_mut(usize::try_from(collection_index(access)?).ok()?)
@@ -988,6 +1021,43 @@ pub(crate) fn initial_parameter_alias<'a>(body: &'a [crate::ast::Stmt]) -> Optio
 }
 
 #[cfg(test)]
+mod fixed_dictionary_depth_cache_tests {
+    use super::*;
+
+    #[test]
+    fn fresh_fixed_wrappers_reuse_cached_child_depth() {
+        let row = Value::array((0..10_000).map(Value::Int).collect());
+        let mut cache = DepthCache::default();
+        assert_eq!(cache.depth(&row), 1);
+        for _ in 0..32 {
+            let root = Value::FixedDict {
+                keys: Arc::new(vec!["row".into()]),
+                values: vec![row.clone()].into(),
+            };
+            assert_eq!(cache.depth(&root), 2);
+        }
+        assert_eq!(cache.scan_count(), 1, "fresh wrappers rescanned an unchanged child");
+    }
+
+    #[test]
+    fn shared_fixed_depth_cache_walk_does_not_expand_the_dag() {
+        let mut root = Value::Int(1);
+        for _ in 0..16 {
+            root = Value::FixedDict {
+                keys: Arc::new(vec!["left".into(), "right".into()]),
+                values: vec![root.clone(), root].into(),
+            };
+        }
+        let mut cache = DepthCache::default();
+        assert_eq!(cache.depth(&root), 16);
+        let scans = cache.scan_count();
+        assert!(scans <= 2, "shared fixed subtree rescanned {scans} times");
+        assert_eq!(cache.depth(&root), 16);
+        assert_eq!(cache.scan_count(), scans);
+    }
+}
+
+#[cfg(test)]
 mod removal_tests {
     use super::*;
     #[test]
@@ -1067,7 +1137,9 @@ mod specialized_path_removal_tests {
         for kind in 0..3 {
             let row = Value::array((0..10_000).map(Value::Int).collect());
             let mut root = match kind {
-                0 => Value::FixedDict { keys: Arc::new(vec!["0".into()]), values: vec![row] },
+                0 => {
+                    Value::FixedDict { keys: Arc::new(vec!["0".into()]), values: vec![row].into() }
+                }
                 1 => Value::IntDict(Arc::new([(0, row)].into_iter().collect())),
                 _ => Value::DenseIntDict(Arc::new(vec![row])),
             };

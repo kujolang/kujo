@@ -1446,7 +1446,11 @@ mod tests {
         if fixed {
             Value::FixedDict {
                 keys: Arc::new(entries.iter().map(|(key, _)| Arc::<str>::from(*key)).collect()),
-                values: entries.iter().map(|(_, value)| str_value(value)).collect(),
+                values: entries
+                    .iter()
+                    .map(|(_, value)| str_value(value))
+                    .collect::<Vec<_>>()
+                    .into(),
             }
         } else {
             Value::Dict(Arc::new(
@@ -1840,7 +1844,7 @@ mod tests {
 
         let fixed_dict = Value::FixedDict {
             keys: Arc::new(vec![Arc::<str>::from("alpha"), Arc::<str>::from("beta")]),
-            values: vec![Value::Int(1), Value::Int(2)],
+            values: vec![Value::Int(1), Value::Int(2)].into(),
         };
         let contains_fixed = handle("contains", &[fixed_dict.clone(), str_value("alpha")]).unwrap();
         assert!(matches!(contains_fixed, Value::Bool(true)));

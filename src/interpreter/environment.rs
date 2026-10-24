@@ -161,12 +161,14 @@ impl Environment {
                         }
                     }
                 }
-                Value::Array(values) | Value::DenseIntDict(values) => {
+                Value::Array(values)
+                | Value::DenseIntDict(values)
+                | Value::FixedDict { values, .. } => {
                     if visited_containers.insert((0, std::sync::Arc::as_ptr(&values) as usize)) {
                         pending.extend(values.iter().cloned());
                     }
                 }
-                Value::FixedDict { values, .. } | Value::Set(values) => pending.extend(values),
+                Value::Set(values) => pending.extend(values),
                 Value::Queue(values) => pending.extend(values.iter().cloned()),
                 Value::Stack(values) => pending.extend(values.iter().cloned()),
                 Value::IntDict(values) => {

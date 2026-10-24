@@ -1134,7 +1134,7 @@ fn csv_row_fields(value: &Value) -> Result<std::collections::BTreeMap<&str, &Val
     match value {
         Value::Dict(fields) => Ok(fields.iter().map(|(k, v)| (k.as_ref(), v)).collect()),
         Value::FixedDict { keys, values } => {
-            Ok(keys.iter().zip(values).map(|(k, v)| (k.as_ref(), v)).collect())
+            Ok(keys.iter().zip(values.iter()).map(|(k, v)| (k.as_ref(), v)).collect())
         }
         _ => Err("CSV requires array of dictionaries".to_string()),
     }
@@ -3106,7 +3106,7 @@ mod tests {
     fn test_to_json_fixed_dict_serializes_successfully() {
         let value = Value::FixedDict {
             keys: Arc::new(vec![Arc::<str>::from("title"), Arc::<str>::from("count")]),
-            values: vec![Value::Str(Arc::new("Kujo".to_string())), Value::Int(2)],
+            values: vec![Value::Str(Arc::new("Kujo".to_string())), Value::Int(2)].into(),
         };
 
         let encoded = to_json(&value).expect("FixedDict should serialize to JSON");

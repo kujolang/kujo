@@ -5077,8 +5077,8 @@ pub extern "C" fn jit_make_dict_with_keys(
             Arc::increment_strong_count(keys_ptr as *const Vec<Arc<str>>);
             Arc::from_raw(keys_ptr as *const Vec<Arc<str>>)
         };
-        let values = stack.drain(stack.len() - count..).collect();
-        let value = Value::FixedDict { keys: owned_keys, values };
+        let values: Vec<Value> = stack.drain(stack.len() - count..).collect();
+        let value = Value::FixedDict { keys: owned_keys, values: values.into() };
         if let Err(error) =
             VM::ensure_value_nesting_depth(&value, "building fixed dictionary literal")
         {
@@ -13078,7 +13078,10 @@ mod tests {
         let seeds = vec![
             Value::array(vec![Value::Int(1)]),
             Value::Dict(Arc::new([(Arc::from("0"), Value::Int(1))].into_iter().collect())),
-            Value::FixedDict { keys: Arc::new(vec![Arc::from("0")]), values: vec![Value::Int(1)] },
+            Value::FixedDict {
+                keys: Arc::new(vec![Arc::from("0")]),
+                values: vec![Value::Int(1)].into(),
+            },
             Value::IntDict(Arc::new([(0, Value::Int(1))].into_iter().collect())),
             Value::DenseIntDict(Arc::new(vec![Value::Int(1)])),
             Value::DenseIntDictInt(Arc::new(vec![Some(1)])),

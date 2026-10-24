@@ -1170,11 +1170,15 @@ impl VM {
             }
             Value::FixedDict { keys, mut values } => {
                 if let Some(idx) = keys.iter().position(|k| k.as_ref() == field.as_str()) {
-                    values[idx] = value;
+                    Arc::make_mut(&mut values)[idx] = value;
                     (Value::FixedDict { keys, values }, "updating fixed dictionary entry")
                 } else {
                     let mut dict = DictMap::default();
-                    for (k, v) in keys.iter().cloned().zip(values.into_iter()) {
+                    for (k, v) in keys.iter().cloned().zip(
+                        Arc::try_unwrap(values)
+                            .unwrap_or_else(|shared| (*shared).clone())
+                            .into_iter(),
+                    ) {
                         dict.insert(k, v);
                     }
                     dict.insert(Arc::from(field), value);
@@ -1334,9 +1338,8 @@ impl VM {
                     } else {
                         let key = i.to_string();
                         if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_str()) {
-                            // FixedDict owns its Vec; Value::clone already gives
-                            // aliases a separate vector. Only nested Values share.
-                            values[idx] = value;
+                            // Detach shared fixed-dictionary storage before mutation.
+                            Arc::make_mut(values)[idx] = value;
                         } else {
                             let mut dict = DictMap::default();
                             for (k, v) in keys.iter().cloned().zip(values.iter().cloned()) {
@@ -1468,7 +1471,7 @@ impl VM {
                 }
                 Value::FixedDict { keys, values } => {
                     if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_str()) {
-                        values[idx] = value;
+                        Arc::make_mut(values)[idx] = value;
                     } else {
                         let mut dict = DictMap::default();
                         for (k, v) in keys.iter().cloned().zip(values.iter().cloned()) {
@@ -1656,14 +1659,18 @@ impl VM {
             }
             (Value::FixedDict { keys, mut values }, Value::Str(key)) => {
                 if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_str()) {
-                    values[idx] = value;
+                    Arc::make_mut(&mut values)[idx] = value;
                     return checked(
                         Value::FixedDict { keys, values },
                         "updating fixed dictionary entry",
                     );
                 } else {
                     let mut dict = DictMap::default();
-                    for (k, v) in keys.iter().cloned().zip(values.into_iter()) {
+                    for (k, v) in keys.iter().cloned().zip(
+                        Arc::try_unwrap(values)
+                            .unwrap_or_else(|shared| (*shared).clone())
+                            .into_iter(),
+                    ) {
                         dict.insert(k, v);
                     }
                     dict.insert(Arc::from(key.as_str()), value);
@@ -1774,14 +1781,18 @@ impl VM {
                     let key = int_key_string(i);
                     if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_ref()) {
                         let mut values = values;
-                        values[idx] = value;
+                        Arc::make_mut(&mut values)[idx] = value;
                         return checked(
                             Value::FixedDict { keys, values },
                             "updating fixed dictionary entry",
                         );
                     } else {
                         let mut dict = DictMap::default();
-                        for (k, v) in keys.iter().cloned().zip(values.into_iter()) {
+                        for (k, v) in keys.iter().cloned().zip(
+                            Arc::try_unwrap(values)
+                                .unwrap_or_else(|shared| (*shared).clone())
+                                .into_iter(),
+                        ) {
                             dict.insert(k, v);
                         }
                         dict.insert(Arc::clone(&key), value);
@@ -5110,7 +5121,7 @@ impl VM {
                     }
                     values.reverse();
                     if !self.push_checked_value(
-                        Value::FixedDict { keys: Arc::clone(&keys), values },
+                        Value::FixedDict { keys: Arc::clone(&keys), values: values.into() },
                         "building fixed dictionary literal",
                     )? {
                         continue;

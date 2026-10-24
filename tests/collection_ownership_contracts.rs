@@ -2,6 +2,34 @@
 mod support;
 
 #[test]
+fn fixed_key_dictionary_updates_preserve_snapshots_in_both_runtimes() {
+    support::success(
+        r#"
+        func update(input) {
+            mut changed := input
+            changed["row"][0] = 9
+            changed["fresh"] = [4]
+            return changed
+        }
+        mut state := {"row": [1,2], "flag": 7}
+        let original := state
+        state["flag"] = 8
+        assert_equal(original, {"row": [1,2], "flag": 7})
+        let changed := update(state)
+        state["row"] = push(state["row"], 3)
+        assert_equal(state, {"row": [1,2,3], "flag": 8})
+        assert_equal(changed, {"row": [9,2], "flag": 8, "fresh": [4]})
+        assert_equal(original, {"row": [1,2], "flag": 7})
+        let before_error := state
+        mut caught := false
+        try { state["row"][99] = 5 } except error { caught = true }
+        assert(caught)
+        assert_equal(state, before_error)
+        "#,
+    );
+}
+
+#[test]
 fn queue_updates_preserve_snapshots_order_and_nested_values() {
     support::success(
         r#"

@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Fixed dictionary COW](fixed-dictionary-cow-2026-10-24.json) removes container
+  copies from compiled local field reads: all six width/read-count combinations
+  now allocate zero bytes, previously up to 17,965,056 bytes. Snapshot writes
+  detach shared storage; unique writes reuse it. Shared-DAG depth and cached-child
+  traversal are covered. 1,077 library tests (8 ignored), 184 integration tests,
+  formatting and minimal-feature compilation pass. Current-candidate release
+  checksums, production sizes and competitive performance remain unverified.
+
 - [Mapped production CPU profile](native-indexed-read-profile-2026-10-24.json)
   retains the unchanged Matmul::Single production timeout on `7468173`: no
   first warmup completion within 600 seconds. Matching binary UUID and linker-map

@@ -3944,7 +3944,7 @@ mod tests {
             builtins::parse_json(r#"{"z":[true,null,1.5],"a":"café 世界\n\"\\"}"#).unwrap(),
             Value::FixedDict {
                 keys: Arc::new(vec![Arc::from("z"), Arc::from("a"), Arc::from("z")]),
-                values: vec![Value::Int(1), Value::Int(2), Value::Int(3)],
+                values: vec![Value::Int(1), Value::Int(2), Value::Int(3)].into(),
             },
         ];
         for size in [0, 1, 8191, 8192, 8193, 262144] {
@@ -5438,7 +5438,8 @@ mod tests {
                 Arc::<str>::from("method"),
                 Arc::<str>::from("headers"),
             ]),
-            values: vec![str_value(&endpoint), str_value("GET"), Value::Dict(Arc::new(headers))],
+            values: vec![str_value(&endpoint), str_value("GET"), Value::Dict(Arc::new(headers))]
+                .into(),
         };
 
         let result =

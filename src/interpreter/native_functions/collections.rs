@@ -1841,11 +1841,11 @@ mod tests {
 
         let fixed_left = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("a"), Arc::from("b")]),
-            values: vec![Value::Int(1), Value::Int(2)],
+            values: vec![Value::Int(1), Value::Int(2)].into(),
         };
         let fixed_right = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("b"), Arc::from("c")]),
-            values: vec![Value::Int(99), Value::Int(3)],
+            values: vec![Value::Int(99), Value::Int(3)].into(),
         };
 
         let merged = handle(&mut interpreter, "merge", &[fixed_left.clone(), fixed_right.clone()])
@@ -1875,11 +1875,11 @@ mod tests {
 
         let left = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("a"), Arc::from("b")]),
-            values: vec![Value::Int(1), Value::Int(2)],
+            values: vec![Value::Int(1), Value::Int(2)].into(),
         };
         let right = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("b"), Arc::from("c")]),
-            values: vec![Value::Int(99), Value::Int(3)],
+            values: vec![Value::Int(99), Value::Int(3)].into(),
         };
 
         let inverted = handle(&mut interpreter, "invert", std::slice::from_ref(&left))

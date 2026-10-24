@@ -12,7 +12,7 @@ fn representations() -> Vec<Value> {
         json(r#"{"0":7,"1":8}"#),
         Value::FixedDict {
             keys: Arc::new(vec![Arc::from("1"), Arc::from("0")]),
-            values: vec![Value::Int(8), Value::Int(7)],
+            values: vec![Value::Int(8), Value::Int(7)].into(),
         },
         Value::IntDict(Arc::new(map)),
         Value::DenseIntDict(Arc::new(vec![Value::Int(7), Value::Int(8)])),

@@ -340,7 +340,7 @@ impl SpawnCapturedValue {
                     keys.push(Arc::<str>::from(key));
                     values.push(dict_value.into_value());
                 }
-                Value::FixedDict { keys: Arc::new(keys), values }
+                Value::FixedDict { keys: Arc::new(keys), values: values.into() }
             }
             SpawnCapturedValue::IntDict(entries) => {
                 let mut map = IntDictMap::default();
@@ -7894,7 +7894,7 @@ mod boundary_dictionary_tests {
             ),
             Value::FixedDict {
                 keys: Arc::new(vec!["0".into(), "1".into()]),
-                values: vec![Value::Int(7), Value::Int(8)],
+                values: vec![Value::Int(7), Value::Int(8)].into(),
             },
             Value::IntDict(Arc::new(
                 [(0, Value::Int(7)), (1, Value::Int(8))].into_iter().collect(),
@@ -7941,7 +7941,7 @@ mod boundary_dictionary_tests {
             assert!(value.dictionary_get(missing).is_none(), "{missing}");
         }
         for empty in [
-            Value::FixedDict { keys: Arc::new(vec![]), values: vec![] },
+            Value::FixedDict { keys: Arc::new(vec![]), values: vec![].into() },
             Value::IntDict(Arc::new(Default::default())),
             Value::DenseIntDict(Arc::new(vec![])),
             Value::DenseIntDictInt(Arc::new(vec![])),

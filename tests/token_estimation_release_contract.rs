@@ -44,7 +44,7 @@ fn token_text_limits_remain_character_based_and_keep_exact_errors() {
         );
         let message = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("role"), Arc::from("content")]),
-            values: vec![text("assistant".into()), oversized],
+            values: vec![text("assistant".into()), oversized].into(),
         };
         let result = call("ai_fit_context", &[array(vec![message]), Value::Int(0)]);
         assert!(

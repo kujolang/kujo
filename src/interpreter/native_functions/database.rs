@@ -1367,7 +1367,7 @@ mod tests {
     #[test]
     fn test_db_pool_accepts_fixed_dict_optional_config() {
         let db_path = tmp_db_path("sqlite_pool_fixed_dict.db");
-        let fixed_config = Value::FixedDict { keys: Arc::new(vec![]), values: vec![] };
+        let fixed_config = Value::FixedDict { keys: Arc::new(vec![]), values: vec![].into() };
 
         let pool = handle("db_pool", &[str_value("sqlite"), str_value(&db_path), fixed_config])
             .expect("db_pool should return a value");

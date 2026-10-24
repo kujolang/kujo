@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "scope": "Fixed dictionary copy-on-write storage with unchanged language value semantics; allocation evidence, not competitive timing.",
+  "baseline": {
+    "source_commit": "746817343ab845d8a61fe810f49a6aef451479a8",
+    "scope": "Whole compiled function repeatedly LoadLocal+FieldGet on fixed dictionaries; JIT compilation and fresh argument setup excluded, successful primitive return checked. Allocation counts, not timings.",
+    "measurements": [
+      {
+        "fields": 8,
+        "reads": 9,
+        "allocations": 9,
+        "requested_bytes": 9792
+      },
+      {
+        "fields": 8,
+        "reads": 129,
+        "allocations": 129,
+        "requested_bytes": 140352
+      },
+      {
+        "fields": 128,
+        "reads": 9,
+        "allocations": 9,
+        "requested_bytes": 156672
+      },
+      {
+        "fields": 128,
+        "reads": 129,
+        "allocations": 129,
+        "requested_bytes": 2245632
+      },
+      {
+        "fields": 1024,
+        "reads": 9,
+        "allocations": 9,
+        "requested_bytes": 1253376
+      },
+      {
+        "fields": 1024,
+        "reads": 129,
+        "allocations": 129,
+        "requested_bytes": 17965056
+      }
+    ],
+    "hashes": {
+      "/tmp/kujo-compiled-read-allocation-probe.rs": "1fc83c7350cdc2dd37132eabbac9d15d5a5488d2a0cdc866f22f1404dedc8959",
+      "/tmp/kujo-compiled-read-allocation-probe": "cf5a0c2826d0d472a893f9f08a0824bf4fddad679ad79836a8d4b0e9c1b98d68",
+      "/tmp/kujo-compiled-read-allocation-baseline.log": "4f6c8a3ed2b58b25bb5e7aa17081c3d3b065fb7c3bc67dd385cb76a3f7526c34",
+      "target/debug/deps/libkujo-837bbf5b9bf890b9.rlib": "c2f2e66959969e3f94029fe1cc0e2594f15170df689e6cc5bf6839ef5925ce49",
+      "src/jit.rs": "2f7c242165ad6715eabe9898565b10f7ed445a2a464bbbeaa824e124beaaa92a",
+      "src/native_owned.rs": "8b1f21255d591016e895bf73180d59ae17c7d3a4966b6a34648dfc5fe5b42b0f",
+      "src/interpreter/value.rs": "9698993f11847fbf66910729af821f3dd35fa209399885fe4ed06a4a0fbc1f82"
+    },
+    "finding": "FixedDict values Vec is cloned by native operand duplication at each local load, despite borrowed read helpers. COW storage is the next candidate; must cover all mutations, shared-DAG depth, cache invalidation, spawn capture, serialization and both-runtime parity.",
+    "harness_correction": "Warm native call consumed argument local as designed; measured call replenishes fresh argument outside allocation window."
+  },
+  "after": [
+    {
+      "fields": 8,
+      "reads": 9,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "fields": 8,
+      "reads": 129,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "fields": 128,
+      "reads": 9,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "fields": 128,
+      "reads": 129,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "fields": 1024,
+      "reads": 9,
+      "allocations": 0,
+      "requested_bytes": 0
+    },
+    {
+      "fields": 1024,
+      "reads": 129,
+      "allocations": 0,
+      "requested_bytes": 0
+    }
+  ],
+  "verification": {
+    "library_passed": 1077,
+    "library_ignored": 8,
+    "integration_passed": 184,
+    "integration_failed": 0,
+    "format": "passed",
+    "minimal_feature_library": "passed",
+    "cost_test": "tests/native_read_allocation.rs::compiled_local_field_reads_do_not_copy_fixed_dictionary_storage",
+    "semantic_test": "tests/collection_ownership_contracts.rs::fixed_key_dictionary_updates_preserve_snapshots_in_both_runtimes",
+    "depth_cache": "Fresh-wrapper regression reproduced 33 full scans versus expected 1 before repair; final cache reuses child bounds and bounds shared-DAG traversal."
+  },
+  "log_hashes": {
+    "/tmp/kujo-fixed-cow-library-final.log": "2fc560be5923be42adeced3557bb5ef450e0c3f1b6ecef151bd2bc6b42e05b0b",
+    "/tmp/kujo-fixed-cow-regressions-recovered.log": "c909b302c9928f2bd9834a6abe0cdb462868e22a1d67e939cbb0c002a1467808",
+    "/tmp/kujo-fixed-cow-minimal-final.log": "b34beb58bf097fd70a14e7ecc675eea9bc45afa0a66bd39f68327afcf305f386",
+    "/tmp/kujo-fixed-cow-child-cache-baseline.log": "855e00c145e46e78fc5d1692369c7e0d57e74535f15eebc496b7c13eb73846d4"
+  },
+  "limitations": [
+    "Final-candidate all-50 release checksums and production/competitive gates remain open.",
+    "Integration compilation exhausted disk; completed recovery uses package-scoped Cargo cleanup, no incremental compilation, and two build jobs. Failed runs remain in /tmp/kujo-fixed-cow-regressions-final.log."
+  ]
+}

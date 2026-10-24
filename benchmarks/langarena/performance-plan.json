@@ -39,7 +39,8 @@
         "post-collection-guard-native-surfaces-2026-10-23.json",
         "post-iteration-native-surfaces-2026-10-24.json",
         "post-nested-write-native-surfaces-2026-10-24.json",
-        "post-path-append-native-surfaces-2026-10-24.json"
+        "post-path-append-native-surfaces-2026-10-24.json",
+        "fixed-dictionary-cow-2026-10-24.json"
       ]
     },
     {
@@ -57,7 +58,8 @@
         "native-depth-cache-2026-10-24.json",
         "native-caller-handler-rebinding-2026-10-24.json",
         "scalar-depth-allocations-2026-10-24.json",
-        "native-borrowed-read-allocations-2026-10-24.json"
+        "native-borrowed-read-allocations-2026-10-24.json",
+        "fixed-dictionary-cow-2026-10-24.json"
       ]
     },
     {

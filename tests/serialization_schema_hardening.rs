@@ -8,7 +8,7 @@ use std::sync::Arc;
 fn csv_accepts_fixed_dictionary_rows() {
     let row = Value::FixedDict {
         keys: Arc::new(vec![Arc::from("name"), Arc::from("age")]),
-        values: vec![Value::Str(Arc::new("Kujo".into())), Value::Int(2)],
+        values: vec![Value::Str(Arc::new("Kujo".into())), Value::Int(2)].into(),
     };
     let output = builtins::to_csv(&array(vec![row])).unwrap();
     assert!(Value::equals(
@@ -97,7 +97,8 @@ fn csv_preserves_scalars_escaping_missing_cells_and_redaction() {
         &json(r#"[{"a":"comma,quote\"\n雪","b":"true","c":""},{"a":"other","b":"","c":""}]"#)
     ));
     let secret = call("secret", &[Value::Str(Arc::new("hidden".into()))]);
-    let row = Value::FixedDict { keys: Arc::new(vec![Arc::from("token")]), values: vec![secret] };
+    let row =
+        Value::FixedDict { keys: Arc::new(vec![Arc::from("token")]), values: vec![secret].into() };
     assert_eq!(builtins::to_csv(&array(vec![row])).unwrap(), "token\n***\n");
 }
 

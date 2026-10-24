@@ -184,7 +184,7 @@ mod tests {
         assert_matches_owned(&Value::Dict(Arc::new(dictionary)));
         let fixed = Value::FixedDict {
             keys: Arc::new(vec!["z".into(), "a".into(), "z".into()]),
-            values: vec![Value::Int(1), array, Value::Int(3)],
+            values: vec![Value::Int(1), array, Value::Int(3)].into(),
         };
         assert_matches_owned(&fixed);
         let integers: IntDictMap =
@@ -207,7 +207,8 @@ mod tests {
         }
         let fixed = Value::FixedDict {
             keys: Arc::new(vec!["z".into(), "a".into(), "z".into()]),
-            values: vec![Value::Bytes(Arc::new(vec![1])), Value::Float(f64::NAN), Value::Int(3)],
+            values: vec![Value::Bytes(Arc::new(vec![1])), Value::Float(f64::NAN), Value::Int(3)]
+                .into(),
         };
         assert_matches_owned(&fixed);
         let integers: IntDictMap =

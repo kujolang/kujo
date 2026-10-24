@@ -509,7 +509,7 @@ mod tests {
         roots.enter().unwrap();
         let value = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("key")]),
-            values: vec![Value::Int(7)],
+            values: vec![Value::Int(7)].into(),
         };
         let (payload, kind) = roots.encode(value).unwrap();
         let original = match roots.borrow_value(payload, kind).unwrap().as_ref() {

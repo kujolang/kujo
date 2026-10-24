@@ -602,13 +602,13 @@ mod tests {
     fn accepts_vm_fixed_dictionary_tls_options() {
         let server_options = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("min_version")]),
-            values: vec![string_value("1.3")],
+            values: vec![string_value("1.3")].into(),
         };
         assert_eq!(parse_server_min_version(Some(&server_options)).unwrap(), SslVersion::TLS1_3);
 
         let client_options = Value::FixedDict {
             keys: Arc::new(vec![Arc::from("min_version"), Arc::from("ca_pem")]),
-            values: vec![string_value("1.2"), string_value("fixture-ca")],
+            values: vec![string_value("1.2"), string_value("fixture-ca")].into(),
         };
         let parsed = parse_client_options(Some(&client_options)).unwrap();
         assert_eq!(parsed.min_version, SslVersion::TLS1_2);

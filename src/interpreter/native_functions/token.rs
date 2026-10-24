@@ -466,7 +466,11 @@ mod tests {
                                 keys: Arc::new(
                                     entries.iter().map(|(key, _)| Arc::from(*key)).collect(),
                                 ),
-                                values: entries.into_iter().map(|(_, value)| value).collect(),
+                                values: entries
+                                    .into_iter()
+                                    .map(|(_, value)| value)
+                                    .collect::<Vec<_>>()
+                                    .into(),
                             }
                         } else {
                             d(entries)

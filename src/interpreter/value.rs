@@ -1277,7 +1277,7 @@ pub enum Value {
     /// Dictionary (hash map) of string keys to values (reference-counted for cheap cloning)
     Dict(Arc<DictMap>),
     /// Fixed-key dictionary for fast literal construction
-    FixedDict { keys: Arc<Vec<Arc<str>>>, values: Vec<Value> },
+    FixedDict { keys: Arc<Vec<Arc<str>>>, values: Arc<Vec<Value>> },
     /// Dictionary (hash map) of integer keys to values (reference-counted for cheap cloning)
     IntDict(Arc<IntDictMap>),
     /// Dense integer dictionary for non-negative integer keys
@@ -1677,6 +1677,7 @@ impl Value {
                 Value::IntDict(items) => Some((2, Arc::as_ptr(items) as usize)),
                 Value::DenseIntDict(items) => Some((3, Arc::as_ptr(items) as usize)),
                 Value::Struct { fields, .. } => Some((4, Arc::as_ptr(fields) as usize)),
+                Value::FixedDict { values, .. } => Some((5, Arc::as_ptr(values) as usize)),
                 _ => None,
             };
             if let Some(key) = allocation {
@@ -2326,6 +2327,63 @@ impl Value {
 #[cfg(test)]
 mod struct_storage_regressions {
     use super::*;
+
+    #[test]
+    fn fixed_dictionary_storage_is_shared_until_a_write() {
+        for width in [1usize, 128, 1024] {
+            let mut value = Value::FixedDict {
+                keys: Arc::new((0..width).map(|i| Arc::<str>::from(i.to_string())).collect()),
+                values: vec![Value::Int(7); width].into(),
+            };
+            let pointer = match &value {
+                Value::FixedDict { values, .. } => Arc::as_ptr(values),
+                _ => unreachable!(),
+            };
+            crate::vm::VM::set_indexed_value(&mut value, Value::Int(0), Value::Int(8)).unwrap();
+            assert!(
+                matches!(&value, Value::FixedDict { values, .. } if Arc::as_ptr(values)==pointer)
+            );
+            let saved = value.clone();
+            assert!(
+                matches!(&saved, Value::FixedDict { values, .. } if Arc::as_ptr(values)==pointer)
+            );
+            crate::vm::VM::set_indexed_value(
+                &mut value,
+                Value::Str(Arc::new("0".into())),
+                Value::Int(9),
+            )
+            .unwrap();
+            assert!(
+                matches!(&value, Value::FixedDict { values, .. } if Arc::as_ptr(values)!=pointer && matches!(values[0],Value::Int(9)))
+            );
+            assert!(
+                matches!(&saved, Value::FixedDict { values, .. } if matches!(values[0],Value::Int(8)))
+            );
+        }
+    }
+
+    #[test]
+    fn fixed_dictionary_shared_dags_have_bounded_depth_visits() {
+        let mut value = Value::Null;
+        for _ in 0..40 {
+            value = Value::FixedDict {
+                keys: Arc::new(vec!["left".into(), "right".into()]),
+                values: vec![value.clone(), value].into(),
+            };
+        }
+        let mut visits = 0;
+        assert_eq!(Value::walk_nesting_depth(&value, || visits += 1), 40);
+        assert!(visits <= 81, "shared DAG revisited {visits} times");
+        let saved = value.clone();
+        crate::vm::VM::set_indexed_value(
+            &mut value,
+            Value::Str(Arc::new("left".into())),
+            Value::Null,
+        )
+        .unwrap();
+        assert_eq!(Value::nesting_depth(&saved), 40);
+        assert_eq!(Value::nesting_depth(&value), 40);
+    }
 
     #[test]
     fn scalar_depth_fast_path_matches_full_walk_and_nested_depth() {
