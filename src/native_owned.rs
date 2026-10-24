@@ -89,6 +89,18 @@ pub(crate) struct NativeCallRoots {
 }
 
 impl NativeCallRoots {
+    /// Only fully unwound stores may be lent to another invocation. Keep issued
+    /// identities and backing capacity, but never retain a live value or argument.
+    /// Large exceptional calls must not pin their high-water storage indefinitely.
+    pub(crate) fn is_reusable(&self) -> bool {
+        self.depth == 0
+            && self.pending_arguments.is_none()
+            && self.values.frames.is_empty()
+            && self.values.lookup.is_empty()
+            && self.values.slots.capacity() <= 256
+            && self.values.frames.capacity() <= 256
+    }
+
     /// Move an incoming argument vector into this fresh call context. Generated
     /// parameter initialization must consume every value once in declaration order.
     /// Installation precedes the invocation wrapper scope and function-entry scope;
@@ -589,6 +601,43 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn recycled_call_roots_keep_capacity_but_not_values_or_handle_identities() {
+        let mut roots = NativeCallRoots::default();
+        assert!(roots.is_reusable());
+        let value = Arc::new(vec![Value::Int(7)]);
+        let weak = Arc::downgrade(&value);
+        roots.set_arguments(vec![Value::Array(value)]).unwrap();
+        assert!(!roots.is_reusable());
+        roots.enter().unwrap();
+        roots.enter().unwrap();
+        let argument = roots.take_argument(0).unwrap().unwrap();
+        let (old, _) = roots.encode(argument).unwrap();
+        let capacity = roots.storage_state();
+        assert!(!roots.is_reusable());
+        roots.leave().unwrap();
+        roots.leave().unwrap();
+        assert!(roots.is_reusable());
+        assert!(weak.upgrade().is_none());
+        for _ in 0..100 {
+            roots.enter().unwrap();
+            roots.enter().unwrap();
+            let (new, _) = roots.encode(Value::array(vec![Value::Int(8)])).unwrap();
+            assert_ne!(old, new);
+            assert!(matches!(roots.borrow_owned(old), Err(OwnershipError::StaleHandle)));
+            assert_eq!(roots.storage_state(), capacity);
+            roots.leave().unwrap();
+            roots.leave().unwrap();
+            assert!(roots.is_reusable());
+        }
+        roots.enter().unwrap();
+        for _ in 0..257 {
+            roots.encode(Value::array(vec![])).unwrap();
+        }
+        roots.leave().unwrap();
+        assert!(!roots.is_reusable(), "oversized storage must not be retained");
+    }
 
     #[test]
     fn cached_reads_validate_live_slots_and_avoid_repeated_hash_lookups() {

@@ -125,6 +125,10 @@ pub struct VM {
     recursion_depth: usize,
     // Active native host frames; deliberately separate from restorable VM frames.
     native_call_depth: usize,
+    /// Inactive native root stores. Active recursive calls exclusively own their
+    /// store; this pool retains capacity only after the invocation has unwound.
+    #[cfg(feature = "runtime-jit")]
+    native_root_pool: Vec<crate::native_owned::NativeCallRoots>,
 
     /// Maximum recursion depth observed (for profiling)
     max_recursion_depth: usize,
@@ -654,6 +658,8 @@ impl VM {
             jit_var_names_cache: HashMap::new(),
             recursion_depth: 0,
             native_call_depth: 0,
+            #[cfg(feature = "runtime-jit")]
+            native_root_pool: Vec::new(),
             max_recursion_depth: 0,
             inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
@@ -8617,6 +8623,11 @@ impl VM {
                         // Execute the compiled function!
                         // Lock is NOT held during execution to allow recursive calls
                         #[cfg(feature = "runtime-jit")]
+                        {
+                            vm_context.owned_roots =
+                                self.native_root_pool.pop().unwrap_or_default();
+                        }
+                        #[cfg(feature = "runtime-jit")]
                         if use_positional_args {
                             vm_context
                                 .owned_roots
@@ -8628,6 +8639,15 @@ impl VM {
                         #[cfg(not(feature = "runtime-jit"))]
                         drop(args);
                         let result_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
+
+                        // The boundary has moved any owned return out of the root
+                        // store and unwound its scopes, including on language errors.
+                        // Malformed/unbalanced stores are dropped, never recycled.
+                        #[cfg(feature = "runtime-jit")]
+                        if self.native_root_pool.len() < 32 && vm_context.owned_roots.is_reusable()
+                        {
+                            self.native_root_pool.push(std::mem::take(&mut vm_context.owned_roots));
+                        }
 
                         if let Some(error) = vm_context.runtime_error.take() {
                             return Err(error);
@@ -10327,6 +10347,55 @@ mod tests {
             }
             // Invalid arity remains a language error after native promotion.
             assert!(vm.call_function_from_jit(function, vec![]).is_err());
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn compiled_callback_reuses_empty_roots_after_success_and_error() {
+        let chunk = compile_chunk(
+            "func update(input, index) { mut data := input; data[index] = 9; return data }",
+        );
+        let function_chunk = chunk
+            .constants
+            .iter()
+            .find_map(|c| match c {
+                Constant::Function(f) => Some((**f).clone()),
+                _ => None,
+            })
+            .unwrap();
+        let function = Value::BytecodeFunction {
+            chunk: function_chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        let mut vm = VM::new();
+        vm.set_jit_enabled(true);
+        assert!(vm.jit_compile_bytecode_function(&function).unwrap());
+        let snapshot = Arc::new(vec![Value::Int(7)]);
+        let mut capacity = None;
+        let mut last_identity = 0;
+        for index in [0, 99, 0, -99, 0].into_iter().cycle().take(100) {
+            let result = vm.call_function_from_jit(
+                function.clone(),
+                vec![Value::Array(snapshot.clone()), Value::Int(index)],
+            );
+            if index == 0 {
+                assert!(
+                    matches!(result.unwrap(), Value::Array(a) if matches!(a[0], Value::Int(9)))
+                );
+            } else {
+                assert!(result.is_err());
+            }
+            assert!(matches!(snapshot[0], Value::Int(7)));
+            assert_eq!(Arc::strong_count(&snapshot), 1, "pool retained a value");
+            assert_eq!(vm.native_root_pool.len(), 1);
+            let roots = &vm.native_root_pool[0];
+            assert!(roots.is_reusable());
+            assert!(roots.issued_handles() > last_identity);
+            last_identity = roots.issued_handles();
+            let state = roots.storage_state();
+            assert_eq!(*capacity.get_or_insert(state), state, "capacity grew after warmup");
         }
     }
 

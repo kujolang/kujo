@@ -6,7 +6,7 @@ fn quicksort_promotes_pivot_helper_without_changing_snapshots_or_errors() {
     let port = include_str!("../benchmarks/langarena/port.kujo");
     let kernel = port.split("func quick_sort(input, low, high) {").nth(1).unwrap();
     let kernel = kernel.split("func merge_sort(").next().unwrap();
-    let source = format!(
+    let mut source = format!(
         r#"
         func idiv(a, b) {{ return to_int(a / b) }}
         func quick_sort(input, low, high) {{{kernel}
@@ -26,9 +26,33 @@ fn quicksort_promotes_pivot_helper_without_changing_snapshots_or_errors() {
         assert_equal(saved, [42])
         assert_equal(original, [9,-2,9,0,4,-2,7,1])
         assert_equal(quick_sort([2,1], 0, 1), [1,2])
-        print("PASS")
         "#
     );
+    // Entire-output checks across distinct recursion shapes. The same source
+    // runs in all three runtimes, and saved snapshots must survive every call.
+    let mut seed = 42_u64;
+    for size in [0, 1, 2, 17, 64, 127] {
+        let random: Vec<i64> = (0..size)
+            .map(|_| {
+                seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+                ((seed >> 8) % 31) as i64 - 15
+            })
+            .collect();
+        let mut sorted = random.clone();
+        sorted.sort();
+        let reverse: Vec<_> = sorted.iter().copied().rev().collect();
+        for (case, input) in
+            [random, sorted.clone(), reverse, vec![7; size]].into_iter().enumerate()
+        {
+            let mut expected = input.clone();
+            expected.sort();
+            source.push_str(&format!(
+                "let snapshot_{size}_{case} := {input:?}; assert_equal(quick_sort(snapshot_{size}_{case}, 0, {}), {expected:?}); assert_equal(snapshot_{size}_{case}, {input:?})\n",
+                size as i64 - 1
+            ));
+        }
+    }
+    source.push_str("print(\"PASS\")\n");
     let directory = tempfile::tempdir().unwrap();
     let file = directory.path().join("quicksort.kujo");
     std::fs::write(&file, source).unwrap();
