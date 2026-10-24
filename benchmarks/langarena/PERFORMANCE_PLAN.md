@@ -480,3 +480,17 @@ TryPopRebind 7, UpdateBindingPath 12, MakeClosure 2 and LoadCapture 2. This is
 eligibility evidence only: actual native time coverage, final-candidate production
 checksums, controlled competitive measurements and release/platform gates remain
 open. Existing frozen benchmark runs do not certify this source revision.
+
+### Native iteration and loop-return milestone
+
+`ForNext` now has native normalized array/byte stepping and guarded generator
+continuation handling. Reachable-edge stack analysis preserves early-return and
+exhaustion control flow. Returns inside separately compiled loops resume the VM
+at the return instruction for normal frame cleanup; regression coverage includes
+the previously incorrect hot `while` return and owned return values.
+
+The unchanged 165-function static audit now has 126 functions with no unsupported
+opcode (previously 109). Remaining first blockers: GuardAppendPath 10,
+TryPopRebind 7, UpdateBindingPath 16, MakeClosure 3, LoadCapture 2 and BeginTry 1.
+This remains static eligibility, not native time coverage or speed acceptance.
+See `native-iteration-2026-10-24.json` for verification and source provenance.

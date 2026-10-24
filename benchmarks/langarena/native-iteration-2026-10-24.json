@@ -1,0 +1,36 @@
+{
+  "scope": "Native normalized iteration, reachable-edge stack analysis, VM return handoff and callback view lifetime guards. No current all50, production or competitive speed acceptance.",
+  "source_parent": "06bbbc1",
+  "source_sha256": {
+    "src/jit.rs": "5de2244fbbc38e7a0908cc586dadab314308cd1a0fee2556b0ba9578307c695d",
+    "src/vm.rs": "5545e0272e2a9c6c27d9b3ec02d424702a732fb1440eecc5e3902038bcad238f",
+    "tests/jit_iteration.rs": "1ec2596da52f3a84ddc6c160f7ad32a61025d667fcb3cf3d7a9711738610ee5b"
+  },
+  "verification": {
+    "baseline": "/tmp/kujo-iteration-baseline.log: a8e7557 passes semantics but fails both required native iteration tests",
+    "early_return": "/tmp/kujo-native-iteration2.log: first() cannot compile because unreachable return-tail changes linear stack depth; fixed by reachable-edge analysis",
+    "hot_return": "/tmp/kujo-while-return-baseline.log: frozen a8e7557 native while loop returns -1 instead of150; /tmp/kujo-iteration-return.log reproduces corresponding new for-loop path. Fixed with VM resume at Return/ReturnNone.",
+    "stack_regression": "/tmp/kujo-iteration-final-contracts.log exposes const-loop native compilation loss; repaired by loop-entry-relative analysis and correct IndexSetInPlace placeholder stack effect",
+    "library": "/tmp/kujo-iteration-library-owned-views.log: 1059 passed,8 ignored,0 failed before final shared-global alias refinement",
+    "integration": "/tmp/kujo-iteration-contracts-owned-views.log:173 passed before final shared-global alias refinement",
+    "final_views": "/tmp/kujo-iteration-final-view-alias.log: generator success/error, separate locals/shared globals and forced scope/frame relocation pass after final refinement",
+    "final_callbacks": "/tmp/kujo-iteration-final-callbacks.log:28 passed after final refinement, including iteration, imports, owned values, field methods and scalar operators",
+    "minimal_features": "/tmp/kujo-iteration-final-minimal.log: cargo check --no-default-features --lib passed",
+    "format": "/tmp/kujo-iteration-final-format.log: cargo fmt --check passed"
+  },
+  "mechanism": [
+    "ForNext uses distinct item/exhaustion edges; null is an item, not exhaustion",
+    "Array/byte stepping retains snapshot semantics; locked loops resume before generator callbacks; full functions use VM continuation API",
+    "Reachable control-flow analysis ignores dead return tails and starts at the compiled entry with relative stack depth",
+    "Loop returns hand the evaluated stack and locals to the VM for frame cleanup",
+    "VM-owned context pointers refresh after callbacks on success/error; standalone maps remain external; shared local/global aliases refresh together",
+    "Iteration helper roots remain bounded at8/128 repeated traversals; byte/index/type errors preserved"
+  ],
+  "static_audit": "post-iteration-native-surfaces-2026-10-24.json",
+  "remaining": [
+    "Native nested path writes/appends, pop/rebinding, captures/closures/try surfaces",
+    "Final candidate all50 production and separate runtime acceptance",
+    "Profiles/native time coverage, controlled Goose/Rust comparisons and platform/release gates"
+  ],
+  "source_commit": "057d87b"
+}
