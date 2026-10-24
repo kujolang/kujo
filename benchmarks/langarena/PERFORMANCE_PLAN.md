@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Frozen scalar-array release matrix](checksums-2026-10-24-native-scalar-array-release.json)
+  verifies all 150 unchanged test-size checksums across JIT, VM and interpreter
+  on `3482e53`. Binary, source, input and report identities are retained, with
+  100 measurement reports verified. This predates positional argument transfer;
+  production and competitive acceptance remain open.
+
 - [Checked native array reads](native-scalar-array-reads-2026-10-24.json)
   avoid scalar materialization and reuse validated lookups for owned elements.
   All 1,080 library tests (8 ignored) and 151 integrations pass, including
