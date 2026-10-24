@@ -1,0 +1,67 @@
+# Unchanged QuickSort test workload, seven rotating rounds of before/after VM/JIT plus Rust/Goose.
+# Usage: kujo run compare_quicksort.kujo BASELINE LATEST RUST GOOSE OUTPUT_DIRECTORY
+# Baseline here means the pre-fix faf9f95 snapshot; not the original f037705 baseline.
+let options := args()
+assert_equal(len(options), 5)
+let rounds := 7
+let binaries := {"Baseline VM": options[0], "Baseline JIT": options[0], "Latest VM": options[1], "Latest JIT": options[1], "Rust": options[2], "Goose": options[3]}
+let directory := options[4]
+let cases := [["Sort::Quick", "benchmarks/langarena/test.json"]]
+let languages := ["Baseline VM", "Baseline JIT", "Latest VM", "Latest JIT", "Rust", "Goose"]
+
+# Time only the measured loop, as the upstream Rust and Goose runners do.
+# Assemble a temporary copy; preserve the normal port and all benchmark kernels.
+let source := read_file("benchmarks/langarena/port.kujo")
+let begin := "            while i < cfg[\"iterations\"] {"
+let end := "            let actual := u32(checksum(state))"
+assert_equal(len(split(source, begin)), 2)
+assert_equal(len(split(source, end)), 2)
+let timed := replace(replace(source, begin, "            let comparison_started := time_ns()\n" + begin), end, "            let comparison_elapsed := time_ns() - comparison_started\n            print(\"@comparison_ns \" + str(comparison_elapsed))\n" + end)
+let port := directory + "/timed-port.kujo"
+write_file(port, timed, true)
+mut results := []
+mut round := 0
+while round < rounds {
+    for selected in cases {
+        let name := selected[0]
+        let config := selected[1]
+        mut index := 0
+        while index < 6 {
+            let language := languages[(index + round) % 6]
+            print("START round=" + str(round + 1) + " " + name + " " + language)
+            mut command := [binaries[language], config, name]
+            if language == "Baseline VM" || language == "Baseline JIT" || language == "Latest VM" || language == "Latest JIT" {
+                command = [binaries[language], "run", port, "--scheduler-no-timeout"]
+                if language == "Latest JIT" || language == "Baseline JIT" { command = push(command, "--jit") }
+                command = push(push(command, config), name)
+            }
+            let started := time_ns()
+            let result := spawn_process(command, {"timeout_ms": 600000, "max_output_bytes": 1048576})
+            let wall := time_ns() - started
+            mut measured := -1.0
+            mut passed := false
+            if language == "Baseline VM" || language == "Baseline JIT" || language == "Latest VM" || language == "Latest JIT" {
+                passed = result.success && contains(result.stdout, name + ": OK ") == 1 && contains(result.stdout, "Summary: 1, 1, 0") == 1
+                for line in split(result.stdout, "\n") {
+                    if starts_with(line, "@comparison_ns ") { measured = to_float(split(line, " ")[1]) / 1000000000.0 }
+                }
+            } else {
+                let prefix := name + ": OK in "
+                passed = result.success && contains(result.stdout, prefix) == 1 && contains(result.stdout, ", 1, 1, 0") == 1
+                for line in split(result.stdout, "\n") {
+                    if starts_with(line, prefix) {
+                        let duration := split(line, " in ")[1]
+                        measured = to_float(substring(duration, 0, len(duration) - 1))
+                    }
+                }
+            }
+            let valid := passed && measured >= 0.0
+            results = push(results, {"round": round + 1, "benchmark": name, "config": config, "language": language, "passed": valid, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "stdout": result.stdout, "stderr": result.stderr})
+            write_file(directory + "/samples.json", to_json({"binaries": binaries, "kujo_runtime": "explicit per variant", "rounds": rounds, "results": results}), true)
+            if !valid { print("FAILED " + language + " " + name + ": " + result.stdout + result.stderr) }
+            if valid { print("PASS measured_seconds=" + str(measured)) }
+            index += 1
+        }
+    }
+    round += 1
+}

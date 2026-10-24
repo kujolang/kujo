@@ -7,24 +7,34 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Resumed on 2026-10-24 at the user's request, starting with QuickSort.**
+  `9b5694f` restores hot-call promotion for helpers reached from native code;
+  `50f8357` transfers callback arguments without repeated vector growth/reversal.
+  All 1,086 library tests (8 ignored) and 19 targeted integrations pass, including
+  VM/interpreter/JIT snapshots, argument ordering and error recovery. Release
+  measurements are recorded in [the QuickSort call-cost report](QUICKSORT_CALL_COSTS_2026_10_24.md).
+  All 150 frozen-release test-size checksums pass; timing gains remain
+  inconclusive under throttling. Production/competitive gates remain open.
+
 - [Latest five-variant comparison](COMPARISON_LATEST_2026_10_24.md) reruns the
   original baseline, latest VM/JIT, Goose and Rust in seven rotating rounds:
   140/140 checksum checks pass across four selected cases. Paired gains are
   2.17x for VM JSON generation and 2.63x for JIT QuickSort versus baseline VM.
   JIT QuickSort still takes approximately 153x Goose's and 175x Rust's time.
-  This measurement-only task does not resume implementation or establish an
-  all-50 competitive score; both pending runtime patches remain unapplied.
+  That measurement-only task did not resume implementation or establish an
+  all-50 competitive score. The two patches were applied after this comparison,
+  in the resumed work above.
 
-- **Paused for user review on 2026-10-24.** The
+- **Historical pause checkpoint on 2026-10-24 (now resumed).** The
   [root-cache release matrix](checksums-2026-10-24-native-root-cache-release.json)
   verifies all 150 unchanged test-size checksums on frozen `faf9f95`, with
   source/input/binary identities and 100 measurement reports verified. The
   [partial production record](production-paused-2026-10-24.json) retains six
   completed JIT timeouts on `3482e53`; Matmul T8 was cancelled at the user's
   request, not classified as a failure. The production sweep is stopped.
-  Callback hot-call promotion and argument-transfer fixes remain unapplied
-  drafts. Production completion, competitive speed and platform gates remain
-  open. Resume implementation only when the user asks.
+  Callback hot-call promotion and argument-transfer fixes were unapplied drafts
+  at that checkpoint; they are now applied in the resumed work above.
+  Production completion, competitive speed and platform gates remain open.
 
 - [Recursive-call production sample](native-recursive-call-profile-2026-10-24.json)
   retains matched executable/map evidence from frozen `3482e53` running
