@@ -1,0 +1,149 @@
+{
+  "scope": "Standalone representation prototype, not runtime implementation or benchmark replacement. Float-valued generic Value scan versus explicit16-byte payload/kind slots; both checksum outputs equal.",
+  "baseline_runtime_source": "3482e53",
+  "packing": [
+    {
+      "n": 128,
+      "packing_ns": 771569,
+      "generic_bytes": 2228224,
+      "packed_bytes": 262144
+    },
+    {
+      "n": 900,
+      "packing_ns": 29922147,
+      "generic_bytes": 110160000,
+      "packed_bytes": 12960000
+    }
+  ],
+  "samples": [
+    {
+      "n": 128,
+      "column_major": false,
+      "passes": 8,
+      "before_ns": [
+        4175908,
+        919868,
+        888980,
+        808753,
+        954625,
+        788973,
+        886021
+      ],
+      "packed_ns": [
+        449208,
+        601327,
+        432016,
+        595916,
+        436010,
+        592482,
+        463422
+      ],
+      "medians_ns": [
+        888980,
+        463422
+      ],
+      "median_ratio": 0.5212963171274945,
+      "checksum": "16215773408301285376"
+    },
+    {
+      "n": 128,
+      "column_major": true,
+      "passes": 8,
+      "before_ns": [
+        1000893,
+        979040,
+        965077,
+        1059695,
+        1050805,
+        1011262,
+        1002012
+      ],
+      "packed_ns": [
+        506166,
+        506184,
+        516665,
+        519835,
+        520273,
+        534451,
+        515091
+      ],
+      "medians_ns": [
+        1002012,
+        516665
+      ],
+      "median_ratio": 0.5156275573546025,
+      "checksum": "16215773408301285376"
+    },
+    {
+      "n": 900,
+      "column_major": false,
+      "passes": 8,
+      "before_ns": [
+        140906050,
+        140611188,
+        155898514,
+        162753451,
+        151612754,
+        143440309,
+        140104974
+      ],
+      "packed_ns": [
+        32566740,
+        36470484,
+        34370614,
+        48201275,
+        31871874,
+        43390711,
+        34416284
+      ],
+      "medians_ns": [
+        143440309,
+        34416284
+      ],
+      "median_ratio": 0.23993453611425222,
+      "checksum": "15179382544071696768"
+    },
+    {
+      "n": 900,
+      "column_major": true,
+      "passes": 8,
+      "before_ns": [
+        194410906,
+        195822096,
+        191533547,
+        211022618,
+        188543462,
+        201900284,
+        223827995
+      ],
+      "packed_ns": [
+        51318531,
+        50120905,
+        55368487,
+        53761792,
+        53659527,
+        56055773,
+        65008803
+      ],
+      "medians_ns": [
+        195822096,
+        53761792
+      ],
+      "median_ratio": 0.274544053496394,
+      "checksum": "15179382544071696768"
+    }
+  ],
+  "raw_output": "PACK n=128 elapsed_ns=771569 generic_bytes=2228224 packed_bytes=262144\nREAD n=128 column_major=false round=0 variant=0 elapsed_ns=4175908 checksum=16215773408301285376\nREAD n=128 column_major=false round=0 variant=1 elapsed_ns=449208 checksum=16215773408301285376\nREAD n=128 column_major=false round=1 variant=1 elapsed_ns=601327 checksum=16215773408301285376\nREAD n=128 column_major=false round=1 variant=0 elapsed_ns=919868 checksum=16215773408301285376\nREAD n=128 column_major=false round=2 variant=0 elapsed_ns=888980 checksum=16215773408301285376\nREAD n=128 column_major=false round=2 variant=1 elapsed_ns=432016 checksum=16215773408301285376\nREAD n=128 column_major=false round=3 variant=1 elapsed_ns=595916 checksum=16215773408301285376\nREAD n=128 column_major=false round=3 variant=0 elapsed_ns=808753 checksum=16215773408301285376\nREAD n=128 column_major=false round=4 variant=0 elapsed_ns=954625 checksum=16215773408301285376\nREAD n=128 column_major=false round=4 variant=1 elapsed_ns=436010 checksum=16215773408301285376\nREAD n=128 column_major=false round=5 variant=1 elapsed_ns=592482 checksum=16215773408301285376\nREAD n=128 column_major=false round=5 variant=0 elapsed_ns=788973 checksum=16215773408301285376\nREAD n=128 column_major=false round=6 variant=0 elapsed_ns=886021 checksum=16215773408301285376\nREAD n=128 column_major=false round=6 variant=1 elapsed_ns=463422 checksum=16215773408301285376\nREAD n=128 column_major=true round=0 variant=0 elapsed_ns=1000893 checksum=16215773408301285376\nREAD n=128 column_major=true round=0 variant=1 elapsed_ns=506166 checksum=16215773408301285376\nREAD n=128 column_major=true round=1 variant=1 elapsed_ns=506184 checksum=16215773408301285376\nREAD n=128 column_major=true round=1 variant=0 elapsed_ns=979040 checksum=16215773408301285376\nREAD n=128 column_major=true round=2 variant=0 elapsed_ns=965077 checksum=16215773408301285376\nREAD n=128 column_major=true round=2 variant=1 elapsed_ns=516665 checksum=16215773408301285376\nREAD n=128 column_major=true round=3 variant=1 elapsed_ns=519835 checksum=16215773408301285376\nREAD n=128 column_major=true round=3 variant=0 elapsed_ns=1059695 checksum=16215773408301285376\nREAD n=128 column_major=true round=4 variant=0 elapsed_ns=1050805 checksum=16215773408301285376\nREAD n=128 column_major=true round=4 variant=1 elapsed_ns=520273 checksum=16215773408301285376\nREAD n=128 column_major=true round=5 variant=1 elapsed_ns=534451 checksum=16215773408301285376\nREAD n=128 column_major=true round=5 variant=0 elapsed_ns=1011262 checksum=16215773408301285376\nREAD n=128 column_major=true round=6 variant=0 elapsed_ns=1002012 checksum=16215773408301285376\nREAD n=128 column_major=true round=6 variant=1 elapsed_ns=515091 checksum=16215773408301285376\nPACK n=900 elapsed_ns=29922147 generic_bytes=110160000 packed_bytes=12960000\nREAD n=900 column_major=false round=0 variant=0 elapsed_ns=140906050 checksum=15179382544071696768\nREAD n=900 column_major=false round=0 variant=1 elapsed_ns=32566740 checksum=15179382544071696768\nREAD n=900 column_major=false round=1 variant=1 elapsed_ns=36470484 checksum=15179382544071696768\nREAD n=900 column_major=false round=1 variant=0 elapsed_ns=140611188 checksum=15179382544071696768\nREAD n=900 column_major=false round=2 variant=0 elapsed_ns=155898514 checksum=15179382544071696768\nREAD n=900 column_major=false round=2 variant=1 elapsed_ns=34370614 checksum=15179382544071696768\nREAD n=900 column_major=false round=3 variant=1 elapsed_ns=48201275 checksum=15179382544071696768\nREAD n=900 column_major=false round=3 variant=0 elapsed_ns=162753451 checksum=15179382544071696768\nREAD n=900 column_major=false round=4 variant=0 elapsed_ns=151612754 checksum=15179382544071696768\nREAD n=900 column_major=false round=4 variant=1 elapsed_ns=31871874 checksum=15179382544071696768\nREAD n=900 column_major=false round=5 variant=1 elapsed_ns=43390711 checksum=15179382544071696768\nREAD n=900 column_major=false round=5 variant=0 elapsed_ns=143440309 checksum=15179382544071696768\nREAD n=900 column_major=false round=6 variant=0 elapsed_ns=140104974 checksum=15179382544071696768\nREAD n=900 column_major=false round=6 variant=1 elapsed_ns=34416284 checksum=15179382544071696768\nREAD n=900 column_major=true round=0 variant=0 elapsed_ns=194410906 checksum=15179382544071696768\nREAD n=900 column_major=true round=0 variant=1 elapsed_ns=51318531 checksum=15179382544071696768\nREAD n=900 column_major=true round=1 variant=1 elapsed_ns=50120905 checksum=15179382544071696768\nREAD n=900 column_major=true round=1 variant=0 elapsed_ns=195822096 checksum=15179382544071696768\nREAD n=900 column_major=true round=2 variant=0 elapsed_ns=191533547 checksum=15179382544071696768\nREAD n=900 column_major=true round=2 variant=1 elapsed_ns=55368487 checksum=15179382544071696768\nREAD n=900 column_major=true round=3 variant=1 elapsed_ns=53761792 checksum=15179382544071696768\nREAD n=900 column_major=true round=3 variant=0 elapsed_ns=211022618 checksum=15179382544071696768\nREAD n=900 column_major=true round=4 variant=0 elapsed_ns=188543462 checksum=15179382544071696768\nREAD n=900 column_major=true round=4 variant=1 elapsed_ns=53659527 checksum=15179382544071696768\nREAD n=900 column_major=true round=5 variant=1 elapsed_ns=56055773 checksum=15179382544071696768\nREAD n=900 column_major=true round=5 variant=0 elapsed_ns=201900284 checksum=15179382544071696768\nREAD n=900 column_major=true round=6 variant=0 elapsed_ns=223827995 checksum=15179382544071696768\nREAD n=900 column_major=true round=6 variant=1 elapsed_ns=65008803 checksum=15179382544071696768\n",
+  "hashes": {
+    "/tmp/kujo-packed-scalar-probe.rs": "7d038775e7c847c3ef05c2f81f6fcb2b83cc2fd2a5548824f66773413382a373",
+    "/tmp/kujo-packed-scalar-probe": "483877004fba539a858fe7b4eef78a0420fadf5153d64d4e8fea08d9df126873",
+    "/tmp/kujo-packed-scalar-probe.log": "c9b9795ea790f2b5f9d341fd6ec0ee1bfd41809d05901175265b48a9df3a03f9",
+    "/tmp/libkujo-scalar-read-refined.rlib": "98e1b06c937e1e38abc2cf318ce4f0adf5fdf0d1252ee020100fde9eed86408a"
+  },
+  "limits": [
+    "Optimized Rust probe linked debug Kujo library; release build and production benchmark concurrently active. Diagnostic only.",
+    "Packing cost separately reported; naive first-read packing can regress one-pass/cold accesses.",
+    "No runtime mutation, alias, lifetime, invalidation or fallback integration implemented. Do not infer full-suite speedups.",
+    "136-byte Value versus16-byte packed slot yields8.5x element-storage difference, not an end-to-end memory or speed ratio."
+  ]
+}

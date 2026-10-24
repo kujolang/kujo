@@ -7,6 +7,15 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Scalar-array production outcome](production-matmul-scalar-array-2026-10-24.json)
+  records the unchanged `3482e53` Matmul timeout after two warmups and four
+  measured iterations. No final checksum was obtained.
+- [Packed-scalar prototype](packed-scalar-prototype-2026-10-24.json) compares
+  136-byte generic elements with explicit 16-byte payload/kind records. It is
+  exploratory code, not a runtime feature. Packing has an upfront cost and can
+  regress cold or single-pass reads; safe reuse and end-to-end measurements are
+  required before admission. Concurrent host work limits timing conclusions.
+
 - [Post-scalar-read production profile](native-array-read-profile-2026-10-24.json)
   on frozen `3482e53` still identifies indexed-read lookup, bounds and tag decoding
   as hot work. Matching-map disassembly uses a 136-byte generic array-element

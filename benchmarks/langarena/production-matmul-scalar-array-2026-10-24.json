@@ -1,0 +1,41 @@
+{
+  "scope": "Unchanged production Matmul Single frozen3482e53 hit600s deadline after two warmups and four measured iterations. No final checksum or speed acceptance.",
+  "source_commit": "3482e532e95bf8338f2061c02be476ade6c6d604",
+  "binary_sha256": "076fa6d7abee5e0eac3787f9a4d6760d692e8657f2044a5a05941296cca5e4b8",
+  "report": {
+    "binary": "/tmp/kujo-native-scalar-array-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 600075714838.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "matmul-production-jit.json.case-4.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Matmul::Single",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=92599\n@profile create-done ns=1784991840\n@profile prepare-done ns=1785268490\n@profile warmup-1 ns=88809005410\n@profile warmup-2 ns=188653782450\n@profile warmup-done ns=188654031100\n@profile run-1 ns=281812129084\n@profile run-2 ns=375559088877\n@profile run-3 ns=455192398626\n@profile run-4 ns=550405891204\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "report_sha256": "53b068e81a76384c18fa3745455aeab0bb749474554ffabfb0308ccc674ee4bd",
+  "limits": [
+    "Shared laptop; positional release build and standalone prototype overlapped later measured work.",
+    "Earlier warmup times have different load; no causal speed ratio.",
+    "Timeout is incomplete execution, not a wrong-checksum finding."
+  ]
+}
