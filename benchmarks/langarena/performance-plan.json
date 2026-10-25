@@ -174,7 +174,8 @@
       "status": "pending",
       "evidence": [
         "builtin-pool-release-2026-10-24.json",
-        "linux-regression-ci-2026-10-24.json"
+        "linux-regression-ci-2026-10-24.json",
+        "windows-regression-ci-2026-10-25.json"
       ]
     },
     {
