@@ -1,0 +1,58 @@
+func ascending(a, b) { return a - b }
+func verify_callbacks() {
+    mut calls := 0
+    mut snapshots := [[7, 11], [13, 17]]
+    let retained := snapshots
+    func nested(a, b) {
+        if a == null { return calls }
+        calls += 1
+        mut local := snapshots
+        local[0][0] = calls
+        let inner := sort_by([3, 1, 2], ascending)
+        assert_equal(inner, [1, 2, 3])
+        assert_equal(snapshots, retained)
+        return a[0] - b[0]
+    }
+    let input := [[2, "first"], [1, "low"], [2, "second"]]
+    let output := sort_by(input, nested)
+    assert_equal(output, [[1, "low"], [2, "first"], [2, "second"]])
+    assert(nested(null, null) > 1, "captured call count must survive callbacks")
+    assert_equal(calls, 0)
+    assert_equal(input, [[2, "first"], [1, "low"], [2, "second"]])
+    assert_equal(snapshots, retained)
+
+    mut attempts := 0
+    func fail_second(a, b) {
+        if a == null { return attempts }
+        attempts += 1
+        if attempts == 2 { throw("callback-stop") }
+        return a - b
+    }
+    mut caught := false
+    try { sort_by([4, 3, 2, 1], fail_second) }
+    except error { caught = contains(error.message, "callback-stop") == 1 }
+    assert(caught, "sort must propagate the first callback error")
+    assert_equal(fail_second(null, null), 2)
+    assert_equal(attempts, 0)
+    assert_equal(sort_by([3, 2, 1], ascending), [1, 2, 3])
+
+    mut replacements := 0
+    func replace(groups) {
+        replacements += 1
+        assert_equal(sort_by([2, 1], ascending), [1, 2])
+        return str(replacements) + groups[0]
+    }
+    assert_equal(regex_replace_with("a b a", "a", replace), "1a b 2a")
+    assert_equal(replacements, 0)
+    assert_equal(regex_replace_with("a", "a", replace), "3a")
+
+    func forbidden(a, b) { return len(read_file("callback-must-not-read")) }
+    caught = false
+    try { sort_by([2, 1], forbidden) }
+    except error { caught = contains(error.message, "Capability denied") == 1 }
+    assert(caught, "callback must retain restricted capabilities")
+    assert_equal(sort_by([2, 1], ascending), [1, 2])
+}
+verify_callbacks()
+verify_callbacks()
+print("PASS")
