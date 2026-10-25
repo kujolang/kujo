@@ -1,0 +1,28 @@
+{
+  "runtime_commit": "5532fe0",
+  "profile": "debug",
+  "binary_sha256": "4874208536493c2f0d33a67174391cfd6d72e9cb5d11143eabd1c5215310908b",
+  "probe": "benchmarks/langarena/probes/jit_function_identity.kujo",
+  "finding": "After 200 calls to the first function named read, JIT uses its code for a second function named read. Expected 7, actual 6. VM and interpreter pass. Function-value identity must be preserved independently of name.",
+  "results": [
+    {
+      "mode": "vm",
+      "exit_code": 0,
+      "stdout": "PASS\n",
+      "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+    },
+    {
+      "mode": "interpreter",
+      "exit_code": 0,
+      "stdout": "PASS\n",
+      "stderr": ""
+    },
+    {
+      "mode": "jit",
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Int(7), got Int(6)\n  --> 0:0\n\n"
+    }
+  ],
+  "status": "Open: reproduce as regression and fix compiled-function cache identity; runtime source currently frozen for release build."
+}
