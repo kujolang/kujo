@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid standalone-script JIT compilation for internal callback and task wrappers
+  whose arguments are already on the VM stack. Callee JIT, cancellation,
+  capability checks, and callback value semantics remain enabled.
+
 - Drop discarded native roots in place rather than returning full `Value`
   payloads only to destroy them. Ownership transfers, frame order, stale-handle
   checks, promotion and copy-on-write snapshots retain their existing behavior.

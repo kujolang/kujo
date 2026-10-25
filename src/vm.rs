@@ -2573,10 +2573,23 @@ impl VM {
     pub fn execute(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
         // Nested generator/callback entry can arrive on a small embedding stack.
         // Keep the large dispatch frame behind the growth check.
-        stacker::maybe_grow(512 * 1024, 2 * 1024 * 1024, || self.execute_dispatch(chunk))
+        stacker::maybe_grow(512 * 1024, 2 * 1024 * 1024, || self.execute_dispatch(chunk, true))
     }
 
-    fn execute_dispatch(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
+    /// Internal wrappers start with arguments and a callable already on the VM
+    /// stack. They are not standalone scripts: script translation starts with
+    /// an empty virtual stack. Callees still use the ordinary JIT hot-call policy.
+    fn execute_preloaded_callback(&mut self) -> Result<Value, String> {
+        stacker::maybe_grow(512 * 1024, 2 * 1024 * 1024, || {
+            self.execute_dispatch(BytecodeChunk::new(), false)
+        })
+    }
+
+    fn execute_dispatch(
+        &mut self,
+        chunk: BytecodeChunk,
+        standalone_script: bool,
+    ) -> Result<Value, String> {
         measurement::add(Metric::VmEntries, 1);
         let _measurement = measurement::Span::new(Metric::VmWallNs);
         let _hashmap_profile_guard = HashMapProfileGuard::new();
@@ -2589,7 +2602,8 @@ impl VM {
         }
 
         // Try to JIT-compile the entire script for maximum performance
-        let allow_script_jit = self.jit_enabled && std::env::var("DISABLE_SCRIPT_JIT").is_err();
+        let allow_script_jit =
+            standalone_script && self.jit_enabled && std::env::var("DISABLE_SCRIPT_JIT").is_err();
         if allow_script_jit {
             let mut script_jit_safe = true;
 
@@ -6381,7 +6395,7 @@ impl VM {
         vm.stack.extend(args);
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
-        vm.execute(BytecodeChunk::new())
+        vm.execute_preloaded_callback()
     }
 
     pub(crate) fn execute_language_task(
@@ -6408,7 +6422,7 @@ impl VM {
         vm.stack.extend(args);
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
-        vm.execute(BytecodeChunk::new())
+        vm.execute_preloaded_callback()
     }
 
     fn call_interpreter_callable(
