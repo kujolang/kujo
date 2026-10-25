@@ -1,0 +1,63 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "Two additional full production JIT outcomes; all50 sweep remains incomplete",
+  "previous_evidence": "nonleaf-production-binarytrees-2026-10-25.json",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 75497436,
+        "depth": 20,
+        "iterations": 30,
+        "name": "Binarytrees::Arena"
+      },
+      "elapsed_ns": 1052390455454.0,
+      "exitcode": 0,
+      "name": "Binarytrees::Arena",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1052.39 real       999.72 user        47.22 sys\n          1333653504  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            12695900  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   3  voluntary context switches\n              156870  involuntary context switches\n       5900409196956  instructions retired\n       2978971003992  cycles elapsed\n          1330110464  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=116503\n@profile create-done ns=334173\n@profile prepare-done ns=527670\n@profile warmup-1 ns=36996740819\n@profile warmup-2 ns=69919915121\n@profile warmup-3 ns=102881852439\n@profile warmup-4 ns=136311438676\n@profile warmup-5 ns=166297151470\n@profile warmup-6 ns=195024438008\n@profile warmup-done ns=195024666357\n@profile run-1 ns=226297598484\n@profile run-3 ns=287177271422\n@profile run-6 ns=375815800803\n@profile run-9 ns=465593262307\n@profile run-12 ns=555416039007\n@profile run-15 ns=644040762048\n@profile run-18 ns=728556292551\n@profile run-21 ns=808372580477\n@profile run-24 ns=890825581807\n@profile run-27 ns=973609186865\n@profile run-30 ns=1052271167063\nBinarytrees::Arena: OK 75497436\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 954437102,
+        "iterations": 1,
+        "name": "Brainfuck::Array",
+        "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+        "warmup_iterations": 1000,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 3600018560686.0,
+      "exitcode": -1,
+      "name": "Brainfuck::Array",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=99130\n@profile create-done ns=290901\n@profile prepare-done ns=454510\n@profile warmup-1 ns=207077730\n@profile warmup-100 ns=3168067913\n@profile warmup-200 ns=6218736675\n@profile warmup-300 ns=9197391580\n@profile warmup-400 ns=12160708224\n@profile warmup-500 ns=15116479035\n@profile warmup-600 ns=18099743833\n@profile warmup-700 ns=21050679037\n@profile warmup-800 ns=24039145638\n@profile warmup-900 ns=27309718446\n@profile warmup-1000 ns=30349997430\n@profile warmup-done ns=30350191586\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Binarytrees::Arena": 1333653504,
+    "Brainfuck::Array": null
+  },
+  "limitations": [
+    "Uncontrolled local laptop; not a stable performance comparison.",
+    "Brainfuck::Array reached the one-hour deadline without a checksum result: incomplete correctness verification, not a semantic failure or pass.",
+    "Timeout process accounting is unavailable; sampled RSS is not substituted for peak memory.",
+    "Inputs, warmups, iterations and checksums unchanged; JIT may fall back to VM.",
+    "Remaining JIT cases and production VM/interpreter gates remain open."
+  ]
+}
