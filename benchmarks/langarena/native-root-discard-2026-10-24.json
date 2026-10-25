@@ -1,0 +1,428 @@
+{
+  "scope": "Isolated native root ownership-helper cost; no full-runtime speed acceptance",
+  "baseline_commit": "2f00c5f",
+  "candidate_commit": "5f22a2a",
+  "probe": "benchmarks/langarena/probes/native_root_discard.rs",
+  "method": "7 alternating pairs, 50000 iterations per case; actual 136-byte Value; opt-level=3 ownership code, non-LTO debug library Value/destructors; shared array ownership count checked after every pair. Concurrent host work is uncontrolled.",
+  "decision": "v1 rejected because take regressed in 7/7 pairs; v2 retained pending release and end-to-end measurement.",
+  "reports": {
+    "rejected_v1": {
+      "raw": {
+        "value_size": 136,
+        "samples": [
+          {
+            "round": 1,
+            "case": "release",
+            "before_ns": 4880412,
+            "after_ns": 3614241
+          },
+          {
+            "round": 1,
+            "case": "take",
+            "before_ns": 4487207,
+            "after_ns": 4634483
+          },
+          {
+            "round": 1,
+            "case": "frame_four",
+            "before_ns": 13330611,
+            "after_ns": 10527430
+          },
+          {
+            "round": 1,
+            "case": "frame_32",
+            "before_ns": 222685388,
+            "after_ns": 204593031
+          },
+          {
+            "round": 2,
+            "case": "release",
+            "before_ns": 4326022,
+            "after_ns": 3105591
+          },
+          {
+            "round": 2,
+            "case": "take",
+            "before_ns": 3727945,
+            "after_ns": 4110805
+          },
+          {
+            "round": 2,
+            "case": "frame_four",
+            "before_ns": 12224167,
+            "after_ns": 10362078
+          },
+          {
+            "round": 2,
+            "case": "frame_32",
+            "before_ns": 224019533,
+            "after_ns": 201945504
+          },
+          {
+            "round": 3,
+            "case": "release",
+            "before_ns": 4307843,
+            "after_ns": 3186599
+          },
+          {
+            "round": 3,
+            "case": "take",
+            "before_ns": 3854254,
+            "after_ns": 4231398
+          },
+          {
+            "round": 3,
+            "case": "frame_four",
+            "before_ns": 12419969,
+            "after_ns": 10276550
+          },
+          {
+            "round": 3,
+            "case": "frame_32",
+            "before_ns": 234659644,
+            "after_ns": 216405999
+          },
+          {
+            "round": 4,
+            "case": "release",
+            "before_ns": 4571135,
+            "after_ns": 3344317
+          },
+          {
+            "round": 4,
+            "case": "take",
+            "before_ns": 4225063,
+            "after_ns": 4582383
+          },
+          {
+            "round": 4,
+            "case": "frame_four",
+            "before_ns": 13071464,
+            "after_ns": 11032892
+          },
+          {
+            "round": 4,
+            "case": "frame_32",
+            "before_ns": 251542280,
+            "after_ns": 224510003
+          },
+          {
+            "round": 5,
+            "case": "release",
+            "before_ns": 4927240,
+            "after_ns": 3582774
+          },
+          {
+            "round": 5,
+            "case": "take",
+            "before_ns": 4447695,
+            "after_ns": 4784596
+          },
+          {
+            "round": 5,
+            "case": "frame_four",
+            "before_ns": 14233567,
+            "after_ns": 11563440
+          },
+          {
+            "round": 5,
+            "case": "frame_32",
+            "before_ns": 263083746,
+            "after_ns": 241474081
+          },
+          {
+            "round": 6,
+            "case": "release",
+            "before_ns": 5392215,
+            "after_ns": 3763007
+          },
+          {
+            "round": 6,
+            "case": "take",
+            "before_ns": 4507651,
+            "after_ns": 5137312
+          },
+          {
+            "round": 6,
+            "case": "frame_four",
+            "before_ns": 14666115,
+            "after_ns": 12195082
+          },
+          {
+            "round": 6,
+            "case": "frame_32",
+            "before_ns": 281111753,
+            "after_ns": 246874423
+          },
+          {
+            "round": 7,
+            "case": "release",
+            "before_ns": 5432249,
+            "after_ns": 4089296
+          },
+          {
+            "round": 7,
+            "case": "take",
+            "before_ns": 4941874,
+            "after_ns": 5994752
+          },
+          {
+            "round": 7,
+            "case": "frame_four",
+            "before_ns": 15975578,
+            "after_ns": 13291647
+          },
+          {
+            "round": 7,
+            "case": "frame_32",
+            "before_ns": 289483061,
+            "after_ns": 275369926
+          }
+        ]
+      },
+      "summary": {
+        "release": {
+          "median_after_over_before": 0.7316163272360147,
+          "favorable_pairs": 7,
+          "pairs": 7
+        },
+        "take": {
+          "median_after_over_before": 1.097851361119428,
+          "favorable_pairs": 0,
+          "pairs": 7
+        },
+        "frame_four": {
+          "median_after_over_before": 0.8315141399068533,
+          "favorable_pairs": 7,
+          "pairs": 7
+        },
+        "frame_32": {
+          "median_after_over_before": 0.9178601288427755,
+          "favorable_pairs": 7,
+          "pairs": 7
+        }
+      }
+    },
+    "accepted_v2": {
+      "raw": {
+        "value_size": 136,
+        "samples": [
+          {
+            "round": 1,
+            "case": "release",
+            "before_ns": 6393299,
+            "after_ns": 4592899
+          },
+          {
+            "round": 1,
+            "case": "take",
+            "before_ns": 5712208,
+            "after_ns": 4976966
+          },
+          {
+            "round": 1,
+            "case": "frame_four",
+            "before_ns": 18771389,
+            "after_ns": 15277191
+          },
+          {
+            "round": 1,
+            "case": "frame_32",
+            "before_ns": 338017349,
+            "after_ns": 323233817
+          },
+          {
+            "round": 2,
+            "case": "release",
+            "before_ns": 6619179,
+            "after_ns": 4562534
+          },
+          {
+            "round": 2,
+            "case": "take",
+            "before_ns": 5826448,
+            "after_ns": 5259341
+          },
+          {
+            "round": 2,
+            "case": "frame_four",
+            "before_ns": 19342546,
+            "after_ns": 16021781
+          },
+          {
+            "round": 2,
+            "case": "frame_32",
+            "before_ns": 340112377,
+            "after_ns": 314478564
+          },
+          {
+            "round": 3,
+            "case": "release",
+            "before_ns": 6386836,
+            "after_ns": 4808894
+          },
+          {
+            "round": 3,
+            "case": "take",
+            "before_ns": 6219647,
+            "after_ns": 5192359
+          },
+          {
+            "round": 3,
+            "case": "frame_four",
+            "before_ns": 19710222,
+            "after_ns": 16114358
+          },
+          {
+            "round": 3,
+            "case": "frame_32",
+            "before_ns": 339891790,
+            "after_ns": 335668380
+          },
+          {
+            "round": 4,
+            "case": "release",
+            "before_ns": 6377362,
+            "after_ns": 4778662
+          },
+          {
+            "round": 4,
+            "case": "take",
+            "before_ns": 5929905,
+            "after_ns": 5144943
+          },
+          {
+            "round": 4,
+            "case": "frame_four",
+            "before_ns": 20936515,
+            "after_ns": 15671771
+          },
+          {
+            "round": 4,
+            "case": "frame_32",
+            "before_ns": 328104902,
+            "after_ns": 299590256
+          },
+          {
+            "round": 5,
+            "case": "release",
+            "before_ns": 6210602,
+            "after_ns": 4682621
+          },
+          {
+            "round": 5,
+            "case": "take",
+            "before_ns": 5667711,
+            "after_ns": 5259806
+          },
+          {
+            "round": 5,
+            "case": "frame_four",
+            "before_ns": 19394926,
+            "after_ns": 15271608
+          },
+          {
+            "round": 5,
+            "case": "frame_32",
+            "before_ns": 326136724,
+            "after_ns": 294758439
+          },
+          {
+            "round": 6,
+            "case": "release",
+            "before_ns": 6341143,
+            "after_ns": 4506209
+          },
+          {
+            "round": 6,
+            "case": "take",
+            "before_ns": 5660664,
+            "after_ns": 4986236
+          },
+          {
+            "round": 6,
+            "case": "frame_four",
+            "before_ns": 17857118,
+            "after_ns": 14965023
+          },
+          {
+            "round": 6,
+            "case": "frame_32",
+            "before_ns": 328422812,
+            "after_ns": 295498880
+          },
+          {
+            "round": 7,
+            "case": "release",
+            "before_ns": 6157855,
+            "after_ns": 4606800
+          },
+          {
+            "round": 7,
+            "case": "take",
+            "before_ns": 5639763,
+            "after_ns": 4961267
+          },
+          {
+            "round": 7,
+            "case": "frame_four",
+            "before_ns": 18241226,
+            "after_ns": 14795706
+          },
+          {
+            "round": 7,
+            "case": "frame_32",
+            "before_ns": 330677535,
+            "after_ns": 303787680
+          }
+        ]
+      },
+      "summary": {
+        "release": {
+          "median_after_over_before": 0.7481176481096096,
+          "favorable_pairs": 7,
+          "pairs": 7
+        },
+        "take": {
+          "median_after_over_before": 0.8796942353783306,
+          "favorable_pairs": 7,
+          "pairs": 7
+        },
+        "frame_four": {
+          "median_after_over_before": 0.8138551174875764,
+          "favorable_pairs": 7,
+          "pairs": 7
+        },
+        "frame_32": {
+          "median_after_over_before": 0.9186825467293991,
+          "favorable_pairs": 7,
+          "pairs": 7
+        }
+      }
+    }
+  },
+  "rejected_v1_patch": "--- /tmp/kujo-root-discard-cost-2026-10-24/before.rs\t2026-10-24 23:32:56\n+++ /tmp/kujo-root-discard-cost-2026-10-24/after-v1.rs\t2026-10-24 23:35:51\n@@ -496,7 +496,7 @@\n             return Err(OwnershipError::FrameOrder);\n         }\n         while let Some(index) = self.frames[token.depth].head {\n-            drop(self.remove(index));\n+            self.drop_root(index);\n         }\n         self.frames.pop();\n         Ok(())\n@@ -575,7 +575,8 @@\n     }\n \n     pub(crate) fn release(&mut self, handle: Handle) -> Result<(), OwnershipError> {\n-        drop(self.take(handle)?);\n+        let index = self.current_index(handle)?;\n+        self.drop_root(index);\n         Ok(())\n     }\n \n@@ -612,22 +613,63 @@\n         }\n     }\n \n-    fn remove(&mut self, index: usize) -> Value {\n+    fn detach(&mut self, index: usize) {\n         self.unlink(index);\n         let slot = &mut self.slots[index];\n         self.lookup.remove(&slot.handle.0);\n-        let value = slot.value.take().expect(\"live native root\");\n         slot.previous = None;\n         slot.next = self.free;\n         self.free = Some(index);\n-        value\n+    }\n+\n+    fn remove(&mut self, index: usize) -> Value {\n+        self.detach(index);\n+        self.slots[index].value.take().expect(\"live native root\")\n     }\n+\n+    /// Discard in place: releasing a root does not need to move a full Value\n+    /// through the ownership-transfer return ABI. Detach before dropping, as\n+    /// the transfer path does, and retain the existing frame/free-list order.\n+    fn drop_root(&mut self, index: usize) {\n+        self.detach(index);\n+        self.slots[index].value = None;\n+    }\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n     use std::sync::Arc;\n+\n+    #[test]\n+    fn discarded_roots_drop_owners_while_taken_and_promoted_values_survive() {\n+        let mut roots = NativeOwnedValues::default();\n+        let outer = roots.enter_frame().unwrap();\n+        let retained = Arc::new(vec![Value::Int(7)]);\n+        let parent = roots.insert(Value::Array(retained.clone())).unwrap();\n+        let inner = roots.enter_frame().unwrap();\n+        assert_eq!(roots.release(parent), Err(OwnershipError::NotCurrentFrame));\n+        let discarded = roots.duplicate(parent).unwrap();\n+        assert_eq!(Arc::strong_count(&retained), 3);\n+        roots.release(discarded).unwrap();\n+        assert_eq!(Arc::strong_count(&retained), 2);\n+        assert_eq!(roots.get(discarded).unwrap_err(), OwnershipError::StaleHandle);\n+        let promoted = roots.duplicate(parent).unwrap();\n+        roots.promote(promoted).unwrap();\n+        let temporary = Arc::new(vec![Value::Int(9)]);\n+        let weak = Arc::downgrade(&temporary);\n+        roots.insert(Value::Array(temporary)).unwrap();\n+        roots.leave_frame(inner).unwrap();\n+        assert!(weak.upgrade().is_none());\n+        let taken = roots.take(promoted).unwrap();\n+        roots.leave_frame(outer).unwrap();\n+        assert_eq!(Arc::strong_count(&retained), 2);\n+        assert!(matches!(&taken, Value::Array(v) if Arc::ptr_eq(v, &retained)));\n+        drop(taken);\n+        assert_eq!(Arc::strong_count(&retained), 1);\n+        assert!(roots.lookup.is_empty());\n+        assert!(roots.slots.iter().all(|slot| slot.value.is_none()));\n+    }\n \n     #[test]\n     fn recycled_call_roots_keep_capacity_but_not_values_or_handle_identities() {\n",
+  "source_sha256": {
+    "before.rs": "8007ec291272f8148f0e89316eefdd8d45594bf09c2e4d61f89784db34f9b860",
+    "after-v1.rs": "246572178ddd965e35234fac55bacbaedd28db818f4f809479ccc8622925749c",
+    "after.rs": "afa3a9b24ca280b8fe10e76ecbe79908161ca4b44dca7f05a752ac0bf7d3b2fe",
+    "scalar.rs": "282f068291eba746edaae0583bfa64e0a77bac9f8840d18c86e66b74d8ebd86d",
+    "probe.rs": "6ca69abe1e92e965e818bae3c032399fe83aa9c660c84cee2e534c2ac7fa9aaf"
+  },
+  "validation": {
+    "library_passed": 1101,
+    "library_ignored": 8,
+    "integration_passed": 18,
+    "runtimes": [
+      "vm",
+      "interpreter",
+      "jit"
+    ],
+    "fmt": "passed",
+    "no_default_features_check": "passed; 17 warnings"
+  },
+  "limitations": [
+    "Helper timings do not predict QuickSort speedup.",
+    "Latest full release checksum acceptance still belongs to runtime 44b2fb1."
+  ]
+}
