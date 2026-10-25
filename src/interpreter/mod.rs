@@ -2222,6 +2222,7 @@ impl Interpreter {
                     self.output.clone(),
                     self.task_cancellation.clone(),
                     self.vm_jit_requested,
+                    &mut self.module_loader,
                 )
                 .unwrap_or_else(Value::Error)
             }

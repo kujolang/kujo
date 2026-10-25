@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve the caller's module loader across VM/JIT callback execution. Repeated
+  callback imports now reuse unchanged module exports, reload changed sources,
+  and restore cache/cycle state after errors without changing capability policy.
+
 - Reuse a private VM within synchronous `sort_by` and `regex_replace_with`
   operations for fixed leaf bytecode callbacks. Closures retain snapshot cell
   semantics; callbacks with calls, imports, async or other unsupported state

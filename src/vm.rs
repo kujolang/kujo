@@ -6379,6 +6379,7 @@ impl VM {
         output: Option<Arc<Mutex<Vec<u8>>>>,
         cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
         jit_requested: bool,
+        module_loader: &mut crate::module::ModuleLoader,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         let mut vm = VM::with_task_policy(jit_requested, cancellation);
@@ -6388,6 +6389,10 @@ impl VM {
         if let Some(output) = output {
             vm.interpreter.set_output(output);
         }
+        // Transfer the caller's loader exactly as module evaluation does. This
+        // preserves cache identity, search paths and in-progress import cycles
+        // without holding a lock while user code runs.
+        std::mem::swap(&mut vm.interpreter.module_loader, module_loader);
         let mut wrapper = BytecodeChunk::new();
         wrapper.emit(OpCode::Call(args.len()));
         wrapper.emit(OpCode::Return);
@@ -6395,7 +6400,10 @@ impl VM {
         vm.stack.extend(args);
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
-        vm.execute_preloaded_callback()
+        let result = vm.execute_preloaded_callback();
+        // Restore even when the callback returns a language/runtime error.
+        std::mem::swap(&mut vm.interpreter.module_loader, module_loader);
+        result
     }
 
     /// Reuse only fixed leaf callbacks. An explicit opcode allowlist keeps
