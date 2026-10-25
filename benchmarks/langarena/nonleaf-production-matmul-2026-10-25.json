@@ -1,0 +1,97 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "All four unchanged production matrix multiplication cases in JIT mode; not all50 or other runtimes",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::Single"
+      },
+      "elapsed_ns": 858138085306.0,
+      "exitcode": 0,
+      "name": "Matmul::Single",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      858.10 real       850.14 user         4.70 sys\n           471371776  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              760198  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   3  voluntary context switches\n              116751  involuntary context switches\n       5238854685353  instructions retired\n       2377980901745  cycles elapsed\n           465895424  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=101218\n@profile create-done ns=1783837862\n@profile prepare-done ns=1784029142\n@profile warmup-1 ns=74502302436\n@profile warmup-2 ns=150075322822\n@profile warmup-done ns=150075536031\n@profile run-1 ns=222005009290\n@profile run-2 ns=297148059309\n@profile run-3 ns=368845875346\n@profile run-4 ns=439604875842\n@profile run-5 ns=507378097952\n@profile run-6 ns=578079841308\n@profile run-7 ns=646573310426\n@profile run-8 ns=717354798299\n@profile run-9 ns=789061363267\n@profile run-10 ns=857965151070\nMatmul::Single: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T4"
+      },
+      "elapsed_ns": 344135370003.0,
+      "exitcode": 0,
+      "name": "Matmul::T4",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      344.10 real      1390.64 user        46.07 sys\n           595873792  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              876063  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             1863681  involuntary context switches\n       6079788659654  instructions retired\n       3229789775535  cycles elapsed\n           589058048  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=102206\n@profile create-done ns=1766809771\n@profile prepare-done ns=1766992412\n@profile warmup-1 ns=28461403498\n@profile warmup-2 ns=57642598685\n@profile warmup-done ns=57642807544\n@profile run-1 ns=85262818317\n@profile run-2 ns=113432716044\n@profile run-3 ns=142329609052\n@profile run-4 ns=171132710142\n@profile run-5 ns=199828013485\n@profile run-6 ns=229121311967\n@profile run-7 ns=258134116668\n@profile run-8 ns=286025311811\n@profile run-9 ns=314742092126\n@profile run-10 ns=343867885044\nMatmul::T4: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T8"
+      },
+      "elapsed_ns": 278080362594.0,
+      "exitcode": 0,
+      "name": "Matmul::T8",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      278.06 real      1984.94 user        76.52 sys\n           609832960  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              983011  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             2428791  involuntary context switches\n       6218956406435  instructions retired\n       4550532807059  cycles elapsed\n           603557888  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=155694\n@profile create-done ns=2050097469\n@profile prepare-done ns=2050303364\n@profile warmup-1 ns=23927548490\n@profile warmup-2 ns=47181656607\n@profile warmup-done ns=47181871207\n@profile run-1 ns=70172076667\n@profile run-2 ns=93248748084\n@profile run-3 ns=116186750022\n@profile run-4 ns=139446035905\n@profile run-5 ns=162247109044\n@profile run-6 ns=185177223156\n@profile run-7 ns=209113622332\n@profile run-8 ns=231794026423\n@profile run-9 ns=254984797484\n@profile run-10 ns=277828472960\nMatmul::T8: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T16"
+      },
+      "elapsed_ns": 329229693764.0,
+      "exitcode": 0,
+      "name": "Matmul::T16",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      329.24 real      2598.45 user       168.05 sys\n           633446400  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n             1203823  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             3737524  involuntary context switches\n       6892405512795  instructions retired\n       6059315375511  cycles elapsed\n           626724864  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=119575\n@profile create-done ns=2146421353\n@profile prepare-done ns=2146646904\n@profile warmup-1 ns=28292502177\n@profile warmup-2 ns=55215971454\n@profile warmup-done ns=55216377784\n@profile run-1 ns=81388951771\n@profile run-2 ns=109413599032\n@profile run-3 ns=138362526283\n@profile run-4 ns=164200301229\n@profile run-5 ns=193114592800\n@profile run-6 ns=220179040960\n@profile run-7 ns=247452274405\n@profile run-8 ns=275048532666\n@profile run-9 ns=301956054663\n@profile run-10 ns=328953424057\nMatmul::T16: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Matmul::Single": 471371776,
+    "Matmul::T4": 595873792,
+    "Matmul::T8": 609832960,
+    "Matmul::T16": 633446400
+  },
+  "limitations": [
+    "Uncontrolled local laptop and one sample per case; timings are not stable competitive rankings.",
+    "Process elapsed includes startup, setup, warmup and benchmark iterations.",
+    "JIT may fall back to VM; this does not certify native-time coverage.",
+    "Full all50 JIT, VM and interpreter production verification remains incomplete; two Brainfuck JIT cases timed out."
+  ]
+}
