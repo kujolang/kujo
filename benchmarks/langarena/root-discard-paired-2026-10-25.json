@@ -1,0 +1,436 @@
+{
+  "before_runtime": "44b2fb1",
+  "after_runtime": "5f22a2a",
+  "scope": "Seven rotating pairs for unchanged test-size QuickSort in VM/JIT; frozen release builds. No intentional concurrent builds or older production sweep. Host otherwise uncontrolled.",
+  "configuration": {
+    "name": "Sort::Quick",
+    "checksum": 2548773,
+    "size": 100000,
+    "iterations": 2
+  },
+  "identities": "b10709b6d28da5eff281f308a9e3794a97139bcfae943ddae9893b6945e01eb9  /tmp/kujo-task-workers-release-2026-10-24/kujo\nee387fd9ba47fc644760c5e7f7e75fee18bca0b6af733818fda37d4617c85686  /tmp/kujo-root-discard-release-2026-10-24/kujo\n67d2cd95aad080509e09c8bfbe93b02c8634c3bfe257ea53f4f0cc6c360d26b9  /tmp/kujo-root-discard-paired-2026-10-25/runner.kujo\n2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6  /tmp/kujo-root-discard-paired-2026-10-25/frozen/benchmarks/langarena/port.kujo\n424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797  /tmp/kujo-root-discard-paired-2026-10-25/frozen/benchmarks/langarena/test.json\n",
+  "timed_port_sha256": "b825d6e4f96415a11a803907b86b4dfd676e0bd10b20a25e74daa47ec81a367a",
+  "summary": {
+    "vm": {
+      "pairs": [
+        {
+          "round": 1,
+          "before_seconds": 10.493237983,
+          "after_seconds": 9.774962555,
+          "after_over_before": 0.9315487336546001
+        },
+        {
+          "round": 2,
+          "before_seconds": 9.722771832,
+          "after_seconds": 9.934691025,
+          "after_over_before": 1.0217961705429024
+        },
+        {
+          "round": 3,
+          "before_seconds": 9.771189208,
+          "after_seconds": 7.810662693,
+          "after_over_before": 0.7993564065472347
+        },
+        {
+          "round": 4,
+          "before_seconds": 7.566314697,
+          "after_seconds": 8.324247671,
+          "after_over_before": 1.100172012974892
+        },
+        {
+          "round": 5,
+          "before_seconds": 7.568239926,
+          "after_seconds": 7.524458754,
+          "after_over_before": 0.9942151448119934
+        },
+        {
+          "round": 6,
+          "before_seconds": 10.325727927,
+          "after_seconds": 7.732131228,
+          "after_over_before": 0.7488219022100909
+        },
+        {
+          "round": 7,
+          "before_seconds": 9.948821121,
+          "after_seconds": 8.705669586,
+          "after_over_before": 0.875045342570694
+        }
+      ],
+      "median_ratio": 0.9315487336546001,
+      "favorable_pairs": 5
+    },
+    "jit": {
+      "pairs": [
+        {
+          "round": 1,
+          "before_seconds": 2.476857551,
+          "after_seconds": 2.461036955,
+          "after_over_before": 0.9936126338821493
+        },
+        {
+          "round": 2,
+          "before_seconds": 2.374312516,
+          "after_seconds": 2.308252029,
+          "after_over_before": 0.972177004267622
+        },
+        {
+          "round": 3,
+          "before_seconds": 2.425474138,
+          "after_seconds": 2.392874574,
+          "after_over_before": 0.9865595087206822
+        },
+        {
+          "round": 4,
+          "before_seconds": 2.062758914,
+          "after_seconds": 1.870222463,
+          "after_over_before": 0.9066607107145435
+        },
+        {
+          "round": 5,
+          "before_seconds": 1.939130082,
+          "after_seconds": 1.912895386,
+          "after_over_before": 0.9864708942202878
+        },
+        {
+          "round": 6,
+          "before_seconds": 1.919784,
+          "after_seconds": 1.960880737,
+          "after_over_before": 1.021406958803699
+        },
+        {
+          "round": 7,
+          "before_seconds": 2.615733877,
+          "after_seconds": 2.412753614,
+          "after_over_before": 0.922400262203738
+        }
+      ],
+      "median_ratio": 0.9864708942202878,
+      "favorable_pairs": 6
+    }
+  },
+  "raw": {
+    "binaries": [
+      "/tmp/kujo-task-workers-release-2026-10-24/kujo",
+      "/tmp/kujo-root-discard-release-2026-10-24/kujo"
+    ],
+    "results": [
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 10.493237983,
+        "passed": true,
+        "round": 1,
+        "stderr": "",
+        "stdout": "@comparison_ns 10493237983\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 16.938045095
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 9.774962555,
+        "passed": true,
+        "round": 1,
+        "stderr": "",
+        "stdout": "@comparison_ns 9774962555\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 16.052074999
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.476857551,
+        "passed": true,
+        "round": 1,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2476857551\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.644950478
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.461036955,
+        "passed": true,
+        "round": 1,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2461036955\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.636499621
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 9.934691025,
+        "passed": true,
+        "round": 2,
+        "stderr": "",
+        "stdout": "@comparison_ns 9934691025\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 16.551992343
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.374312516,
+        "passed": true,
+        "round": 2,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2374312516\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.439666511
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.308252029,
+        "passed": true,
+        "round": 2,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2308252029\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.325360001
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 9.722771832,
+        "passed": true,
+        "round": 2,
+        "stderr": "",
+        "stdout": "@comparison_ns 9722771832\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 15.834268793
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.425474138,
+        "passed": true,
+        "round": 3,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2425474138\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.544716835
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.392874574,
+        "passed": true,
+        "round": 3,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2392874574\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.48233073
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 9.771189208,
+        "passed": true,
+        "round": 3,
+        "stderr": "",
+        "stdout": "@comparison_ns 9771189208\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 16.004537341
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.810662693,
+        "passed": true,
+        "round": 3,
+        "stderr": "",
+        "stdout": "@comparison_ns 7810662693\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 13.597684065
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 1.870222463,
+        "passed": true,
+        "round": 4,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1870222463\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.547684491
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 7.566314697,
+        "passed": true,
+        "round": 4,
+        "stderr": "",
+        "stdout": "@comparison_ns 7566314697\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 12.4134802
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 8.324247671,
+        "passed": true,
+        "round": 4,
+        "stderr": "",
+        "stdout": "@comparison_ns 8324247671\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 13.165265432
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.062758914,
+        "passed": true,
+        "round": 4,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2062758914\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 3.899311329
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 7.568239926,
+        "passed": true,
+        "round": 5,
+        "stderr": "",
+        "stdout": "@comparison_ns 7568239926\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 12.534016281
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.524458754,
+        "passed": true,
+        "round": 5,
+        "stderr": "",
+        "stdout": "@comparison_ns 7524458754\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 12.314411848
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 1.939130082,
+        "passed": true,
+        "round": 5,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1939130082\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 3.601591869
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 1.912895386,
+        "passed": true,
+        "round": 5,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1912895386\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.925697734
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 7.732131228,
+        "passed": true,
+        "round": 6,
+        "stderr": "",
+        "stdout": "@comparison_ns 7732131228\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 12.667113818
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 1.919784,
+        "passed": true,
+        "round": 6,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1919784000\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 3.605255045
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 1.960880737,
+        "passed": true,
+        "round": 6,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 1960880737\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 3.599284032
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 10.325727927,
+        "passed": true,
+        "round": 6,
+        "stderr": "",
+        "stdout": "@comparison_ns 10325727927\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 15.874973702
+      },
+      {
+        "after": false,
+        "jit": true,
+        "measured_seconds": 2.615733877,
+        "passed": true,
+        "round": 7,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2615733877\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 2,
+        "wall_seconds": 4.916484211
+      },
+      {
+        "after": true,
+        "jit": true,
+        "measured_seconds": 2.412753614,
+        "passed": true,
+        "round": 7,
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stdout": "@comparison_ns 2412753614\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 3,
+        "wall_seconds": 4.520916741
+      },
+      {
+        "after": false,
+        "jit": false,
+        "measured_seconds": 9.948821121,
+        "passed": true,
+        "round": 7,
+        "stderr": "",
+        "stdout": "@comparison_ns 9948821121\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 0,
+        "wall_seconds": 16.242353762
+      },
+      {
+        "after": true,
+        "jit": false,
+        "measured_seconds": 8.705669586,
+        "passed": true,
+        "round": 7,
+        "stderr": "",
+        "stdout": "@comparison_ns 8705669586\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "variant": 1,
+        "wall_seconds": 14.35377139
+      }
+    ],
+    "rounds": 7
+  },
+  "limitations": [
+    "Not full production-size or clean-host acceptance.",
+    "VM is a control: root-discard change targets native ownership helpers.",
+    "One workload does not establish all50 performance.",
+    "Timing instrumentation preserves algorithm, warmups, iterations and checksum."
+  ],
+  "interpretation": "JIT median paired elapsed ratio0.98647, favorable6/7, a small observed reduction. VM control ratio0.93155 with ratios0.74882..1.10017 shows material uncontrolled variance. Do not attribute a large end-to-end speedup to this change; clean-host replication remains necessary.",
+  "instrumentation_verification": "Timed port exactly equals frozen source with only the two runner timing insertions."
+}
