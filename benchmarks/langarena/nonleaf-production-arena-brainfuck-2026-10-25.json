@@ -1,6 +1,6 @@
 {
   "runtime_commit": "ea0ea3e",
-  "scope": "Two additional full production JIT outcomes; all50 sweep remains incomplete",
+  "scope": "Three additional full production JIT outcomes; all50 sweep remains incomplete",
   "previous_evidence": "nonleaf-production-binarytrees-2026-10-25.json",
   "binary_input_hashes": {
     "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
@@ -47,15 +47,36 @@
       "stdout": "@profile create-start ns=99130\n@profile create-done ns=290901\n@profile prepare-done ns=454510\n@profile warmup-1 ns=207077730\n@profile warmup-100 ns=3168067913\n@profile warmup-200 ns=6218736675\n@profile warmup-300 ns=9197391580\n@profile warmup-400 ns=12160708224\n@profile warmup-500 ns=15116479035\n@profile warmup-600 ns=18099743833\n@profile warmup-700 ns=21050679037\n@profile warmup-800 ns=24039145638\n@profile warmup-900 ns=27309718446\n@profile warmup-1000 ns=30349997430\n@profile warmup-done ns=30350191586\n",
       "stdout_truncated": false,
       "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 954437102,
+        "iterations": 1,
+        "name": "Brainfuck::Recursion",
+        "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+        "warmup_iterations": 1000,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 3600013706382.0,
+      "exitcode": -1,
+      "name": "Brainfuck::Recursion",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=86537\n@profile create-done ns=262421\n@profile prepare-done ns=418581\n@profile warmup-1 ns=139386136\n@profile warmup-100 ns=3223633626\n@profile warmup-200 ns=6393288184\n@profile warmup-300 ns=9448982333\n@profile warmup-400 ns=12553237976\n@profile warmup-500 ns=15664493695\n@profile warmup-600 ns=18749345520\n@profile warmup-700 ns=21868105067\n@profile warmup-800 ns=24729301325\n@profile warmup-900 ns=28117864969\n@profile warmup-1000 ns=31240387744\n@profile warmup-done ns=31240538873\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
     }
   ],
   "maximum_resident_bytes": {
     "Binarytrees::Arena": 1333653504,
-    "Brainfuck::Array": null
+    "Brainfuck::Array": null,
+    "Brainfuck::Recursion": null
   },
   "limitations": [
     "Uncontrolled local laptop; not a stable performance comparison.",
-    "Brainfuck::Array reached the one-hour deadline without a checksum result: incomplete correctness verification, not a semantic failure or pass.",
+    "Both Brainfuck cases reached the one-hour deadline without a checksum result: incomplete correctness verification, not a semantic failure or pass.",
     "Timeout process accounting is unavailable; sampled RSS is not substituted for peak memory.",
     "Inputs, warmups, iterations and checksums unchanged; JIT may fall back to VM.",
     "Remaining JIT cases and production VM/interpreter gates remain open."
