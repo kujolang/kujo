@@ -10,8 +10,13 @@ a target to test, not a guarantee. This document explains the execution order;
 - **Consumed native call operands (`4e42bd2`).** [Evidence](CONSUMING_CALLS_2026_10_24.md)
   records zero isolated marshalling allocations and QuickSort JIT unique requests
   14,638→7,322. Borrowed APIs stay reusable; nested ownership and errors pass
-  1,097 library and 40 integration tests. This candidate still needs release
-  checksum, elapsed-time and peak-memory verification.
+  1,097 library and 40 integration tests. The
+  [frozen release audit](CONSUMING_RELEASE_2026_10_24.md) verifies 150/150
+  test-size checksums, 28 timing samples and eight peak-memory observations.
+  JIT QuickSort's median paired speedup over `aa30071` is 1.0363×, with all
+  seven pairs favorable. CPU speed limits changed 55→71%; this is provisional
+  local evidence. Production, controlled competitive and platform gates remain
+  open, and two RSS samples per variant do not establish a memory improvement.
 
 - **Builtin argument reuse (`aa30071`).** [Evidence](BUILTIN_ARGUMENT_POOL_2026_10_24.md)
   records JIT QuickSort unique allocations 21,954→14,638 and requested bytes
