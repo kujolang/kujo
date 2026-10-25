@@ -19,6 +19,12 @@ a target to test, not a guarantee. This document explains the execution order;
   cancellation latency and admission release, capability inheritance, isolated
   globals, snapshots, ordering, errors, nested tasks and VM/interpreter/JIT parity.
   Do not enable JIT globally or remove cancellation to improve benchmark scores.
+  The bounded concurrency lifecycle suite now runs its 19 contracts in VM,
+  interpreter and JIT modes (57 child executions), including repeatable
+  cancellation, admission recovery, capability denial, capture isolation and
+  generator delegation. All pass on the `d8d99d8` runtime. This establishes
+  JIT-mode policy parity only; native worker execution remains unimplemented
+  and still needs its own coverage and cancellation-latency evidence.
 
 - **Consumed native call operands (`4e42bd2`).** [Evidence](CONSUMING_CALLS_2026_10_24.md)
   records zero isolated marshalling allocations and QuickSort JIT unique requests
