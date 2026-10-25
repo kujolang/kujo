@@ -31,14 +31,14 @@ runtime optimization in sections 3–5 has not been restarted.
 - [ ] Freeze original baseline, candidate, Goose, Rust, toolchains and inputs.
 - [ ] Preserve original and immediate-predecessor baselines for each future fix.
 - [ ] Establish a quiet dedicated Linux host. **Blocked: user confirmed no host.**
-- [ ] Record CPU/architecture, OS, RAM, toolchains and build flags.
-- [ ] Record continuous load, memory/swap and available thermal telemetry.
-- [ ] Separate builds from measured benchmark intervals.
+- [x] Record CPU/architecture, OS, RAM, toolchains and build flags for the local candidate/probe (diagnosis manifest).
+- [x] Record continuous load, memory/swap and available thermal telemetry during the main local pass.
+- [x] Separate builds from measured benchmark intervals.
 - [ ] Run seven alternating/rotating focused comparison rounds.
 - [ ] Separate startup/setup, compilation/warmup, measured loop, total time and RSS.
 - [ ] Treat rounded zero competitor timings as below reporting resolution.
 - [ ] Keep compared algorithms, inputs, iterations, warmups and checksums identical.
-- [ ] Preserve explicit timeout, cancellation, failed and passed statuses.
+- [x] Preserve explicit timeout, cancellation, failed and passed statuses.
 
 Gate: repeatable measurements with exact identities and uncertainty. A noisy local
 diagnostic cannot close clean-host acceptance. Old `/tmp` baseline/competitor
@@ -65,17 +65,19 @@ not retained memory. A diagnostic input is not an official benchmark pass.
 | Next | TextRaytracer | [ ] structs/vector helpers/numerics/calls |
 | Next | Small JIT workloads | [ ] compilation and transition break-even |
 
-- [ ] Capture CPU profiles with useful symbols, or explicitly mark missing symbols.
-- [ ] Measure allocation count and requested bytes separately from peak RSS.
+- [x] Capture local CPU profiles with useful symbols; preserve short/missing-window limitations.
+- [x] Measure aggregate main-thread allocation count/requested bytes separately from ordinary CLI peak RSS.
 - [ ] Identify owners behind repeated copies; distinguish required snapshots.
 - [ ] Attribute call-frame setup, argument/return transfer and environment lookup.
 - [ ] Measure native execution/fallback without inventing coverage percentages.
 - [ ] Separate one-time setup from per-element/per-iteration work.
 - [ ] Create representative small reproducers and verify their mechanism.
-- [ ] Preserve before results before implementation.
+- [x] Preserve local diagnostic before results before implementation.
 
 Gate: each optimization proposal has a reproduced bottleneck, not just a static
 hypothesis. No runtime optimization is authorized by completing this diagnosis.
+
+Local diagnostic results and remaining attribution gates: [priority diagnosis](PRIORITY_DIAGNOSIS_2026_10_25.md). Neither section 1 nor section 2 is fully closed.
 
 ## 3. Allocation and call-frame fixes (not started in this round)
 
@@ -142,24 +144,58 @@ Gate: measured speed improvements, not just additional compilable functions.
 Each family below requires exact input/checksum, build identity, status, elapsed
 time, resource evidence and limitations for every case and runtime.
 
-| Family | Cases | Final-candidate production VM / interpreter / JIT |
-| --- | --- | --- |
-| Binarytrees | Obj, Arena | [ ] / [ ] / [ ] |
-| Brainfuck | Array, Recursion | [ ] / [ ] / [ ] |
-| Matmul | Single, T4, T8, T16 | [ ] / [ ] / [ ] |
-| Base64 | Encode, Decode | [ ] / [ ] / [ ] |
-| JSON | Generate, ParseDom, ParseMapping | [ ] / [ ] / [ ] |
-| CSV | Parse | [ ] / [ ] / [ ] |
-| Etc | Sieve, TextRaytracer, NeuralNet, CacheSimulation, GameOfLife, Words, LogParser | [ ] / [ ] / [ ] |
-| Template | Regex, Parse | [ ] / [ ] / [ ] |
-| Sort | Quick, Merge, Self | [ ] / [ ] / [ ] |
-| Graph | BFS, DFS, AStar | [ ] / [ ] / [ ] |
-| Hash | SHA256, CRC32 | [ ] / [ ] / [ ] |
-| Calculator | Ast, Interpreter | [ ] / [ ] / [ ] |
-| Maze | Generator, BFS, AStar | [ ] / [ ] / [ ] |
-| CLBG | Fannkuchredux, Mandelbrot, Nbody, Spectralnorm | [ ] / [ ] / [ ] |
-| Compress | BWTEncode/Decode, HuffEncode/Decode, ArithEncode/Decode, LZWEncode/Decode | [ ] / [ ] / [ ] |
-| Distance | Jaro, NGram | [ ] / [ ] / [ ] |
+| Benchmark | Production VM | Production interpreter | Production JIT |
+| --- | --- | --- | --- |
+| Binarytrees::Obj | [ ] | [ ] | [ ] |
+| Binarytrees::Arena | [ ] | [ ] | [ ] |
+| Brainfuck::Array | [ ] | [ ] | [ ] |
+| Brainfuck::Recursion | [ ] | [ ] | [ ] |
+| Matmul::Single | [ ] | [ ] | [ ] |
+| Matmul::T4 | [ ] | [ ] | [ ] |
+| Matmul::T8 | [ ] | [ ] | [ ] |
+| Matmul::T16 | [ ] | [ ] | [ ] |
+| Base64::Encode | [ ] | [ ] | [ ] |
+| Base64::Decode | [ ] | [ ] | [ ] |
+| Json::Generate | [ ] | [ ] | [ ] |
+| Json::ParseDom | [ ] | [ ] | [ ] |
+| Json::ParseMapping | [ ] | [ ] | [ ] |
+| CSV::Parse | [ ] | [ ] | [ ] |
+| Etc::Sieve | [ ] | [ ] | [ ] |
+| Etc::TextRaytracer | [ ] | [ ] | [ ] |
+| Etc::NeuralNet | [ ] | [ ] | [ ] |
+| Etc::CacheSimulation | [ ] | [ ] | [ ] |
+| Etc::GameOfLife | [ ] | [ ] | [ ] |
+| Etc::Words | [ ] | [ ] | [ ] |
+| Etc::LogParser | [ ] | [ ] | [ ] |
+| Template::Regex | [ ] | [ ] | [ ] |
+| Template::Parse | [ ] | [ ] | [ ] |
+| Sort::Quick | [ ] | [ ] | [ ] |
+| Sort::Merge | [ ] | [ ] | [ ] |
+| Sort::Self | [ ] | [ ] | [ ] |
+| Graph::BFS | [ ] | [ ] | [ ] |
+| Graph::DFS | [ ] | [ ] | [ ] |
+| Graph::AStar | [ ] | [ ] | [ ] |
+| Hash::SHA256 | [ ] | [ ] | [ ] |
+| Hash::CRC32 | [ ] | [ ] | [ ] |
+| Calculator::Ast | [ ] | [ ] | [ ] |
+| Calculator::Interpreter | [ ] | [ ] | [ ] |
+| Maze::Generator | [ ] | [ ] | [ ] |
+| Maze::BFS | [ ] | [ ] | [ ] |
+| Maze::AStar | [ ] | [ ] | [ ] |
+| CLBG::Fannkuchredux | [ ] | [ ] | [ ] |
+| CLBG::Mandelbrot | [ ] | [ ] | [ ] |
+| CLBG::Nbody | [ ] | [ ] | [ ] |
+| CLBG::Spectralnorm | [ ] | [ ] | [ ] |
+| Compress::BWTEncode | [ ] | [ ] | [ ] |
+| Compress::BWTDecode | [ ] | [ ] | [ ] |
+| Compress::HuffEncode | [ ] | [ ] | [ ] |
+| Compress::HuffDecode | [ ] | [ ] | [ ] |
+| Compress::ArithEncode | [ ] | [ ] | [ ] |
+| Compress::ArithDecode | [ ] | [ ] | [ ] |
+| Compress::LZWEncode | [ ] | [ ] | [ ] |
+| Compress::LZWDecode | [ ] | [ ] | [ ] |
+| Distance::Jaro | [ ] | [ ] | [ ] |
+| Distance::NGram | [ ] | [ ] | [ ] |
 
 - [ ] Recheck all 150 test-size combinations after optimizations.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
