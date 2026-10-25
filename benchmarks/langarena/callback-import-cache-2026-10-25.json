@@ -1,0 +1,33 @@
+{
+  "runtime_source_commit": "f22e06c",
+  "binary_sha256": "96ccd01ea51fa51b3af73a2036f120d83a0afecf8925ec33d54c359f84d00ea8",
+  "scope": "Existing non-leaf callback module cache parity gap; not caused by pending leaf VM reuse.",
+  "source": {
+    "main.kujo": "shared_set(\"callback_module_initializations\", 0)\nfunc compare(a, b) {\n    from marker import compare_values\n    return compare_values(a, b)\n}\nassert_equal(sort_by([4, 3, 2, 1], compare), [1, 2, 3, 4])\nprint(shared_get(\"callback_module_initializations\"))\n",
+    "marker.kujo": "shared_add_int(\"callback_module_initializations\", 1)\nexport func compare_values(a, b) { return a - b }\n"
+  },
+  "reports": [
+    {
+      "mode": "vm",
+      "exitcode": 0,
+      "stdout": "4\n",
+      "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+    },
+    {
+      "mode": "interpreter",
+      "exitcode": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "mode": "jit",
+      "exitcode": 0,
+      "stdout": "4\n",
+      "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+    }
+  ],
+  "canonical_reference": "docs/LANGUAGE_SPEC.md module cache behavior: unchanged source metadata reuses cached exports.",
+  "finding": "For four comparator invocations, module initialization executes four times in VM/JIT and once in interpreter. call_interpreter_callback creates a new ModuleLoader for every invocation. Sorted result matches in all modes.",
+  "remaining_work": "Define and test callback import-cache lifetime across operations, source reload and capabilities before general VM reuse; align with canonical caching and runtime parity without hiding repeated side effects.",
+  "pending_leaf_change": "Explicit opcode allowlist rejects calls/imports, so leaf reuse does not silently change this behavior."
+}
