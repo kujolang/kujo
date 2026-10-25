@@ -2,8 +2,8 @@
 
 The full performance objective remains open. This directory prepares an exact
 Linux comparison set; it does not provision resources or claim Linux validation.
-The original Kujo baseline is `f037705`, and the candidate is `44b2fb1` (task/callback and nested-worker
-JIT/cancellation fixes). Both use the pinned Rust toolchain and separate target folders.
+The original Kujo baseline is `f037705`, and the candidate is `ea0ea3e` (synchronous callback reuse, native code identity,
+and preceding ownership/JIT/cancellation fixes). Both use the pinned Rust toolchain and separate target folders.
 The earlier preparation pin `9be62a6` remains historical evidence, not the
 original baseline. Update candidate pins explicitly after accepting further fixes;
 never silently substitute a floating branch or overwrite a prior run directory.
@@ -39,7 +39,7 @@ revisions (including both Kujo versions), builds release binaries with locked Ru
 upstream `prod` recipe, and records machine/compiler identities and hashes.
 The candidate's `build.kujo` assembles the ignored `port.kujo` from pinned source
 fragments before its hash is recorded. The candidate passed 150 local test-size
-checksums; see `../task-workers-release-2026-10-24.json` for the bounded evidence.
+checksums; see `../nonleaf-release-2026-10-25.json` for the bounded evidence.
 Its shell bootstrap is necessary before a Kujo executable exists; subsequent
 orchestration uses the repository's Kujo runners. A failed build leaves logs
 and no completion marker. `BUILT_NOT_VERIFIED` means only that builds finished.
