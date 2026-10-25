@@ -1,0 +1,92 @@
+# Sequential six-variant comparison over an unchanged configuration registry.
+# Usage: kujo run compare_suite.kujo BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME]
+# Pin source/binary identities separately; baseline is the executable supplied by the caller.
+func parse_duration(text) {
+    try { return to_float(text) } except error { return -1.0 }
+}
+let options := args()
+assert(len(options) >= 6 && len(options) <= 9, "Expected six to nine arguments")
+mut rounds := 7
+if len(options) >= 7 { rounds = to_int(options[6]) }
+mut timeout := 600000
+if len(options) >= 8 { timeout = to_int(options[7]) }
+assert(rounds >= 1 && rounds <= 100, "Invalid rounds")
+assert(timeout >= 1 && timeout <= 86400000, "Invalid timeout")
+let binaries := {"Baseline VM": options[0], "Baseline JIT": options[0], "Latest VM": options[1], "Latest JIT": options[1], "Rust": options[2], "Goose": options[3]}
+let directory := options[4]
+assert(!file_exists(directory + "/samples.json") && !file_exists(directory + "/timed-port.kujo") && !file_exists(directory + "/config.json"), "Output evidence already exists")
+let config_text := read_file(options[5])
+let registry := parse_json(config_text)
+mut cases := []
+mut names := {}
+for row in registry {
+    let name := row["name"]
+    assert(has_key(names, name) == 0, "Duplicate benchmark name")
+    names[name] = true
+    if len(options) < 9 || options[8] == name { cases = push(cases, [name, directory + "/config.json", row]) }
+}
+assert(len(cases) > 0, "No matching benchmarks")
+write_file(directory + "/config.json", config_text, true)
+let languages := ["Baseline VM", "Baseline JIT", "Latest VM", "Latest JIT", "Rust", "Goose"]
+
+# Time only the measured loop, as the upstream Rust and Goose runners do.
+# Assemble a temporary copy; preserve the normal port and all benchmark kernels.
+let source := read_file("benchmarks/langarena/port.kujo")
+let begin := "            while i < cfg[\"iterations\"] {"
+let end := "            let actual := u32(checksum(state))"
+assert_equal(len(split(source, begin)), 2)
+assert_equal(len(split(source, end)), 2)
+let timed := replace(replace(source, begin, "            let comparison_started := time_ns()\n" + begin), end, "            let comparison_elapsed := time_ns() - comparison_started\n            print(\"@comparison_ns \" + str(comparison_elapsed))\n" + end)
+let port := directory + "/timed-port.kujo"
+write_file(port, timed, true)
+mut results := []
+mut failures := 0
+mut round := 0
+while round < rounds {
+    for selected in cases {
+        let name := selected[0]
+        let config := selected[1]
+        mut index := 0
+        while index < 6 {
+            let language := languages[(index + round) % 6]
+            print("START round=" + str(round + 1) + " " + name + " " + language)
+            mut command := [binaries[language], config, name]
+            if language == "Baseline VM" || language == "Baseline JIT" || language == "Latest VM" || language == "Latest JIT" {
+                command = [binaries[language], "run", port, "--scheduler-no-timeout"]
+                if language == "Latest JIT" || language == "Baseline JIT" { command = push(command, "--jit") }
+                command = push(push(command, config), name)
+            }
+            let started := time_ns()
+            let result := spawn_process(command, {"timeout_ms": timeout, "max_output_bytes": 1048576})
+            let wall := time_ns() - started
+            mut measured := -1.0
+            mut passed := false
+            if language == "Baseline VM" || language == "Baseline JIT" || language == "Latest VM" || language == "Latest JIT" {
+                mut checksum_ok := false
+                for line in split(result.stdout, "\n") { if line == name + ": OK " + str(selected[2]["checksum"]) { checksum_ok = true } }
+                passed = result.success && checksum_ok && contains(result.stdout, "Summary: 1, 1, 0") == 1
+                for line in split(result.stdout, "\n") {
+                    if starts_with(line, "@comparison_ns ") { measured = parse_duration(substring(line, 15, len(line))) / 1000000000.0 }
+                }
+            } else {
+                let prefix := name + ": OK in "
+                passed = result.success && contains(result.stdout, prefix) == 1 && contains(result.stdout, ", 1, 1, 0") == 1
+                for line in split(result.stdout, "\n") {
+                    if starts_with(line, prefix) {
+                        let duration := split(line, " in ")[1]
+                        measured = parse_duration(substring(duration, 0, len(duration) - 1))
+                    }
+                }
+            }
+            let valid := passed && !result.timed_out && !result.cancelled && measured >= 0.0 && measured < 86400.0
+            results = push(results, {"round": round + 1, "benchmark": name, "config": selected[2], "language": language, "passed": valid, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout": result.stdout, "stderr": result.stderr})
+            write_file(directory + "/samples.json", to_json({"binaries": binaries, "kujo_runtime": "explicit per variant", "rounds": rounds, "timeout_ms": timeout, "configuration_sha256": sha256(config_text), "original_port_sha256": sha256(source), "timed_port_sha256": sha256(timed), "results": results}), true)
+            if !valid { failures += 1 print("FAILED " + language + " " + name + ": " + result.stdout + result.stderr) }
+            if valid { print("PASS measured_seconds=" + str(measured)) }
+            assert(!result.cancelled, "Comparison cancelled; partial evidence retained")
+            index += 1
+        }
+    }
+    round += 1
+}
+assert(failures == 0, "Incomplete comparison; inspect all recorded failures")

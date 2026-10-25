@@ -88,3 +88,37 @@ The bootstrap has local shell syntax and fail-closed preflight validation only.
 Linux downloads/builds, cloud performance, production completion and platform
 acceptance remain unverified until the server run supplies evidence. Cloud
 access is currently required; it does not block independent local investigation.
+
+## Full-registry comparison runner
+
+Use `compare_suite.kujo` from this tooling checkout (the pinned runtime checkout
+can predate this runner). Run it with the candidate executable, from the
+candidate repository root, after generating `port.kujo`. Create a fresh output
+directory first. The arguments are:
+
+```text
+BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME]
+```
+
+It runs original VM/JIT, candidate VM/JIT, Rust and Goose sequentially over every
+entry in the supplied unchanged `test.json` or `run.json`, rotating variant order.
+Use one round for the initial full-registry correctness pass. Seven rounds are
+the default for subsequent comparisons. The default per-process deadline is ten
+minutes; set a longer deadline explicitly for production retries. A local tree
+case needed roughly 35 seconds per iteration and did not finish within ten
+minutes; that timeout does not establish a correctness failure.
+
+The runner freezes the configuration and instrumented port in the output folder,
+records their hashes, checkpoints every result, retains failures and exits
+nonzero if any variant fails. It refuses existing evidence files. Kujo output
+must contain the exact expected checksum; Rust/Goose use their pinned upstream
+runner's checksum verdict. Binary/source provenance must accompany these reports
+from the bootstrap manifest. Peak RSS and host-load capture remain separate
+requirements; this runner does not claim to measure either. Cancellation stops
+with partial evidence retained. Do not interpret incomplete rows as timings.
+
+The lightweight host-fixture contract can be checked without real benchmark
+work using `bash benchmarks/langarena/tests/compare-suite.sh /absolute/kujo`.
+It exercises all 50 synthetic registry entries in VM, interpreter and JIT,
+wrong checksums, malformed times, deadlines, output preservation and selection.
+These are runner tests, not LangArena correctness or speed results.
