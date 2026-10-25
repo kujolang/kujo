@@ -853,6 +853,7 @@ impl VM {
     /// Enable or disable JIT compilation
     pub fn set_jit_enabled(&mut self, enabled: bool) {
         self.jit_enabled = enabled;
+        self.interpreter.vm_jit_requested = enabled;
         if let Some(compiler) = self.jit_compiler.as_mut() {
             compiler.set_enabled(enabled);
         }

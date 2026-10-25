@@ -714,7 +714,7 @@ fn try_parallel_map_with_rayon(
     Some(resolved_promise(Ok(Value::Array(Arc::new(results)))))
 }
 
-fn try_parallel_map_with_jit_bytecode(
+fn try_parallel_map_with_bytecode(
     interp: &mut crate::interpreter::Interpreter,
     mapper: &Value,
     array: &Arc<Vec<Value>>,
@@ -729,6 +729,7 @@ fn try_parallel_map_with_jit_bytecode(
     let mapper = mapper.clone();
     let base_env = interp.env.clone();
     let capability_policy = interp.capability_policy().clone();
+    let jit_requested = interp.vm_jit_requested && interp.task_cancellation.is_none();
     let elements = array.as_ref().clone();
     let (tx, rx) = tokio::sync::oneshot::channel();
     AsyncRuntime::spawn_task(async move {
@@ -740,7 +741,16 @@ fn try_parallel_map_with_jit_bytecode(
             let worker_env = base_env.clone();
             let worker_policy = capability_policy.clone();
             tokio::task::spawn_blocking(move || {
-                (idx, execute_bytecode_mapper(mapper, element, worker_env, worker_policy))
+                (
+                    idx,
+                    execute_bytecode_mapper(
+                        mapper,
+                        element,
+                        worker_env,
+                        worker_policy,
+                        jit_requested,
+                    ),
+                )
             })
         };
 
@@ -791,6 +801,7 @@ fn execute_bytecode_mapper(
     element: Value,
     mut environment: Environment,
     capability_policy: RuntimeCapabilityPolicy,
+    jit_requested: bool,
 ) -> Result<Value, String> {
     const MAPPER: &str = "__kujo_parallel_mapper";
     const ARGUMENT: &str = "__kujo_parallel_argument";
@@ -813,6 +824,7 @@ fn execute_bytecode_mapper(
     ];
 
     let mut vm = VM::new();
+    vm.set_jit_enabled(jit_requested);
     vm.set_capability_policy(capability_policy);
     vm.set_globals(Arc::clone(&shared_environment));
     match vm.execute_until_suspend(wrapper)? {
@@ -2359,7 +2371,7 @@ pub fn handle(
             }
 
             if let Some(jit_bytecode_result) =
-                try_parallel_map_with_jit_bytecode(_interp, &mapper, &array, concurrency_limit)
+                try_parallel_map_with_bytecode(_interp, &mapper, &array, concurrency_limit)
             {
                 return Some(jit_bytecode_result);
             }

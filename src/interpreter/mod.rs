@@ -386,6 +386,9 @@ pub struct Interpreter {
     async_task_pool_size: usize,
     capability_policy: RuntimeCapabilityPolicy,
     pub(crate) vm_globals: Option<Arc<Mutex<Environment>>>,
+    /// Explicit caller policy for isolated synchronous bytecode workers.
+    /// Cancellable language tasks retain their separate VM-only policy.
+    pub(crate) vm_jit_requested: bool,
     pub(crate) task_cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
 }
 
@@ -467,6 +470,7 @@ impl Interpreter {
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
             vm_globals: None,
+            vm_jit_requested: false,
             task_cancellation: None,
         }
     }

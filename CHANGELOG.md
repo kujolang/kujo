@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Pass explicit JIT opt-in to isolated synchronous `parallel_map` bytecode
+  workers. VM/interpreter modes remain opt-out; cancellable language tasks
+  retain VM execution pending native cancellation support.
+
 - Unwind exited `try` handlers before `break`, `continue` and `return`, while
   retaining handlers around loops that remain active after those exits.
 
