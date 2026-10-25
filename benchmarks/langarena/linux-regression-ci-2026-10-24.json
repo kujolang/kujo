@@ -1,0 +1,3414 @@
+{
+  "run_url": "https://github.com/kujolang/kujo/actions/runs/40148692910",
+  "artifact_id": 12585229282,
+  "archive_sha256": "95e0ca4f4e97dce13dbf8ebb4197ab44e26927a74339f85148040aac8675411a",
+  "scope": "Earlier-candidate Linux internal VM regression corpus; not all50 LangArena, JIT coverage, clean-host comparison or latest runtime acceptance.",
+  "verification": "All artifact manifest hashes verified; driver/runner hashes match immutable corpus commit; summaries recomputed from raw timings and runtime reports; baseline A/A binary identity checked.",
+  "limitations": [
+    "corpus_dirty is true; measured driver/runner bytes match committed source, but unrelated workspace changes were not itemized.",
+    "Binary hashes are reported by CI; binaries are not included for independent rehashing.",
+    "Hosted runner interference uncontrolled.",
+    "macOS and Windows measurement jobs still running when inspected."
+  ],
+  "evidence": {
+    "baseline-evidence": {
+      "environment": {
+        "schema": "kujo.release-performance-environment/v1",
+        "recorded_at": "2026-10-25T03:29:20.751Z",
+        "baseline": {
+          "source_sha": "aa3007194ebb446ddbe6a91a90d7a8f55e8ee6b9",
+          "binary_sha256": "1bc9d2d833b29a584b88b6da06c101ff20c1d97e5b560e6290258a164002c8b9",
+          "bytes": 49980016
+        },
+        "candidate": {
+          "source_sha": "aa3007194ebb446ddbe6a91a90d7a8f55e8ee6b9",
+          "binary_sha256": "1bc9d2d833b29a584b88b6da06c101ff20c1d97e5b560e6290258a164002c8b9",
+          "bytes": 49980016
+        },
+        "corpus_sha": "635363364eaf51036be4d23648ffbf2def78f0c0",
+        "corpus_dirty": false,
+        "driver_sha256": "f666af396bd4cb3748f677b3a879f95963c54444d3a6ccf43dd3acd338644298",
+        "runtime_runner_sha256": "09a5ac0b0f1c5adbd57ac5dec96288d27dd02ab5ce10c04ab43c61015ce91bf9",
+        "static_runner_sha256": "34a1db577e618c2fc30ba28ffe72aa8b4201e1275dfa690aeaeff8936a921b4f",
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1",
+        "node": "v22.23.4",
+        "platform": "linux",
+        "arch": "x64",
+        "os_release": "6.8.0-1064-azure",
+        "cpu_models": [
+          "AMD EPYC 7763 64-Core Processor"
+        ],
+        "logical_cpus": 4,
+        "total_memory_bytes": 16765411328,
+        "profile": "release (caller-built; build command and cache state must accompany receipt)",
+        "power_storage": "not controlled; internal regression evidence only",
+        "cache": "two discarded process warmups per mode; not OS-cache-cold measurements",
+        "unsupported": [
+          "total_heap_allocations",
+          "retained_heap_bytes",
+          "filesystem_syscall_counts",
+          "network_request_counts",
+          "child_process_counts"
+        ],
+        "github": {
+          "run_id": "40148692910",
+          "attempt": "1"
+        }
+      },
+      "hashes": {
+        "environment.json": "0e393385eed3ba4b7feb978a4de75c6306f5ea16e7d7a4eab13167182f940e58",
+        "runtime.compiler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "runtime.json": "c88b29645d2fd056a7228219eb3a48c8cc2b0b119940802116ec163a206cf7be",
+        "runtime.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "runtime_measurement_release_bench.rs": "09a5ac0b0f1c5adbd57ac5dec96288d27dd02ab5ce10c04ab43c61015ce91bf9",
+        "static.compiler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "static.json": "4f4f4d41f5ec63f95d14b0abadcca9ce4dae298cdd9340b190a90a25dd162635",
+        "static.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "static_analysis_release_bench.rs": "34a1db577e618c2fc30ba28ffe72aa8b4201e1275dfa690aeaeff8936a921b4f",
+        "summary.json": "7b9dc24437cfbc04a829247522a8ae3a511fa4e0e664f0224027032e673416f6"
+      },
+      "workloads": [
+        {
+          "name": "calls",
+          "baseline_ms": 19.783905,
+          "candidate_ms": 19.889831,
+          "paired_delta_pct": 0.670323010035867,
+          "cpu_seconds": 0.015669,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "captures_generators",
+          "baseline_ms": 25.822386,
+          "candidate_ms": 25.785247,
+          "paired_delta_pct": -0.2680788257115374,
+          "cpu_seconds": 0.021969,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "tasks",
+          "baseline_ms": 114.039227,
+          "candidate_ms": 114.138752,
+          "paired_delta_pct": -0.020448897370450858,
+          "cpu_seconds": 0.005876999999999999,
+          "peak_rss_bytes": 15859712
+        },
+        {
+          "name": "calls_sustained",
+          "baseline_ms": 306.752774,
+          "candidate_ms": 306.666541,
+          "paired_delta_pct": -0.09845583798774316,
+          "cpu_seconds": 0.301027,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "captures_generators_sustained",
+          "baseline_ms": 214.291862,
+          "candidate_ms": 213.254673,
+          "paired_delta_pct": 0.14142962872758513,
+          "cpu_seconds": 0.211114,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "tasks_sustained",
+          "baseline_ms": 1087.325951,
+          "candidate_ms": 1088.031528,
+          "paired_delta_pct": 0.04887356909961671,
+          "cpu_seconds": 0.045356,
+          "peak_rss_bytes": 15859712
+        },
+        {
+          "name": "language_collections_structs",
+          "baseline_ms": 28.328016,
+          "candidate_ms": 27.900129,
+          "paired_delta_pct": -0.0365878080797688,
+          "cpu_seconds": 0.023504999999999998,
+          "peak_rss_bytes": 15073280
+        },
+        {
+          "name": "closures_retained",
+          "baseline_ms": 5.45784,
+          "candidate_ms": 5.367081,
+          "paired_delta_pct": 0.11679459670161929,
+          "cpu_seconds": 0.0014379999999999996,
+          "peak_rss_bytes": 15335424
+        },
+        {
+          "name": "generator_nested_alias",
+          "baseline_ms": 113.942507,
+          "candidate_ms": 113.697601,
+          "paired_delta_pct": -0.06093741044338463,
+          "cpu_seconds": 0.110699,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "promise_observers",
+          "baseline_ms": 1093.315291,
+          "candidate_ms": 1092.233545,
+          "paired_delta_pct": -0.1626825481050198,
+          "cpu_seconds": 0.049119,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "scheduler_channels",
+          "baseline_ms": 1089.066868,
+          "candidate_ms": 1090.413597,
+          "paired_delta_pct": 0.05398936054696879,
+          "cpu_seconds": 0.048486,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "task_admission_rejection",
+          "baseline_ms": 7.393078,
+          "candidate_ms": 7.330872,
+          "paired_delta_pct": -0.6779908617179475,
+          "cpu_seconds": 0.00291,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "task_cancellation",
+          "baseline_ms": 6.848702,
+          "candidate_ms": 6.813258,
+          "paired_delta_pct": 1.3985519521686252,
+          "cpu_seconds": 0.003709,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "ai_native_hash",
+          "baseline_ms": 5.355771,
+          "candidate_ms": 5.432122,
+          "paired_delta_pct": 0.6260467417422699,
+          "cpu_seconds": 0.0013149999999999998,
+          "peak_rss_bytes": 16384000
+        },
+        {
+          "name": "collection_serialization",
+          "baseline_ms": 12.764443,
+          "candidate_ms": 12.645204,
+          "paired_delta_pct": 0.3245906671116794,
+          "cpu_seconds": 0.008392,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "sparse_dictionary",
+          "baseline_ms": 292.139495,
+          "candidate_ms": 292.613023,
+          "paired_delta_pct": 0.6475961489595949,
+          "cpu_seconds": 0.28733,
+          "peak_rss_bytes": 18321408
+        },
+        {
+          "name": "schema_regex",
+          "baseline_ms": 11.526118,
+          "candidate_ms": 11.583705,
+          "paired_delta_pct": 0.22177389722646268,
+          "cpu_seconds": 0.007098,
+          "peak_rss_bytes": 17301504
+        },
+        {
+          "name": "schema_integer_dictionary",
+          "baseline_ms": 26.368517,
+          "candidate_ms": 26.461279,
+          "paired_delta_pct": 0.02657492508681969,
+          "cpu_seconds": 0.021717,
+          "peak_rss_bytes": 16355328
+        },
+        {
+          "name": "ai_context_fitting",
+          "baseline_ms": 6.317742,
+          "candidate_ms": 6.288448,
+          "paired_delta_pct": -0.26574627190192324,
+          "cpu_seconds": 0.0021349999999999997,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "token_text_ascii",
+          "baseline_ms": 7.211238,
+          "candidate_ms": 7.178877,
+          "paired_delta_pct": -0.09018832859563064,
+          "cpu_seconds": 0.0029470000000000004,
+          "peak_rss_bytes": 15728640
+        },
+        {
+          "name": "token_text_unicode",
+          "baseline_ms": 18.946506,
+          "candidate_ms": 19.098018,
+          "paired_delta_pct": 0.2639825776890037,
+          "cpu_seconds": 0.014613000000000001,
+          "peak_rss_bytes": 15728640
+        }
+      ],
+      "static_workloads": [
+        {
+          "name": "startup",
+          "baseline_ms": {
+            "min": 4.54327,
+            "median": 4.668971,
+            "p90": 4.865884,
+            "max": 4.883165,
+            "mean": 4.696055000000001,
+            "standard_deviation": 0.10683702888757159
+          },
+          "candidate_ms": {
+            "min": 4.528354,
+            "median": 4.642898,
+            "p90": 4.811696,
+            "max": 4.915434,
+            "mean": 4.663945047619047,
+            "standard_deviation": 0.10796734263235797
+          }
+        },
+        {
+          "name": "project_check",
+          "baseline_ms": {
+            "min": 6.175842,
+            "median": 6.419178,
+            "p90": 6.779202,
+            "max": 6.786984,
+            "mean": 6.44935119047619,
+            "standard_deviation": 0.17144961325057936
+          },
+          "candidate_ms": {
+            "min": 6.240836,
+            "median": 6.396346,
+            "p90": 6.59186,
+            "max": 6.769684,
+            "mean": 6.4241105238095235,
+            "standard_deviation": 0.14022786911160975
+          }
+        },
+        {
+          "name": "lsp_diagnostics",
+          "baseline_ms": {
+            "min": 7.197049,
+            "median": 7.497696,
+            "p90": 7.653857,
+            "max": 7.727657,
+            "mean": 7.479629999999999,
+            "standard_deviation": 0.14895250646398933
+          },
+          "candidate_ms": {
+            "min": 7.21372,
+            "median": 7.410163,
+            "p90": 7.479582,
+            "max": 7.718394,
+            "mean": 7.395198952380953,
+            "standard_deviation": 0.10823433210289446
+          }
+        }
+      ],
+      "raw_timing_samples": [
+        {
+          "name": "calls",
+          "iterations": 10000,
+          "source": "func plus(n) { return n + 1 } mut n := 0 while n < 10000 { n = plus(n) } print(n)",
+          "warmups_ns": [
+            [
+              20854710,
+              20096267
+            ],
+            [
+              21052679,
+              19853345
+            ],
+            [
+              23506120,
+              23127801
+            ]
+          ],
+          "baseline_ns": [
+            20200370,
+            19882960,
+            19617395,
+            19673109,
+            19841662,
+            19655445,
+            19574975,
+            20604423,
+            19783905,
+            20178630,
+            19675953
+          ],
+          "disabled_ns": [
+            19980521,
+            19889831,
+            19785528,
+            19975802,
+            19674451,
+            19202792,
+            19804884,
+            19994787,
+            20071471,
+            20313892,
+            19845720
+          ],
+          "enabled_ns": [
+            20907293,
+            20949522,
+            20514767,
+            20846765,
+            20405848,
+            20502059,
+            20693299,
+            20925737,
+            20870379,
+            20721392,
+            21053751
+          ]
+        },
+        {
+          "name": "captures_generators",
+          "iterations": 1000,
+          "source": "func factory(n) { func get() { return n } return get } func* numbers() { yield 1 yield 2 } mut i := 0 mut total := 0 while i < 1000 { let f := factory(i) total += f() let g := numbers() for v in g { total += v } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              25785518,
+              26184601
+            ],
+            [
+              25669993,
+              32033570
+            ],
+            [
+              27424553,
+              27277078
+            ]
+          ],
+          "baseline_ns": [
+            25711109,
+            25574535,
+            25947219,
+            25538057,
+            25799955,
+            25852123,
+            25822386,
+            25939806,
+            26012410,
+            25792650,
+            25862261
+          ],
+          "disabled_ns": [
+            25407183,
+            25749851,
+            25877660,
+            25940187,
+            26286521,
+            26230296,
+            25602266,
+            25685442,
+            25785247,
+            25881737,
+            25735064
+          ],
+          "enabled_ns": [
+            26866958,
+            27160975,
+            27046533,
+            26968357,
+            27698042,
+            27280002,
+            27597724,
+            27157535,
+            27171045,
+            27275574,
+            27195440
+          ]
+        },
+        {
+          "name": "tasks",
+          "iterations": 100,
+          "source": "async func work(n) { return n + 1 } mut n := 0 while n < 100 { n = await work(n) } print(n)",
+          "warmups_ns": [
+            [
+              113792837,
+              113981008
+            ],
+            [
+              114307056,
+              113890124
+            ],
+            [
+              115169168,
+              114966956
+            ]
+          ],
+          "baseline_ns": [
+            114128403,
+            113926387,
+            114378940,
+            114523099,
+            113342203,
+            114355696,
+            114167596,
+            113963876,
+            114039227,
+            114028046,
+            113974977
+          ],
+          "disabled_ns": [
+            114105065,
+            114138752,
+            114200578,
+            114419895,
+            113690517,
+            114246083,
+            113464656,
+            114167406,
+            113670018,
+            114077078,
+            114224372
+          ],
+          "enabled_ns": [
+            115749062,
+            115174071,
+            115718611,
+            115761736,
+            115368378,
+            115690574,
+            115796391,
+            114897150,
+            115709379,
+            115491914,
+            115149014
+          ]
+        },
+        {
+          "name": "calls_sustained",
+          "iterations": 200000,
+          "source": "func plus(n) { return n + 1 } mut n := 0 while n < 200000 { n = plus(n) } print(n)",
+          "warmups_ns": [
+            [
+              303526020,
+              307432509
+            ],
+            [
+              297732244,
+              308313020
+            ],
+            [
+              304389329,
+              310593329
+            ]
+          ],
+          "baseline_ns": [
+            306752774,
+            306127677,
+            301719904,
+            308127994,
+            303761548,
+            312204811,
+            304523898,
+            303616328,
+            310010162,
+            309799127,
+            307914937
+          ],
+          "disabled_ns": [
+            308027738,
+            314892795,
+            302312207,
+            302986043,
+            308897969,
+            307032703,
+            309508316,
+            303317400,
+            304809069,
+            302023550,
+            306666541
+          ],
+          "enabled_ns": [
+            304485407,
+            308125695,
+            308600580,
+            318522423,
+            307013863,
+            305192404,
+            308300136,
+            304255498,
+            313510104,
+            306912236,
+            304353381
+          ]
+        },
+        {
+          "name": "captures_generators_sustained",
+          "iterations": 10000,
+          "source": "func factory(n) { func get() { return n } return get } func* numbers() { yield 1 yield 2 } mut i := 0 mut total := 0 while i < 10000 { let f := factory(i) total += f() let g := numbers() for v in g { total += v } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              214998593,
+              219852405
+            ],
+            [
+              212788675,
+              213190844
+            ],
+            [
+              214007605,
+              216043860
+            ]
+          ],
+          "baseline_ns": [
+            215049306,
+            213413338,
+            214074471,
+            211445793,
+            214370111,
+            214883157,
+            216951731,
+            214917251,
+            213707613,
+            214291862,
+            211452451
+          ],
+          "disabled_ns": [
+            213254673,
+            215095633,
+            217919244,
+            211744840,
+            214621209,
+            216317851,
+            211207027,
+            212020063,
+            216113046,
+            212583559,
+            212317073
+          ],
+          "enabled_ns": [
+            214904998,
+            215585035,
+            217417078,
+            214540363,
+            217903455,
+            215749451,
+            215354095,
+            217468229,
+            218611732,
+            217287234,
+            217878205
+          ]
+        },
+        {
+          "name": "tasks_sustained",
+          "iterations": 1000,
+          "source": "async func work(n) { return n + 1 } mut n := 0 while n < 1000 { n = await work(n) } print(n)",
+          "warmups_ns": [
+            [
+              1086663361,
+              1087874785
+            ],
+            [
+              1084187227,
+              1085932845
+            ],
+            [
+              1088153594,
+              1092684115
+            ]
+          ],
+          "baseline_ns": [
+            1087121636,
+            1085973431,
+            1087080708,
+            1088467842,
+            1087020295,
+            1085727727,
+            1087325951,
+            1092022163,
+            1087887255,
+            1090073256,
+            1088650342
+          ],
+          "disabled_ns": [
+            1091858794,
+            1085063741,
+            1089371390,
+            1086120338,
+            1085357541,
+            1087311784,
+            1087857366,
+            1090245318,
+            1090296956,
+            1088031528,
+            1089901558
+          ],
+          "enabled_ns": [
+            1093551517,
+            1086124042,
+            1087449856,
+            1090389288,
+            1090987186,
+            1092102967,
+            1090521435,
+            1088559703,
+            1088384437,
+            1086402719,
+            1093938461
+          ]
+        },
+        {
+          "name": "language_collections_structs",
+          "iterations": 5000,
+          "source": "struct Pair { left: int, right: int } mut i := 0 mut total := 0 while i < 5000 { let pair := Pair { left: i, right: i + 1 } let values := [pair.left, pair.right] total += values[0] + values[1] i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              28476242,
+              28018458
+            ],
+            [
+              27774013,
+              28006567
+            ],
+            [
+              28929777,
+              30197964
+            ]
+          ],
+          "baseline_ns": [
+            28328016,
+            27791626,
+            28158730,
+            29156259,
+            28528479,
+            28715778,
+            27833454,
+            27913574,
+            29104543,
+            28595624,
+            27823476
+          ],
+          "disabled_ns": [
+            27854132,
+            27852179,
+            28172125,
+            29406786,
+            27992089,
+            28180561,
+            27832543,
+            28967918,
+            27900129,
+            27453696,
+            27813296
+          ],
+          "enabled_ns": [
+            28596425,
+            28802700,
+            29649969,
+            32129499,
+            29099523,
+            29200481,
+            29142824,
+            29180510,
+            29206332,
+            29152922,
+            28930048
+          ]
+        },
+        {
+          "name": "closures_retained",
+          "iterations": 250,
+          "source": "func factory(n) { func get() { return n } return get } mut closures := [] mut i := 0 while i < 250 { closures = push(closures, factory(i)) i += 1 } print(closures[250 - 1]())",
+          "warmups_ns": [
+            [
+              5905404,
+              5537439
+            ],
+            [
+              5524464,
+              5617878
+            ],
+            [
+              6568891,
+              6444118
+            ]
+          ],
+          "baseline_ns": [
+            5414810,
+            5310255,
+            5597820,
+            5457840,
+            5489980,
+            5475223,
+            5525907,
+            5338838,
+            5460686,
+            5328259,
+            5302802
+          ],
+          "disabled_ns": [
+            5304464,
+            5528873,
+            5472898,
+            5475192,
+            5496392,
+            5325272,
+            5355389,
+            5349137,
+            5676638,
+            5319742,
+            5367081
+          ],
+          "enabled_ns": [
+            6507305,
+            6584098,
+            6311671,
+            6448897,
+            6344352,
+            6483091,
+            6790845,
+            7114106,
+            6427848,
+            6291664,
+            6334172
+          ]
+        },
+        {
+          "name": "generator_nested_alias",
+          "iterations": 5000,
+          "source": "func* inner(n) { yield n yield n + 1 } func* outer(n) { for value in inner(n) { yield value } } mut i := 0 mut total := 0 while i < 5000 { let generator := outer(i) let alias := generator for value in alias { total += value } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              113982201,
+              115128998
+            ],
+            [
+              113774735,
+              113397783
+            ],
+            [
+              115915979,
+              117667689
+            ]
+          ],
+          "baseline_ns": [
+            113942507,
+            113719962,
+            113300836,
+            116697141,
+            112809950,
+            113932655,
+            114825889,
+            115075774,
+            113971307,
+            114083676,
+            113709649
+          ],
+          "disabled_ns": [
+            113658758,
+            113650664,
+            113697601,
+            113673165,
+            113870739,
+            114739548,
+            114096670,
+            113060390,
+            112889000,
+            114125234,
+            114676380
+          ],
+          "enabled_ns": [
+            116514109,
+            116227692,
+            117878221,
+            115723202,
+            115367121,
+            117467037,
+            117385028,
+            116256604,
+            116663317,
+            116833891,
+            116870799
+          ]
+        },
+        {
+          "name": "promise_observers",
+          "iterations": 1000,
+          "source": "async func work(n) { return n + 1 } mut i := 0 mut total := 0 while i < 1000 { let promise := work(i) total += await promise total += await promise i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              1094962901,
+              1091786178
+            ],
+            [
+              1095208112,
+              1089418012
+            ],
+            [
+              1091040015,
+              1096610478
+            ]
+          ],
+          "baseline_ns": [
+            1096985879,
+            1091884563,
+            1090766023,
+            1092750212,
+            1091412862,
+            1095630005,
+            1090041743,
+            1093347148,
+            1096691897,
+            1094135474,
+            1093315291
+          ],
+          "disabled_ns": [
+            1090456119,
+            1096595976,
+            1095998745,
+            1094030788,
+            1091883630,
+            1090971466,
+            1096867190,
+            1091568463,
+            1094053774,
+            1092233545,
+            1091104772
+          ],
+          "enabled_ns": [
+            1094526490,
+            1095288043,
+            1093401867,
+            1095687283,
+            1094690816,
+            1092948349,
+            1091487633,
+            1093823348,
+            1098162744,
+            1092131523,
+            1097999446
+          ]
+        },
+        {
+          "name": "scheduler_channels",
+          "iterations": 1000,
+          "source": "let queue := channel() async func work(value) { queue.send(value) return queue.receive() } mut i := 0 mut total := 0 while i < 1000 { total += await work(i) i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              1088697877,
+              1092972065
+            ],
+            [
+              1088179572,
+              1090895199
+            ],
+            [
+              1092221211,
+              1094074465
+            ]
+          ],
+          "baseline_ns": [
+            1092526679,
+            1089066868,
+            1089514019,
+            1091294911,
+            1087406841,
+            1089032210,
+            1087565632,
+            1088172176,
+            1093060724,
+            1091399786,
+            1088814025
+          ],
+          "disabled_ns": [
+            1088639001,
+            1093664605,
+            1090413597,
+            1090765900,
+            1087993925,
+            1091401150,
+            1089883554,
+            1087536360,
+            1087438729,
+            1090904437,
+            1090848774
+          ],
+          "enabled_ns": [
+            1091284230,
+            1094620435,
+            1096050246,
+            1088200772,
+            1093358876,
+            1091152541,
+            1088721220,
+            1087804892,
+            1094660888,
+            1091240597,
+            1091014499
+          ]
+        },
+        {
+          "name": "task_admission_rejection",
+          "iterations": 100,
+          "source": "async func recurse(n) { if n == 0 { return 0 } return await recurse(n - 1) } mut caught := false try { await recurse(100) } except err { caught = true } print(caught)",
+          "warmups_ns": [
+            [
+              7826656,
+              7426336
+            ],
+            [
+              7450194,
+              7473562
+            ],
+            [
+              8425672,
+              8388884
+            ]
+          ],
+          "baseline_ns": [
+            7346982,
+            7503334,
+            7498263,
+            7254249,
+            7327917,
+            7464595,
+            7228711,
+            7283497,
+            7549800,
+            7521808,
+            7393078
+          ],
+          "disabled_ns": [
+            7213253,
+            7730386,
+            7409258,
+            7402355,
+            7268175,
+            7547095,
+            7179701,
+            7330872,
+            7214751,
+            7310434,
+            8633169
+          ],
+          "enabled_ns": [
+            8512043,
+            8327499,
+            8481546,
+            8468041,
+            8691728,
+            8772870,
+            8444283,
+            8278138,
+            8584808,
+            8398953,
+            8481266
+          ]
+        },
+        {
+          "name": "task_cancellation",
+          "iterations": 40,
+          "source": "shared_set(\"started\", 0) func work() { shared_add_int(\"started\", 1) loop {} } mut i := 0 while i < 40 { let handle := spawn_task(work) while (shared_get(\"started\") <= i) {} cancel_task(handle) try { await await_task(handle) } except err {} i += 1 } print(shared_get(\"started\"))",
+          "warmups_ns": [
+            [
+              6418501,
+              6762072
+            ],
+            [
+              6752043,
+              6414905
+            ],
+            [
+              7709497,
+              7674622
+            ]
+          ],
+          "baseline_ns": [
+            6565134,
+            6647018,
+            6635796,
+            6889128,
+            6338609,
+            6893998,
+            6460346,
+            6868039,
+            6863281,
+            7001138,
+            6848702
+          ],
+          "disabled_ns": [
+            6751021,
+            6739980,
+            6940515,
+            6467923,
+            6774815,
+            6813258,
+            6880963,
+            7146329,
+            6880373,
+            6631989,
+            6815380
+          ],
+          "enabled_ns": [
+            7948593,
+            7878326,
+            7781903,
+            8050323,
+            7998336,
+            7680604,
+            7766417,
+            7978733,
+            7775607,
+            7699372,
+            8284033
+          ]
+        },
+        {
+          "name": "ai_native_hash",
+          "iterations": 100,
+          "source": "let messages := [ai_message(\"user\", \"offline benchmark\")] let options := {\"endpoint\": \"https://example.test/v1/chat\", \"model\": \"fixture\"} mut i := 0 mut latest := \"\" while i < 100 { latest = ai_request_hash(messages, options) i += 1 } print(len(latest))",
+          "warmups_ns": [
+            [
+              5794037,
+              5406645
+            ],
+            [
+              5526969,
+              5636584
+            ],
+            [
+              6582630,
+              6536928
+            ]
+          ],
+          "baseline_ns": [
+            5337316,
+            5349779,
+            5576552,
+            5355771,
+            5279478,
+            5328469,
+            5308572,
+            5609945,
+            5493637,
+            5438545,
+            5562926
+          ],
+          "disabled_ns": [
+            5288475,
+            5279719,
+            5512843,
+            5283615,
+            5312530,
+            5395304,
+            5469502,
+            5648276,
+            5596369,
+            5432122,
+            5601980
+          ],
+          "enabled_ns": [
+            6332720,
+            6448110,
+            6753080,
+            6328753,
+            6176410,
+            6220241,
+            6741743,
+            6661904,
+            6441824,
+            6344122,
+            6522274
+          ]
+        },
+        {
+          "name": "collection_serialization",
+          "iterations": 200,
+          "source": "mut d := {} for i in range(100) { d[i] = i } mut total := 0 for i in range(200) { let decoded := parse_json(to_json(d)) total += len(decoded) } print(total)",
+          "warmups_ns": [
+            [
+              12923032,
+              12961583
+            ],
+            [
+              12934383,
+              13010745
+            ],
+            [
+              14182001,
+              13970423
+            ]
+          ],
+          "baseline_ns": [
+            12889949,
+            16421301,
+            12724161,
+            12764443,
+            12477581,
+            12796185,
+            12395609,
+            12491117,
+            13380635,
+            12636849,
+            12833926
+          ],
+          "disabled_ns": [
+            13229283,
+            13718534,
+            13062912,
+            12449149,
+            12645204,
+            12365753,
+            12607714,
+            12531662,
+            12877066,
+            12954710,
+            12554445
+          ],
+          "enabled_ns": [
+            13851918,
+            13818359,
+            13824846,
+            13332564,
+            13279646,
+            13353855,
+            13381556,
+            14915174,
+            13568124,
+            13458530,
+            14546687
+          ]
+        },
+        {
+          "name": "sparse_dictionary",
+          "iterations": 5000,
+          "source": "mut d := {} for i in range(5000) { d[i * 100000] = i } print(len(d)) print(get(d, 100000, 9999))",
+          "warmups_ns": [
+            [
+              293103477,
+              291157913
+            ],
+            [
+              300637527,
+              296422322
+            ],
+            [
+              301159152,
+              293354445
+            ]
+          ],
+          "baseline_ns": [
+            292727607,
+            290506939,
+            290452938,
+            290730265,
+            297968683,
+            292926067,
+            290777109,
+            291795592,
+            304564896,
+            303028349,
+            292139495
+          ],
+          "disabled_ns": [
+            291306298,
+            293437239,
+            298114886,
+            292613023,
+            289873068,
+            301899458,
+            294514318,
+            293988686,
+            290287767,
+            292459010,
+            291949181
+          ],
+          "enabled_ns": [
+            303097557,
+            300539344,
+            296212525,
+            292475236,
+            292239965,
+            292994053,
+            303096968,
+            293690966,
+            296105774,
+            293595402,
+            292390171
+          ]
+        },
+        {
+          "name": "schema_regex",
+          "iterations": 100,
+          "source": "mut values := [] for i in range(100) { values = push(values, \"kujo\") } let schema := {\"items\":{\"type\":\"string\",\"pattern\":\"^[a-z]+$\"}} mut total := 0 for i in range(100) { let result := json_schema_validate(values, schema) if result[\"valid\"] { total += 1 } } print(total)",
+          "warmups_ns": [
+            [
+              12101791,
+              11916746
+            ],
+            [
+              11924647,
+              11738884
+            ],
+            [
+              13050980,
+              12586234
+            ]
+          ],
+          "baseline_ns": [
+            11526118,
+            11674535,
+            11414421,
+            11531608,
+            11579928,
+            11441881,
+            11643577,
+            11862074,
+            11464273,
+            11294386,
+            11349870
+          ],
+          "disabled_ns": [
+            11727434,
+            11446289,
+            11305537,
+            11670517,
+            11776374,
+            11308172,
+            11843811,
+            11702784,
+            11583705,
+            11319434,
+            11329632
+          ],
+          "enabled_ns": [
+            12691290,
+            12720614,
+            12676783,
+            12455961,
+            12844558,
+            12413001,
+            12479866,
+            12837161,
+            12749026,
+            12467216,
+            12732757
+          ]
+        },
+        {
+          "name": "schema_integer_dictionary",
+          "iterations": 2000,
+          "source": "mut d := {} for i in range(10) { d[i] = i } let schema := {\"type\":\"object\",\"required\":[\"0\",\"9\"],\"additionalProperties\":{\"type\":\"integer\"}} mut total := 0 for i in range(2000) { let result := json_schema_validate(d, schema) if result[\"valid\"] { total += 1 } } print(total)",
+          "warmups_ns": [
+            [
+              26643458,
+              26597814
+            ],
+            [
+              26363296,
+              26026750
+            ],
+            [
+              28944897,
+              27231631
+            ]
+          ],
+          "baseline_ns": [
+            26125704,
+            26422337,
+            26633309,
+            26368517,
+            26090538,
+            26213217,
+            26540056,
+            26525919,
+            26269161,
+            26465597,
+            26297974
+          ],
+          "disabled_ns": [
+            26039573,
+            26224007,
+            26439569,
+            26499540,
+            26278829,
+            26461279,
+            26547109,
+            26511082,
+            26541519,
+            26254463,
+            26484241
+          ],
+          "enabled_ns": [
+            27353522,
+            27142379,
+            27742787,
+            27497650,
+            27500766,
+            27863041,
+            27157396,
+            27080587,
+            27570423,
+            27707024,
+            27422751
+          ]
+        },
+        {
+          "name": "ai_context_fitting",
+          "iterations": 100,
+          "source": "mut messages := [{\"role\":\"system\",\"content\":\"stay\"}] for i in range(100) { messages = push(messages, {\"role\":\"user\",\"content\":\"abcd\"}) } mut dropped := 0 for i in range(100) { let fit := ai_fit_context(messages,16) dropped += fit[\"dropped\"] } print(dropped)",
+          "warmups_ns": [
+            [
+              6605349,
+              6231882
+            ],
+            [
+              6449638,
+              6480115
+            ],
+            [
+              7425253,
+              7167927
+            ]
+          ],
+          "baseline_ns": [
+            6212136,
+            6217826,
+            6313856,
+            6317742,
+            6881844,
+            6587094,
+            6556258,
+            6208930,
+            6331418,
+            6356425,
+            6108132
+          ],
+          "disabled_ns": [
+            6306822,
+            6172391,
+            6435081,
+            6640748,
+            6241570,
+            6225471,
+            6334865,
+            6192430,
+            6390298,
+            6288448,
+            6288338
+          ],
+          "enabled_ns": [
+            7102966,
+            7343965,
+            7234220,
+            7260599,
+            7356989,
+            7565979,
+            7467545,
+            7392576,
+            7259217,
+            7216043,
+            7699972
+          ]
+        },
+        {
+          "name": "token_text_ascii",
+          "iterations": 100,
+          "source": "mut text := \"abcd\" for i in range(16) { text = text + text } mut count := 0 for i in range(100) { count = ai_count_tokens(text) } print(count)",
+          "warmups_ns": [
+            [
+              7553636,
+              7211508
+            ],
+            [
+              7154662,
+              7293060
+            ],
+            [
+              8187754,
+              8341274
+            ]
+          ],
+          "baseline_ns": [
+            7335148,
+            7231827,
+            7282590,
+            7141898,
+            7132852,
+            7142239,
+            7211238,
+            7109438,
+            7084031,
+            8715982,
+            8822461
+          ],
+          "disabled_ns": [
+            7178877,
+            7043996,
+            7106863,
+            7232478,
+            7126419,
+            7338465,
+            7009161,
+            7101263,
+            7251393,
+            8797554,
+            8849922
+          ],
+          "enabled_ns": [
+            8438989,
+            8149255,
+            8051600,
+            8302966,
+            8514453,
+            8129630,
+            8122315,
+            8096481,
+            8562005,
+            8150769,
+            9133326
+          ]
+        },
+        {
+          "name": "token_text_unicode",
+          "iterations": 100,
+          "source": "mut text := \"a\u754c\" for i in range(16) { text = text + text } mut count := 0 for i in range(100) { count = ai_count_tokens(text) } print(count)",
+          "warmups_ns": [
+            [
+              28378963,
+              19250111
+            ],
+            [
+              27277013,
+              19570218
+            ],
+            [
+              27155755,
+              20164916
+            ]
+          ],
+          "baseline_ns": [
+            18946506,
+            19128033,
+            18847892,
+            18760339,
+            19168579,
+            19290667,
+            19223391,
+            18776579,
+            18920838,
+            18876105,
+            19206310
+          ],
+          "disabled_ns": [
+            18712990,
+            19292661,
+            19132082,
+            19158511,
+            19098018,
+            19341591,
+            18929755,
+            19256543,
+            19003862,
+            18750360,
+            19054086
+          ],
+          "enabled_ns": [
+            20320225,
+            20425221,
+            19876376,
+            19768989,
+            20485954,
+            20267768,
+            20524298,
+            20414832,
+            19846762,
+            20045575,
+            20199368
+          ]
+        }
+      ],
+      "raw_static_samples": {
+        "schema": "kujo.static-analysis-benchmark/v1",
+        "samples_per_binary": 21,
+        "discarded_warmups_per_binary": 2,
+        "process_inclusive": true,
+        "workloads": [
+          {
+            "name": "startup",
+            "arguments": [
+              "--version"
+            ],
+            "baseline_warmups_ns": [
+              5292061,
+              4812498
+            ],
+            "candidate_warmups_ns": [
+              4748209,
+              4714840
+            ],
+            "baseline_ns": [
+              4883165,
+              4763690,
+              4865884,
+              4593466,
+              4543270,
+              4744355,
+              4648121,
+              4634252,
+              4553655,
+              4868916,
+              4796948,
+              4562769,
+              4605125,
+              4668971,
+              4634406,
+              4685445,
+              4641776,
+              4637445,
+              4672296,
+              4863820,
+              4749380
+            ],
+            "candidate_ns": [
+              4645907,
+              4680318,
+              4790136,
+              4678010,
+              4562889,
+              4811696,
+              4581133,
+              4560842,
+              4635732,
+              4569201,
+              4793699,
+              4915434,
+              4528354,
+              4556955,
+              4767844,
+              4610127,
+              4546643,
+              4646900,
+              4642898,
+              4593724,
+              4824404
+            ]
+          },
+          {
+            "name": "project_check",
+            "arguments": [
+              "check",
+              "/tmp/kujo-static-bench-24542/entry.kujo"
+            ],
+            "baseline_warmups_ns": [
+              6575353,
+              6533171
+            ],
+            "candidate_warmups_ns": [
+              6452571,
+              6515905
+            ],
+            "baseline_ns": [
+              6398316,
+              6490541,
+              6360516,
+              6286011,
+              6175842,
+              6263839,
+              6446136,
+              6614793,
+              6484296,
+              6403690,
+              6354214,
+              6239534,
+              6293201,
+              6346907,
+              6539313,
+              6786984,
+              6448018,
+              6786853,
+              6779202,
+              6419178,
+              6518991
+            ],
+            "candidate_ns": [
+              6506221,
+              6333956,
+              6357012,
+              6329578,
+              6242389,
+              6316103,
+              6240836,
+              6269637,
+              6475613,
+              6512639,
+              6396346,
+              6368490,
+              6572434,
+              6254067,
+              6300324,
+              6769684,
+              6591860,
+              6443801,
+              6462226,
+              6543323,
+              6619782
+            ]
+          },
+          {
+            "name": "lsp_diagnostics",
+            "arguments": [
+              "lsp-diagnostics",
+              "/tmp/kujo-static-bench-24542/entry.kujo",
+              "--json"
+            ],
+            "baseline_warmups_ns": [
+              7645611,
+              7475534
+            ],
+            "candidate_warmups_ns": [
+              7514462,
+              7318104
+            ],
+            "baseline_ns": [
+              7404044,
+              7617638,
+              7727657,
+              7262283,
+              7441751,
+              7616450,
+              7477388,
+              7369992,
+              7236289,
+              7554928,
+              7298612,
+              7625076,
+              7414781,
+              7533232,
+              7197049,
+              7533796,
+              7653857,
+              7675080,
+              7497696,
+              7361555,
+              7573076
+            ],
+            "candidate_ns": [
+              7370808,
+              7459538,
+              7427525,
+              7426024,
+              7339704,
+              7281523,
+              7524810,
+              7479582,
+              7364120,
+              7257999,
+              7213720,
+              7410163,
+              7445471,
+              7718394,
+              7276380,
+              7411145,
+              7456622,
+              7351474,
+              7314017,
+              7305788,
+              7464371
+            ]
+          }
+        ]
+      }
+    },
+    "performance-evidence": {
+      "environment": {
+        "schema": "kujo.release-performance-environment/v1",
+        "recorded_at": "2026-10-25T03:32:18.616Z",
+        "baseline": {
+          "source_sha": "aa3007194ebb446ddbe6a91a90d7a8f55e8ee6b9",
+          "binary_sha256": "1bc9d2d833b29a584b88b6da06c101ff20c1d97e5b560e6290258a164002c8b9",
+          "bytes": 49980016
+        },
+        "candidate": {
+          "source_sha": "d8d99d8c8e3b64f6f6da83efcfa8da9b8b8e67b4",
+          "binary_sha256": "e2b04834652671c2ab4a8758b1568065615b7642de124ba6ecd07473d93a0fa0",
+          "bytes": 49982608
+        },
+        "corpus_sha": "635363364eaf51036be4d23648ffbf2def78f0c0",
+        "corpus_dirty": true,
+        "driver_sha256": "f666af396bd4cb3748f677b3a879f95963c54444d3a6ccf43dd3acd338644298",
+        "runtime_runner_sha256": "09a5ac0b0f1c5adbd57ac5dec96288d27dd02ab5ce10c04ab43c61015ce91bf9",
+        "static_runner_sha256": "34a1db577e618c2fc30ba28ffe72aa8b4201e1275dfa690aeaeff8936a921b4f",
+        "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.1\nLLVM version: 23.1.1",
+        "node": "v22.23.4",
+        "platform": "linux",
+        "arch": "x64",
+        "os_release": "6.8.0-1064-azure",
+        "cpu_models": [
+          "AMD EPYC 7763 64-Core Processor"
+        ],
+        "logical_cpus": 4,
+        "total_memory_bytes": 16765411328,
+        "profile": "release (caller-built; build command and cache state must accompany receipt)",
+        "power_storage": "not controlled; internal regression evidence only",
+        "cache": "two discarded process warmups per mode; not OS-cache-cold measurements",
+        "unsupported": [
+          "total_heap_allocations",
+          "retained_heap_bytes",
+          "filesystem_syscall_counts",
+          "network_request_counts",
+          "child_process_counts"
+        ],
+        "github": {
+          "run_id": "40148692910",
+          "attempt": "1"
+        }
+      },
+      "hashes": {
+        "environment.json": "756bb09cf80894d5942797cdd944234e4da770f3ad2891235ca8e918754c8617",
+        "runtime.compiler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "runtime.json": "7c9b881891a6216ec502d9f4c58b5dbab59c392ae288da709f2515316b4d32a7",
+        "runtime.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "runtime_measurement_release_bench.rs": "09a5ac0b0f1c5adbd57ac5dec96288d27dd02ab5ce10c04ab43c61015ce91bf9",
+        "static.compiler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "static.json": "5d7ea78dc43ecfc93b5454d1f1d05b8824b7782db322389ecf6ef296dd2ca88c",
+        "static.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "static_analysis_release_bench.rs": "34a1db577e618c2fc30ba28ffe72aa8b4201e1275dfa690aeaeff8936a921b4f",
+        "summary.json": "5fd4518bf1c27ed0248631a076e374df5a94d6f6cf351601177ee586d11e2b1e"
+      },
+      "workloads": [
+        {
+          "name": "calls",
+          "baseline_ms": 20.269433,
+          "candidate_ms": 19.99945,
+          "paired_delta_pct": -1.1801072837176019,
+          "cpu_seconds": 0.015564000000000001,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "captures_generators",
+          "baseline_ms": 26.496328,
+          "candidate_ms": 26.248235,
+          "paired_delta_pct": -1.1645613686545597,
+          "cpu_seconds": 0.021813,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "tasks",
+          "baseline_ms": 114.579936,
+          "candidate_ms": 114.646861,
+          "paired_delta_pct": 0.04967252445131631,
+          "cpu_seconds": 0.005875000000000001,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "calls_sustained",
+          "baseline_ms": 304.813448,
+          "candidate_ms": 301.238212,
+          "paired_delta_pct": -1.1375022455396677,
+          "cpu_seconds": 0.296672,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "captures_generators_sustained",
+          "baseline_ms": 213.094976,
+          "candidate_ms": 212.167758,
+          "paired_delta_pct": 0.3978947605629779,
+          "cpu_seconds": 0.210178,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "tasks_sustained",
+          "baseline_ms": 1086.206514,
+          "candidate_ms": 1088.141542,
+          "paired_delta_pct": 0.15311443287957527,
+          "cpu_seconds": 0.041593000000000005,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "language_collections_structs",
+          "baseline_ms": 28.004512,
+          "candidate_ms": 27.282186,
+          "paired_delta_pct": -1.8928555231861321,
+          "cpu_seconds": 0.0232,
+          "peak_rss_bytes": 15073280
+        },
+        {
+          "name": "closures_retained",
+          "baseline_ms": 5.663796,
+          "candidate_ms": 5.521581,
+          "paired_delta_pct": -2.375096848184366,
+          "cpu_seconds": 0.0014449999999999997,
+          "peak_rss_bytes": 15466496
+        },
+        {
+          "name": "generator_nested_alias",
+          "baseline_ms": 113.441744,
+          "candidate_ms": 113.002143,
+          "paired_delta_pct": -0.6551787118088681,
+          "cpu_seconds": 0.109806,
+          "peak_rss_bytes": 15204352
+        },
+        {
+          "name": "promise_observers",
+          "baseline_ms": 1092.81192,
+          "candidate_ms": 1093.396217,
+          "paired_delta_pct": 0.038487026308997585,
+          "cpu_seconds": 0.049078000000000004,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "scheduler_channels",
+          "baseline_ms": 1091.024528,
+          "candidate_ms": 1089.004472,
+          "paired_delta_pct": -0.015174218780744653,
+          "cpu_seconds": 0.046098,
+          "peak_rss_bytes": 16908288
+        },
+        {
+          "name": "task_admission_rejection",
+          "baseline_ms": 7.346051,
+          "candidate_ms": 7.168621,
+          "paired_delta_pct": -1.7621016014094049,
+          "cpu_seconds": 0.002895,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "task_cancellation",
+          "baseline_ms": 6.732748,
+          "candidate_ms": 6.632241,
+          "paired_delta_pct": -2.042494387135829,
+          "cpu_seconds": 0.0036240000000000005,
+          "peak_rss_bytes": 16777216
+        },
+        {
+          "name": "ai_native_hash",
+          "baseline_ms": 5.471638,
+          "candidate_ms": 5.307702,
+          "paired_delta_pct": -2.40171817925221,
+          "cpu_seconds": 0.001278,
+          "peak_rss_bytes": 16384000
+        },
+        {
+          "name": "collection_serialization",
+          "baseline_ms": 13.095407,
+          "candidate_ms": 12.815444,
+          "paired_delta_pct": -1.0658503456194235,
+          "cpu_seconds": 0.008471,
+          "peak_rss_bytes": 16908288
+        },
+        {
+          "name": "sparse_dictionary",
+          "baseline_ms": 292.442944,
+          "candidate_ms": 285.767798,
+          "paired_delta_pct": -1.7444194313506745,
+          "cpu_seconds": 0.286011,
+          "peak_rss_bytes": 18456576
+        },
+        {
+          "name": "schema_regex",
+          "baseline_ms": 11.485076,
+          "candidate_ms": 11.051878,
+          "paired_delta_pct": -4.176541867921402,
+          "cpu_seconds": 0.006777999999999999,
+          "peak_rss_bytes": 17432576
+        },
+        {
+          "name": "schema_integer_dictionary",
+          "baseline_ms": 26.477107,
+          "candidate_ms": 25.885695,
+          "paired_delta_pct": -1.4665687930935145,
+          "cpu_seconds": 0.021435999999999997,
+          "peak_rss_bytes": 16457728
+        },
+        {
+          "name": "ai_context_fitting",
+          "baseline_ms": 6.330348,
+          "candidate_ms": 6.284132,
+          "paired_delta_pct": -1.7611751786761665,
+          "cpu_seconds": 0.0020980000000000005,
+          "peak_rss_bytes": 15990784
+        },
+        {
+          "name": "token_text_ascii",
+          "baseline_ms": 7.298303,
+          "candidate_ms": 7.123717,
+          "paired_delta_pct": -2.433071051939961,
+          "cpu_seconds": 0.002959,
+          "peak_rss_bytes": 15859712
+        },
+        {
+          "name": "token_text_unicode",
+          "baseline_ms": 18.852647,
+          "candidate_ms": 18.3775,
+          "paired_delta_pct": -2.2822842861270343,
+          "cpu_seconds": 0.014224999999999998,
+          "peak_rss_bytes": 15765504
+        }
+      ],
+      "static_workloads": [
+        {
+          "name": "startup",
+          "baseline_ms": {
+            "min": 4.494587,
+            "median": 4.595615,
+            "p90": 4.747057,
+            "max": 4.848877,
+            "mean": 4.613998571428572,
+            "standard_deviation": 0.09010502300071388
+          },
+          "candidate_ms": {
+            "min": 4.491586,
+            "median": 4.634368,
+            "p90": 4.720553,
+            "max": 4.972117,
+            "mean": 4.641223142857141,
+            "standard_deviation": 0.10179412020594997
+          }
+        },
+        {
+          "name": "project_check",
+          "baseline_ms": {
+            "min": 6.131227,
+            "median": 6.371965,
+            "p90": 6.720265,
+            "max": 6.801598,
+            "mean": 6.4202509999999995,
+            "standard_deviation": 0.19078361956290646
+          },
+          "candidate_ms": {
+            "min": 6.192061,
+            "median": 6.419885,
+            "p90": 6.718822,
+            "max": 6.899318,
+            "mean": 6.4479216190476185,
+            "standard_deviation": 0.16492721775939498
+          }
+        },
+        {
+          "name": "lsp_diagnostics",
+          "baseline_ms": {
+            "min": 7.046432,
+            "median": 7.316857,
+            "p90": 7.495018,
+            "max": 7.546584,
+            "mean": 7.2977977142857124,
+            "standard_deviation": 0.14584992277195424
+          },
+          "candidate_ms": {
+            "min": 7.048106,
+            "median": 7.379764,
+            "p90": 7.539852,
+            "max": 7.570129,
+            "mean": 7.341955857142857,
+            "standard_deviation": 0.16152412510100853
+          }
+        }
+      ],
+      "raw_timing_samples": [
+        {
+          "name": "calls",
+          "iterations": 10000,
+          "source": "func plus(n) { return n + 1 } mut n := 0 while n < 10000 { n = plus(n) } print(n)",
+          "warmups_ns": [
+            [
+              20383646,
+              20464357
+            ],
+            [
+              20115226,
+              20110717
+            ],
+            [
+              21115846,
+              21445390
+            ]
+          ],
+          "baseline_ns": [
+            19995767,
+            20050095,
+            20803018,
+            20132818,
+            20573299,
+            20807867,
+            19973762,
+            20269433,
+            20252702,
+            20861726,
+            20776709
+          ],
+          "disabled_ns": [
+            19803164,
+            19993789,
+            19717074,
+            20103524,
+            20330512,
+            19830565,
+            19999450,
+            20186458,
+            19995202,
+            20456131,
+            20320910
+          ],
+          "enabled_ns": [
+            20957075,
+            20945022,
+            20609203,
+            22273819,
+            21192283,
+            21118169,
+            21021073,
+            21344076,
+            21176232,
+            21255762,
+            21674321
+          ]
+        },
+        {
+          "name": "captures_generators",
+          "iterations": 1000,
+          "source": "func factory(n) { func get() { return n } return get } func* numbers() { yield 1 yield 2 } mut i := 0 mut total := 0 while i < 1000 { let f := factory(i) total += f() let g := numbers() for v in g { total += v } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              26764568,
+              26806024
+            ],
+            [
+              26538306,
+              26526404
+            ],
+            [
+              27736168,
+              27979637
+            ]
+          ],
+          "baseline_ns": [
+            26212368,
+            26568061,
+            26496328,
+            26455361,
+            26702672,
+            26699175,
+            26401000,
+            26171692,
+            26382115,
+            26882908,
+            26772582
+          ],
+          "disabled_ns": [
+            26358230,
+            26174107,
+            26187762,
+            26503907,
+            26410207,
+            26351918,
+            26024278,
+            26165882,
+            26248235,
+            26502990,
+            26247083
+          ],
+          "enabled_ns": [
+            28201414,
+            27287572,
+            27981109,
+            27620653,
+            27891056,
+            27795969,
+            27778321,
+            27438703,
+            27479891,
+            27401013,
+            27405201
+          ]
+        },
+        {
+          "name": "tasks",
+          "iterations": 100,
+          "source": "async func work(n) { return n + 1 } mut n := 0 while n < 100 { n = await work(n) } print(n)",
+          "warmups_ns": [
+            [
+              114679321,
+              114572752
+            ],
+            [
+              114872421,
+              114351630
+            ],
+            [
+              115806541,
+              115662995
+            ]
+          ],
+          "baseline_ns": [
+            114497617,
+            114635249,
+            114504365,
+            114785740,
+            114579936,
+            114578679,
+            114813025,
+            114592525,
+            114406001,
+            114526186,
+            114617346
+          ],
+          "disabled_ns": [
+            114764359,
+            114719837,
+            114263816,
+            114633526,
+            113884199,
+            114287761,
+            114646861,
+            114649446,
+            114573334,
+            114654896,
+            114745360
+          ],
+          "enabled_ns": [
+            115833808,
+            115363882,
+            115973528,
+            116034606,
+            115614534,
+            115467961,
+            115822963,
+            115689749,
+            115732804,
+            115555905,
+            115654473
+          ]
+        },
+        {
+          "name": "calls_sustained",
+          "iterations": 200000,
+          "source": "func plus(n) { return n + 1 } mut n := 0 while n < 200000 { n = plus(n) } print(n)",
+          "warmups_ns": [
+            [
+              311809213,
+              311611467
+            ],
+            [
+              299216917,
+              299842800
+            ],
+            [
+              305805156,
+              301692073
+            ]
+          ],
+          "baseline_ns": [
+            306630076,
+            305112437,
+            300071966,
+            313314392,
+            304411871,
+            305245622,
+            303463782,
+            300840323,
+            306809788,
+            302808220,
+            304813448
+          ],
+          "disabled_ns": [
+            303142152,
+            302475520,
+            300826795,
+            300652530,
+            299447853,
+            301238212,
+            299225714,
+            301035266,
+            301487259,
+            302642441,
+            304807888
+          ],
+          "enabled_ns": [
+            314778803,
+            304183846,
+            301249913,
+            305895638,
+            305479521,
+            302028750,
+            302068502,
+            299817948,
+            307676564,
+            300273176,
+            303604654
+          ]
+        },
+        {
+          "name": "captures_generators_sustained",
+          "iterations": 10000,
+          "source": "func factory(n) { func get() { return n } return get } func* numbers() { yield 1 yield 2 } mut i := 0 mut total := 0 while i < 10000 { let f := factory(i) total += f() let g := numbers() for v in g { total += v } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              215498045,
+              215365307
+            ],
+            [
+              211498039,
+              214084811
+            ],
+            [
+              215651581,
+              215476714
+            ]
+          ],
+          "baseline_ns": [
+            213325466,
+            211397132,
+            217176332,
+            212293572,
+            213073175,
+            216225198,
+            211004770,
+            213094976,
+            215579506,
+            213343639,
+            211343251
+          ],
+          "disabled_ns": [
+            211819950,
+            213879337,
+            223812059,
+            213138277,
+            212167758,
+            210709771,
+            211956664,
+            211952186,
+            211125695,
+            215075827,
+            213105796
+          ],
+          "enabled_ns": [
+            216157324,
+            220535080,
+            220110481,
+            216457253,
+            214634806,
+            216338605,
+            221542699,
+            217077847,
+            216066152,
+            217401290,
+            216350703
+          ]
+        },
+        {
+          "name": "tasks_sustained",
+          "iterations": 1000,
+          "source": "async func work(n) { return n + 1 } mut n := 0 while n < 1000 { n = await work(n) } print(n)",
+          "warmups_ns": [
+            [
+              1089169124,
+              1089957185
+            ],
+            [
+              1087768984,
+              1090324536
+            ],
+            [
+              1090620148,
+              1091234349
+            ]
+          ],
+          "baseline_ns": [
+            1084733278,
+            1086206514,
+            1084723226,
+            1085155212,
+            1091623575,
+            1090442539,
+            1090350828,
+            1085532545,
+            1086896547,
+            1086452237,
+            1086099058
+          ],
+          "disabled_ns": [
+            1087466102,
+            1088904463,
+            1090416669,
+            1085139774,
+            1088141542,
+            1086891803,
+            1086650085,
+            1087194652,
+            1088283712,
+            1089427712,
+            1090451319
+          ],
+          "enabled_ns": [
+            1088899936,
+            1089608831,
+            1090245601,
+            1086180472,
+            1090056771,
+            1086954459,
+            1087014192,
+            1086392197,
+            1084111235,
+            1088556017,
+            1084802071
+          ]
+        },
+        {
+          "name": "language_collections_structs",
+          "iterations": 5000,
+          "source": "struct Pair { left: int, right: int } mut i := 0 mut total := 0 while i < 5000 { let pair := Pair { left: i, right: i + 1 } let values := [pair.left, pair.right] total += values[0] + values[1] i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              27781978,
+              28808260
+            ],
+            [
+              27373867,
+              27204611
+            ],
+            [
+              28535302,
+              28215176
+            ]
+          ],
+          "baseline_ns": [
+            27849623,
+            27948868,
+            28136748,
+            28050989,
+            28750373,
+            27783420,
+            27430362,
+            28567422,
+            28004512,
+            28008670,
+            27668276
+          ],
+          "disabled_ns": [
+            27282186,
+            27679186,
+            28111642,
+            27818787,
+            27495574,
+            27257520,
+            27003868,
+            27530148,
+            27134772,
+            27166300,
+            27187160
+          ],
+          "enabled_ns": [
+            28601576,
+            28671736,
+            29025525,
+            29368835,
+            29372472,
+            28457637,
+            28159372,
+            29247449,
+            27996327,
+            28788874,
+            28171033
+          ]
+        },
+        {
+          "name": "closures_retained",
+          "iterations": 250,
+          "source": "func factory(n) { func get() { return n } return get } mut closures := [] mut i := 0 while i < 250 { closures = push(closures, factory(i)) i += 1 } print(closures[250 - 1]())",
+          "warmups_ns": [
+            [
+              5760806,
+              5657414
+            ],
+            [
+              5471768,
+              5415272
+            ],
+            [
+              6379140,
+              6214232
+            ]
+          ],
+          "baseline_ns": [
+            5520890,
+            5705423,
+            5962542,
+            5771667,
+            5451099,
+            5663796,
+            5482808,
+            5467810,
+            5774482,
+            5488128,
+            5729168
+          ],
+          "disabled_ns": [
+            5629672,
+            5883895,
+            5447583,
+            5543652,
+            5447603,
+            5323612,
+            5352586,
+            5598173,
+            5566504,
+            5397179,
+            5521581
+          ],
+          "enabled_ns": [
+            6233618,
+            6637070,
+            6405629,
+            6578449,
+            6428150,
+            6188804,
+            6519140,
+            6462264,
+            6213211,
+            6237656,
+            6524430
+          ]
+        },
+        {
+          "name": "generator_nested_alias",
+          "iterations": 5000,
+          "source": "func* inner(n) { yield n yield n + 1 } func* outer(n) { for value in inner(n) { yield value } } mut i := 0 mut total := 0 while i < 5000 { let generator := outer(i) let alias := generator for value in alias { total += value } i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              112654696,
+              113976969
+            ],
+            [
+              114197892,
+              113713570
+            ],
+            [
+              115344028,
+              115681898
+            ]
+          ],
+          "baseline_ns": [
+            114482343,
+            113837130,
+            113315367,
+            113441744,
+            113170016,
+            114310122,
+            112761295,
+            119369772,
+            114538707,
+            112846413,
+            112507101
+          ],
+          "disabled_ns": [
+            113002143,
+            112215027,
+            113575012,
+            112624761,
+            112757277,
+            113861866,
+            112022507,
+            113023814,
+            113445620,
+            112263718,
+            113987751
+          ],
+          "enabled_ns": [
+            116844679,
+            117269256,
+            114899950,
+            115881861,
+            115194460,
+            117410380,
+            115623971,
+            114880885,
+            117617506,
+            114200366,
+            116582245
+          ]
+        },
+        {
+          "name": "promise_observers",
+          "iterations": 1000,
+          "source": "async func work(n) { return n + 1 } mut i := 0 mut total := 0 while i < 1000 { let promise := work(i) total += await promise total += await promise i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              1093317297,
+              1090809333
+            ],
+            [
+              1096419438,
+              1096747886
+            ],
+            [
+              1090735424,
+              1097750621
+            ]
+          ],
+          "baseline_ns": [
+            1092215835,
+            1090429904,
+            1092853098,
+            1090583088,
+            1093224111,
+            1093855463,
+            1092811920,
+            1094367732,
+            1089354720,
+            1092484246,
+            1095893109
+          ],
+          "disabled_ns": [
+            1089967956,
+            1092607345,
+            1091684299,
+            1091002821,
+            1096460358,
+            1093396217,
+            1096653002,
+            1093878771,
+            1094673753,
+            1094638082,
+            1089192361
+          ],
+          "enabled_ns": [
+            1094428969,
+            1093629210,
+            1093486328,
+            1097459112,
+            1096207997,
+            1097672916,
+            1091293789,
+            1096866668,
+            1094574118,
+            1093751640,
+            1095202882
+          ]
+        },
+        {
+          "name": "scheduler_channels",
+          "iterations": 1000,
+          "source": "let queue := channel() async func work(value) { queue.send(value) return queue.receive() } mut i := 0 mut total := 0 while i < 1000 { total += await work(i) i += 1 } print(total)",
+          "warmups_ns": [
+            [
+              1093325803,
+              1087316539
+            ],
+            [
+              1088782315,
+              1088610631
+            ],
+            [
+              1089880637,
+              1088616882
+            ]
+          ],
+          "baseline_ns": [
+            1091024528,
+            1087957579,
+            1092034438,
+            1090216039,
+            1086417454,
+            1091810365,
+            1088711352,
+            1091710361,
+            1089169745,
+            1092437958,
+            1091276601
+          ],
+          "disabled_ns": [
+            1092305318,
+            1088704992,
+            1087433654,
+            1088522896,
+            1091619809,
+            1092264019,
+            1087194545,
+            1092068990,
+            1089004472,
+            1091014975,
+            1087133350
+          ],
+          "enabled_ns": [
+            1090322622,
+            1089661223,
+            1092132080,
+            1094366233,
+            1097472828,
+            1091357121,
+            1088898179,
+            1089463605,
+            1093092796,
+            1091650228,
+            1087975743
+          ]
+        },
+        {
+          "name": "task_admission_rejection",
+          "iterations": 100,
+          "source": "async func recurse(n) { if n == 0 { return 0 } return await recurse(n - 1) } mut caught := false try { await recurse(100) } except err { caught = true } print(caught)",
+          "warmups_ns": [
+            [
+              7945698,
+              7555381
+            ],
+            [
+              7610865,
+              7229263
+            ],
+            [
+              8236310,
+              7970855
+            ]
+          ],
+          "baseline_ns": [
+            7274988,
+            7445617,
+            7320974,
+            7184910,
+            7131409,
+            7598642,
+            7577823,
+            7346051,
+            7506860,
+            7289195,
+            7491963
+          ],
+          "disabled_ns": [
+            7168621,
+            7238269,
+            6983806,
+            7159264,
+            7115230,
+            7083161,
+            7368894,
+            7385414,
+            7144595,
+            7431160,
+            7359947
+          ],
+          "enabled_ns": [
+            8113573,
+            8162924,
+            7914801,
+            8083015,
+            8188962,
+            9809863,
+            8492948,
+            8365601,
+            8013224,
+            8024424,
+            8172402
+          ]
+        },
+        {
+          "name": "task_cancellation",
+          "iterations": 40,
+          "source": "shared_set(\"started\", 0) func work() { shared_add_int(\"started\", 1) loop {} } mut i := 0 while i < 40 { let handle := spawn_task(work) while (shared_get(\"started\") <= i) {} cancel_task(handle) try { await await_task(handle) } except err {} i += 1 } print(shared_get(\"started\"))",
+          "warmups_ns": [
+            [
+              7023019,
+              6985028
+            ],
+            [
+              6543544,
+              6441154
+            ],
+            [
+              7486704,
+              7282773
+            ]
+          ],
+          "baseline_ns": [
+            6691852,
+            6732748,
+            7015645,
+            6877107,
+            6689217,
+            6863333,
+            7028600,
+            6319307,
+            7142612,
+            6653690,
+            6644995
+          ],
+          "disabled_ns": [
+            6388216,
+            6595232,
+            6518959,
+            6632241,
+            6654422,
+            6545670,
+            6965082,
+            6888227,
+            6609839,
+            6714424,
+            6672796
+          ],
+          "enabled_ns": [
+            7735046,
+            7679533,
+            7559869,
+            7789918,
+            7642122,
+            7540573,
+            7974963,
+            7736189,
+            7546324,
+            7464151,
+            7554800
+          ]
+        },
+        {
+          "name": "ai_native_hash",
+          "iterations": 100,
+          "source": "let messages := [ai_message(\"user\", \"offline benchmark\")] let options := {\"endpoint\": \"https://example.test/v1/chat\", \"model\": \"fixture\"} mut i := 0 mut latest := \"\" while i < 100 { latest = ai_request_hash(messages, options) i += 1 } print(len(latest))",
+          "warmups_ns": [
+            [
+              5954197,
+              5724719
+            ],
+            [
+              5591401,
+              5174754
+            ],
+            [
+              6391854,
+              6291095
+            ]
+          ],
+          "baseline_ns": [
+            5599947,
+            5667282,
+            5521901,
+            5392721,
+            5487257,
+            5456780,
+            5650821,
+            5438315,
+            5471638,
+            5262348,
+            5179043
+          ],
+          "disabled_ns": [
+            5439818,
+            5528584,
+            5234636,
+            5591972,
+            5605216,
+            5208056,
+            5547318,
+            5307702,
+            5132876,
+            5157041,
+            5262197
+          ],
+          "enabled_ns": [
+            6462284,
+            6301615,
+            6027975,
+            6065344,
+            6214681,
+            6219492,
+            6081454,
+            6083077,
+            6106962,
+            6192571,
+            6139202
+          ]
+        },
+        {
+          "name": "collection_serialization",
+          "iterations": 200,
+          "source": "mut d := {} for i in range(100) { d[i] = i } mut total := 0 for i in range(200) { let decoded := parse_json(to_json(d)) total += len(decoded) } print(total)",
+          "warmups_ns": [
+            [
+              12341471,
+              12754000
+            ],
+            [
+              12590365,
+              12333066
+            ],
+            [
+              13412237,
+              13197747
+            ]
+          ],
+          "baseline_ns": [
+            13581332,
+            13109803,
+            13020336,
+            13229697,
+            12664874,
+            13074116,
+            13313402,
+            12753479,
+            13095407,
+            13159115,
+            13074026
+          ],
+          "disabled_ns": [
+            13600989,
+            12763528,
+            12815444,
+            13097350,
+            12629088,
+            11962054,
+            13011299,
+            12617546,
+            12575818,
+            13127165,
+            13140450
+          ],
+          "enabled_ns": [
+            13567765,
+            14078910,
+            13622931,
+            14182893,
+            13452813,
+            13512944,
+            13766747,
+            13153565,
+            13635173,
+            13932056,
+            13473711
+          ]
+        },
+        {
+          "name": "sparse_dictionary",
+          "iterations": 5000,
+          "source": "mut d := {} for i in range(5000) { d[i * 100000] = i } print(len(d)) print(get(d, 100000, 9999))",
+          "warmups_ns": [
+            [
+              297659822,
+              298142186
+            ],
+            [
+              285929435,
+              287320027
+            ],
+            [
+              287350508,
+              288804083
+            ]
+          ],
+          "baseline_ns": [
+            300778780,
+            290639333,
+            301387094,
+            292175205,
+            292442944,
+            292862891,
+            289478563,
+            290952451,
+            291206294,
+            301739926,
+            299596532
+          ],
+          "disabled_ns": [
+            285353582,
+            285569364,
+            292684876,
+            295141303,
+            289783679,
+            291705133,
+            285377040,
+            284328175,
+            295191712,
+            285752369,
+            285767798
+          ],
+          "enabled_ns": [
+            296513807,
+            287466253,
+            297471587,
+            299226858,
+            288058433,
+            292094410,
+            296066227,
+            286535383,
+            296336536,
+            287823610,
+            288777227
+          ]
+        },
+        {
+          "name": "schema_regex",
+          "iterations": 100,
+          "source": "mut values := [] for i in range(100) { values = push(values, \"kujo\") } let schema := {\"items\":{\"type\":\"string\",\"pattern\":\"^[a-z]+$\"}} mut total := 0 for i in range(100) { let result := json_schema_validate(values, schema) if result[\"valid\"] { total += 1 } } print(total)",
+          "warmups_ns": [
+            [
+              12148292,
+              11855726
+            ],
+            [
+              11351467,
+              11035147
+            ],
+            [
+              11943050,
+              11810131
+            ]
+          ],
+          "baseline_ns": [
+            11484264,
+            11412911,
+            11460981,
+            11087104,
+            11881594,
+            11873710,
+            11748321,
+            11485076,
+            11739569,
+            11653349,
+            11279161
+          ],
+          "disabled_ns": [
+            10976768,
+            11147978,
+            10907499,
+            10970773,
+            11413352,
+            10958835,
+            11051878,
+            11135545,
+            10906317,
+            11166642,
+            11054132
+          ],
+          "enabled_ns": [
+            11947287,
+            12077921,
+            11719101,
+            11830520,
+            11977824,
+            11998893,
+            12065036,
+            11888929,
+            12096054,
+            12598571,
+            11852730
+          ]
+        },
+        {
+          "name": "schema_integer_dictionary",
+          "iterations": 2000,
+          "source": "mut d := {} for i in range(10) { d[i] = i } let schema := {\"type\":\"object\",\"required\":[\"0\",\"9\"],\"additionalProperties\":{\"type\":\"integer\"}} mut total := 0 for i in range(2000) { let result := json_schema_validate(d, schema) if result[\"valid\"] { total += 1 } } print(total)",
+          "warmups_ns": [
+            [
+              26114683,
+              26002833
+            ],
+            [
+              25455924,
+              25425157
+            ],
+            [
+              26823242,
+              26472108
+            ]
+          ],
+          "baseline_ns": [
+            26041696,
+            26547088,
+            26535527,
+            26412381,
+            26819125,
+            26477107,
+            26360700,
+            26125021,
+            27148398,
+            27324517,
+            25996803
+          ],
+          "disabled_ns": [
+            25839599,
+            26451640,
+            25736728,
+            29798979,
+            26219858,
+            26200402,
+            25885695,
+            25845160,
+            25870914,
+            25910742,
+            25615542
+          ],
+          "enabled_ns": [
+            27718502,
+            27085351,
+            26759554,
+            27710096,
+            26970337,
+            27744669,
+            27305591,
+            26624282,
+            27345079,
+            27946211,
+            26650045
+          ]
+        },
+        {
+          "name": "ai_context_fitting",
+          "iterations": 100,
+          "source": "mut messages := [{\"role\":\"system\",\"content\":\"stay\"}] for i in range(100) { messages = push(messages, {\"role\":\"user\",\"content\":\"abcd\"}) } mut dropped := 0 for i in range(100) { let fit := ai_fit_context(messages,16) dropped += fit[\"dropped\"] } print(dropped)",
+          "warmups_ns": [
+            [
+              6517397,
+              6629386
+            ],
+            [
+              6165190,
+              6304029
+            ],
+            [
+              7029346,
+              7236057
+            ]
+          ],
+          "baseline_ns": [
+            6126689,
+            6152217,
+            6344675,
+            6273513,
+            6415457,
+            6602095,
+            6227887,
+            6180109,
+            6500476,
+            6330348,
+            6398765
+          ],
+          "disabled_ns": [
+            6074822,
+            6013919,
+            5998420,
+            6311644,
+            6644364,
+            6401651,
+            6118203,
+            6401030,
+            6172394,
+            6403986,
+            6284132
+          ],
+          "enabled_ns": [
+            6989096,
+            6926214,
+            6827044,
+            7276191,
+            7560511,
+            7158823,
+            7088401,
+            7121924,
+            7261709,
+            7280079,
+            7092274
+          ]
+        },
+        {
+          "name": "token_text_ascii",
+          "iterations": 100,
+          "source": "mut text := \"abcd\" for i in range(16) { text = text + text } mut count := 0 for i in range(100) { count = ai_count_tokens(text) } print(count)",
+          "warmups_ns": [
+            [
+              7397327,
+              7327347
+            ],
+            [
+              7191253,
+              6943742
+            ],
+            [
+              7951480,
+              7695743
+            ]
+          ],
+          "baseline_ns": [
+            7464602,
+            7102508,
+            7569487,
+            7429590,
+            7263668,
+            7416222,
+            7079605,
+            6949392,
+            7374014,
+            7298303,
+            7153994
+          ],
+          "disabled_ns": [
+            7221068,
+            7123717,
+            7000868,
+            7333117,
+            7254741,
+            6807798,
+            6900821,
+            6954613,
+            7194599,
+            7347471,
+            6953781
+          ],
+          "enabled_ns": [
+            8329214,
+            8198981,
+            8021841,
+            7973881,
+            7894182,
+            7907594,
+            7874717,
+            7910844,
+            7810227,
+            8120568,
+            7603581
+          ]
+        },
+        {
+          "name": "token_text_unicode",
+          "iterations": 100,
+          "source": "mut text := \"a\u754c\" for i in range(16) { text = text + text } mut count := 0 for i in range(100) { count = ai_count_tokens(text) } print(count)",
+          "warmups_ns": [
+            [
+              18550874,
+              19164659
+            ],
+            [
+              18598123,
+              18506352
+            ],
+            [
+              19969229,
+              19585947
+            ]
+          ],
+          "baseline_ns": [
+            18844532,
+            18771416,
+            19254476,
+            19252372,
+            18819275,
+            18852647,
+            18753763,
+            18605545,
+            18960687,
+            19102181,
+            19003807
+          ],
+          "disabled_ns": [
+            18508396,
+            18450728,
+            18348668,
+            18352174,
+            18417075,
+            18422376,
+            18178100,
+            18366039,
+            18335572,
+            18848078,
+            18377500
+          ],
+          "enabled_ns": [
+            20463566,
+            19551700,
+            19410397,
+            19846593,
+            19555784,
+            19208310,
+            19760379,
+            19665981,
+            28914389,
+            19692752,
+            19644653
+          ]
+        }
+      ],
+      "raw_static_samples": {
+        "schema": "kujo.static-analysis-benchmark/v1",
+        "samples_per_binary": 21,
+        "discarded_warmups_per_binary": 2,
+        "process_inclusive": true,
+        "workloads": [
+          {
+            "name": "startup",
+            "arguments": [
+              "--version"
+            ],
+            "baseline_warmups_ns": [
+              5097690,
+              4772415
+            ],
+            "candidate_warmups_ns": [
+              4994148,
+              4592804
+            ],
+            "baseline_ns": [
+              4534441,
+              4623367,
+              4543748,
+              4750398,
+              4606916,
+              4848877,
+              4595615,
+              4678219,
+              4504665,
+              4649389,
+              4540041,
+              4622285,
+              4747057,
+              4706361,
+              4537547,
+              4555871,
+              4494587,
+              4669703,
+              4574886,
+              4575026,
+              4534971
+            ],
+            "candidate_ns": [
+              4605780,
+              4527148,
+              4780650,
+              4679632,
+              4720553,
+              4590866,
+              4972117,
+              4645908,
+              4656198,
+              4579294,
+              4704538,
+              4584725,
+              4704127,
+              4634368,
+              4655356,
+              4505577,
+              4639347,
+              4581328,
+              4577280,
+              4491586,
+              4629308
+            ]
+          },
+          {
+            "name": "project_check",
+            "arguments": [
+              "check",
+              "/tmp/kujo-static-bench-28959/entry.kujo"
+            ],
+            "baseline_warmups_ns": [
+              6214286,
+              6537965
+            ],
+            "candidate_warmups_ns": [
+              6510164,
+              6198873
+            ],
+            "baseline_ns": [
+              6292918,
+              6769587,
+              6371965,
+              6720265,
+              6403444,
+              6366986,
+              6138481,
+              6410747,
+              6399277,
+              6621381,
+              6209232,
+              6801598,
+              6270376,
+              6477713,
+              6348321,
+              6663810,
+              6329487,
+              6503271,
+              6271999,
+              6323186,
+              6131227
+            ],
+            "candidate_ns": [
+              6899318,
+              6460030,
+              6718822,
+              6338623,
+              6433531,
+              6419885,
+              6382425,
+              6335588,
+              6784714,
+              6383291,
+              6480509,
+              6370121,
+              6535360,
+              6301494,
+              6378017,
+              6466803,
+              6428581,
+              6262281,
+              6455341,
+              6192061,
+              6379559
+            ]
+          },
+          {
+            "name": "lsp_diagnostics",
+            "arguments": [
+              "lsp-diagnostics",
+              "/tmp/kujo-static-bench-28959/entry.kujo",
+              "--json"
+            ],
+            "baseline_warmups_ns": [
+              7212994,
+              7383921
+            ],
+            "candidate_warmups_ns": [
+              7350158,
+              7138444
+            ],
+            "baseline_ns": [
+              7128986,
+              7436610,
+              7143043,
+              7395944,
+              7332656,
+              7537758,
+              7247187,
+              7385024,
+              7342905,
+              7316857,
+              7046432,
+              7235716,
+              7074795,
+              7546584,
+              7366930,
+              7286971,
+              7244201,
+              7398209,
+              7066951,
+              7495018,
+              7224975
+            ],
+            "candidate_ns": [
+              7539852,
+              7172387,
+              7478829,
+              7112917,
+              7570129,
+              7281090,
+              7453271,
+              7160255,
+              7530484,
+              7128055,
+              7379764,
+              7048106,
+              7500940,
+              7389452,
+              7433454,
+              7237459,
+              7357002,
+              7324841,
+              7387278,
+              7136721,
+              7558787
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "build_logs": {
+    "baseline-build.log": "{\"command\":\"cargo\",\"args\":[\"build\",\"--manifest-path\",\"/home/runner/work/_temp/perf-runtime/Cargo.toml\",\"--release\",\"--locked\",\"--bin\",\"kujo\"]}\n\u001b[1m\u001b[92m    Updating\u001b[0m crates.io index\n\u001b[1m\u001b[92m Downloading\u001b[0m crates ...\n\u001b[1m\u001b[92m  Downloaded\u001b[0m anstyle v1.0.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m async-trait v0.1.92\n\u001b[1m\u001b[92m  Downloaded\u001b[0m adler2 v2.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aead v0.5.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aes v0.8.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aes v0.9.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m alloc-stdlib v0.2.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m anstyle-query v1.1.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aws-lc-rs v1.18.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hyper-tls v0.6.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hyphenation_commons v0.8.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hyper-rustls v0.27.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-jit v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ambient-authority v0.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m once_cell v1.21.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m anstyle-parse v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m idna v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m nibble_vec v0.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m no_std_io2 v0.9.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-derive v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ascii v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hyper-util v0.1.20\n\u001b[1m\u001b[92m  Downloaded\u001b[0m alloc-no-stdlib v2.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ahash v0.8.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m allocator-api2 v0.2.21\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ar_archive_writer v0.5.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m anyhow v1.0.104\n\u001b[1m\u001b[92m  Downloaded\u001b[0m arrayvec v0.7.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-general-category v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m arbitrary v1.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m arg_enum_proc_macro v0.3.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aes-gcm v0.10.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m arc-swap v1.9.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aliasable v0.1.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m autocfg v1.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aligned-vec v0.6.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m anstream v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-complex v0.4.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m moxcms v0.8.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m openssl-sys v0.9.117\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lebe v0.5.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m colorchoice v1.0.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m image-webp v0.2.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m byteorder v1.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bytes v1.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m infer v0.16.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m io-lifetimes v3.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mysql_async v0.37.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m nom v8.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aho-corasick v1.1.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m as-slice v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bcrypt v0.15.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bitstream-io v4.10.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m blowfish v0.9.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m constant_time_eq v0.6.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cpufeatures v0.2.17\n\u001b[1m\u001b[92m  Downloaded\u001b[0m is_terminal_polyfill v1.70.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m loop9 v0.1.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m block-buffer v0.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m md-5 v0.10.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m byteorder-lite v0.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m clap_lex v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m avif-serialize v0.8.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m block-padding v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cpufeatures v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-iter v0.1.46\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aligned v0.4.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m base64 v0.21.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cfg_aliases v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m atomic-waker v1.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m block-padding v0.3.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-bitset v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-control v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m built v0.8.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cbc v0.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-bforest v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-codegen-shared v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m block-buffer v0.10.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m color_quant v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m btoi v0.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cpubits v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m inout v0.1.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-conv v0.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tower-service v0.3.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m base64 v0.22.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bit_field v0.10.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bzip2 v0.6.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m chunked_transfer v1.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bitflags v1.3.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-entity v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fallible-streaming-iterator v0.1.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m sync_wrapper v1.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m utf8_iter v1.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bitflags v2.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cfg-if v1.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cipher v0.5.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cbc v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m slice-group-by v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m stacker v0.1.25\n\u001b[1m\u001b[92m  Downloaded\u001b[0m thiserror-impl v2.0.20\n\u001b[1m\u001b[92m  Downloaded\u001b[0m clap_derive v4.6.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-frontend v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-module v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m subtle v2.6.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m azul-simplecss v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cap-fs-ext v4.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cap-std v4.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustc-hash v2.1.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cmake v0.1.58\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pkg-config v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m slab v0.4.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m av1-grain v0.2.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m chacha20 v0.10.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cmov v0.5.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m colored v2.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m const-oid v0.10.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pin-project-lite v0.2.17\n\u001b[1m\u001b[92m  Downloaded\u001b[0m thiserror v2.0.20\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ucd-trie v0.1.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerofrom-derive v0.1.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m csv-core v0.1.13\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-core v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bytemuck v1.25.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m quick-error v2.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m weezl v0.1.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m xmlparser v0.13.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zeroize v1.9.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cfb v0.7.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cipher v0.4.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-codegen-meta v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-isle v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m darling v0.23.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m dbus-secret-service v4.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fd-lock v4.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fdeflate v0.3.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fs_extra v1.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m potential_utf v0.1.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m powerfmt v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rand_core v0.10.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m utf8parse v0.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m writeable v0.6.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zeroize_derive v1.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bincode-next v2.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m bumpalo v3.20.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cap-primitives v4.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cc v1.4.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m clap v4.6.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m defmt-macros v1.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-channel v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-executor v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-io v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m maybe-rayon v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ppmd-rust v1.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m qoi v0.4.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m chrono v0.4.45\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crossbeam-channel v0.5.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lru-cache v0.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m maybe-owned v0.3.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m noop_proc_macro v0.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m openssl-macros v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m errno v0.3.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m opaque-debug v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m clap_builder v4.6.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m manyhow-macros v0.11.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m nohash-hasher v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde v1.0.229\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tagptr v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m brotli-decompressor v5.0.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ident_case v1.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m idna_adapter v1.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m itoa v1.0.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m jiff-static v0.2.37\n\u001b[1m\u001b[92m  Downloaded\u001b[0m keyed_priority_queue v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lazy_static v1.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m linked-hash-map v0.5.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mime v0.3.17\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mysql-common-derive v0.32.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m new_debug_unreachable v1.0.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num v0.4.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-sink v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-task v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m imgref v1.12.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m inout v0.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m io-extras v0.19.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ipnet v2.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libbz2-rs-sys v0.2.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m manyhow v0.11.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m markup5ever v0.39.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m md-5 v0.11.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mime_guess v2.0.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mmapio v0.9.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-integer v0.1.47\n\u001b[1m\u001b[92m  Downloaded\u001b[0m openssl-probe v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ouroboros v0.18.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m postgres v0.19.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rust-fontconfig v5.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m semver v1.0.28\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-stream v0.1.19\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-canonical-combining-class v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-joining-type v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-properties v0.1.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m winnow v1.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m allsorts-azul v0.17.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m digest v0.11.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m either v1.18.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m filetime v0.2.29\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-macro v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m iana-time-zone v0.1.65\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_normalizer_data v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m io-lifetimes v2.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m jobserver v0.1.35\n\u001b[1m\u001b[92m  Downloaded\u001b[0m keyring-core v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libyaml-rs v0.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m litemap v0.8.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lock_api v0.4.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m log v0.4.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lru v0.18.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m native-tls v0.2.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-rational v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-traits v0.2.19\n\u001b[1m\u001b[92m  Downloaded\u001b[0m regalloc2 v0.10.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rtoolbox v0.0.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rusqlite v0.31.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ryu v1.0.23\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde_urlencoded v0.7.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m sha1 v0.10.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m sha2 v0.10.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m signature v2.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m static_assertions v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m string_cache v0.9.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m syn v2.0.119\n\u001b[1m\u001b[92m  Downloaded\u001b[0m syn v3.0.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m taffy v0.10.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m target-lexicon v0.12.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tempfile v3.27.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_edit v0.22.27\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicase v2.9.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-bidi v0.3.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m wasm-bindgen-macro-support v0.2.127\n\u001b[1m\u001b[92m  Downloaded\u001b[0m yoke v0.8.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerovec-derive v0.11.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zip v9.0.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zmij v1.0.23\n\u001b[1m\u001b[92m  Downloaded\u001b[0m av-scenechange v0.14.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m home v0.5.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m httparse v1.10.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_locale_core v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_provider v2.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m memchr v2.8.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m miniz_oxide v0.9.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m quick-xml v0.42.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m sha1 v0.11.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m simd-adler32 v0.3.10\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tar v0.4.46\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-util v0.7.19\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_datetime v0.6.11\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-normalization v0.1.25\n\u001b[1m\u001b[92m  Downloaded\u001b[0m wasm-bindgen-shared v0.2.127\n\u001b[1m\u001b[92m  Downloaded\u001b[0m critical-section v1.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crypto-common v0.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m dbus-secret-service-keyring-store v1.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m enumflags2_derive v0.7.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_collections v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_properties v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m jsonwebtoken v10.4.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m miniz_oxide v0.8.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mio v1.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m sha2 v0.11.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crypto-common v0.1.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m num-bigint v0.4.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tiff v0.11.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerofrom v0.1.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m indexmap v2.14.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf_shared v0.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m profiling-procmacros v1.0.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m deflate64 v0.1.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tower v0.5.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m equator-macro v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m heck v0.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m precomputed-hash v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fallible-iterator v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m foreign-types v0.3.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m heck v0.4.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m percent-encoding v2.3.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf_shared v0.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m same-file v1.0.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m defmt v1.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m equivalent v1.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m dunce v1.0.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m endian-type v0.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m httpdate v1.0.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf_generator v0.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m postgres-protocol v0.6.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rangemap v1.8.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m scopeguard v1.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fallible-iterator v0.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libm v0.2.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf v0.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rand_chacha v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m jiff-core v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pbkdf2 v0.13.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zstd v0.14.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m chrono-tz v0.10.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m displaydoc v0.2.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pastey v0.2.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pathfinder_geometry v0.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pathfinder_simd v0.5.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pocket-resources v0.3.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m proc-macro-utils v0.10.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m profiling v1.0.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m string_cache_codegen v0.6.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-ident v1.0.24\n\u001b[1m\u001b[92m  Downloaded\u001b[0m find-msvc-tools v0.1.11\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hmac v0.13.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m parking_lot_core v0.9.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde_derive v1.0.229\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml v0.8.23\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hybrid-array v0.4.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_properties_data v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ppv-lite86 v0.2.21\n\u001b[1m\u001b[92m  Downloaded\u001b[0m psm v0.1.32\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ravif v0.13.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustls-pki-types v1.15.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerotrie v0.2.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-native v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde_core v1.0.229\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fs2 v0.4.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m quote v1.0.47\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fax v0.2.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m itertools v0.14.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hashlink v0.9.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m untrusted v0.7.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m parking_lot v0.12.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf_codegen v0.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m half v2.7.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m http-body v1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m shlex v2.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m proc-macro2 v1.0.107\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pulp-wasm-simd-flag v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rand_core v0.6.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_write v0.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m try-lock v0.2.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m untrusted v0.9.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m html5ever v0.39.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ouroboros_macro v0.18.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m phf v0.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rand v0.8.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m regex-automata v0.4.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustc_version v0.4.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustix-linux-procfs v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde_spanned v0.6.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m strsim v0.11.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_parser v1.1.3+spec-1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zopfli v0.8.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zune-core v0.5.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m azul-css v0.0.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crc32fast v1.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ctutils v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m data-encoding v2.11.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m generic-array v0.14.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m gif v0.14.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m glyph-names v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hickory-net v0.26.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m http v1.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m http-body-util v0.1.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m polyval v0.6.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m postgres-openssl v0.5.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m prefix-trie v0.8.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m proc-macro2-diagnostics v0.10.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m reborrow v0.5.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m region v3.0.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m resolv-conf v0.7.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rgb v0.8.53\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rpassword v7.5.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustls-webpki v0.103.15\n\u001b[1m\u001b[92m  Downloaded\u001b[0m serde_json v1.0.151\n\u001b[1m\u001b[92m  Downloaded\u001b[0m slotmap v1.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m smallvec v1.15.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m socket2 v0.6.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m stringprep v0.1.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tendril v0.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tinyvec_macros v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tower-layer v0.3.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m web_atoms v0.2.6\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerocopy-derive v0.8.56\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerovec v0.11.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zlib-rs v0.6.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crossbeam-queue v0.3.13\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ctr v0.9.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m form_urlencoded v1.2.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m futures-util v0.3.34\n\u001b[1m\u001b[92m  Downloaded\u001b[0m getrandom v0.2.17\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hashbrown v0.14.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hmac v0.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hyper v1.11.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lzma-rust2 v0.22.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m mysql_common v0.37.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m portable-atomic v1.15.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rayon-core v1.13.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m regex v1.13.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustyline v14.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tinyvec v1.12.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_edit v0.25.13+spec-1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m vcpkg v0.2.15\n\u001b[1m\u001b[92m  Downloaded\u001b[0m wasm-bindgen v0.2.127\n\u001b[1m\u001b[92m  Downloaded\u001b[0m yaml_serde v0.10.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m csv v1.4.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m dbus v0.9.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m exr v1.74.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hashbrown v0.17.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hickory-proto v0.26.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hickory-resolver v0.26.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m lopdf v0.44.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m moka v0.12.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m raw-cpuid v11.6.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m roxmltree v0.21.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tracing-core v0.1.36\n\u001b[1m\u001b[92m  Downloaded\u001b[0m v_frame v0.3.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m xmlwriter v0.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m digest v0.10.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m getrandom v0.3.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rand v0.10.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustix v1.1.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m y4m v0.8.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m yoke-derive v0.8.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m azul-core v0.0.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m cranelift-codegen v0.113.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m enumflags2 v0.7.12\n\u001b[1m\u001b[92m  Downloaded\u001b[0m foreign-types-shared v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fs-set-times v0.20.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ghash v0.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m hkdf v0.12.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m image v0.25.10\n\u001b[1m\u001b[92m  Downloaded\u001b[0m nix v0.28.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m stable_deref_trait v1.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m synstructure v0.13.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m time v0.3.55\n\u001b[1m\u001b[92m  Downloaded\u001b[0m toml_datetime v1.1.1+spec-1.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m urlencoding v2.1.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m uuid v1.26.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m whoami v2.1.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m defmt-parser v1.0.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m foldhash v0.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m proc-macro-crate v3.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m reqwest v0.12.28\n\u001b[1m\u001b[92m  Downloaded\u001b[0m universal-hash v0.5.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zstd-sys v2.1.2+zstd.1.5.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zune-inflate v0.2.54\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crossbeam-epoch v0.9.20\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crossbeam-utils v0.8.22\n\u001b[1m\u001b[92m  Downloaded\u001b[0m gl-context-loader v0.1.10\n\u001b[1m\u001b[92m  Downloaded\u001b[0m grid v1.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m openssl v0.10.81\n\u001b[1m\u001b[92m  Downloaded\u001b[0m time-macros v0.2.32\n\u001b[1m\u001b[92m  Downloaded\u001b[0m twox-hash v2.1.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m url v2.5.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m yansi v1.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m object v0.39.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m simd_helpers v0.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tinystr v0.8.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-rustls v0.26.4\n\u001b[1m\u001b[92m  Downloaded\u001b[0m crossbeam-deque v0.8.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m regex-lite v0.1.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m termcolor v1.4.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-postgres v0.7.18\n\u001b[1m\u001b[92m  Downloaded\u001b[0m typenum v1.20.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m want v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m wasmtime-jit-icache-coherence v26.0.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zune-jpeg v0.5.15\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-openssl v0.6.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m typed-path v0.12.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m getrandom v0.4.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m radix_trie v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-native-tls v0.3.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m version_check v0.9.5\n\u001b[1m\u001b[92m  Downloaded\u001b[0m darling_macro v0.23.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tracing v0.1.44\n\u001b[1m\u001b[92m  Downloaded\u001b[0m winnow v0.7.15\n\u001b[1m\u001b[92m  Downloaded\u001b[0m h2 v0.4.19\n\u001b[1m\u001b[92m  Downloaded\u001b[0m wasm-bindgen-macro v0.2.127\n\u001b[1m\u001b[92m  Downloaded\u001b[0m darling_core v0.23.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m regex-syntax v0.8.11\n\u001b[1m\u001b[92m  Downloaded\u001b[0m icu_normalizer v2.3.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m time-core v0.1.9\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zerocopy v0.8.56\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustls v0.23.46\n\u001b[1m\u001b[92m  Downloaded\u001b[0m deranged v0.5.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m gimli v0.31.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio-macros v2.7.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m azul-layout v0.0.16\n\u001b[1m\u001b[92m  Downloaded\u001b[0m equator v0.4.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m jiff v0.2.37\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pastey v0.1.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tokio v1.53.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fastrand v2.5.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libc v0.2.189\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rustversion v1.0.23\n\u001b[1m\u001b[92m  Downloaded\u001b[0m saturating v0.1.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-segmentation v1.13.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unty-next v0.1.2\n\u001b[1m\u001b[92m  Downloaded\u001b[0m png v0.18.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m postgres-types v0.2.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libz-sys v1.1.29\n\u001b[1m\u001b[92m  Downloaded\u001b[0m unicode-width v0.1.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m flate2 v1.1.10\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fnv v1.0.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m siphasher v1.0.3\n\u001b[1m\u001b[92m  Downloaded\u001b[0m rayon v1.12.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m pxfm v0.1.30\n\u001b[1m\u001b[92m  Downloaded\u001b[0m zstd-safe v8.2.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ecb v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m fst v0.4.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libdbus-sys v0.2.7\n\u001b[1m\u001b[92m  Downloaded\u001b[0m tower-http v0.6.11\n\u001b[1m\u001b[92m  Downloaded\u001b[0m encoding_rs v0.8.35\n\u001b[1m\u001b[92m  Downloaded\u001b[0m ring v0.17.14\n\u001b[1m\u001b[92m  Downloaded\u001b[0m weezl v0.2.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m linux-raw-sys v0.12.1\n\u001b[1m\u001b[92m  Downloaded\u001b[0m aws-lc-sys v0.44.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m libsqlite3-sys v0.28.0\n\u001b[1m\u001b[92m  Downloaded\u001b[0m printpdf v0.12.8\n\u001b[1m\u001b[92m  Downloaded\u001b[0m openssl-src v300.6.1+3.6.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m proc-macro2 v1.0.107\n\u001b[1m\u001b[92m   Compiling\u001b[0m quote v1.0.47\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-ident v1.0.24\n\u001b[1m\u001b[92m   Compiling\u001b[0m libc v0.2.189\n\u001b[1m\u001b[92m   Compiling\u001b[0m cfg-if v1.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m syn v3.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m syn v2.0.119\n\u001b[1m\u001b[92m   Compiling\u001b[0m jobserver v0.1.35\n\u001b[1m\u001b[92m   Compiling\u001b[0m find-msvc-tools v0.1.11\n\u001b[1m\u001b[92m   Compiling\u001b[0m shlex v2.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde v1.0.229\n\u001b[1m\u001b[92m   Compiling\u001b[0m cc v1.4.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde_derive v1.0.229\n\u001b[1m\u001b[92m   Compiling\u001b[0m version_check v0.9.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde_core v1.0.229\n\u001b[1m\u001b[92m   Compiling\u001b[0m pkg-config v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m typenum v1.20.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m autocfg v1.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m bitflags v2.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m vcpkg v0.2.15\n\u001b[1m\u001b[92m   Compiling\u001b[0m smallvec v1.15.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m memchr v2.8.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m portable-atomic v1.15.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-traits v0.2.19\n\u001b[1m\u001b[92m   Compiling\u001b[0m getrandom v0.2.17\n\u001b[1m\u001b[92m   Compiling\u001b[0m log v0.4.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m critical-section v1.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m once_cell v1.21.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m zeroize_derive v1.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m zeroize v1.9.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m generic-array v0.14.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m equivalent v1.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m rand_core v0.6.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m pin-project-lite v0.2.17\n\u001b[1m\u001b[92m   Compiling\u001b[0m allocator-api2 v0.2.21\n\u001b[1m\u001b[92m   Compiling\u001b[0m bytes v1.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m foldhash v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m hashbrown v0.17.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m hybrid-array v0.4.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m synstructure v0.13.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m crypto-common v0.1.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m getrandom v0.4.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerocopy v0.8.56\n\u001b[1m\u001b[92m   Compiling\u001b[0m rand_core v0.10.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-core v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerofrom-derive v0.1.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m indexmap v2.14.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerocopy-derive v0.8.56\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerofrom v0.1.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m yoke-derive v0.8.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m crypto-common v0.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m stable_deref_trait v1.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m simd-adler32 v0.3.10\n\u001b[1m\u001b[92m   Compiling\u001b[0m yoke v0.8.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-macros v2.7.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m mio v1.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m socket2 v0.6.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m cpufeatures v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m itoa v1.0.18\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-sink v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio v1.53.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerovec-derive v0.11.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m tinyvec_macros v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tinyvec v1.12.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerovec v0.11.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m displaydoc v0.2.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m cmov v0.5.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m adler2 v2.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m crc32fast v1.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m slab v0.4.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m ctutils v0.4.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-channel v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m block-buffer v0.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m libz-sys v1.1.29\n\u001b[1m\u001b[92m   Compiling\u001b[0m getrandom v0.3.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m crossbeam-utils v0.8.22\n\u001b[1m\u001b[92m   Compiling\u001b[0m const-oid v0.10.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m subtle v2.6.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m digest v0.11.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m openssl-src v300.6.1+3.6.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-macro v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m base64 v0.22.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m percent-encoding v2.3.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-io v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-task v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-util v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m openssl-sys v0.9.117\n\u001b[1m\u001b[92m   Compiling\u001b[0m miniz_oxide v0.9.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tinystr v0.8.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m litemap v0.8.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m thiserror v2.0.20\n\u001b[1m\u001b[92m   Compiling\u001b[0m parking_lot_core v0.9.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m zlib-rs v0.6.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m writeable v0.6.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_locale_core v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m flate2 v1.1.10\n\u001b[1m\u001b[92m   Compiling\u001b[0m zerotrie v0.2.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m potential_utf v0.1.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m chacha20 v0.10.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m ahash v0.8.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m siphasher v1.0.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m scopeguard v1.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_normalizer_data v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m utf8_iter v1.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustc-hash v2.1.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_properties_data v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_collections v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m lock_api v0.4.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m rand v0.10.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_provider v2.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m thiserror-impl v2.0.20\n\u001b[1m\u001b[92m   Compiling\u001b[0m fst v0.4.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m byteorder v1.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m crossbeam-epoch v0.9.20\n\u001b[1m\u001b[92m   Compiling\u001b[0m parking_lot v0.12.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m block-buffer v0.10.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m block-padding v0.3.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m ipnet v2.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-isle v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustix v1.1.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m cpufeatures v0.2.17\n\u001b[1m\u001b[92m   Compiling\u001b[0m semver v1.0.28\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustc_version v0.4.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m inout v0.1.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m digest v0.10.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_properties v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m icu_normalizer v2.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m hashbrown v0.14.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m sha2 v0.11.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-util v0.7.19\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-normalization v0.1.25\n\u001b[1m\u001b[92m   Compiling\u001b[0m tracing-core v0.1.36\n\u001b[1m\u001b[92m   Compiling\u001b[0m proc-macro2-diagnostics v0.10.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m openssl v0.10.81\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-bidi v0.3.18\n\u001b[1m\u001b[92m   Compiling\u001b[0m bytemuck v1.25.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m foreign-types-shared v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m libm v0.2.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-codegen-shared v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m linux-raw-sys v0.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-codegen-meta v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m foreign-types v0.3.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf_shared v0.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tracing v0.1.44\n\u001b[1m\u001b[92m   Compiling\u001b[0m idna_adapter v1.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m cipher v0.4.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m pathfinder_simd v0.5.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m form_urlencoded v1.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m http v1.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m block-padding v0.4.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-integer v0.1.47\n\u001b[1m\u001b[92m   Compiling\u001b[0m openssl-macros v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m yansi v1.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m either v1.18.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m zmij v1.0.23\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-properties v0.1.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m iana-time-zone v0.1.65\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustversion v1.0.23\n\u001b[1m\u001b[92m   Compiling\u001b[0m crossbeam-deque v0.8.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m fastrand v2.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-bitset v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m target-lexicon v0.12.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m bumpalo v3.20.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-entity v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf_generator v0.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m chrono v0.4.45\n\u001b[1m\u001b[92m   Compiling\u001b[0m stringprep v0.1.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m inout v0.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-codegen v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m idna v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-complex v0.4.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m md-5 v0.11.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m hmac v0.13.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m encoding_rs v0.8.35\n\u001b[1m\u001b[92m   Compiling\u001b[0m heck v0.4.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m rayon-core v1.13.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m object v0.39.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-canonical-combining-class v1.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-conv v0.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde_json v1.0.151\n\u001b[1m\u001b[92m   Compiling\u001b[0m slice-group-by v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m alloc-no-stdlib v2.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m time-core v0.1.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m fnv v1.0.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m deranged v0.5.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-joining-type v1.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m arbitrary v1.4.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m powerfmt v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-general-category v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m time v0.3.55\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-control v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m alloc-stdlib v0.2.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m regalloc2 v0.10.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m ouroboros_macro v0.18.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m url v2.5.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m cipher v0.5.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-bforest v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-bigint v0.4.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m http-body v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf v0.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m uuid v1.26.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m gimli v0.31.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m zstd-sys v2.1.2+zstd.1.5.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m cmake v0.1.58\n\u001b[1m\u001b[92m   Compiling\u001b[0m enumflags2_derive v0.7.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m aliasable v0.1.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m static_assertions v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m unty-next v0.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m httparse v1.10.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m io-lifetimes v2.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m dunce v1.0.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m fs_extra v1.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m strsim v0.11.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m winnow v1.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m io-lifetimes v3.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m ident_case v1.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m darling_core v0.23.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_parser v1.1.3+spec-1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m aws-lc-sys v0.44.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m proc-macro-utils v0.10.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m bincode-next v2.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m ouroboros v0.18.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m enumflags2 v0.7.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m pathfinder_geometry v0.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m hyphenation_commons v0.8.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m brotli-decompressor v5.0.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf_codegen v0.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m string_cache_codegen v0.6.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m libdbus-sys v0.2.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m pulp v0.22.3 (/home/runner/work/_temp/perf-runtime/vendor/pulp-0.22.3)\n\u001b[1m\u001b[92m   Compiling\u001b[0m slotmap v1.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m ring v0.17.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m async-trait v0.1.92\n\u001b[1m\u001b[92m   Compiling\u001b[0m anyhow v1.0.104\n\u001b[1m\u001b[92m   Compiling\u001b[0m utf8parse v0.2.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m heck v0.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m pocket-resources v0.3.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m fallible-iterator v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m native-tls v0.2.18\n\u001b[1m\u001b[92m   Compiling\u001b[0m atomic-waker v1.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m tower-service v0.3.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m new_debug_unreachable v1.0.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m io-extras v0.19.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m glyph-names v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_datetime v1.1.1+spec-1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m try-lock v0.2.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m ucd-trie v0.1.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m allsorts-azul v0.17.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m want v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_edit v0.25.13+spec-1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m h2 v0.4.19\n\u001b[1m\u001b[92m   Compiling\u001b[0m postgres-protocol v0.6.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m hyphenation v0.8.4 (/home/runner/work/_temp/perf-runtime/vendor/hyphenation-0.8.4)\n\u001b[1m\u001b[92m   Compiling\u001b[0m web_atoms v0.2.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m manyhow-macros v0.11.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m ar_archive_writer v0.5.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m darling_macro v0.23.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m sha2 v0.10.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m miniz_oxide v0.8.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m half v2.7.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustls-pki-types v1.15.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m aho-corasick v1.1.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m raw-cpuid v11.6.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m mmapio v0.9.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m pulp-wasm-simd-flag v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cap-primitives v4.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m weezl v0.1.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m regex-syntax v0.8.11\n\u001b[1m\u001b[92m   Compiling\u001b[0m ryu v1.0.23\n\u001b[1m\u001b[92m   Compiling\u001b[0m cpubits v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m precomputed-hash v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m azul-simplecss v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m openssl-probe v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m zstd-safe v8.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m quick-error v2.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m untrusted v0.9.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m cfg_aliases v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m reborrow v0.5.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m xmlparser v0.13.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m pastey v0.2.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m zune-core v0.5.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m zune-jpeg v0.5.15\n\u001b[1m\u001b[92m   Compiling\u001b[0m rust-fontconfig v5.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m nix v0.28.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m azul-css v0.0.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m string_cache v0.9.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m aes v0.9.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m regex-automata v0.4.18\n\u001b[1m\u001b[92m   Compiling\u001b[0m darling v0.23.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m psm v0.1.32\n\u001b[1m\u001b[92m   Compiling\u001b[0m fs-set-times v0.20.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m manyhow v0.11.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m hyper v1.11.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m postgres-types v0.2.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m proc-macro-crate v3.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m anstyle-parse v1.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m rayon v1.12.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-rational v0.4.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m constant_time_eq v0.6.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m prefix-trie v0.8.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m num-iter v0.1.46\n\u001b[1m\u001b[92m   Compiling\u001b[0m aes v0.8.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustix-linux-procfs v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m hmac v0.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m universal-hash v0.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m fdeflate v0.3.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m zune-inflate v0.2.54\n\u001b[1m\u001b[92m   Compiling\u001b[0m sync_wrapper v1.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m lru v0.18.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m libsqlite3-sys v0.28.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m whoami v2.1.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m tower-layer v0.3.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m color_quant v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m grid v1.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m lebe v0.5.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m colorchoice v1.0.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m jiff-core v0.1.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m aws-lc-rs v1.18.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m linked-hash-map v0.5.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m anstyle v1.0.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m cap-std v4.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m byteorder-lite v0.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m ambient-authority v0.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m anstyle-query v1.1.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-openssl v0.6.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m opaque-debug v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m maybe-owned v0.3.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m fax v0.2.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m data-encoding v2.11.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m gl-context-loader v0.1.10\n\u001b[1m\u001b[92m   Compiling\u001b[0m arrayvec v0.7.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m is_terminal_polyfill v1.70.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-segmentation v1.13.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m mysql_common v0.37.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m pxfm v0.1.30\n\u001b[1m\u001b[92m   Compiling\u001b[0m bit_field v0.10.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicase v2.9.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m termcolor v1.4.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m mysql-common-derive v0.32.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m moxcms v0.8.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m mime_guess v2.0.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m exr v1.74.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m anstream v1.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m taffy v0.10.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m azul-core v0.0.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m hickory-proto v0.26.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m tiff v0.11.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m polyval v0.6.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m image-webp v0.2.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m lru-cache v0.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m jiff v0.2.37\n\u001b[1m\u001b[92m   Compiling\u001b[0m gif v0.14.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m tower v0.5.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-postgres v0.7.18\n\u001b[1m\u001b[92m   Compiling\u001b[0m png v0.18.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m hkdf v0.12.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m num v0.4.3\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: hiding a lifetime that's elided elsewhere is confusing\u001b[0m\n  \u001b[1m\u001b[94m--> \u001b[0mvendor/hyphenation-0.8.4/src/case_folding.rs:80:26\n   \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m80\u001b[0m \u001b[1m\u001b[94m|\u001b[0m pub fn refold(original : &str) -> (Cow<str>, Vec<Shift>) {\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33m^^^^\u001b[0m      \u001b[1m\u001b[33m^^^^^^^^\u001b[0m \u001b[1m\u001b[33mthe same lifetime is hidden here\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33m|\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33mthe lifetime is elided here\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mhelp\u001b[0m: the same lifetime is referred to in inconsistent ways, making the signature confusing\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(mismatched_lifetime_syntaxes)]` on by default\n\u001b[1m\u001b[96mhelp\u001b[0m: use `'_` for type paths\n   \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m80\u001b[0m \u001b[1m\u001b[94m| \u001b[0mpub fn refold(original : &str) -> (Cow<\u001b[92m'_, \u001b[0mstr>, Vec<Shift>) {\n   \u001b[1m\u001b[94m|\u001b[0m                                        \u001b[92m+++\u001b[0m\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `hyphenation` (lib) generated 1 warning (run `cargo fix --lib -p hyphenation` to apply 1 suggestion)\n\u001b[1m\u001b[92m   Compiling\u001b[0m dbus v0.9.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m hyper-util v0.1.20\n\u001b[1m\u001b[92m   Compiling\u001b[0m regex v1.13.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-native-tls v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tendril v0.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m http-body-util v0.1.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m cbc v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m ecb v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cbc v0.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m qoi v0.4.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m sha1 v0.10.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf_shared v0.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m crossbeam-channel v0.5.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m ppv-lite86 v0.2.21\n\u001b[1m\u001b[92m   Compiling\u001b[0m btoi v0.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m nom v8.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m roxmltree v0.21.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m nibble_vec v0.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_datetime v0.6.11\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde_spanned v0.6.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m stacker v0.1.25\n\u001b[1m\u001b[92m   Compiling\u001b[0m winnow v0.7.15\n\u001b[1m\u001b[92m   Compiling\u001b[0m regex-lite v0.1.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m cap-fs-ext v4.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m clap_lex v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m weezl v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m saturating v0.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m chrono-tz v0.10.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_write v0.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m rangemap v1.8.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m untrusted v0.7.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m tagptr v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m bitflags v1.3.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m endian-type v0.1.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m xmlwriter v0.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m libbz2-rs-sys v0.2.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m mime v0.3.17\n\u001b[1m\u001b[92m   Compiling\u001b[0m clap_builder v4.6.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m bzip2 v0.6.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m azul-layout v0.0.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m radix_trie v0.2.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m region v3.0.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m moka v0.12.16\n\u001b[1m\u001b[92m   Compiling\u001b[0m lopdf v0.44.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml_edit v0.22.27\n\u001b[1m\u001b[92m   Compiling\u001b[0m rand_chacha v0.3.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m phf v0.12.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m image v0.25.10\n\u001b[1m\u001b[92m   Compiling\u001b[0m dbus-secret-service v4.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m hyper-tls v0.6.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m markup5ever v0.39.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m zstd v0.14.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m tower-http v0.6.11\n\u001b[1m\u001b[92m   Compiling\u001b[0m hickory-net v0.26.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m ghash v0.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-module v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m wasmtime-jit-icache-coherence v26.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m serde_urlencoded v0.7.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m clap_derive v4.6.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-native v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-frontend v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cfb v0.7.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m arc-swap v1.9.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m pbkdf2 v0.13.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m zopfli v0.8.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m blowfish v0.9.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m ctr v0.9.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m fd-lock v4.0.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m lzma-rust2 v0.22.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m hashlink v0.9.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures-executor v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m crossbeam-queue v0.3.13\n\u001b[1m\u001b[92m   Compiling\u001b[0m sha1 v0.11.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m keyed_priority_queue v0.4.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m aead v0.5.2\n\u001b[1m\u001b[92m   Compiling\u001b[0m keyring-core v1.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m csv-core v0.1.13\n\u001b[1m\u001b[92m   Compiling\u001b[0m filetime v0.2.29\n\u001b[1m\u001b[92m   Compiling\u001b[0m rtoolbox v0.0.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m chunked_transfer v1.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m fallible-iterator v0.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m unicode-width v0.1.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m typed-path v0.12.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m lazy_static v1.5.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m ascii v1.1.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m deflate64 v0.1.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m signature v2.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m home v0.5.12\n\u001b[1m\u001b[92m   Compiling\u001b[0m twox-hash v2.1.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m libyaml-rs v0.3.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m ppmd-rust v1.5.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m httpdate v1.0.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m fallible-streaming-iterator v0.1.9\n\u001b[1m\u001b[92m   Compiling\u001b[0m resolv-conf v0.7.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m hickory-resolver v0.26.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m rusqlite v0.31.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m tiny_http v0.12.0 (/home/runner/work/_temp/perf-runtime/vendor/tiny_http-0.12.0)\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: unused import: `SequentialWriter`\u001b[0m\n \u001b[1m\u001b[94m--> \u001b[0mvendor/tiny_http-0.12.0/src/util/mod.rs:7:28\n  \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m7\u001b[0m \u001b[1m\u001b[94m|\u001b[0m pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};\n  \u001b[1m\u001b[94m|\u001b[0m                            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n  \u001b[1m\u001b[94m|\u001b[0m\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: trait `MustBeShareDummy` is never used\u001b[0m\n   \u001b[1m\u001b[94m--> \u001b[0mvendor/tiny_http-0.12.0/src/lib.rs:164:7\n    \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m164\u001b[0m \u001b[1m\u001b[94m|\u001b[0m trait MustBeShareDummy: Sync + Send {}\n    \u001b[1m\u001b[94m|\u001b[0m       \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n    \u001b[1m\u001b[94m|\u001b[0m\n    \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)\n\u001b[1m\u001b[92m   Compiling\u001b[0m zip v9.0.5\n\u001b[1m\u001b[92m   Compiling\u001b[0m yaml_serde v0.10.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m mysql_async v0.37.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m rustyline v14.0.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m jsonwebtoken v10.4.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m colored v2.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m rpassword v7.5.4\n\u001b[1m\u001b[92m   Compiling\u001b[0m tar v0.4.46\n\u001b[1m\u001b[92m   Compiling\u001b[0m csv v1.4.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m dbus-secret-service-keyring-store v1.0.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m aes-gcm v0.10.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m futures v0.3.34\n\u001b[1m\u001b[92m   Compiling\u001b[0m bcrypt v0.15.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m infer v0.16.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m clap v4.6.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m cranelift-jit v0.113.1\n\u001b[1m\u001b[92m   Compiling\u001b[0m reqwest v0.12.28\n\u001b[1m\u001b[92m   Compiling\u001b[0m printpdf v0.12.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m postgres-openssl v0.5.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m html5ever v0.39.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m rand v0.8.8\n\u001b[1m\u001b[92m   Compiling\u001b[0m toml v0.8.23\n\u001b[1m\u001b[92m   Compiling\u001b[0m postgres v0.19.14\n\u001b[1m\u001b[92m   Compiling\u001b[0m tempfile v3.27.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m md-5 v0.10.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m tokio-stream v0.1.19\n\u001b[1m\u001b[92m   Compiling\u001b[0m quick-xml v0.42.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m fs2 v0.4.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m urlencoding v2.1.3\n\u001b[1m\u001b[92m   Compiling\u001b[0m nohash-hasher v0.2.0\n\u001b[1m\u001b[92m   Compiling\u001b[0m same-file v1.0.6\n\u001b[1m\u001b[92m   Compiling\u001b[0m base64 v0.21.7\n\u001b[1m\u001b[92m   Compiling\u001b[0m kujolang v1.9.0 (/home/runner/work/_temp/perf-runtime)\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: methods `compile`, `compile_function`, and `compile_function_with_info` are never used\u001b[0m\n     \u001b[1m\u001b[94m--> \u001b[0msrc/jit.rs:10254:12\n      \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m 9732\u001b[0m \u001b[1m\u001b[94m|\u001b[0m impl JitCompiler {\n      \u001b[1m\u001b[94m|\u001b[0m \u001b[1m\u001b[94m----------------\u001b[0m \u001b[1m\u001b[94mmethods in this implementation\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m10254\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile(&mut self, chunk: &BytecodeChunk, offset: usize) -> Result<CompiledFn, String> {\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m10999\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile_function(\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m11923\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile_function_with_info(\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^\u001b[0m\n      \u001b[1m\u001b[94m|\u001b[0m\n      \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 1 warning\n\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 14m 24s\n",
+    "candidate-build.log": "{\"command\":\"cargo\",\"args\":[\"build\",\"--manifest-path\",\"/home/runner/work/_temp/perf-runtime/Cargo.toml\",\"--release\",\"--locked\",\"--bin\",\"kujo\"]}\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: hiding a lifetime that's elided elsewhere is confusing\u001b[0m\n  \u001b[1m\u001b[94m--> \u001b[0mvendor/hyphenation-0.8.4/src/case_folding.rs:80:26\n   \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m80\u001b[0m \u001b[1m\u001b[94m|\u001b[0m pub fn refold(original : &str) -> (Cow<str>, Vec<Shift>) {\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33m^^^^\u001b[0m      \u001b[1m\u001b[33m^^^^^^^^\u001b[0m \u001b[1m\u001b[33mthe same lifetime is hidden here\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33m|\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m                          \u001b[1m\u001b[33mthe lifetime is elided here\u001b[0m\n   \u001b[1m\u001b[94m|\u001b[0m\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mhelp\u001b[0m: the same lifetime is referred to in inconsistent ways, making the signature confusing\n   \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(mismatched_lifetime_syntaxes)]` on by default\n\u001b[1m\u001b[96mhelp\u001b[0m: use `'_` for type paths\n   \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m80\u001b[0m \u001b[1m\u001b[94m| \u001b[0mpub fn refold(original : &str) -> (Cow<\u001b[92m'_, \u001b[0mstr>, Vec<Shift>) {\n   \u001b[1m\u001b[94m|\u001b[0m                                        \u001b[92m+++\u001b[0m\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `hyphenation` (lib) generated 1 warning (run `cargo fix --lib -p hyphenation` to apply 1 suggestion)\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: unused import: `SequentialWriter`\u001b[0m\n \u001b[1m\u001b[94m--> \u001b[0mvendor/tiny_http-0.12.0/src/util/mod.rs:7:28\n  \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m7\u001b[0m \u001b[1m\u001b[94m|\u001b[0m pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};\n  \u001b[1m\u001b[94m|\u001b[0m                            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n  \u001b[1m\u001b[94m|\u001b[0m\n  \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: trait `MustBeShareDummy` is never used\u001b[0m\n   \u001b[1m\u001b[94m--> \u001b[0mvendor/tiny_http-0.12.0/src/lib.rs:164:7\n    \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m164\u001b[0m \u001b[1m\u001b[94m|\u001b[0m trait MustBeShareDummy: Sync + Send {}\n    \u001b[1m\u001b[94m|\u001b[0m       \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n    \u001b[1m\u001b[94m|\u001b[0m\n    \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)\n\u001b[1m\u001b[92m   Compiling\u001b[0m kujolang v1.9.0 (/home/runner/work/_temp/perf-runtime)\n\u001b[1m\u001b[33mwarning\u001b[0m\u001b[1m: methods `compile`, `compile_function`, and `compile_function_with_info` are never used\u001b[0m\n     \u001b[1m\u001b[94m--> \u001b[0msrc/jit.rs:10263:12\n      \u001b[1m\u001b[94m|\u001b[0m\n\u001b[1m\u001b[94m 9738\u001b[0m \u001b[1m\u001b[94m|\u001b[0m impl JitCompiler {\n      \u001b[1m\u001b[94m|\u001b[0m \u001b[1m\u001b[94m----------------\u001b[0m \u001b[1m\u001b[94mmethods in this implementation\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m10263\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile(&mut self, chunk: &BytecodeChunk, offset: usize) -> Result<CompiledFn, String> {\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m11008\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile_function(\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^\u001b[0m\n\u001b[1m\u001b[94m...\u001b[0m\n\u001b[1m\u001b[94m11932\u001b[0m \u001b[1m\u001b[94m|\u001b[0m     pub fn compile_function_with_info(\n      \u001b[1m\u001b[94m|\u001b[0m            \u001b[1m\u001b[33m^^^^^^^^^^^^^^^^^^^^^^^^^^\u001b[0m\n      \u001b[1m\u001b[94m|\u001b[0m\n      \u001b[1m\u001b[94m= \u001b[0m\u001b[1mnote\u001b[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n\u001b[1m\u001b[33mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 1 warning\n\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 5m 39s\n",
+    "candidate-checkout.log": "{\"command\":\"git\",\"args\":[\"-C\",\"/home/runner/work/_temp/perf-runtime\",\"checkout\",\"--detach\",\"d8d99d8c8e3b64f6f6da83efcfa8da9b8b8e67b4\"]}\nPrevious HEAD position was aa30071 perf(jit): recycle builtin callback argument buffers\nHEAD is now at d8d99d8 fix(compiler): unwind try handlers on loop and function exits\n"
+  }
+}

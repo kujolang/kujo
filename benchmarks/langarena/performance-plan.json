@@ -173,7 +173,8 @@
       "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns",
       "status": "pending",
       "evidence": [
-        "builtin-pool-release-2026-10-24.json"
+        "builtin-pool-release-2026-10-24.json",
+        "linux-regression-ci-2026-10-24.json"
       ]
     },
     {
