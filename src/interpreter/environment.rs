@@ -497,6 +497,33 @@ impl Environment {
         Err(format!("Undefined variable: {}", name))
     }
 
+    /// An atomic, fallible mutation reports whether it actually changed a binding.
+    /// Callers must leave the value untouched on Err/false. In particular, a
+    /// rejected optimization must not appear in a callback's captured-write log.
+    pub(crate) fn try_mutate_checked(
+        &mut self,
+        name: &str,
+        f: impl FnOnce(&mut Value) -> Result<bool, String>,
+    ) -> Result<bool, String> {
+        for (scope_index, scope) in self.scopes.iter_mut().enumerate().rev() {
+            if let Some(value) = scope.get_mut(name) {
+                let kind = self.binding_kinds[scope_index]
+                    .get(name)
+                    .copied()
+                    .unwrap_or(BindingKind::Mutable);
+                if !kind.allows_mutation() {
+                    return Err(kind.mutation_error(name));
+                }
+                let changed = f(value)?;
+                if changed {
+                    Self::record_capture_write(&mut self.capture_writes, scope_index, name);
+                }
+                return Ok(changed);
+            }
+        }
+        Err(format!("Undefined variable: {}", name))
+    }
+
     pub fn ensure_mutable_for_mutation(&self, name: &str) -> Result<(), String> {
         for (scope_index, scope) in self.scopes.iter().enumerate().rev() {
             if scope.contains_key(name) {
@@ -518,5 +545,27 @@ impl Environment {
 impl Default for Environment {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod conditional_mutation_tests {
+    use super::*;
+
+    #[test]
+    fn rejected_mutations_do_not_publish_capture_writes() {
+        let mut env = Environment::new();
+        env.define("items".into(), Value::Int(1));
+        env.track_capture_writes();
+        assert!(!env.try_mutate_checked("items", |_| Ok(false)).unwrap());
+        assert!(env.try_mutate_checked("items", |_| Err("rejected".into())).is_err());
+        assert!(env.capture_writes.as_ref().unwrap().1.is_empty());
+        assert!(env
+            .try_mutate_checked("items", |value| {
+                *value = Value::Int(2);
+                Ok(true)
+            })
+            .unwrap());
+        assert_eq!(env.capture_writes.as_ref().unwrap().1.len(), 1);
     }
 }

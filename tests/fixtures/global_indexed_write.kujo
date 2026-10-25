@@ -1,0 +1,31 @@
+mut data := [1,2,3]
+let saved := data
+mut i := 0
+while i < 200 { data[i % 3] = i i += 1 }
+assert_equal(saved, [1,2,3])
+assert_equal(data, [198,199,197])
+let before := data
+mut caught := false
+try { data[999] = 8 } except error { caught = true }
+assert(caught)
+assert_equal(data, before)
+data[-1] = 7
+assert_equal(data, [198,199,7])
+func replace_index() { data = [9,9,9] return 0 }
+data[replace_index()] = 42
+print(data)
+mut map := dict()
+map["a"] = [1]
+let old := map
+map["a"] = [2]
+map["b"] = 3
+assert_equal(old["a"], [1])
+assert_equal(map["a"], [2])
+let alias := map
+map["self"] = map
+assert_equal(map["self"], alias)
+func leaf(a,b,c,d,e,f,g,h) { return a+b+c+d+e+f+g+h }
+mut total := 0
+mut n := 0
+while n < 100 { total += leaf(1,2,3,4,5,6,7,8) n += 1 }
+assert_equal(total, 3600)

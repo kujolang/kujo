@@ -14,6 +14,9 @@ This file records user-visible changes to Kujo, following
 - Avoid parameter-name allocations and redundant argument snapshots during ordinary
   VM calls; retain legacy receiver adaptation and existing arity diagnostics.
   Reuse bounded, cleared local-slot buffers after VM returns and exception unwinds.
+- Reuse global array and string-key dictionary storage for indexed writes when
+  the loaded value still matches the destination. Real snapshots, reentrant index
+  evaluation, failed writes and depth validation retain their existing behavior.
 
 - Retain operation-owned VM hot state for synchronous sort and regex callbacks
   that call helpers, create closures or import modules. Module-loader ownership,

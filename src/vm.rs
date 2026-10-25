@@ -5199,6 +5199,74 @@ impl VM {
                     let index = self.stack.pop().ok_or("Stack underflow")?;
                     let object = self.stack.pop().ok_or("Stack underflow")?;
                     let value = self.stack.pop().ok_or("Stack underflow")?;
+                    // The compiler's global assignment keeps a loaded snapshot while
+                    // evaluating the index. Release that temporary only if the current
+                    // destination still has the identical backing storage. Reentrant
+                    // indices that replace the binding keep the original slow path.
+                    let mut operands = Some((object, index, value));
+                    let mut fast_result = None;
+                    let global_target = match self.chunk.instructions.get(self.ip) {
+                        Some(OpCode::StoreGlobal(name)) => Some(name),
+                        // Top-level loops lower assignments through StoreVar. Its
+                        // captured/local precedence must be resolved before touching
+                        // a global that happens to share the same name or value.
+                        Some(OpCode::StoreVar(name))
+                            if self.call_frames.last().is_none_or(|frame| {
+                                !frame.captured.contains_key(name)
+                                    && !frame.locals.contains_key(name)
+                            }) =>
+                        {
+                            Some(name)
+                        }
+                        _ => None,
+                    };
+                    if let Some(name) = global_target {
+                        let cache = &mut self.path_depth_valid;
+                        let _ = self.globals.lock().unwrap().try_mutate_checked(name, |root| {
+                            let (object, index, _) = operands.as_ref().unwrap();
+                            let context = match (&*root, object, index) {
+                                (Value::Array(a), Value::Array(b), Value::Int(_))
+                                    if Arc::ptr_eq(a, b) =>
+                                {
+                                    "updating array element"
+                                }
+                                (Value::Dict(a), Value::Dict(b), Value::Str(_))
+                                    if Arc::ptr_eq(a, b) =>
+                                {
+                                    "updating dictionary entry"
+                                }
+                                _ => return Ok(false),
+                            };
+                            let (object, index, value) = operands.take().unwrap();
+                            drop(object);
+                            fast_result = Some(
+                                crate::interpreter::assignment::update_checked(
+                                    root,
+                                    &[crate::interpreter::assignment::Access::Index(index)],
+                                    value,
+                                    cache,
+                                )
+                                .map(|()| root.clone())
+                                .map_err(|error| {
+                                    error.replace("updating nested assignment", context)
+                                }),
+                            );
+                            match fast_result.as_ref().unwrap() {
+                                Ok(_) => Ok(true),
+                                Err(error) => Err(error.clone()),
+                            }
+                        });
+                    }
+                    if let Some(result) = fast_result {
+                        match result {
+                            Ok(updated) => self.stack.push(updated),
+                            Err(error) => {
+                                self.throw_runtime_value(Value::Error(error))?;
+                            }
+                        }
+                        continue;
+                    }
+                    let (object, index, value) = operands.unwrap();
                     match Self::index_set_result(object, index, value, |key| {
                         self.int_key_string(key)
                     }) {

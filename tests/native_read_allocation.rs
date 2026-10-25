@@ -237,3 +237,65 @@ fn vm_call_validation_does_not_allocate_per_parameter() {
     }
     assert_eq!(counts[0], counts[1], "parameter metadata allocation slope: {counts:?}");
 }
+
+#[test]
+fn repeated_global_writes_do_not_copy_or_rescan_the_container() {
+    use kujo::{bytecode::Constant, interpreter::Environment, vm::VM};
+    use std::sync::Mutex;
+    for (dictionary, named_write) in [(false, false), (true, false), (false, true), (true, true)] {
+        let measure = |width: usize, writes: usize| {
+            let mut chunk = BytecodeChunk::new();
+            let value = chunk.add_constant(Constant::Int(7));
+            let key = chunk.add_constant(if dictionary {
+                Constant::String("k0".into())
+            } else {
+                Constant::Int(0)
+            });
+            for _ in 0..writes {
+                chunk.emit(OpCode::LoadConst(value));
+                chunk.emit(OpCode::LoadGlobal("data".into()));
+                chunk.emit(OpCode::LoadConst(key));
+                chunk.emit(OpCode::IndexSet);
+                chunk.emit(if named_write {
+                    OpCode::StoreVar("data".into())
+                } else {
+                    OpCode::StoreGlobal("data".into())
+                });
+                chunk.emit(OpCode::Pop);
+            }
+            if named_write {
+                // Exercise real compiler output, not just a hand-built opcode pair.
+                let key = if dictionary { "\"k0\"" } else { "0" };
+                let source = format!("mut i := 0 while i < {writes} {{ data[{key}] = 7 i += 1 }}");
+                let mut parser = kujo::parser::Parser::new(kujo::lexer::tokenize(&source).unwrap());
+                chunk = kujo::compiler::Compiler::new().compile(&parser.parse()).unwrap();
+            }
+            let mut env = Environment::new();
+            let root = if dictionary {
+                Value::Dict(Arc::new(
+                    (0..width).map(|i| (Arc::from(format!("k{i}")), Value::Int(0))).collect(),
+                ))
+            } else {
+                Value::array(vec![Value::Int(0); width])
+            };
+            env.set("data".into(), root);
+            let mut vm = VM::new();
+            vm.set_globals(Arc::new(Mutex::new(env)));
+            vm.set_jit_enabled(false);
+            REQUESTED_BYTES.with(|v| v.set(0));
+            TRACK.with(|v| v.set(true));
+            let result = vm.execute(chunk);
+            TRACK.with(|v| v.set(false));
+            result.unwrap();
+            REQUESTED_BYTES.with(Cell::get)
+        };
+        // Subtract first-write work, including initial depth validation. Only
+        // repeated-mutation growth must be independent of container width.
+        let small = measure(128, 64) - measure(128, 1);
+        let large = measure(2048, 64) - measure(2048, 1);
+        assert!(
+            large <= small + 4096,
+            "dictionary={dictionary} named_write={named_write} small={small} large={large}"
+        );
+    }
+}
