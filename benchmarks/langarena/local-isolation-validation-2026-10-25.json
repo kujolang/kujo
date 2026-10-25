@@ -1,0 +1,21 @@
+{
+  "accepted_evidence_sha256": "ac60e737303eaf3d45ae9c5128d4b6173ffc8f3fcc386e7bcabbe95fe9ed4d93",
+  "negative_checksum_audit": {
+    "exitcode": 1,
+    "stdout": "",
+    "stderr": "Neural checksum missing\n",
+    "accepted_artifact_unchanged": true
+  },
+  "checks": [
+    "cargo fmt --check passed",
+    "rustfmt --check standalone Rust probes passed",
+    "Ruby syntax checks passed",
+    "strict positive audit passed",
+    "50 benchmark ledger entries retained",
+    "git diff --check passed"
+  ],
+  "runtime_source_changed": false,
+  "limitations": [
+    "No broad runtime test sweep repeated: runtime source unchanged; diagnostic semantics verified in VM, interpreter and JIT."
+  ]
+}

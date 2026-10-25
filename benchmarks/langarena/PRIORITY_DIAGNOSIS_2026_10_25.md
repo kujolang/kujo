@@ -1,5 +1,10 @@
 # Measurement foundation and priority diagnosis — 2026-10-25
 
+Follow-up: [local isolation report](LOCAL_ISOLATION_2026_10_25.md) completes the
+available local ownership/scaling, allocation-phase and NeuralNet regression
+checks below. Clean-host comparisons and precise native CPU-time attribution
+remain pending. This document preserves the earlier investigation state.
+
 Scope: checklist sections 1 and 2. No runtime implementation fixes in this round.
 The checklist is `PERFORMANCE_CHECKLIST.md`; the reconciled machine ledger is
 `performance-plan.json`. Full completion of sections 1 and 2 is **not claimed**.

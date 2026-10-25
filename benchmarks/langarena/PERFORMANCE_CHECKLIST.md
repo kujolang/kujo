@@ -28,22 +28,22 @@ runtime optimization in sections 3–5 has not been restarted.
 ## 1. Reliable measurement foundation
 
 - [x] Reconcile the machine ledger with the latest committed evidence (diagnostic_review_2026_10_25).
-- [ ] Freeze original baseline, candidate, Goose, Rust, toolchains and inputs.
-- [ ] Preserve original and immediate-predecessor baselines for each future fix.
+- [x] Freeze reconstructed original, verified candidate, Goose, Rust, toolchains and inputs (`local-isolation-2026-10-25.json`).
+- [x] Preserve original and current candidate as baselines for the next fix; repeat freezing after each future fix.
 - [ ] Establish a quiet dedicated Linux host. **Blocked: user confirmed no host.**
 - [x] Record CPU/architecture, OS, RAM, toolchains and build flags for the local candidate/probe (diagnosis manifest).
 - [x] Record continuous load, memory/swap and available thermal telemetry during the main local pass.
 - [x] Separate builds from measured benchmark intervals.
-- [ ] Run seven alternating/rotating focused comparison rounds.
-- [ ] Separate startup/setup, compilation/warmup, measured loop, total time and RSS.
-- [ ] Treat rounded zero competitor timings as below reporting resolution.
-- [ ] Keep compared algorithms, inputs, iterations, warmups and checksums identical.
+- [x] Run seven alternating local NeuralNet comparisons in VM and JIT; clean-host comparisons remain pending.
+- [x] Record local phase checkpoints, allocation phases, compile counters, loop/total time and separate peak RSS observations.
+- [x] Treat rounded zero competitor timings as below reporting resolution; do not calculate zero-based speedup ratios.
+- [x] Keep NeuralNet comparison algorithms/configuration/checksums identical; label modified diagnostic inputs separately.
 - [x] Preserve explicit timeout, cancellation, failed and passed statuses.
 
 Gate: repeatable measurements with exact identities and uncertainty. A noisy local
-diagnostic cannot close clean-host acceptance. Old `/tmp` baseline/competitor
-binaries are absent at this restart; reconstruct them from pins, never substitute
-a current release silently. The surviving candidate must match its saved hash.
+diagnostic cannot close clean-host acceptance. Removed temporary executables have
+now been reconstructed from pinned sources and hashed. The preserved candidate
+matches its previously verified binary hash; no current release substitution.
 
 ## 2. Diagnose dominant costs
 
@@ -55,29 +55,35 @@ not retained memory. A diagnostic input is not an official benchmark pass.
 
 | Priority | Workload | Diagnosis gate |
 | --- | --- | --- |
-| First | QuickSort | [ ] comparisons/calls/indexing/allocation/ownership |
-| First | MergeSort | [ ] comparisons/calls/indexing/allocation/ownership |
-| First | NeuralNet | [ ] repeat VM regression; attribute dominant operations |
-| First | CacheSimulation | [ ] dictionary/nested mutation/aliases/validation |
-| First | GameOfLife | [ ] nested reads/writes/iteration/validation |
-| Next | Brainfuck Array | [ ] dispatch/bytes/fallback |
-| Next | Brainfuck Recursion | [ ] dispatch/bytes/recursive calls/fallback |
-| Next | TextRaytracer | [ ] structs/vector helpers/numerics/calls |
-| Next | Small JIT workloads | [ ] compilation and transition break-even |
+| First | QuickSort | [x] local profiles/phases and call/index/ownership controls |
+| First | MergeSort | [x] local profiles/phases and call/index/ownership controls |
+| First | NeuralNet | [x] seven-round local regression check, phases and struct-state controls |
+| First | CacheSimulation | [x] depth/hash profiles and dictionary/nested ownership scaling |
+| First | GameOfLife | [x] nested-state scaling, phases and validation attribution |
+| Next | Brainfuck Array | [x] dispatch/operand profiles, phases and native counters |
+| Next | Brainfuck Recursion | [x] dispatch/operand/call profiles, phases and native counters |
+| Next | TextRaytracer | [x] field/root profiles, phases and struct-state controls |
+| Next | Small JIT workloads | [x] separate compilation/setup costs and local iteration-count payback experiment |
 
 - [x] Capture local CPU profiles with useful symbols; preserve short/missing-window limitations.
 - [x] Measure aggregate main-thread allocation count/requested bytes separately from ordinary CLI peak RSS.
-- [ ] Identify owners behind repeated copies; distinguish required snapshots.
-- [ ] Attribute call-frame setup, argument/return transfer and environment lookup.
-- [ ] Measure native execution/fallback without inventing coverage percentages.
-- [ ] Separate one-time setup from per-element/per-iteration work.
-- [ ] Create representative small reproducers and verify their mechanism.
+- [x] Isolate user snapshots, global loaded temporaries, function locals and assertion-call effects; retain required snapshots.
+- [x] Measure warmed native call controls by arity/count, helper-return scaling, named-opcode clones and disabled-debug lookups.
+- [x] Preserve native/fallback event evidence and sampled helper/dispatch categories without claiming CPU-time percentages.
+- [x] Separate allocation phases and container-width/operation-count scaling; retain instrumentation boundaries.
+- [x] Verify representative reproducers across VM, interpreter and JIT (495 ownership observations).
+- [ ] Obtain precise generated-native/fallback CPU-time attribution. **Blocked locally:** xctrace absent; DTrace cannot initialize with current privileges/SIP.
 - [x] Preserve local diagnostic before results before implementation.
 
 Gate: each optimization proposal has a reproduced bottleneck, not just a static
 hypothesis. No runtime optimization is authorized by completing this diagnosis.
 
-Local diagnostic results and remaining attribution gates: [priority diagnosis](PRIORITY_DIAGNOSIS_2026_10_25.md). Neither section 1 nor section 2 is fully closed.
+Available local work in sections 1–2 is complete: [local isolation report](LOCAL_ISOLATION_2026_10_25.md).
+Clean-host acceptance and precise native CPU-time attribution remain open.
+The earlier [priority diagnosis](PRIORITY_DIAGNOSIS_2026_10_25.md) remains historical evidence.
+The reproduced global indexed-write copy/validation cost is an unfixed runtime
+finding, not authorization to begin sections 3–5. Local-state snapshot semantics
+passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally.
 
 ## 3. Allocation and call-frame fixes (not started in this round)
 

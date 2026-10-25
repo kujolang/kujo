@@ -4013,7 +4013,7 @@
     },
     {
       "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
-      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754\u20131.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
+      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
       "evidence": "paired-assignment-2026-10-23.json"
     },
     {
@@ -4318,7 +4318,7 @@
     },
     {
       "scope": "checked append unique Arc-node reuse",
-      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1\u20132 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
+      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1–2 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
       "evidence": "checked-append-node-relocations-2026-10-24.json"
     },
     {
@@ -4383,7 +4383,7 @@
       "timing_samples": 28,
       "rss_samples": 8,
       "evidence": "builtin-pool-release-2026-10-24.json",
-      "limit": "CPU speed limit 100\u219271%; local directional timing only; production/platform/competitive gates open"
+      "limit": "CPU speed limit 100→71%; local directional timing only; production/platform/competitive gates open"
     },
     {
       "runtime_commit": "4e42bd2",
@@ -4484,5 +4484,120 @@
     "platform": "Linux/Windows21 runtime+3static verified; macOS cancelled at pause",
     "clean_host": "User confirmed no dedicated Linux host; gate pending",
     "prior_temp_artifacts": "Frozen /tmp executables removed; committed reports retained. Surviving target/release/kujo SHA256 matches verified candidate."
+  },
+  "local_isolation_review_2026_10_25": {
+    "status": "available_local_items_1_and_2_verified",
+    "runtime_implementation_changed": false,
+    "runtime_commit": "ea0ea3e",
+    "original_commit": "f037705",
+    "verification": {
+      "ownership_vm_interpreter_jit": 495,
+      "phase_vm_jit": 18,
+      "paired_neural": 28,
+      "break_even": 56,
+      "separate_neural_resources": 4,
+      "direct_control_processes": 1,
+      "comparator_smoke": 2
+    },
+    "neural_stats": {
+      "vm": {
+        "pairs": [
+          {
+            "round": 1,
+            "loop_ratio": 0.9894112529206502,
+            "wall_ratio": 0.9521094616867254
+          },
+          {
+            "round": 2,
+            "loop_ratio": 1.0598448518961239,
+            "wall_ratio": 1.039044615360922
+          },
+          {
+            "round": 3,
+            "loop_ratio": 0.7603010679930886,
+            "wall_ratio": 0.8085904638504708
+          },
+          {
+            "round": 4,
+            "loop_ratio": 1.0629616232824288,
+            "wall_ratio": 1.0554112860921259
+          },
+          {
+            "round": 5,
+            "loop_ratio": 0.9021436248027974,
+            "wall_ratio": 0.9193641252759545
+          },
+          {
+            "round": 6,
+            "loop_ratio": 0.8689244014399421,
+            "wall_ratio": 0.8655480556532219
+          },
+          {
+            "round": 7,
+            "loop_ratio": 0.9081303174909015,
+            "wall_ratio": 0.9136665074516249
+          }
+        ],
+        "median_loop_ratio": 0.9081303174909015,
+        "median_wall_ratio": 0.9193641252759545
+      },
+      "jit": {
+        "pairs": [
+          {
+            "round": 1,
+            "loop_ratio": 0.5454499547668686,
+            "wall_ratio": 0.5628043170050722
+          },
+          {
+            "round": 2,
+            "loop_ratio": 0.7391038410975418,
+            "wall_ratio": 0.7270435567670162
+          },
+          {
+            "round": 3,
+            "loop_ratio": 0.8403157442971274,
+            "wall_ratio": 0.8070945046597496
+          },
+          {
+            "round": 4,
+            "loop_ratio": 0.6386426802395617,
+            "wall_ratio": 0.6732733488143224
+          },
+          {
+            "round": 5,
+            "loop_ratio": 0.6207729525788206,
+            "wall_ratio": 0.6635098531095066
+          },
+          {
+            "round": 6,
+            "loop_ratio": 0.6533938900524887,
+            "wall_ratio": 0.6811937279536047
+          },
+          {
+            "round": 7,
+            "loop_ratio": 0.6258040752395906,
+            "wall_ratio": 0.6369274487162596
+          }
+        ],
+        "median_loop_ratio": 0.6386426802395617,
+        "median_wall_ratio": 0.6732733488143224
+      }
+    },
+    "neural_interpretation": "No consistent VM slowdown reproduced; raw VM medians essentially tied despite median paired ratio 0.908. Candidate JIT faster in all seven local pairs. Not a controlled speedup claim.",
+    "unfixed_findings": [
+      "Simple global indexed array/dictionary writes retain an owner while mutating a loaded temporary and scan the returned aggregate; width and operation scaling reproduced. Function-local controls distinguish this from required snapshot detachment.",
+      "Named opcode/debug environment/path/root costs remain optimization candidates; warmed native call control did not reproduce arity-proportional allocation growth."
+    ],
+    "pending": [
+      "Clean-host acceptance and competitor comparisons",
+      "Precise generated-native/fallback CPU-time attribution: xctrace absent and DTrace unavailable under current privileges/SIP",
+      "Runtime optimization sections 3–5 require the next authorized fix round"
+    ],
+    "evidence": [
+      "benchmarks/langarena/LOCAL_ISOLATION_2026_10_25.md",
+      "benchmarks/langarena/local-isolation-2026-10-25.json",
+      "benchmarks/langarena/probes/LOCAL_ISOLATION.md"
+    ],
+    "rejected_evidence": "Initial dictionary fixture reused k in the same scope; initial partial run retained separately and all accepted ownership observations rerun with corrected fixtures in local-isolation-2026-10-25-v2."
   }
 }
