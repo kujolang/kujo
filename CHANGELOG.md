@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Key native function caches and call-site guards by immutable bytecode identity
+  instead of function names. Distinct same-name functions retain their own code
+  and metadata after native compilation; bytecode mutation invalidates identity.
+
 - Preserve the caller's module loader across VM/JIT callback execution. Repeated
   callback imports now reuse unchanged module exports, reload changed sources,
   and restore cache/cycle state after errors without changing capability policy.

@@ -106,20 +106,20 @@ pub struct VM {
     function_call_stack: Vec<String>,
 
     /// Function call counts for JIT compilation threshold
-    /// Maps function name to number of times it has been called
-    function_call_counts: HashMap<String, usize>,
+    /// Maps code identity to number of times it has been called
+    function_call_counts: HashMap<u64, usize>,
 
     /// Cache of JIT-compiled functions
-    /// Maps function name to compiled native code
-    compiled_functions: HashMap<String, CompiledFn>,
+    /// Maps immutable code identity to compiled native code
+    compiled_functions: HashMap<u64, CompiledFn>,
 
     /// Enhanced cache with direct-arg variants for recursive functions
-    /// Maps function name to CompiledFnInfo (includes both standard and direct-arg)
-    compiled_fn_info: HashMap<String, CompiledFnInfo>,
+    /// Maps immutable code identity to CompiledFnInfo (includes both standard and direct-arg)
+    compiled_fn_info: HashMap<u64, CompiledFnInfo>,
 
     /// Cache of var_names for JIT-compiled functions
     /// This avoids re-computing hash mappings on every call
-    jit_var_names_cache: HashMap<String, Arc<HashMap<u64, String>>>,
+    jit_var_names_cache: HashMap<u64, Arc<HashMap<u64, String>>>,
 
     /// Current recursion depth (for optimization and debugging)
     recursion_depth: usize,
@@ -177,7 +177,7 @@ pub struct VM {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct CallSiteId {
     /// Unique identifier for the chunk/function containing this call site
-    /// We use the chunk name's hash for stability across executions
+    /// Code identity distinguishes same-name and anonymous callers
     chunk_id: u64,
     /// Instruction pointer within the chunk where the Call opcode is
     ip: usize,
@@ -270,19 +270,7 @@ impl Drop for HashMapProfileGuard {
 }
 
 impl CallSiteId {
-    fn new(chunk_name: Option<&str>, ip: usize) -> Self {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let chunk_id = match chunk_name {
-            Some(name) => {
-                let mut hasher = DefaultHasher::new();
-                name.hash(&mut hasher);
-                hasher.finish()
-            }
-            None => 0, // Anonymous/top-level chunk
-        };
-
+    fn new(chunk_id: u64, ip: usize) -> Self {
         Self { chunk_id, ip }
     }
 }
@@ -290,9 +278,9 @@ impl CallSiteId {
 /// Cached information for a call site to enable fast function dispatch
 #[derive(Clone)]
 struct InlineCacheEntry {
-    /// The expected function name at this call site
+    /// The expected immutable code identity at this call site
     /// Used to validate cache hit (guard against function reassignment)
-    expected_func_name: String,
+    expected_code_id: u64,
 
     /// Cached JIT-compiled function pointer (if available)
     /// None if function is not JIT-compiled yet
@@ -309,18 +297,8 @@ struct InlineCacheEntry {
 }
 
 impl InlineCacheEntry {
-    fn new(
-        func_name: &str,
-        compiled_fn: Option<CompiledFn>,
-        var_names: HashMap<u64, String>,
-    ) -> Self {
-        Self {
-            expected_func_name: func_name.to_string(),
-            compiled_fn,
-            var_names,
-            hit_count: 0,
-            miss_count: 0,
-        }
+    fn new(code_id: u64, compiled_fn: Option<CompiledFn>, var_names: HashMap<u64, String>) -> Self {
+        Self { expected_code_id: code_id, compiled_fn, var_names, hit_count: 0, miss_count: 0 }
     }
 }
 
@@ -354,7 +332,7 @@ pub struct VmExecutionSnapshot {
     upvalues: Vec<Upvalue>,
     exception_handlers: Vec<ExceptionHandlerFrame>,
     function_call_stack: Vec<String>,
-    function_call_counts: HashMap<String, usize>,
+    function_call_counts: HashMap<u64, usize>,
     recursion_depth: usize,
     max_recursion_depth: usize,
     int_key_cache: HashMap<i64, Arc<str>>,
@@ -963,7 +941,7 @@ impl VM {
             return Ok(false);
         }
 
-        if self.compiled_functions.contains_key(func_name.as_str()) {
+        if self.compiled_functions.contains_key(&chunk.code_identity()) {
             return Ok(true);
         }
 
@@ -978,8 +956,8 @@ impl VM {
             .compile_function_for_vm(chunk, func_name.as_str())
             .map_err(|e| format!("Failed to JIT-compile function '{}': {}", func_name, e))?;
 
-        self.compiled_functions.insert(func_name.clone(), info.fn_ptr);
-        self.compiled_fn_info.insert(func_name, info);
+        self.compiled_functions.insert(chunk.code_identity(), info.fn_ptr);
+        self.compiled_fn_info.insert(chunk.code_identity(), info);
 
         Ok(true)
     }
@@ -2691,8 +2669,7 @@ impl VM {
                         };
                         vm_context.obj_stack_ptr = &mut self.jit_obj_stack as *mut Vec<Value>;
 
-                        let chunk_name = self.chunk.name.as_deref().unwrap_or("<script>");
-                        let cache_key = format!("script:{}", chunk_name);
+                        let cache_key = self.chunk.code_identity();
                         if !self.jit_var_names_cache.contains_key(&cache_key) {
                             let mut cached_var_names = HashMap::new();
                             Self::register_jit_local_names(&self.chunk, &mut cached_var_names);
@@ -3048,9 +3025,7 @@ impl VM {
                                         vm_context.obj_stack_ptr =
                                             &mut self.jit_obj_stack as *mut Vec<Value>;
 
-                                        let chunk_name =
-                                            self.chunk.name.as_deref().unwrap_or("<script>");
-                                        let cache_key = format!("loop:{}", chunk_name);
+                                        let cache_key = self.chunk.code_identity();
                                         if !self.jit_var_names_cache.contains_key(&cache_key) {
                                             let mut cached_var_names = HashMap::new();
                                             Self::register_jit_local_names(
@@ -4086,7 +4061,7 @@ impl VM {
                     measurement::add(Metric::Calls, 1);
                     // Create call site ID for inline cache lookup
                     // This identifies where in the bytecode this call occurs
-                    let call_site_id = CallSiteId::new(self.chunk.name.as_deref(), self.ip);
+                    let call_site_id = CallSiteId::new(self.chunk.code_identity(), self.ip);
 
                     // Function is on top of stack, then arguments below it
                     // Stack layout: [... arg1, arg2, ..., argN, function]
@@ -4132,11 +4107,11 @@ impl VM {
                                 // This is faster than HashMap lookups because:
                                 // 1. We cache the compiled_fn pointer directly (no string hash)
                                 // 2. We cache var_names to avoid rebuilding on every call
-                                // 3. We validate with a simple string comparison (guard)
+                                // 3. We validate with a code identity comparison (guard)
                                 if let Some(cache_entry) = self.inline_cache.get_mut(&call_site_id)
                                 {
                                     // Cache hit! Validate that function hasn't changed (guard)
-                                    if cache_entry.expected_func_name == func_name {
+                                    if cache_entry.expected_code_id == chunk.code_identity() {
                                         cache_entry.hit_count += 1;
 
                                         // If we have a compiled function, use it directly
@@ -4314,7 +4289,8 @@ impl VM {
                                     if let Some((arg_val, _)) =
                                         crate::native_scalar::encode(&args[0])
                                     {
-                                        if let Some(fn_info) = self.compiled_fn_info.get(func_name)
+                                        if let Some(fn_info) =
+                                            self.compiled_fn_info.get(&chunk.code_identity())
                                         {
                                             if let Some(direct_fn) = fn_info.fn_with_arg {
                                                 // ULTRA-FAST PATH: Use direct-arg JIT variant!
@@ -4420,7 +4396,9 @@ impl VM {
                                 }
 
                                 // Check if we have a JIT-compiled version (standard path)
-                                if let Some(compiled_fn) = self.compiled_functions.get(func_name) {
+                                if let Some(compiled_fn) =
+                                    self.compiled_functions.get(&chunk.code_identity())
+                                {
                                     // Fast path: Call JIT-compiled version
 
                                     // Create locals HashMap for the function parameters
@@ -4434,9 +4412,9 @@ impl VM {
                                     }
 
                                     // Get or create var_names from cache
-                                    let func_name_owned = func_name.to_string();
+                                    let code_id = chunk.code_identity();
                                     let var_names = if let Some(cached) =
-                                        self.jit_var_names_cache.get(&func_name_owned)
+                                        self.jit_var_names_cache.get(&code_id)
                                     {
                                         cached.as_ref().clone()
                                     } else {
@@ -4473,10 +4451,8 @@ impl VM {
                                             }
                                         }
 
-                                        self.jit_var_names_cache.insert(
-                                            func_name_owned.clone(),
-                                            Arc::new(cached_var_names.clone()),
-                                        );
+                                        self.jit_var_names_cache
+                                            .insert(code_id, Arc::new(cached_var_names.clone()));
                                         cached_var_names
                                     };
 
@@ -4485,7 +4461,7 @@ impl VM {
                                     self.inline_cache.insert(
                                         call_site_id,
                                         InlineCacheEntry::new(
-                                            func_name,
+                                            chunk.code_identity(),
                                             Some(*compiled_fn),
                                             var_names.clone(),
                                         ),
@@ -4647,7 +4623,7 @@ impl VM {
                                 // Increment call counter
                                 let count = self
                                     .function_call_counts
-                                    .entry(func_name.to_string())
+                                    .entry(chunk.code_identity())
                                     .or_insert(0);
                                 *count += 1;
                                 let call_count = *count;
@@ -4712,9 +4688,9 @@ impl VM {
                                             }
 
                                             self.compiled_functions
-                                                .insert(func_name.to_string(), info.fn_ptr);
+                                                .insert(chunk.code_identity(), info.fn_ptr);
                                             self.compiled_fn_info
-                                                .insert(func_name.to_string(), info);
+                                                .insert(chunk.code_identity(), info);
 
                                             // The current call already paid the compilation cost.
                                             // Restore its operands and retry the Call opcode so it
@@ -6492,10 +6468,16 @@ impl VM {
         self.stack.clear();
         self.upvalues.clear();
         self.function_call_stack.clear();
-        let mut wrapper = BytecodeChunk::new();
-        wrapper.emit(OpCode::Call(args.len()));
-        wrapper.emit(OpCode::Return);
-        self.set_chunk(wrapper);
+        // Keep one call-site identity for this operation instead of allocating
+        // a fresh inline-cache entry for every comparison or replacement.
+        if !matches!(self.chunk.instructions.as_slice(),
+            [OpCode::Call(arity), OpCode::Return] if *arity == args.len())
+        {
+            let mut wrapper = BytecodeChunk::new();
+            wrapper.emit(OpCode::Call(args.len()));
+            wrapper.emit(OpCode::Return);
+            self.set_chunk(wrapper);
+        }
         self.stack.extend_from_slice(args);
         self.stack.push(function);
         self.skip_execute_reset_once = true;
@@ -8355,12 +8337,12 @@ impl VM {
     }
 
     fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
-        let key = chunk.name.as_deref().unwrap_or("<anonymous>");
-        if let Some(names) = self.jit_var_names_cache.get(key) {
+        let key = chunk.code_identity();
+        if let Some(names) = self.jit_var_names_cache.get(&key) {
             return Arc::clone(names);
         }
         self.jit_var_names_cache
-            .entry(key.to_owned())
+            .entry(key)
             .or_insert_with(|| {
                 use std::hash::{Hash, Hasher};
                 let mut names = HashMap::new();
@@ -8503,8 +8485,9 @@ impl VM {
                 // helper reaches the threshold and strand that helper in fallback.
                 if self.jit_enabled && args.len() == chunk.params.len() {
                     let name = chunk.name.as_deref().unwrap_or("<anonymous>");
-                    if !self.compiled_functions.contains_key(name) {
-                        let count = self.function_call_counts.entry(name.to_owned()).or_insert(0);
+                    if !self.compiled_functions.contains_key(&chunk.code_identity()) {
+                        let count =
+                            self.function_call_counts.entry(chunk.code_identity()).or_insert(0);
                         *count = count.saturating_add(1);
                         let calls = *count;
                         let has_loop = chunk.call_metadata().has_loop;
@@ -8542,7 +8525,8 @@ impl VM {
                     if args.len() == 1 {
                         if let Some((arg_val, _)) = crate::native_scalar::encode(&args[0]) {
                             // Copy the function info to avoid borrow checker issues
-                            let fn_info_opt = self.compiled_fn_info.get(func_name).copied();
+                            let fn_info_opt =
+                                self.compiled_fn_info.get(&chunk.code_identity()).copied();
 
                             if let Some(fn_info) = fn_info_opt {
                                 if let Some(direct_fn) = fn_info.fn_with_arg {
@@ -8649,7 +8633,8 @@ impl VM {
                     }
 
                     // Copy the function pointer to avoid borrow checker issues
-                    let compiled_fn_opt = self.compiled_functions.get(func_name).copied();
+                    let compiled_fn_opt =
+                        self.compiled_functions.get(&chunk.code_identity()).copied();
 
                     if let Some(compiled_fn) = compiled_fn_opt {
                         // Fast path: Direct JIT → JIT call!
@@ -8669,7 +8654,7 @@ impl VM {
                         let use_positional_args = !use_fast_args
                             && self
                                 .compiled_fn_info
-                                .get(func_name)
+                                .get(&chunk.code_identity())
                                 .is_some_and(|info| info.supports_positional_arguments);
                         let use_empty_locals = use_fast_args || use_positional_args;
 
@@ -8693,7 +8678,7 @@ impl VM {
                         // OPTIMIZATION: Get reference to cached var_names instead of cloning
                         // This avoids HashMap clone on every recursive call
                         let cached_var_names_exists =
-                            self.jit_var_names_cache.contains_key(func_name);
+                            self.jit_var_names_cache.contains_key(&chunk.code_identity());
                         if !cached_var_names_exists {
                             // Build var_names once and cache it
                             let mut cached_var_names = HashMap::new();
@@ -8726,13 +8711,13 @@ impl VM {
                             }
 
                             self.jit_var_names_cache
-                                .insert(func_name.to_owned(), Arc::new(cached_var_names));
+                                .insert(chunk.code_identity(), Arc::new(cached_var_names));
                         }
 
                         // Get pointer to cached var_names (no clone!)
                         let var_names_ptr: *mut HashMap<u64, String> = self
                             .jit_var_names_cache
-                            .get_mut(func_name)
+                            .get_mut(&chunk.code_identity())
                             .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
                             .unwrap_or(std::ptr::null_mut());
 
@@ -10547,6 +10532,77 @@ mod tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn reused_callbacks_keep_one_inline_call_site() {
+        let script = compile_chunk("func read(x) { return x + 1 }");
+        let chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some((**chunk).clone()),
+                _ => None,
+            })
+            .unwrap();
+        let function = Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        let mut vm = VM::new();
+        vm.set_jit_enabled(true);
+        let mut wrapper_id = None;
+        for _ in 0..200 {
+            let result = vm.call_reused_leaf_callback(function.clone(), &[Value::Int(5)]).unwrap();
+            assert!(matches!(result, Value::Int(6)));
+            let id = vm.chunk.code_identity();
+            assert_eq!(*wrapper_id.get_or_insert(id), id);
+            assert!(vm.inline_cache.len() <= 1);
+        }
+        assert_eq!(vm.inline_cache.len(), 1);
+        assert_eq!(vm.compiled_functions.len(), 1);
+        assert!(vm.call_reused_leaf_callback(function, &[]).is_err());
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn same_name_functions_compile_and_dispatch_independently() {
+        let mut vm = VM::new();
+        vm.set_jit_enabled(true);
+        let mut functions = Vec::new();
+        for source in ["func read(x) { return x + 1 }", "func read(x) { return x + 2 }"] {
+            let script = compile_chunk(source);
+            let chunk = script
+                .constants
+                .iter()
+                .find_map(|constant| match constant {
+                    Constant::Function(chunk) => Some((**chunk).clone()),
+                    _ => None,
+                })
+                .unwrap();
+            let function = Value::BytecodeFunction {
+                chunk,
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+            };
+            assert!(vm.jit_compile_bytecode_function(&function).unwrap());
+            functions.push(function);
+        }
+        assert_eq!(
+            vm.compiled_functions.len(),
+            2,
+            "both bodies must compile, not silently fall back"
+        );
+        assert_eq!(vm.compiled_fn_info.len(), 2);
+        for _ in 0..4 {
+            for (index, function) in functions.iter().enumerate() {
+                let result =
+                    vm.call_function_from_jit(function.clone(), vec![Value::Int(5)]).unwrap();
+                assert!(matches!(result, Value::Int(value) if value == 6 + index as i64));
+            }
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn native_callbacks_promote_hot_helpers_and_loop_helpers() {
         for (source, threshold) in [
             ("func helper(a) { return a[0] }", JIT_FUNCTION_THRESHOLD),
@@ -10556,6 +10612,7 @@ mod tests {
             let function_chunk = chunk.constants.iter().find_map(|c| match c {
                 Constant::Function(f) => Some((**f).clone()), _ => None,
             }).unwrap();
+            let code_id = function_chunk.code_identity();
             let function = Value::BytecodeFunction { chunk: function_chunk, captured: HashMap::new(), captured_binding_kinds: HashMap::new() };
             let mut vm = VM::new();
             vm.set_jit_enabled(true);
@@ -10563,7 +10620,7 @@ mod tests {
             for call in 1..=threshold+2 {
                 let result = vm.call_function_from_jit(function.clone(), vec![Value::Array(snapshot.clone())]).unwrap();
                 assert!(matches!(result, Value::Int(n) if n == if threshold==1 {21} else {7}));
-                assert_eq!(vm.compiled_functions.contains_key("helper"), call>=threshold);
+                assert_eq!(vm.compiled_functions.contains_key(&code_id), call>=threshold);
                 assert!(matches!(snapshot[0],Value::Int(7)));
             }
             // Invalid arity remains a language error after native promotion.
@@ -10810,7 +10867,7 @@ mod tests {
             scope_depth: 1,
         }];
         vm.function_call_stack = vec!["outer".to_string(), "inner".to_string()];
-        vm.function_call_counts.insert("hot_fn".to_string(), 42);
+        vm.function_call_counts.insert(1, 42);
         vm.recursion_depth = 3;
         vm.max_recursion_depth = 5;
         vm.int_key_cache.insert(7, Arc::from("7"));
@@ -10876,7 +10933,7 @@ mod tests {
         assert_eq!(vm.exception_handlers.len(), 1);
         assert_eq!(vm.exception_handlers[0].catch_ip, 19);
         assert_eq!(vm.function_call_stack, vec!["outer".to_string(), "inner".to_string()]);
-        assert_eq!(vm.function_call_counts.get("hot_fn"), Some(&42));
+        assert_eq!(vm.function_call_counts.get(&1), Some(&42));
         assert_eq!(vm.recursion_depth, 3);
         assert_eq!(vm.max_recursion_depth, 5);
         assert_eq!(vm.int_key_cache.get(&7), Some(&Arc::from("7")));

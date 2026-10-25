@@ -4,7 +4,16 @@
 // Defines OpCode enum representing all bytecode instructions and supporting types.
 
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
+
+static NEXT_CODE_ID: AtomicU64 = AtomicU64::new(1);
+
+fn next_code_id() -> u64 {
+    NEXT_CODE_ID
+        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
+        .expect("bytecode identity space exhausted")
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BytecodeBindingKind {
@@ -472,8 +481,9 @@ pub enum OpCode {
 #[derive(Debug, Clone, PartialEq)]
 pub struct BytecodeChunk(Arc<BytecodeStorage>);
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct BytecodeStorage {
+    identity: u64,
     data: BytecodeData,
     named_bindings: OnceLock<HashSet<String>>,
     call_metadata: OnceLock<CallMetadata>,
@@ -485,6 +495,17 @@ pub(crate) struct CallMetadata {
     pub(crate) requires_closure_vm: bool,
     pub(crate) has_loop: bool,
     pub(crate) has_try: bool,
+}
+
+impl std::fmt::Debug for BytecodeStorage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Process-local cache identity is not part of diagnostics or language values.
+        f.debug_struct("BytecodeStorage")
+            .field("data", &self.data)
+            .field("named_bindings", &self.named_bindings)
+            .field("call_metadata", &self.call_metadata)
+            .finish()
+    }
 }
 
 impl PartialEq for BytecodeStorage {
@@ -504,6 +525,8 @@ impl std::ops::Deref for BytecodeChunk {
 impl std::ops::DerefMut for BytecodeChunk {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let storage = Arc::make_mut(&mut self.0);
+        // Any mutation invalidates native code, even when storage was uniquely owned.
+        storage.identity = next_code_id();
         storage.named_bindings.take();
         storage.call_metadata.take();
         &mut storage.data
@@ -561,6 +584,7 @@ pub struct BytecodeData {
 impl BytecodeChunk {
     pub fn new() -> Self {
         Self(Arc::new(BytecodeStorage {
+            identity: next_code_id(),
             data: BytecodeData {
                 instructions: Vec::new(),
                 constants: Vec::new(),
@@ -580,6 +604,11 @@ impl BytecodeChunk {
             named_bindings: OnceLock::new(),
             call_metadata: OnceLock::new(),
         }))
+    }
+
+    /// Stable for shared immutable code; independent of names and allocation reuse.
+    pub(crate) fn code_identity(&self) -> u64 {
+        self.0.identity
     }
 
     pub(crate) fn call_metadata(&self) -> &CallMetadata {
@@ -822,5 +851,30 @@ mod sharing_tests {
         assert!(Arc::ptr_eq(&saved.0, &child.0));
         assert_eq!(saved.instructions.len(), 1);
         assert_eq!(nested.instructions.len(), 2);
+    }
+}
+
+#[cfg(test)]
+mod code_identity_tests {
+    use super::*;
+
+    #[test]
+    fn shared_code_preserves_identity_and_mutation_invalidates_it() {
+        let mut original = BytecodeChunk::new();
+        original.name = Some("same".into());
+        let mut copy = original.clone();
+        let id = original.code_identity();
+        assert_eq!(copy.code_identity(), id);
+        original.call_metadata();
+        assert_eq!(original.code_identity(), id);
+        copy.name = Some("same".into());
+        assert_ne!(copy.code_identity(), id);
+        assert_eq!(original.code_identity(), id);
+        assert_eq!(original, copy, "identity must not change structural equality");
+        let copy_id = copy.code_identity();
+        copy.instructions.push(OpCode::Nop);
+        assert_ne!(copy.code_identity(), copy_id, "unique-storage mutation invalidates code too");
+        assert!(original.instructions.is_empty());
+        assert_ne!(BytecodeChunk::new().code_identity(), BytecodeChunk::new().code_identity());
     }
 }

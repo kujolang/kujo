@@ -5260,7 +5260,7 @@ pub struct JitCompiler {
     /// Type profiling data for specialization
     type_profiles: HashMap<usize, SpecializationInfo>,
 
-    /// Enhanced function info cache (function name -> info)
+    /// Name-based inspection index; execution dispatch uses VM code-identity caches.
     /// Stores CompiledFnInfo which includes both standard and direct-arg variants
     /// This enables direct JIT recursion for eligible functions
     compiled_fn_info: HashMap<String, CompiledFnInfo>,
@@ -11096,7 +11096,7 @@ impl JitCompiler {
         // 4. Declare function in module
         let func_id = self
             .module
-            .declare_function(name, Linkage::Export, &sig)
+            .declare_function(&format!("kujo_fn_{}", chunk.code_identity()), Linkage::Export, &sig)
             .map_err(|e| format!("Failed to declare function: {}", e))?;
 
         // 5. Set function signature
@@ -11766,7 +11766,7 @@ impl JitCompiler {
         sig.returns.push(AbiParam::new(types::I64)); // Result value (not status code!)
 
         // 4. Declare function in module with unique name for direct-arg variant
-        let direct_name = format!("{}_direct", name);
+        let direct_name = format!("kujo_fn_{}_direct", chunk.code_identity());
         let func_id = self
             .module
             .declare_function(&direct_name, Linkage::Export, &sig)
@@ -12604,7 +12604,7 @@ impl JitCompiler {
         Ok(compiled_fn)
     }
 
-    /// Get compiled function info for a function name
+    /// Get the most recently compiled function info for a name (inspection only).
     #[allow(dead_code)] // API for external tooling and debugging
     pub fn get_fn_info(&self, name: &str) -> Option<&CompiledFnInfo> {
         let result = self.compiled_fn_info.get(name);
