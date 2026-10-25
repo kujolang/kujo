@@ -1,0 +1,18 @@
+func order(a, b) { return a - b }
+func compare(a, b) { return order(a, b) }
+func run() {
+    mut values := []
+    mut i := 255
+    while i >= 0 { values = push(values, i) i -= 1 }
+    let saved := values
+    mut round := 0
+    while round < 4 {
+        let sorted := sort_by(values, compare)
+        assert_equal(sorted[0], 0)
+        assert_equal(sorted[255], 255)
+        assert_equal(values, saved)
+        round += 1
+    }
+    print("PASS")
+}
+run()
