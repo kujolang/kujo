@@ -1,0 +1,120 @@
+{
+  "runtime_source_commit": "4e42bd2",
+  "scope": "Partial JIT-requested unchanged production sweep; VM/interpreter not started",
+  "binary_sha256": "06f7cdb4cb24d8a4a48e85f607e8fb00dfab5f4596520841589666c0ed29961d",
+  "identities": "63dd8f06aef03a99e053a043761413005b8d3b345a8af1f9310333546f3795e0  /tmp/kujo-consuming-production-2026-10-24/kujo-timed\n06f7cdb4cb24d8a4a48e85f607e8fb00dfab5f4596520841589666c0ed29961d  /tmp/kujo-consuming-release-2026-10-24/kujo\n",
+  "input_identities": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/port.kujo\n80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/profile.kujo\n8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/run.json\n",
+  "completed_cases": 5,
+  "expected_cases": 50,
+  "summary": {
+    "timeout": 5
+  },
+  "report": {
+    "binary": "/tmp/kujo-consuming-production-2026-10-24/kujo-timed",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 75497436,
+          "depth": 20,
+          "iterations": 30,
+          "name": "Binarytrees::Obj"
+        },
+        "elapsed_ns": 600066329364.0,
+        "exitcode": -1,
+        "name": "Binarytrees::Obj",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=92244\n@profile create-done ns=279244\n@profile prepare-done ns=437200\n@profile warmup-1 ns=35358807642\n@profile warmup-2 ns=70411842679\n@profile warmup-3 ns=105516908132\n@profile warmup-4 ns=139885655996\n@profile warmup-5 ns=175284847507\n@profile warmup-6 ns=210147592451\n@profile warmup-done ns=210147806531\n@profile run-1 ns=245014661857\n@profile run-3 ns=314997634654\n@profile run-6 ns=419337759319\n@profile run-9 ns=527713111649\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 75497436,
+          "depth": 20,
+          "iterations": 30,
+          "name": "Binarytrees::Arena"
+        },
+        "elapsed_ns": 600139744481.0,
+        "exitcode": -1,
+        "name": "Binarytrees::Arena",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=114039\n@profile create-done ns=328494\n@profile prepare-done ns=503249\n@profile warmup-1 ns=24794198929\n@profile warmup-2 ns=50751088431\n@profile warmup-3 ns=76903172216\n@profile warmup-4 ns=110390182095\n@profile warmup-5 ns=146651191090\n@profile warmup-6 ns=177866970006\n@profile warmup-done ns=177867190878\n@profile run-1 ns=206061229157\n@profile run-3 ns=261481891854\n@profile run-6 ns=343532224469\n@profile run-9 ns=436231715306\n@profile run-12 ns=523680557024\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 954437102,
+          "iterations": 1,
+          "name": "Brainfuck::Array",
+          "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+          "warmup_iterations": 1000,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 600016715543.0,
+        "exitcode": -1,
+        "name": "Brainfuck::Array",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=96255\n@profile create-done ns=285086\n@profile prepare-done ns=442158\n@profile warmup-1 ns=216394491\n@profile warmup-100 ns=3554067415\n@profile warmup-200 ns=7117796384\n@profile warmup-300 ns=10724409899\n@profile warmup-400 ns=14424181587\n@profile warmup-500 ns=18082331908\n@profile warmup-600 ns=21635859189\n@profile warmup-700 ns=24894101463\n@profile warmup-800 ns=28100858461\n@profile warmup-900 ns=31409446820\n@profile warmup-1000 ns=34849112896\n@profile warmup-done ns=34849278587\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 954437102,
+          "iterations": 1,
+          "name": "Brainfuck::Recursion",
+          "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+          "warmup_iterations": 1000,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 600019549283.0,
+        "exitcode": -1,
+        "name": "Brainfuck::Recursion",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=128027\n@profile create-done ns=375730\n@profile prepare-done ns=582013\n@profile warmup-1 ns=199409208\n@profile warmup-100 ns=4608551729\n@profile warmup-200 ns=9061869336\n@profile warmup-300 ns=13372902748\n@profile warmup-400 ns=17822995800\n@profile warmup-500 ns=22251170654\n@profile warmup-600 ns=26553035442\n@profile warmup-700 ns=30899093504\n@profile warmup-800 ns=35354904495\n@profile warmup-900 ns=39753921131\n@profile warmup-1000 ns=44386884697\n@profile warmup-done ns=44387095164\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 600075884183.0,
+        "exitcode": -1,
+        "name": "Matmul::Single",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=121632\n@profile create-done ns=2205183549\n@profile prepare-done ns=2205412955\n@profile warmup-1 ns=76283490707\n@profile warmup-2 ns=149810765250\n@profile warmup-done ns=149810981261\n@profile run-1 ns=219827028291\n@profile run-2 ns=296699729204\n@profile run-3 ns=365619990283\n@profile run-4 ns=437793521868\n@profile run-5 ns=510534806827\n@profile run-6 ns=579073668938\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "limitations": [
+    "Every timeout is incomplete correctness evidence, not a checksum mismatch or successful result.",
+    "Compilation, regression tests and fixture tests overlap parts of this sweep; timings are diagnostic and not competitive acceptance.",
+    "No maximum RSS is available for killed child processes; missing measurements are not zero.",
+    "Top-level fallback warnings do not establish native function execution coverage.",
+    "The candidate is frozen4e42bd2 and predates1627e57/d8d99d8 exception cleanup. Latest runtime release verification runs separately."
+  ]
+}
