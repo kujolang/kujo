@@ -1,0 +1,374 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "recorded_at": "2026-10-25T13:57:21Z",
+  "scope": "User-requested stop of partial production sweep; no production completion claim",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "completed_results": [
+    {
+      "config": {
+        "checksum": 75497436,
+        "depth": 20,
+        "iterations": 30,
+        "name": "Binarytrees::Obj"
+      },
+      "elapsed_ns": 1300600428098.0,
+      "exitcode": 0,
+      "name": "Binarytrees::Obj",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1300.56 real      1239.93 user        55.12 sys\n          1936183296  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            14954905  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n              210685  involuntary context switches\n       6008898192249  instructions retired\n       3609380236829  cycles elapsed\n          1834700800  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=118050\n@profile create-done ns=347670\n@profile prepare-done ns=537301\n@profile warmup-1 ns=34213569234\n@profile warmup-2 ns=69118356278\n@profile warmup-3 ns=102650894048\n@profile warmup-4 ns=136115379527\n@profile warmup-5 ns=169748061818\n@profile warmup-6 ns=203247221429\n@profile warmup-done ns=203247437917\n@profile run-1 ns=236977922703\n@profile run-3 ns=305780452318\n@profile run-6 ns=407446070183\n@profile run-9 ns=507874327641\n@profile run-12 ns=609157713263\n@profile run-15 ns=732023127705\n@profile run-18 ns=846975135592\n@profile run-21 ns=959085693489\n@profile run-24 ns=1064295436954\n@profile run-27 ns=1175227755670\n@profile run-30 ns=1300481082458\nBinarytrees::Obj: OK 75497436\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 75497436,
+        "depth": 20,
+        "iterations": 30,
+        "name": "Binarytrees::Arena"
+      },
+      "elapsed_ns": 1052390455454.0,
+      "exitcode": 0,
+      "name": "Binarytrees::Arena",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1052.39 real       999.72 user        47.22 sys\n          1333653504  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            12695900  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   3  voluntary context switches\n              156870  involuntary context switches\n       5900409196956  instructions retired\n       2978971003992  cycles elapsed\n          1330110464  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=116503\n@profile create-done ns=334173\n@profile prepare-done ns=527670\n@profile warmup-1 ns=36996740819\n@profile warmup-2 ns=69919915121\n@profile warmup-3 ns=102881852439\n@profile warmup-4 ns=136311438676\n@profile warmup-5 ns=166297151470\n@profile warmup-6 ns=195024438008\n@profile warmup-done ns=195024666357\n@profile run-1 ns=226297598484\n@profile run-3 ns=287177271422\n@profile run-6 ns=375815800803\n@profile run-9 ns=465593262307\n@profile run-12 ns=555416039007\n@profile run-15 ns=644040762048\n@profile run-18 ns=728556292551\n@profile run-21 ns=808372580477\n@profile run-24 ns=890825581807\n@profile run-27 ns=973609186865\n@profile run-30 ns=1052271167063\nBinarytrees::Arena: OK 75497436\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 954437102,
+        "iterations": 1,
+        "name": "Brainfuck::Array",
+        "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+        "warmup_iterations": 1000,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 3600018560686.0,
+      "exitcode": -1,
+      "name": "Brainfuck::Array",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=99130\n@profile create-done ns=290901\n@profile prepare-done ns=454510\n@profile warmup-1 ns=207077730\n@profile warmup-100 ns=3168067913\n@profile warmup-200 ns=6218736675\n@profile warmup-300 ns=9197391580\n@profile warmup-400 ns=12160708224\n@profile warmup-500 ns=15116479035\n@profile warmup-600 ns=18099743833\n@profile warmup-700 ns=21050679037\n@profile warmup-800 ns=24039145638\n@profile warmup-900 ns=27309718446\n@profile warmup-1000 ns=30349997430\n@profile warmup-done ns=30350191586\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 954437102,
+        "iterations": 1,
+        "name": "Brainfuck::Recursion",
+        "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+        "warmup_iterations": 1000,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 3600013706382.0,
+      "exitcode": -1,
+      "name": "Brainfuck::Recursion",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=86537\n@profile create-done ns=262421\n@profile prepare-done ns=418581\n@profile warmup-1 ns=139386136\n@profile warmup-100 ns=3223633626\n@profile warmup-200 ns=6393288184\n@profile warmup-300 ns=9448982333\n@profile warmup-400 ns=12553237976\n@profile warmup-500 ns=15664493695\n@profile warmup-600 ns=18749345520\n@profile warmup-700 ns=21868105067\n@profile warmup-800 ns=24729301325\n@profile warmup-900 ns=28117864969\n@profile warmup-1000 ns=31240387744\n@profile warmup-done ns=31240538873\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::Single"
+      },
+      "elapsed_ns": 858138085306.0,
+      "exitcode": 0,
+      "name": "Matmul::Single",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      858.10 real       850.14 user         4.70 sys\n           471371776  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              760198  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   3  voluntary context switches\n              116751  involuntary context switches\n       5238854685353  instructions retired\n       2377980901745  cycles elapsed\n           465895424  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=101218\n@profile create-done ns=1783837862\n@profile prepare-done ns=1784029142\n@profile warmup-1 ns=74502302436\n@profile warmup-2 ns=150075322822\n@profile warmup-done ns=150075536031\n@profile run-1 ns=222005009290\n@profile run-2 ns=297148059309\n@profile run-3 ns=368845875346\n@profile run-4 ns=439604875842\n@profile run-5 ns=507378097952\n@profile run-6 ns=578079841308\n@profile run-7 ns=646573310426\n@profile run-8 ns=717354798299\n@profile run-9 ns=789061363267\n@profile run-10 ns=857965151070\nMatmul::Single: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T4"
+      },
+      "elapsed_ns": 344135370003.0,
+      "exitcode": 0,
+      "name": "Matmul::T4",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      344.10 real      1390.64 user        46.07 sys\n           595873792  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              876063  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             1863681  involuntary context switches\n       6079788659654  instructions retired\n       3229789775535  cycles elapsed\n           589058048  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=102206\n@profile create-done ns=1766809771\n@profile prepare-done ns=1766992412\n@profile warmup-1 ns=28461403498\n@profile warmup-2 ns=57642598685\n@profile warmup-done ns=57642807544\n@profile run-1 ns=85262818317\n@profile run-2 ns=113432716044\n@profile run-3 ns=142329609052\n@profile run-4 ns=171132710142\n@profile run-5 ns=199828013485\n@profile run-6 ns=229121311967\n@profile run-7 ns=258134116668\n@profile run-8 ns=286025311811\n@profile run-9 ns=314742092126\n@profile run-10 ns=343867885044\nMatmul::T4: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T8"
+      },
+      "elapsed_ns": 278080362594.0,
+      "exitcode": 0,
+      "name": "Matmul::T8",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      278.06 real      1984.94 user        76.52 sys\n           609832960  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              983011  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             2428791  involuntary context switches\n       6218956406435  instructions retired\n       4550532807059  cycles elapsed\n           603557888  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=155694\n@profile create-done ns=2050097469\n@profile prepare-done ns=2050303364\n@profile warmup-1 ns=23927548490\n@profile warmup-2 ns=47181656607\n@profile warmup-done ns=47181871207\n@profile run-1 ns=70172076667\n@profile run-2 ns=93248748084\n@profile run-3 ns=116186750022\n@profile run-4 ns=139446035905\n@profile run-5 ns=162247109044\n@profile run-6 ns=185177223156\n@profile run-7 ns=209113622332\n@profile run-8 ns=231794026423\n@profile run-9 ns=254984797484\n@profile run-10 ns=277828472960\nMatmul::T8: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3655420808,
+        "iterations": 10,
+        "n": 900,
+        "name": "Matmul::T16"
+      },
+      "elapsed_ns": 329229693764.0,
+      "exitcode": 0,
+      "name": "Matmul::T16",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      329.24 real      2598.45 user       168.05 sys\n           633446400  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n             1203823  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n             3737524  involuntary context switches\n       6892405512795  instructions retired\n       6059315375511  cycles elapsed\n           626724864  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=119575\n@profile create-done ns=2146421353\n@profile prepare-done ns=2146646904\n@profile warmup-1 ns=28292502177\n@profile warmup-2 ns=55215971454\n@profile warmup-done ns=55216377784\n@profile run-1 ns=81388951771\n@profile run-2 ns=109413599032\n@profile run-3 ns=138362526283\n@profile run-4 ns=164200301229\n@profile run-5 ns=193114592800\n@profile run-6 ns=220179040960\n@profile run-7 ns=247452274405\n@profile run-8 ns=275048532666\n@profile run-9 ns=301956054663\n@profile run-10 ns=328953424057\nMatmul::T16: OK 3655420808\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3516658482,
+        "iterations": 5000,
+        "name": "Base64::Encode",
+        "size": 500000
+      },
+      "elapsed_ns": 3642403886.0,
+      "exitcode": 0,
+      "name": "Base64::Encode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        3.62 real         3.55 user         0.05 sys\n            32301056  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n                9972  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   3  voluntary context switches\n                 529  involuntary context switches\n         24491849797  instructions retired\n          8531183006  cycles elapsed\n            27078656  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=214039\n@profile create-done ns=629323\n@profile prepare-done ns=3553724\n@profile warmup-1 ns=6748190\n@profile warmup-100 ns=86494186\n@profile warmup-200 ns=219108365\n@profile warmup-300 ns=276820687\n@profile warmup-400 ns=338360568\n@profile warmup-500 ns=395852882\n@profile warmup-600 ns=460382361\n@profile warmup-700 ns=523406115\n@profile warmup-800 ns=587906461\n@profile warmup-900 ns=645701449\n@profile warmup-1000 ns=707510581\n@profile warmup-done ns=708058830\n@profile run-1 ns=709864628\n@profile run-500 ns=1060690523\n@profile run-1000 ns=1334746475\n@profile run-1500 ns=1639377609\n@profile run-2000 ns=1923320001\n@profile run-2500 ns=2195609570\n@profile run-3000 ns=2466689870\n@profile run-3500 ns=2733237010\n@profile run-4000 ns=2997412665\n@profile run-4500 ns=3260627512\n@profile run-5000 ns=3528192531\nBase64::Encode: OK 3516658482\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 1329134018,
+        "iterations": 4000,
+        "name": "Base64::Decode",
+        "size": 500000
+      },
+      "elapsed_ns": 3790918737.0,
+      "exitcode": 0,
+      "name": "Base64::Decode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        3.77 real         3.71 user         0.04 sys\n            29519872  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n                9977  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                 398  involuntary context switches\n         22875311182  instructions retired\n          9302571514  cycles elapsed\n            24186880  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=120124\n@profile create-done ns=347585\n@profile prepare-done ns=2204870\n@profile warmup-1 ns=3449376\n@profile warmup-80 ns=64018313\n@profile warmup-160 ns=204638683\n@profile warmup-240 ns=262282293\n@profile warmup-320 ns=326598621\n@profile warmup-400 ns=385520632\n@profile warmup-480 ns=442223272\n@profile warmup-560 ns=497432714\n@profile warmup-640 ns=555837693\n@profile warmup-720 ns=616240325\n@profile warmup-800 ns=678629628\n@profile warmup-done ns=679022762\n@profile run-1 ns=680876972\n@profile run-400 ns=1039909527\n@profile run-800 ns=1332782483\n@profile run-1200 ns=1626322690\n@profile run-1600 ns=1912102790\n@profile run-2000 ns=2199327778\n@profile run-2400 ns=2491545976\n@profile run-2800 ns=2778940749\n@profile run-3200 ns=3081140557\n@profile run-3600 ns=3386146823\n@profile run-4000 ns=3690588909\nBase64::Decode: OK 1329134018\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 120,
+        "coords": 20000,
+        "iterations": 100,
+        "name": "Json::Generate"
+      },
+      "elapsed_ns": 8966324708.0,
+      "exitcode": 0,
+      "name": "Json::Generate",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n        8.93 real         8.78 user         0.12 sys\n            73760768  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               23643  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                1291  involuntary context switches\n         29985377169  instructions retired\n         20472407900  cycles elapsed\n            67977216  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=172872\n@profile create-done ns=1215467279\n@profile prepare-done ns=1215771264\n@profile warmup-1 ns=1498551562\n@profile warmup-2 ns=1561997163\n@profile warmup-4 ns=1684464612\n@profile warmup-6 ns=1800433502\n@profile warmup-8 ns=1919495770\n@profile warmup-10 ns=2041205425\n@profile warmup-12 ns=2160256570\n@profile warmup-14 ns=2289967843\n@profile warmup-16 ns=2416027725\n@profile warmup-18 ns=2541490461\n@profile warmup-20 ns=2651899364\n@profile warmup-done ns=2652136032\n@profile run-1 ns=2710505059\n@profile run-10 ns=3261344753\n@profile run-20 ns=3877244826\n@profile run-30 ns=4470411636\n@profile run-40 ns=5052695116\n@profile run-50 ns=5662801884\n@profile run-60 ns=6277900795\n@profile run-70 ns=6889824002\n@profile run-80 ns=7516691058\n@profile run-90 ns=8122383362\n@profile run-100 ns=8742110796\nJson::Generate: OK 120\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3989922952,
+        "coords": 10000,
+        "iterations": 100,
+        "name": "Json::ParseDom"
+      },
+      "elapsed_ns": 19041979956.0,
+      "exitcode": 0,
+      "name": "Json::ParseDom",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n       19.02 real        16.95 user         1.78 sys\n           125992960  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n              272546  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n                3551  involuntary context switches\n         65564750977  instructions retired\n         44583411737  cycles elapsed\n            62074880  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=116346\n@profile create-done ns=371964\n@profile prepare-done ns=961178814\n@profile warmup-1 ns=1342133374\n@profile warmup-2 ns=1494507796\n@profile warmup-4 ns=1796212991\n@profile warmup-6 ns=2090015887\n@profile warmup-8 ns=2364673860\n@profile warmup-10 ns=2660706479\n@profile warmup-12 ns=2962679040\n@profile warmup-14 ns=3250018271\n@profile warmup-16 ns=3544330012\n@profile warmup-18 ns=3839295184\n@profile warmup-20 ns=4126376102\n@profile warmup-done ns=4126593725\n@profile run-1 ns=4276296010\n@profile run-10 ns=5534489508\n@profile run-20 ns=6898062619\n@profile run-30 ns=8225254594\n@profile run-40 ns=9674725302\n@profile run-50 ns=11139953552\n@profile run-60 ns=12664887243\n@profile run-70 ns=14195393395\n@profile run-80 ns=15781982996\n@profile run-90 ns=17307966042\n@profile run-100 ns=18869269800\nJson::ParseDom: OK 3989922952\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3826684672,
+        "coords": 25000,
+        "iterations": 100,
+        "name": "Json::ParseMapping"
+      },
+      "elapsed_ns": 78539067161.0,
+      "exitcode": 0,
+      "name": "Json::ParseMapping",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n       78.35 real        69.93 user         7.57 sys\n           213929984  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n             1269776  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n               21129  involuntary context switches\n        271193499516  instructions retired\n        187115123594  cycles elapsed\n           126578688  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=114256\n@profile create-done ns=365266\n@profile prepare-done ns=1617738414\n@profile warmup-1 ns=2470529284\n@profile warmup-2 ns=3086215939\n@profile warmup-4 ns=4333305533\n@profile warmup-6 ns=5676805703\n@profile warmup-8 ns=6983547683\n@profile warmup-10 ns=8261679815\n@profile warmup-12 ns=9579055497\n@profile warmup-14 ns=10888163399\n@profile warmup-16 ns=12198823484\n@profile warmup-18 ns=13511304698\n@profile warmup-20 ns=14818053927\n@profile warmup-done ns=14818402562\n@profile run-1 ns=15495092579\n@profile run-10 ns=21917790706\n@profile run-20 ns=28581621087\n@profile run-30 ns=34567644970\n@profile run-40 ns=40616146907\n@profile run-50 ns=46985891883\n@profile run-60 ns=52989181550\n@profile run-70 ns=58935156970\n@profile run-80 ns=65351687324\n@profile run-90 ns=71966328500\n@profile run-100 ns=78190080694\nJson::ParseMapping: OK 3826684672\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 1071523081,
+        "iterations": 70,
+        "name": "CSV::Parse",
+        "rows": 100000
+      },
+      "elapsed_ns": 203869972026.0,
+      "exitcode": 0,
+      "name": "CSV::Parse",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n      203.84 real       183.97 user        18.80 sys\n           301871104  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n             4602668  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   2  voluntary context switches\n               35498  involuntary context switches\n        940610331711  instructions retired\n        527801186774  cycles elapsed\n           277614592  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=112574\n@profile create-done ns=346999\n@profile prepare-done ns=4932978250\n@profile warmup-1 ns=7246791986\n@profile warmup-2 ns=9451367453\n@profile warmup-3 ns=11703775473\n@profile warmup-4 ns=13952111462\n@profile warmup-5 ns=16192077773\n@profile warmup-6 ns=18417210433\n@profile warmup-7 ns=20680975644\n@profile warmup-8 ns=22922870136\n@profile warmup-9 ns=25212386531\n@profile warmup-10 ns=27384858885\n@profile warmup-11 ns=29488590127\n@profile warmup-12 ns=31574776810\n@profile warmup-13 ns=33675849205\n@profile warmup-14 ns=35724265000\n@profile warmup-done ns=35724556211\n@profile run-1 ns=37757422175\n@profile run-7 ns=49556554819\n@profile run-14 ns=63467621210\n@profile run-21 ns=77861772481\n@profile run-28 ns=91300006786\n@profile run-35 ns=104506185069\n@profile run-42 ns=118601641645\n@profile run-49 ns=132581478257\n@profile run-56 ns=147060396273\n@profile run-63 ns=160934520931\n@profile run-70 ns=174989916812\nCSV::Parse: OK 1071523081\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 1042248060,
+        "iterations": 270,
+        "limit": 3000000,
+        "name": "Etc::Sieve"
+      },
+      "elapsed_ns": 1605530664552.0,
+      "exitcode": 0,
+      "name": "Etc::Sieve",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1605.55 real      1491.35 user       101.45 sys\n           471728128  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            37816124  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   4  voluntary context switches\n              261050  involuntary context switches\n       8476623338052  instructions retired\n       4146064184338  cycles elapsed\n           463347712  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=131426\n@profile create-done ns=368593\n@profile prepare-done ns=562998\n@profile warmup-1 ns=4891534983\n@profile warmup-5 ns=25100700417\n@profile warmup-10 ns=51198843317\n@profile warmup-15 ns=77309929094\n@profile warmup-20 ns=102990148147\n@profile warmup-25 ns=129343895893\n@profile warmup-30 ns=156947128000\n@profile warmup-35 ns=183532618212\n@profile warmup-40 ns=211345823084\n@profile warmup-45 ns=238301647711\n@profile warmup-50 ns=265733942603\n@profile warmup-54 ns=287797661728\n@profile warmup-done ns=287797870266\n@profile run-1 ns=293292425376\n@profile run-27 ns=428358894693\n@profile run-54 ns=562958282870\n@profile run-81 ns=679991011764\n@profile run-108 ns=795763000689\n@profile run-135 ns=944643763599\n@profile run-162 ns=1099589871496\n@profile run-189 ns=1247918368079\n@profile run-216 ns=1364346323728\n@profile run-243 ns=1474374370874\n@profile run-270 ns=1605427656159\nEtc::Sieve: OK 1042248060\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 2761140480,
+        "h": 800,
+        "iterations": 100,
+        "name": "Etc::TextRaytracer",
+        "w": 800
+      },
+      "elapsed_ns": 3600020116721.0,
+      "exitcode": -1,
+      "name": "Etc::TextRaytracer",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=150657\n@profile create-done ns=371948\n@profile prepare-done ns=567580\n@profile warmup-1 ns=97015682297\n@profile warmup-2 ns=189523134861\n@profile warmup-4 ns=355287816408\n@profile warmup-6 ns=548713148624\n@profile warmup-8 ns=754875796939\n@profile warmup-10 ns=961088289605\n@profile warmup-12 ns=1126002314957\n@profile warmup-14 ns=1307223830014\n@profile warmup-16 ns=1493920159559\n@profile warmup-18 ns=1677159112396\n@profile warmup-20 ns=1869221298609\n@profile warmup-done ns=1869221576929\n@profile run-1 ns=1974619248959\n@profile run-10 ns=2883178606311\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 144809112,
+        "iterations": 1700,
+        "name": "Etc::NeuralNet"
+      },
+      "elapsed_ns": 3600014802066.0,
+      "exitcode": -1,
+      "name": "Etc::NeuralNet",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=116932\n@profile create-done ns=345842\n@profile prepare-done ns=113783182\n@profile warmup-1 ns=3936011993\n@profile warmup-34 ns=117259613065\n@profile warmup-68 ns=232282211463\n@profile warmup-102 ns=340034376202\n@profile warmup-136 ns=435438109710\n@profile warmup-170 ns=530662286792\n@profile warmup-204 ns=636099279677\n@profile warmup-238 ns=745387939988\n@profile warmup-272 ns=849032294963\n@profile warmup-306 ns=959129268736\n@profile warmup-340 ns=1078413833267\n@profile warmup-done ns=1078414115292\n@profile run-1 ns=1081986871991\n@profile run-170 ns=1585004001531\n@profile run-340 ns=2150520626253\n@profile run-510 ns=2726586023683\n@profile run-680 ns=3217363348461\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    },
+    {
+      "config": {
+        "checksum": 3263751556,
+        "iterations": 5000,
+        "name": "Etc::CacheSimulation",
+        "size": 2500,
+        "values": 5000
+      },
+      "elapsed_ns": 3600015645816.0,
+      "exitcode": -1,
+      "name": "Etc::CacheSimulation",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=99218\n@profile create-done ns=301938\n@profile prepare-done ns=475608\n@profile warmup-1 ns=300299146\n@profile warmup-100 ns=171681840692\n@profile warmup-200 ns=362883026474\n@profile warmup-300 ns=559001258509\n@profile warmup-400 ns=739687897519\n@profile warmup-500 ns=920204510047\n@profile warmup-600 ns=1101622948971\n@profile warmup-700 ns=1297371154522\n@profile warmup-800 ns=1483213006172\n@profile warmup-900 ns=1688766039563\n@profile warmup-1000 ns=1912865567439\n@profile warmup-done ns=1912865776514\n@profile run-1 ns=1915105635183\n@profile run-500 ns=2918016103582\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "counts": {
+    "passed": 13,
+    "timeout": 5
+  },
+  "interrupted": {
+    "name": "Etc::GameOfLife",
+    "runtime": "jit",
+    "status": "cancelled_by_user_request",
+    "config": {
+      "name": "Etc::GameOfLife",
+      "checksum": 3805797673,
+      "w": 500,
+      "h": 500,
+      "iterations": 500
+    },
+    "stdout": "@profile create-start ns=245097\n@profile create-done ns=4618700411\n@profile prepare-done ns=57431211455\n@profile warmup-1 ns=177825446142\n@profile warmup-10 ns=1201952059706\n",
+    "last_observed_process_elapsed": "24:52",
+    "last_observed_process_cpu_time": "24:32.57",
+    "checksum_verified": false
+  },
+  "not_started_modes": [
+    "vm",
+    "interpreter"
+  ],
+  "termination": "Stopped orchestrator before interrupting driver; session64547 exited143 and all four observed sweep processes were absent afterward.",
+  "limitations": [
+    "Five one-hour timeouts remain incomplete checksum verification, not semantic failures.",
+    "Laptop contention and thermal effects were not controlled; no causal attribution or competitive timing claim.",
+    "Near-one-core CPU usage and CPU time close to elapsed time show substantial active computation, not just scheduler waiting.",
+    "Full production matrix and repeated clean-host comparison remain open."
+  ]
+}
