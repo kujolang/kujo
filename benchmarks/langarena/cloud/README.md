@@ -2,8 +2,8 @@
 
 The full performance objective remains open. This directory prepares an exact
 Linux comparison set; it does not provision resources or claim Linux validation.
-The original Kujo baseline is `f037705`, and the candidate is `aa30071` (builtin
-argument reuse). Both use the pinned Rust toolchain and separate target folders.
+The original Kujo baseline is `f037705`, and the candidate is `4e42bd2` (consumed
+call operand transfer). Both use the pinned Rust toolchain and separate target folders.
 The earlier preparation pin `9be62a6` remains historical evidence, not the
 original baseline. Update candidate pins explicitly after accepting further fixes;
 never silently substitute a floating branch or overwrite a prior run directory.
@@ -37,6 +37,9 @@ bash benchmarks/langarena/cloud/prepare-linux.sh /home/benchmark/langa-compariso
 The script installs Rust 1.96.0, checks out immutable Kujo/LangArena/Goose
 revisions (including both Kujo versions), builds release binaries with locked Rust dependencies, uses Goose's
 upstream `prod` recipe, and records machine/compiler identities and hashes.
+The candidate's `build.kujo` assembles the ignored `port.kujo` from pinned source
+fragments before its hash is recorded. The candidate passed 150 local test-size
+checksums; see `../CONSUMING_RELEASE_2026_10_24.md` for the bounded evidence.
 Its shell bootstrap is necessary before a Kujo executable exists; subsequent
 orchestration uses the repository's Kujo runners. A failed build leaves logs
 and no completion marker. `BUILT_NOT_VERIFIED` means only that builds finished.

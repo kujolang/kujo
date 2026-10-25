@@ -22,7 +22,7 @@ for tool in git rustup clang clang++ cmake make pkg-config sha256sum; do
 done
 
 kujo_baseline_revision=f037705190bb6ef765238f9c091086eae0e97485
-kujo_revision=aa3007194ebb446ddbe6a91a90d7a8f55e8ee6b9
+kujo_revision=4e42bd227202cc17fe111bb1592e8998de7db754
 arena_revision=3c9f84ddaeec834c0631747cb789e8cfd602f993
 goose_revision=ea1f368c109c083a2161580ff1d74c70200b6cc8
 toolchain=1.96.0
@@ -52,6 +52,13 @@ for source in kujo-baseline kujo; do
         cargo build --locked --release --bin kujo --target-dir "$workspace/$source/target" -j "$jobs"
     )
 done
+# The port is generated and intentionally absent from Git. Assemble it using
+# the pinned candidate before hashing or running the common comparison input.
+(
+    cd "$workspace/kujo"
+    target/release/kujo run benchmarks/langarena/build.kujo
+    test -s benchmarks/langarena/port.kujo
+)
 cmake -S "$workspace/goose" -B "$workspace/goose/build" \
     -DCMAKE_BUILD_TYPE=Release -DGOOSE_LIBTCC=OFF -DGOOSE_GFX=OFF \
     -DGOOSE_AUDIO=OFF -DGOOSE_PHYSICS=OFF -DGOOSE_UI=OFF
