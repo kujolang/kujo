@@ -1,0 +1,36 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "One full production JIT case; remaining all50 matrix active, not complete",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "result": {
+    "config": {
+      "checksum": 75497436,
+      "depth": 20,
+      "iterations": 30,
+      "name": "Binarytrees::Obj"
+    },
+    "elapsed_ns": 1300600428098.0,
+    "exitcode": 0,
+    "name": "Binarytrees::Obj",
+    "runtime": "jit",
+    "status": "passed",
+    "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1300.56 real      1239.93 user        55.12 sys\n          1936183296  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            14954905  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   0  voluntary context switches\n              210685  involuntary context switches\n       6008898192249  instructions retired\n       3609380236829  cycles elapsed\n          1834700800  peak memory footprint\n",
+    "stderr_truncated": false,
+    "stdout": "@profile create-start ns=118050\n@profile create-done ns=347670\n@profile prepare-done ns=537301\n@profile warmup-1 ns=34213569234\n@profile warmup-2 ns=69118356278\n@profile warmup-3 ns=102650894048\n@profile warmup-4 ns=136115379527\n@profile warmup-5 ns=169748061818\n@profile warmup-6 ns=203247221429\n@profile warmup-done ns=203247437917\n@profile run-1 ns=236977922703\n@profile run-3 ns=305780452318\n@profile run-6 ns=407446070183\n@profile run-9 ns=507874327641\n@profile run-12 ns=609157713263\n@profile run-15 ns=732023127705\n@profile run-18 ns=846975135592\n@profile run-21 ns=959085693489\n@profile run-24 ns=1064295436954\n@profile run-27 ns=1175227755670\n@profile run-30 ns=1300481082458\nBinarytrees::Obj: OK 75497436\nSummary: 1, 1, 0\n",
+    "stdout_truncated": false,
+    "timeout_ms": 3600000
+  },
+  "maximum_resident_bytes": 1936183296,
+  "limitations": [
+    "Uncontrolled local laptop; not competitive performance evidence.",
+    "One-hour diagnostic process deadline; previous ten-minute deadlines could not cover this unchanged workload.",
+    "Inputs, warmups, iterations and checksum unchanged.",
+    "Production VM/interpreter and remaining JIT cases pending."
+  ]
+}
