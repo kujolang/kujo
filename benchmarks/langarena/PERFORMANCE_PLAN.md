@@ -7,6 +7,15 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Synchronous worker JIT opt-in (`e20dc03`).**
+  [Coverage and validation](worker-jit-policy-2026-10-24.json) show two native
+  entries from two synchronous workers, previously zero. VM/interpreter remain
+  opt-out; cancellable async workers still record zero native entries. All
+  1,097 library tests and 30 targeted integrations pass, plus formatting and
+  no-default-features checks. Each worker compiles independently, so cold-mapper
+  cost, release speed and full-suite revalidation remain unmeasured. Native
+  cancellation and callback/task policy propagation remain required.
+
 - **Existing synchronous mapper global-write divergence requires contract review.**
   [Reproducer evidence](parallel-global-policy-2026-10-24.json) on `d8d99d8`
   shows VM/JIT worker global writes isolated from the parent, while interpreter
@@ -21,7 +30,7 @@ a target to test, not a guarantee. This document explains the execution order;
   performance gates remain open; the concurrent production sweep uses the older
   `4e42bd2` binary. Later worker-policy changes require fresh verification.
 
-- **Worker JIT policy remains a gap.** The
+- **Worker JIT policy baseline before `e20dc03`.** The
   [worker coverage probe](worker-jit-coverage-2026-10-24.json) on frozen `4e42bd2`
   performs two identical integer-kernel calls per variant. Direct execution
   records two native function entries; synchronous and async `parallel_map`
