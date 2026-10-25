@@ -1,0 +1,42 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "Unchanged production CacheSimulation JIT timeout; checksum verification incomplete",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 3263751556,
+        "iterations": 5000,
+        "name": "Etc::CacheSimulation",
+        "size": 2500,
+        "values": 5000
+      },
+      "elapsed_ns": 3600015645816.0,
+      "exitcode": -1,
+      "name": "Etc::CacheSimulation",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=99218\n@profile create-done ns=301938\n@profile prepare-done ns=475608\n@profile warmup-1 ns=300299146\n@profile warmup-100 ns=171681840692\n@profile warmup-200 ns=362883026474\n@profile warmup-300 ns=559001258509\n@profile warmup-400 ns=739687897519\n@profile warmup-500 ns=920204510047\n@profile warmup-600 ns=1101622948971\n@profile warmup-700 ns=1297371154522\n@profile warmup-800 ns=1483213006172\n@profile warmup-900 ns=1688766039563\n@profile warmup-1000 ns=1912865567439\n@profile warmup-done ns=1912865776514\n@profile run-1 ns=1915105635183\n@profile run-500 ns=2918016103582\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Etc::CacheSimulation": null
+  },
+  "limitations": [
+    "One-hour diagnostic deadline reached without final checksum; neither a correctness pass nor evidence of a semantic failure.",
+    "Completed 1000 warmups and at least 500 measured iterations; full production requires 5000 measured iterations.",
+    "Timeout prevented final external RSS accounting; sampled process RSS is not substituted.",
+    "Uncontrolled laptop, single attempt, JIT fallback coverage unknown; no competitive speed claim.",
+    "Full production verification across JIT, VM and interpreter remains open."
+  ]
+}
