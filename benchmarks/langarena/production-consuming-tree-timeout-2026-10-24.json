@@ -1,0 +1,143 @@
+{
+  "scope": "Partial production evidence: one JIT-requested case, not an all50 result or native coverage claim",
+  "runtime_source_commit": "4e42bd2",
+  "binary_sha256": "06f7cdb4cb24d8a4a48e85f607e8fb00dfab5f4596520841589666c0ed29961d",
+  "inputs_sha256": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/port.kujo\n80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/profile.kujo\n8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f  /tmp/kujo-consuming-production-2026-10-24/frozen/benchmarks/langarena/run.json\n",
+  "executable_sha256": "63dd8f06aef03a99e053a043761413005b8d3b345a8af1f9310333546f3795e0  /tmp/kujo-consuming-production-2026-10-24/kujo-timed\n06f7cdb4cb24d8a4a48e85f607e8fb00dfab5f4596520841589666c0ed29961d  /tmp/kujo-consuming-release-2026-10-24/kujo\n",
+  "host_before": "Darwin MacBook-Pro 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_X86_64 x86_64\nNote: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\n2026-10-24 20:10:17 -0400 CPU Power notify\n\tCPU_Scheduler_Limit \t= 100\n\tCPU_Available_CPUs \t= 12\n\tCPU_Speed_Limit \t= 88\nMach Virtual Memory Statistics: (page size of 4096 bytes)\nPages free:                                   321595.\nPages active:                                1118322.\nPages inactive:                              1074193.\nPages speculative:                             59752.\nPages throttled:                                   0.\nPages wired down:                            1092216.\nPages purgeable:                               15226.\n\"Translation faults\":                    16487090638.\nPages copy-on-write:                       768955886.\nPages zero filled:                       11980585532.\nPages reactivated:                        1059710612.\nPages purged:                               44748058.\nFile-backed pages:                            955215.\nAnonymous pages:                             1297052.\nPages stored in compressor:                  4096198.\nPages occupied by compressor:                 527452.\nDecompressions:                            745950417.\nCompressions:                             1004287387.\nPageins:                                   366076023.\nPageouts:                                    3938842.\nSwapins:                                  1326405044.\nSwapouts:                                 1353273913.\n",
+  "result": {
+    "config": {
+      "checksum": 75497436,
+      "depth": 20,
+      "iterations": 30,
+      "name": "Binarytrees::Obj"
+    },
+    "elapsed_ns": 600066329364.0,
+    "exitcode": -1,
+    "name": "Binarytrees::Obj",
+    "runtime": "jit",
+    "status": "timeout",
+    "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+    "stderr_truncated": false,
+    "stdout": "@profile create-start ns=92244\n@profile create-done ns=279244\n@profile prepare-done ns=437200\n@profile warmup-1 ns=35358807642\n@profile warmup-2 ns=70411842679\n@profile warmup-3 ns=105516908132\n@profile warmup-4 ns=139885655996\n@profile warmup-5 ns=175284847507\n@profile warmup-6 ns=210147592451\n@profile warmup-done ns=210147806531\n@profile run-1 ns=245014661857\n@profile run-3 ns=314997634654\n@profile run-6 ns=419337759319\n@profile run-9 ns=527713111649\n",
+    "stdout_truncated": false,
+    "timeout_ms": 600000
+  },
+  "live_resources": [
+    {
+      "at": "2026-10-25T00:17:25Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:08  98.7 815108 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:17:35Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:18 100.0 1465612 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:17:45Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:28  99.1 1889204 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:17:55Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:38 100.0 281232 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:05Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:48  99.3 1042344 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:15Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 07:58  98.4 1755792 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:25Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:08  99.0 1889196 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:35Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:18 100.0 647484 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:45Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:28  99.7 1397376 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:18:55Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:38 100.0 1890188 R",
+      "last_checkpoint": "@profile run-6 ns=419337759319"
+    },
+    {
+      "at": "2026-10-25T00:19:05Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:48  98.1 252228 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:19:15Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 08:58  98.4 1048876 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:19:25Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:08 100.0 1769384 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:19:35Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:18 100.0 1890140 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:19:45Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:28 100.0 644300 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:19:55Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:38 100.0 1398772 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:20:05Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:48 100.0 1891184 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    },
+    {
+      "at": "2026-10-25T00:20:15Z",
+      "source": "macOS ps; rss in KiB, instantaneous not peak",
+      "process": "59696 09:58  99.7 253152 R",
+      "last_checkpoint": "@profile run-9 ns=527713111649"
+    }
+  ],
+  "limits": [
+    "Timeout is incomplete correctness evidence, not a checksum mismatch.",
+    "ps RSS observations are instantaneous, not peak RSS or proof of a leak.",
+    "Top-level fallback warning does not identify native coverage of called functions.",
+    "CPU host uncontrolled; no Goose/Rust competitive claim."
+  ],
+  "followup": "Retain the bounded all50 sweep, then retry this unchanged production case with at least a 30-minute deadline. Observed approximately35-second iterations suggest about21minutes total including six warmups, but this is an estimate, not a completed measurement."
+}
