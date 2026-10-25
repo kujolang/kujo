@@ -60,7 +60,8 @@
         "CALLABLE_MARSHALLING_2026_10_24.md",
         "builtin-pool-release-2026-10-24.json",
         "consuming-calls-2026-10-24.json",
-        "quicksort-production-profile-2026-10-24.json"
+        "quicksort-production-profile-2026-10-24.json",
+        "native-root-discard-2026-10-24.json"
       ]
     },
     {
@@ -92,7 +93,8 @@
         "local-return-release-2026-10-24.json",
         "native-argument-pool-2026-10-24.json",
         "builtin-argument-pool-2026-10-24.json",
-        "consuming-calls-2026-10-24.json"
+        "consuming-calls-2026-10-24.json",
+        "native-root-discard-2026-10-24.json"
       ]
     },
     {
@@ -136,7 +138,8 @@
         "native-call-setup-reservation-2026-10-24.json",
         "native-scalar-array-reads-2026-10-24.json",
         "native-positional-arguments-2026-10-24.json",
-        "native-root-read-cache-2026-10-24.json"
+        "native-root-read-cache-2026-10-24.json",
+        "root-discard-native-surfaces-2026-10-24.json"
       ]
     },
     {
