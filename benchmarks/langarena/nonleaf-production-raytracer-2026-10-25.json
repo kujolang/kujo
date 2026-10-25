@@ -1,0 +1,42 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "Unchanged production TextRaytracer JIT timeout; checksum verification incomplete",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 2761140480,
+        "h": 800,
+        "iterations": 100,
+        "name": "Etc::TextRaytracer",
+        "w": 800
+      },
+      "elapsed_ns": 3600020116721.0,
+      "exitcode": -1,
+      "name": "Etc::TextRaytracer",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=150657\n@profile create-done ns=371948\n@profile prepare-done ns=567580\n@profile warmup-1 ns=97015682297\n@profile warmup-2 ns=189523134861\n@profile warmup-4 ns=355287816408\n@profile warmup-6 ns=548713148624\n@profile warmup-8 ns=754875796939\n@profile warmup-10 ns=961088289605\n@profile warmup-12 ns=1126002314957\n@profile warmup-14 ns=1307223830014\n@profile warmup-16 ns=1493920159559\n@profile warmup-18 ns=1677159112396\n@profile warmup-20 ns=1869221298609\n@profile warmup-done ns=1869221576929\n@profile run-1 ns=1974619248959\n@profile run-10 ns=2883178606311\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Etc::TextRaytracer": null
+  },
+  "limitations": [
+    "One-hour diagnostic deadline reached without final checksum; neither a correctness pass nor evidence of a semantic failure.",
+    "Completed 20 warmups and at least 10 measured iterations; full production requires 100 measured iterations at 800x800.",
+    "Timeout prevented final external RSS accounting; sampled process RSS is not substituted.",
+    "Uncontrolled laptop, single attempt, JIT fallback coverage unknown; no competitive speed claim.",
+    "Full production verification across JIT, VM and interpreter remains open."
+  ]
+}
