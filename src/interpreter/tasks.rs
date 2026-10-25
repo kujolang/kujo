@@ -55,6 +55,7 @@ pub(crate) fn submit(
     environment: Environment,
     policy: RuntimeCapabilityPolicy,
     output: Option<Arc<Mutex<Vec<u8>>>>,
+    jit_requested: bool,
 ) -> Result<Arc<TaskState>, String> {
     let params = match &function {
         Value::Function(params, ..) | Value::AsyncFunction(params, ..) => params,
@@ -110,6 +111,7 @@ pub(crate) fn submit(
                     policy,
                     output,
                     worker_state.cancelled.clone(),
+                    jit_requested,
                 )
             } else {
                 let mut interpreter = Interpreter::with_environment(policy, environment);
@@ -118,6 +120,7 @@ pub(crate) fn submit(
                 interpreter.vm_globals = Some(Arc::new(Mutex::new(interpreter.env.clone())));
                 interpreter.output = output;
                 interpreter.task_cancellation = Some(worker_state.cancelled.clone());
+                interpreter.vm_jit_requested = jit_requested;
                 let value = interpreter.execute_task_body(&function, &args);
                 match value {
                     Value::Error(message) | Value::ErrorObject { message, .. } => Err(message),
@@ -155,7 +158,14 @@ impl Interpreter {
             }
             None => self.env.global_snapshot(),
         };
-        submit(function, args, environment, self.capability_policy.clone(), self.output.clone())
+        submit(
+            function,
+            args,
+            environment,
+            self.capability_policy.clone(),
+            self.output.clone(),
+            self.vm_jit_requested,
+        )
     }
 
     fn execute_task_body(&mut self, function: &Value, args: &[Value]) -> Value {
@@ -247,6 +257,7 @@ impl Interpreter {
             environment,
             self.capability_policy.clone(),
             self.output.clone(),
+            self.vm_jit_requested,
         )?);
         Ok(())
     }
@@ -257,6 +268,7 @@ pub(crate) fn submit_detached_vm(
     globals: &Environment,
     policy: RuntimeCapabilityPolicy,
     output: Option<Arc<Mutex<Vec<u8>>>>,
+    jit_requested: bool,
 ) -> Result<(), String> {
     use crate::bytecode::{Constant, OpCode};
     let Value::BytecodeFunction { chunk, captured, captured_binding_kinds } = function else {
@@ -294,6 +306,6 @@ pub(crate) fn submit_detached_vm(
         }
     }
     let function = Value::BytecodeFunction { chunk, captured: transferred, captured_binding_kinds };
-    observe_detached(submit(function, Vec::new(), environment, policy, output)?);
+    observe_detached(submit(function, Vec::new(), environment, policy, output, jit_requested)?);
     Ok(())
 }

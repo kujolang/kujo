@@ -5979,6 +5979,7 @@ impl VM {
                         &*self.globals.lock().map_err(|_| "Spawn globals lock poisoned")?,
                         self.interpreter.capability_policy().clone(),
                         self.interpreter.output_buffer(),
+                        self.interpreter.vm_jit_requested,
                     );
                     if let Err(error) = result {
                         self.throw_runtime_value(Value::Error(error))?;
@@ -6352,14 +6353,13 @@ impl VM {
         policy: RuntimeCapabilityPolicy,
         output: Option<Arc<Mutex<Vec<u8>>>>,
         cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+        jit_requested: bool,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         let mut vm = VM::new();
         vm.cooperative_suspend_enabled = false;
-        if cancellation.is_some() {
-            vm.jit_enabled = false;
-        }
         vm.interpreter.task_cancellation = cancellation;
+        vm.set_jit_enabled(jit_requested);
         vm.set_capability_policy(policy);
         vm.set_callback_globals(globals);
         if let Some(output) = output {
@@ -6382,6 +6382,7 @@ impl VM {
         policy: RuntimeCapabilityPolicy,
         output: Option<Arc<Mutex<Vec<u8>>>>,
         cancelled: Arc<std::sync::atomic::AtomicBool>,
+        jit_requested: bool,
     ) -> Result<Value, String> {
         let mut vm = VM::new();
         vm.cooperative_suspend_enabled = false;
@@ -6392,7 +6393,7 @@ impl VM {
         }
         vm.interpreter.task_cancellation = Some(cancelled);
         vm.task_async_entry = true;
-        vm.jit_enabled = false;
+        vm.set_jit_enabled(jit_requested);
         let mut wrapper = BytecodeChunk::new();
         wrapper.emit(OpCode::Call(args.len()));
         wrapper.emit(OpCode::Return);
@@ -6535,6 +6536,7 @@ impl VM {
                     environment,
                     self.interpreter.capability_policy().clone(),
                     self.interpreter.output_buffer(),
+                    self.interpreter.vm_jit_requested,
                 )?;
                 self.stack.push(task.completion.clone());
                 return Ok(());
@@ -8823,6 +8825,11 @@ impl VM {
                 // Execute until this function returns
                 // (call_frames will pop back to call_frame_depth)
                 while self.call_frames.len() > call_frame_depth {
+                    // Higher-order callbacks can run entirely in this dispatcher,
+                    // without returning to execute_dispatch's cancellation poll.
+                    if self.interpreter.task_is_cancelled() {
+                        return Err("Task was cancelled".to_string());
+                    }
                     // Check bounds
                     if self.ip >= self.chunk.instructions.len() {
                         return Err("Function execution reached end without return".to_string());

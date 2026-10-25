@@ -11,16 +11,22 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Poll task cancellation in the inline VM callback dispatcher, preventing
+  cancelled higher-order callbacks from retaining language-task capacity.
+
+- Propagate explicit JIT opt-in through language tasks, detached tasks and
+  interpreter-to-bytecode callback bridges. Task cancellation tokens reach the
+  native safepoints before compilation; interpreter and VM modes stay opt-out.
+
 - Add native function-entry and backward-edge cancellation safepoints. Loop
   checks are emitted only by compilers created for cancellable execution;
   ordinary JIT loops retain their existing instruction paths. Native
   contexts borrow the enclosing task token, preserve earlier errors and unwind
-  native frames on cancellation. Cancellable worker JIT remains disabled until
-  execution-policy propagation and end-to-end cancellation gates are complete.
+  native frames on cancellation.
 
 - Pass explicit JIT opt-in to isolated synchronous `parallel_map` bytecode
-  workers. VM/interpreter modes remain opt-out; cancellable language tasks
-  retain VM execution pending native cancellation support.
+  workers. VM/interpreter modes remain opt-out; nested synchronous parallel
+  workers inside cancellable tasks still await cancellation-token propagation.
 
 - Unwind exited `try` handlers before `break`, `continue` and `return`, while
   retaining handlers around loops that remain active after those exits.
