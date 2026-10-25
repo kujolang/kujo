@@ -4,7 +4,9 @@
   "verified": [
     "All 40 manifest file hashes match downloaded artifacts",
     "Baseline ed4acc51fc0ae428104a9eb2581f3721fe3dc1a0 and candidate ea0ea3ed64a663bb2419c076794030e30a0b0c8c match requested pins",
-    "All four summaries exactly recomputed from raw samples using campaign summarize validator"
+    "All four summaries exactly recomputed from raw samples using campaign summarize validator",
+    "Linux and Windows driver and runner SHA256 values match exact corpus commit 402ff20932a0e4a10af17cf8b953c4a92cfad9eb, accounting for Windows CRLF checkout",
+    "Both platforms record successful cargo build --release --locked and exact candidate checkout"
   ],
   "platforms": {
     "linux": {
@@ -2427,6 +2429,63 @@
             }
           }
         ]
+      },
+      "build_provenance": {
+        "baseline-build.log": {
+          "sha256": "e89dfd19450ac700165faa1fba5dba148f6ae98ddd558a22afc830637ef2da13",
+          "command": {
+            "command": "cargo",
+            "args": [
+              "build",
+              "--manifest-path",
+              "/home/runner/work/_temp/perf-runtime/Cargo.toml",
+              "--release",
+              "--locked",
+              "--bin",
+              "kujo"
+            ]
+          },
+          "terminal_lines": [
+            "\u001b[1m\u001b[33mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 2 warnings (1 duplicate)",
+            "\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 11m 49s"
+          ]
+        },
+        "candidate-build.log": {
+          "sha256": "3046a5a701a3ae3c3ac758edadac4635fe2469d4c135c60341a45b9c21ae1977",
+          "command": {
+            "command": "cargo",
+            "args": [
+              "build",
+              "--manifest-path",
+              "/home/runner/work/_temp/perf-runtime/Cargo.toml",
+              "--release",
+              "--locked",
+              "--bin",
+              "kujo"
+            ]
+          },
+          "terminal_lines": [
+            "\u001b[1m\u001b[33mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 2 warnings (1 duplicate)",
+            "\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 4m 38s"
+          ]
+        },
+        "candidate-checkout.log": {
+          "sha256": "1b27f75080be4fa02bfe06b3777a3d1d32699b59fa7fec872632b510b446faf5",
+          "command": {
+            "command": "git",
+            "args": [
+              "-C",
+              "/home/runner/work/_temp/perf-runtime",
+              "checkout",
+              "--detach",
+              "ea0ea3ed64a663bb2419c076794030e30a0b0c8c"
+            ]
+          },
+          "terminal_lines": [
+            "Previous HEAD position was ed4acc5 fix: key native dispatch by code identity and reuse callback sites",
+            "HEAD is now at ea0ea3e fix: retain synchronous callback hot state without leaf overhead"
+          ]
+        }
       }
     },
     "windows": {
@@ -4261,6 +4320,63 @@
             }
           }
         ]
+      },
+      "build_provenance": {
+        "baseline-build.log": {
+          "sha256": "75e07adca074ffacf69d1390668689e345f2f059bb8b61b20ecb61377836082c",
+          "command": {
+            "command": "cargo",
+            "args": [
+              "build",
+              "--manifest-path",
+              "D:\\a\\_temp\\perf-runtime\\Cargo.toml",
+              "--release",
+              "--locked",
+              "--bin",
+              "kujo"
+            ]
+          },
+          "terminal_lines": [
+            "\u001b[1m\u001b[93mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 25 warnings (21 duplicates)",
+            "\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 26m 26s"
+          ]
+        },
+        "candidate-build.log": {
+          "sha256": "cbc79513f009c0b99742bd5ddc50eb4237a7888cd633d308495e85601860a9e6",
+          "command": {
+            "command": "cargo",
+            "args": [
+              "build",
+              "--manifest-path",
+              "D:\\a\\_temp\\perf-runtime\\Cargo.toml",
+              "--release",
+              "--locked",
+              "--bin",
+              "kujo"
+            ]
+          },
+          "terminal_lines": [
+            "\u001b[1m\u001b[93mwarning\u001b[0m: `kujolang` (bin \"kujo\") generated 25 warnings (21 duplicates)",
+            "\u001b[1m\u001b[92m    Finished\u001b[0m `release` profile [optimized] target(s) in 9m 42s"
+          ]
+        },
+        "candidate-checkout.log": {
+          "sha256": "be1e8bfa30295e823581a1be78c1625af176b9fad3076b4dff37a31ef4f9b9fd",
+          "command": {
+            "command": "git",
+            "args": [
+              "-C",
+              "D:\\a\\_temp\\perf-runtime",
+              "checkout",
+              "--detach",
+              "ea0ea3ed64a663bb2419c076794030e30a0b0c8c"
+            ]
+          },
+          "terminal_lines": [
+            "Previous HEAD position was ed4acc5 fix: key native dispatch by code identity and reuse callback sites",
+            "HEAD is now at ea0ea3e fix: retain synchronous callback hot state without leaf overhead"
+          ]
+        }
       }
     }
   },
@@ -4268,7 +4384,7 @@
     "This is 21 runtime and 3 static workloads, not the 50 LangArena production benchmarks.",
     "Single CI campaign per platform with A/A controls; no competitive performance claim.",
     "Windows CPU and RSS measurements are unavailable.",
-    "Environment records corpus_dirty=true; source provenance review remains open.",
+    "corpus_dirty=true is non-diagnostic: the driver creates its untracked output directory before git status, and build logs also exist. Exact driver/runner source hashes match the pinned commit; no full runtime checkout cleanliness snapshot was captured.",
     "macOS measurement job remains queued."
   ]
 }
