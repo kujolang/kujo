@@ -1,0 +1,40 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "Unchanged production NeuralNet JIT timeout; checksum verification incomplete",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 144809112,
+        "iterations": 1700,
+        "name": "Etc::NeuralNet"
+      },
+      "elapsed_ns": 3600014802066.0,
+      "exitcode": -1,
+      "name": "Etc::NeuralNet",
+      "runtime": "jit",
+      "status": "timeout",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=116932\n@profile create-done ns=345842\n@profile prepare-done ns=113783182\n@profile warmup-1 ns=3936011993\n@profile warmup-34 ns=117259613065\n@profile warmup-68 ns=232282211463\n@profile warmup-102 ns=340034376202\n@profile warmup-136 ns=435438109710\n@profile warmup-170 ns=530662286792\n@profile warmup-204 ns=636099279677\n@profile warmup-238 ns=745387939988\n@profile warmup-272 ns=849032294963\n@profile warmup-306 ns=959129268736\n@profile warmup-340 ns=1078413833267\n@profile warmup-done ns=1078414115292\n@profile run-1 ns=1081986871991\n@profile run-170 ns=1585004001531\n@profile run-340 ns=2150520626253\n@profile run-510 ns=2726586023683\n@profile run-680 ns=3217363348461\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Etc::NeuralNet": null
+  },
+  "limitations": [
+    "One-hour diagnostic deadline reached without final checksum; neither a correctness pass nor evidence of a semantic failure.",
+    "Completed 340 warmups and at least 680 measured iterations; full production requires 1700 measured iterations.",
+    "Timeout prevented final external RSS accounting; sampled process RSS is not substituted.",
+    "Uncontrolled laptop, single attempt, JIT fallback coverage unknown; no competitive speed claim.",
+    "Full production verification across JIT, VM and interpreter remains open."
+  ]
+}
