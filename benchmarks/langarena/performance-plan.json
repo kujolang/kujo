@@ -18,7 +18,8 @@
       "status": "in_progress",
       "evidence": [
         "performance-baseline-2026-10-23.json",
-        "comparison-latest-2026-10-24.json"
+        "comparison-latest-2026-10-24.json",
+        "nonleaf-comparison-all50-2026-10-25.json"
       ]
     },
     {
@@ -178,7 +179,8 @@
         "root-discard-release-2026-10-24.json",
         "superseded-production-partial-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ]
     },
     {
@@ -204,7 +206,9 @@
       "id": "release_acceptance",
       "scope": "Full relevant tests, Linux/macOS and supported-architecture gates, default-feature release artifacts, official local runner integration, concrete maintainer questions; no contact/submission without authorization",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "nonleaf-platform-partial-2026-10-25.json"
+      ]
     }
   ],
   "benchmarks": [
@@ -217,8 +221,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -255,7 +259,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -274,7 +280,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Binarytrees::Arena",
@@ -285,8 +291,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -323,7 +329,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -342,7 +350,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Brainfuck::Array",
@@ -353,8 +361,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -391,7 +399,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -410,7 +420,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: one-hour timeout; checksum incomplete, not a semantic failure."
     },
     {
       "name": "Brainfuck::Recursion",
@@ -421,8 +431,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -459,7 +469,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -478,7 +490,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: one-hour timeout; checksum incomplete, not a semantic failure."
     },
     {
       "name": "Matmul::Single",
@@ -489,8 +501,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -527,7 +539,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -546,7 +560,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Matmul::T4",
@@ -557,8 +571,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -595,7 +609,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -614,7 +630,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Matmul::T8",
@@ -625,8 +641,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -663,7 +679,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -682,7 +700,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Matmul::T16",
@@ -693,8 +711,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -731,7 +749,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -750,7 +770,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Base64::Encode",
@@ -761,8 +781,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -799,7 +819,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -818,7 +840,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Base64::Decode",
@@ -829,8 +851,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -867,7 +889,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -886,7 +910,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Json::Generate",
@@ -897,8 +921,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -935,7 +959,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -954,7 +980,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Json::ParseDom",
@@ -965,8 +991,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1003,7 +1029,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1022,7 +1050,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Json::ParseMapping",
@@ -1033,8 +1061,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1071,7 +1099,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1090,7 +1120,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "CSV::Parse",
@@ -1101,8 +1131,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1139,7 +1169,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1158,7 +1190,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Etc::Sieve",
@@ -1169,8 +1201,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1207,7 +1239,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1226,7 +1260,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: exact production checksum passed, one local run; final-candidate revalidation remains required."
     },
     {
       "name": "Etc::TextRaytracer",
@@ -1237,8 +1271,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1275,7 +1309,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1294,7 +1330,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: one-hour timeout; checksum incomplete, not a semantic failure."
     },
     {
       "name": "Etc::NeuralNet",
@@ -1305,8 +1341,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1343,7 +1379,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1362,7 +1400,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: one-hour timeout; checksum incomplete, not a semantic failure."
     },
     {
       "name": "Etc::CacheSimulation",
@@ -1373,8 +1411,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1411,7 +1449,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1430,7 +1470,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: one-hour timeout; checksum incomplete, not a semantic failure."
     },
     {
       "name": "Etc::GameOfLife",
@@ -1441,8 +1481,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1479,7 +1519,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1498,7 +1540,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "ea0ea3e: cancelled at user pause; checksum incomplete."
     },
     {
       "name": "Etc::Words",
@@ -1509,8 +1551,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1547,7 +1589,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1566,7 +1610,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Etc::LogParser",
@@ -1577,8 +1621,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1615,7 +1659,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1634,7 +1680,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Template::Regex",
@@ -1645,8 +1691,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1683,7 +1729,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1702,7 +1750,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Template::Parse",
@@ -1713,8 +1761,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1751,7 +1799,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1770,7 +1820,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Sort::Quick",
@@ -1781,8 +1831,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "44b2fb1 matched linker-map sample: indexed reads/writes, root bookkeeping and Value cloning; dynamic code attribution incomplete",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "Seven rotating rounds at test size: JIT median3.449s, Goose.022s, Rust.019s; approximately157x/182x. Shared thermally throttled host; not controlled acceptance.",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1821,7 +1871,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1840,7 +1892,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "passed unchanged full-size checksum at 44b2fb1; concurrent diagnostic run, not competitive timing acceptance",
+      "production_jit": "Not reached in stopped ea0ea3e production sweep.",
       "latest_cpu_profile": {
         "evidence": "quicksort-production-profile-2026-10-24.json",
         "limit": "Partial-symbol warmup sample; idle threads and concurrent compilation; not CPU percentages or timing acceptance."
@@ -1855,8 +1907,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1893,7 +1945,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1912,7 +1966,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Sort::Self",
@@ -1923,8 +1977,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -1961,7 +2015,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1980,7 +2036,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Graph::BFS",
@@ -1991,8 +2047,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2029,7 +2085,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2048,7 +2106,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Graph::DFS",
@@ -2059,8 +2117,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2097,7 +2155,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2116,7 +2176,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Graph::AStar",
@@ -2127,8 +2187,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2165,7 +2225,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2184,7 +2246,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Hash::SHA256",
@@ -2195,8 +2257,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2233,7 +2295,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2252,7 +2316,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Hash::CRC32",
@@ -2263,8 +2327,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2301,7 +2365,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2320,7 +2386,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Calculator::Ast",
@@ -2331,8 +2397,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2369,7 +2435,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2388,7 +2456,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Calculator::Interpreter",
@@ -2399,8 +2467,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2437,7 +2505,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2456,7 +2526,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Maze::Generator",
@@ -2467,8 +2537,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2505,7 +2575,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2524,7 +2596,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Maze::BFS",
@@ -2535,8 +2607,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2573,7 +2645,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2592,7 +2666,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Maze::AStar",
@@ -2603,8 +2677,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2641,7 +2715,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2660,7 +2736,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "CLBG::Fannkuchredux",
@@ -2671,8 +2747,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2709,7 +2785,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2728,7 +2806,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "CLBG::Mandelbrot",
@@ -2739,8 +2817,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2777,7 +2855,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2796,7 +2876,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "CLBG::Nbody",
@@ -2807,8 +2887,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2845,7 +2925,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2864,7 +2946,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "CLBG::Spectralnorm",
@@ -2875,8 +2957,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2913,7 +2995,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2932,7 +3016,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::BWTEncode",
@@ -2943,8 +3027,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -2981,7 +3065,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3000,7 +3086,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::BWTDecode",
@@ -3011,8 +3097,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3049,7 +3135,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3068,7 +3156,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::HuffEncode",
@@ -3079,8 +3167,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT passed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3117,7 +3205,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3136,7 +3226,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::HuffDecode",
@@ -3147,8 +3237,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3185,7 +3275,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3204,7 +3296,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::ArithEncode",
@@ -3215,8 +3307,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3253,7 +3345,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3272,7 +3366,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::ArithDecode",
@@ -3283,8 +3377,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3321,7 +3415,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3340,7 +3436,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::LZWEncode",
@@ -3351,8 +3447,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3389,7 +3485,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3408,7 +3506,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Compress::LZWDecode",
@@ -3419,8 +3517,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3457,7 +3555,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3476,7 +3576,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Distance::Jaro",
@@ -3487,8 +3587,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3525,7 +3625,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3544,7 +3646,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     },
     {
       "name": "Distance::NGram",
@@ -3555,8 +3657,8 @@
       "jit_correctness_and_coverage": "ea0ea3e frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
-      "competitor_comparison": "pending",
+      "peak_memory": "Per-process peak RSS recorded for successful six-variant test-size samples in nonleaf-comparison-all50-2026-10-25.json. Controlled-host/resource-scaling acceptance remains open.",
+      "competitor_comparison": "One test-size round at ea0ea3e: Baseline VM passed, Baseline JIT failed, Latest VM passed, Latest JIT passed, Rust passed, Goose passed. Not seven-round, production or clean-host performance acceptance.",
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
@@ -3593,7 +3695,9 @@
         "root-discard-release-2026-10-24.json",
         "leaf-callback-release-2026-10-25.json",
         "code-identity-release-2026-10-25.json",
-        "nonleaf-release-2026-10-25.json"
+        "nonleaf-release-2026-10-25.json",
+        "nonleaf-comparison-all50-2026-10-25.json",
+        "nonleaf-production-stopped-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3612,7 +3716,7 @@
         "runtime_commit": "44b2fb1",
         "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
-      "production_jit": "pending for current candidate"
+      "production_jit": "Not reached in stopped ea0ea3e production sweep."
     }
   ],
   "initial_audit": [
