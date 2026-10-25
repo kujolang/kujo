@@ -61,7 +61,9 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-calls-2026-10-24.json",
         "quicksort-production-profile-2026-10-24.json",
-        "native-root-discard-2026-10-24.json"
+        "native-root-discard-2026-10-24.json",
+        "nonleaf-callback-hot-state-2026-10-25.json",
+        "nonleaf-callback-reuse-2026-10-25.json"
       ]
     },
     {
@@ -97,7 +99,9 @@
         "native-root-discard-2026-10-24.json",
         "root-discard-paired-2026-10-25.json",
         "preloaded-callback-wrapper-2026-10-25.json",
-        "leaf-callback-reuse-2026-10-25.json"
+        "leaf-callback-reuse-2026-10-25.json",
+        "jit-code-identity-fix-2026-10-25.json",
+        "nonleaf-callback-reuse-2026-10-25.json"
       ]
     },
     {
@@ -142,7 +146,9 @@
         "native-scalar-array-reads-2026-10-24.json",
         "native-positional-arguments-2026-10-24.json",
         "native-root-read-cache-2026-10-24.json",
-        "root-discard-native-surfaces-2026-10-24.json"
+        "root-discard-native-surfaces-2026-10-24.json",
+        "jit-code-identity-fix-2026-10-25.json",
+        "nonleaf-callback-reuse-2026-10-25.json"
       ]
     },
     {
@@ -170,7 +176,8 @@
         "builtin-pool-release-2026-10-24.json",
         "quicksort-production-profile-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "superseded-production-partial-2026-10-25.json"
+        "superseded-production-partial-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ]
     },
     {
@@ -180,7 +187,8 @@
       "evidence": [
         "builtin-pool-release-2026-10-24.json",
         "linux-regression-ci-2026-10-24.json",
-        "windows-regression-ci-2026-10-25.json"
+        "windows-regression-ci-2026-10-25.json",
+        "nonleaf-callback-reuse-2026-10-25.json"
       ]
     },
     {
@@ -195,19 +203,17 @@
       "id": "release_acceptance",
       "scope": "Full relevant tests, Linux/macOS and supported-architecture gates, default-feature release artifacts, official local runner integration, concrete maintainer questions; no contact/submission without authorization",
       "status": "pending",
-      "evidence": [
-
-      ]
+      "evidence": []
     }
   ],
   "benchmarks": [
     {
       "name": "Binarytrees::Obj",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -246,7 +252,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -269,11 +276,11 @@
     },
     {
       "name": "Binarytrees::Arena",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -312,7 +319,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -335,11 +343,11 @@
     },
     {
       "name": "Brainfuck::Array",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -378,7 +386,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -401,11 +410,11 @@
     },
     {
       "name": "Brainfuck::Recursion",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -444,7 +453,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -467,11 +477,11 @@
     },
     {
       "name": "Matmul::Single",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -510,7 +520,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -533,11 +544,11 @@
     },
     {
       "name": "Matmul::T4",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -576,7 +587,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -599,11 +611,11 @@
     },
     {
       "name": "Matmul::T8",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -642,7 +654,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -665,11 +678,11 @@
     },
     {
       "name": "Matmul::T16",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -708,7 +721,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -731,11 +745,11 @@
     },
     {
       "name": "Base64::Encode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -774,7 +788,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -797,11 +812,11 @@
     },
     {
       "name": "Base64::Decode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -840,7 +855,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -863,11 +879,11 @@
     },
     {
       "name": "Json::Generate",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -906,7 +922,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -929,11 +946,11 @@
     },
     {
       "name": "Json::ParseDom",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -972,7 +989,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -995,11 +1013,11 @@
     },
     {
       "name": "Json::ParseMapping",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1038,7 +1056,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1061,11 +1080,11 @@
     },
     {
       "name": "CSV::Parse",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1104,7 +1123,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1127,11 +1147,11 @@
     },
     {
       "name": "Etc::Sieve",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1170,7 +1190,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1193,11 +1214,11 @@
     },
     {
       "name": "Etc::TextRaytracer",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1236,7 +1257,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1259,11 +1281,11 @@
     },
     {
       "name": "Etc::NeuralNet",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1302,7 +1324,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1325,11 +1348,11 @@
     },
     {
       "name": "Etc::CacheSimulation",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1368,7 +1391,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1391,11 +1415,11 @@
     },
     {
       "name": "Etc::GameOfLife",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1434,7 +1458,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1457,11 +1482,11 @@
     },
     {
       "name": "Etc::Words",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1500,7 +1525,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1523,11 +1549,11 @@
     },
     {
       "name": "Etc::LogParser",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1566,7 +1592,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1589,11 +1616,11 @@
     },
     {
       "name": "Template::Regex",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1632,7 +1659,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1655,11 +1683,11 @@
     },
     {
       "name": "Template::Parse",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1698,7 +1726,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1721,11 +1750,11 @@
     },
     {
       "name": "Sort::Quick",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "44b2fb1 matched linker-map sample: indexed reads/writes, root bookkeeping and Value cloning; dynamic code attribution incomplete",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1766,7 +1795,8 @@
         "task-workers-quicksort-production-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1793,11 +1823,11 @@
     },
     {
       "name": "Sort::Merge",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1836,7 +1866,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1859,11 +1890,11 @@
     },
     {
       "name": "Sort::Self",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1902,7 +1933,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1925,11 +1957,11 @@
     },
     {
       "name": "Graph::BFS",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1968,7 +2000,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1991,11 +2024,11 @@
     },
     {
       "name": "Graph::DFS",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2034,7 +2067,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2057,11 +2091,11 @@
     },
     {
       "name": "Graph::AStar",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2100,7 +2134,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2123,11 +2158,11 @@
     },
     {
       "name": "Hash::SHA256",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2166,7 +2201,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2189,11 +2225,11 @@
     },
     {
       "name": "Hash::CRC32",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2232,7 +2268,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2255,11 +2292,11 @@
     },
     {
       "name": "Calculator::Ast",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2298,7 +2335,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2321,11 +2359,11 @@
     },
     {
       "name": "Calculator::Interpreter",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2364,7 +2402,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2387,11 +2426,11 @@
     },
     {
       "name": "Maze::Generator",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2430,7 +2469,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2453,11 +2493,11 @@
     },
     {
       "name": "Maze::BFS",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2496,7 +2536,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2519,11 +2560,11 @@
     },
     {
       "name": "Maze::AStar",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2562,7 +2603,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2585,11 +2627,11 @@
     },
     {
       "name": "CLBG::Fannkuchredux",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2628,7 +2670,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2651,11 +2694,11 @@
     },
     {
       "name": "CLBG::Mandelbrot",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2694,7 +2737,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2717,11 +2761,11 @@
     },
     {
       "name": "CLBG::Nbody",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2760,7 +2804,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2783,11 +2828,11 @@
     },
     {
       "name": "CLBG::Spectralnorm",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2826,7 +2871,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2849,11 +2895,11 @@
     },
     {
       "name": "Compress::BWTEncode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2892,7 +2938,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2915,11 +2962,11 @@
     },
     {
       "name": "Compress::BWTDecode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2958,7 +3005,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2981,11 +3029,11 @@
     },
     {
       "name": "Compress::HuffEncode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3024,7 +3072,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3047,11 +3096,11 @@
     },
     {
       "name": "Compress::HuffDecode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3090,7 +3139,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3113,11 +3163,11 @@
     },
     {
       "name": "Compress::ArithEncode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3156,7 +3206,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3179,11 +3230,11 @@
     },
     {
       "name": "Compress::ArithDecode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3222,7 +3273,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3245,11 +3297,11 @@
     },
     {
       "name": "Compress::LZWEncode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3288,7 +3340,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3311,11 +3364,11 @@
     },
     {
       "name": "Compress::LZWDecode",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3354,7 +3407,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3377,11 +3431,11 @@
     },
     {
       "name": "Distance::Jaro",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3420,7 +3474,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3443,11 +3498,11 @@
     },
     {
       "name": "Distance::NGram",
-      "test_vm": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 5532fe0 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
+      "test_interpreter": "passed at ed4acc5 frozen release; exact test-size registry/config/checksum audited. Newer ea0ea3e release gate pending.",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "5532fe0 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
+      "jit_correctness_and_coverage": "ed4acc5 frozen release test-size checksum passed; fallback allowed. Newer ea0ea3e release gate pending; native kernel time and full production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3486,7 +3541,8 @@
         "task-workers-release-2026-10-24.json",
         "task-workers-native-census-2026-10-24.json",
         "root-discard-release-2026-10-24.json",
-        "leaf-callback-release-2026-10-25.json"
+        "leaf-callback-release-2026-10-25.json",
+        "code-identity-release-2026-10-25.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3802,7 +3858,7 @@
     },
     {
       "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
-      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
+      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754\u20131.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
       "evidence": "paired-assignment-2026-10-23.json"
     },
     {
@@ -4107,7 +4163,7 @@
     },
     {
       "scope": "checked append unique Arc-node reuse",
-      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1–2 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
+      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1\u20132 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
       "evidence": "checked-append-node-relocations-2026-10-24.json"
     },
     {
@@ -4172,7 +4228,7 @@
       "timing_samples": 28,
       "rss_samples": 8,
       "evidence": "builtin-pool-release-2026-10-24.json",
-      "limit": "CPU speed limit 100→71%; local directional timing only; production/platform/competitive gates open"
+      "limit": "CPU speed limit 100\u219271%; local directional timing only; production/platform/competitive gates open"
     },
     {
       "runtime_commit": "4e42bd2",
@@ -4195,6 +4251,21 @@
       "test_size_passes": 150,
       "evidence": "leaf-callback-release-2026-10-25.json",
       "limit": "Frozen release and matching linker map verified. Predates callback module-cache fix7aee500 and pending JIT identity fix. Concurrent debug build; no performance, production or native coverage acceptance."
+    },
+    {
+      "runtime_commit": "ed4acc5",
+      "test_size_passes": 150,
+      "evidence": "code-identity-release-2026-10-25.json",
+      "limit": "Frozen release/linker map and all50 exact input/checksum identities audited. Predates ea0ea3e callback reuse; no production or competitive acceptance."
+    },
+    {
+      "runtime_commit": "ea0ea3e",
+      "library_passes": 1105,
+      "library_ignored": 8,
+      "integration_passes": 74,
+      "paired_debug_samples": 112,
+      "evidence": "nonleaf-callback-reuse-2026-10-25.json",
+      "limit": "Debug cost and semantic gates passed; default-feature release all150 gate pending. Full production, resource/platform and clean-host competitive gates remain open."
     }
   ],
   "review_pause": {
