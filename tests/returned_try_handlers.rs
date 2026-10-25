@@ -61,3 +61,52 @@ fn returning_from_nested_try_preserves_the_callers_handler_and_snapshots() {
         assert!(output.status.success(), "{runtime}: {}", String::from_utf8_lossy(&output.stderr));
     }
 }
+
+#[test]
+fn loop_exits_discard_only_the_handlers_they_leave() {
+    for runtime in ["vm", "interpreter", "jit"] {
+        for exit in ["break", "continue"] {
+            let source = format!(
+                r#"
+                mut i := 0
+                while i < 3 {{
+                    i += 1
+                    try {{ {exit} }} except stale {{ throw("stale catch") }}
+                }}
+                assert(false, "expected after loop")
+                "#
+            );
+            let output = run(&source, runtime);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            assert_eq!(output.status.code(), Some(4), "{runtime}/{exit}: {stderr}");
+            assert!(stderr.contains("expected after loop"), "{runtime}/{exit}: {stderr}");
+        }
+        let output = run(
+            r#"
+            mut caught := 0
+            try {
+                for item in [1, 2, 3] {
+                    try { if item == 1 { continue } break }
+                    except stale { throw("stale for handler") }
+                }
+                throw("outer expected")
+            } except outer {
+                assert_equal(outer.message, "outer expected")
+                caught += 1
+            }
+            try {
+                loop {
+                    try { break } except stale { throw("stale loop handler") }
+                }
+                throw("second expected")
+            } except outer {
+                assert_equal(outer.message, "second expected")
+                caught += 1
+            }
+            assert_equal(caught, 2)
+            "#,
+            runtime,
+        );
+        assert!(output.status.success(), "{runtime}: {}", String::from_utf8_lossy(&output.stderr));
+    }
+}

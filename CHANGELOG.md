@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Unwind exited `try` handlers before `break`, `continue` and `return`, while
+  retaining handlers around loops that remain active after those exits.
+
 - Discard VM exception handlers when their function returns from inside `try`,
   preserving the caller's active handlers. Later errors now retain their intended
   diagnostics instead of jumping into a returned function's catch block.

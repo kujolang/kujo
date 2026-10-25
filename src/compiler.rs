@@ -22,6 +22,8 @@ pub struct Compiler {
     loop_ends: Vec<Vec<usize>>,
     loop_continues: Vec<Vec<usize>>,
     loop_runtime_depths: Vec<usize>,
+    loop_try_depths: Vec<usize>,
+    active_try_depth: usize,
     runtime_scope_depth: usize,
 
     /// Current scope depth (0 = global)
@@ -109,6 +111,8 @@ impl Compiler {
             loop_ends: Vec::new(),
             loop_continues: Vec::new(),
             loop_runtime_depths: Vec::new(),
+            loop_try_depths: Vec::new(),
+            active_try_depth: 0,
             runtime_scope_depth: 0,
             scope_depth: 0,
             locals: Vec::new(),
@@ -301,6 +305,14 @@ impl Compiler {
     fn pop_local_aware_runtime_scope(&mut self) {
         if !self.uses_local_slots {
             self.pop_runtime_scope();
+        }
+    }
+
+    fn unwind_try_handlers(&mut self, target: usize) {
+        // Emit cleanup for this exit only; lexical depth still describes the
+        // surrounding code while compiling other branches.
+        for _ in target..self.active_try_depth {
+            self.chunk.emit(OpCode::EndTry);
         }
     }
 
@@ -689,6 +701,7 @@ impl Compiler {
                 self.loop_ends.push(Vec::new());
                 self.loop_continues.push(Vec::new());
                 self.loop_runtime_depths.push(self.runtime_scope_depth);
+                self.loop_try_depths.push(self.active_try_depth);
 
                 // Compile condition
                 self.compile_expr(condition)?;
@@ -721,6 +734,7 @@ impl Compiler {
                 self.loop_starts.pop();
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
+                self.loop_try_depths.pop();
 
                 if let Some(fast_exit) = append_fast_exit {
                     let done = self.chunk.emit(OpCode::Jump(0));
@@ -798,6 +812,7 @@ impl Compiler {
                 self.loop_ends.push(Vec::new());
                 self.loop_continues.push(Vec::new());
                 self.loop_runtime_depths.push(self.runtime_scope_depth);
+                self.loop_try_depths.push(self.active_try_depth);
 
                 // Load iterator and index
                 if let Some(slot) = iter_slot {
@@ -862,6 +877,7 @@ impl Compiler {
                 self.loop_starts.pop();
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
+                self.loop_try_depths.pop();
                 self.exit_scope();
                 self.pop_local_aware_runtime_scope();
 
@@ -871,9 +887,11 @@ impl Compiler {
             Stmt::Return(value) => {
                 if let Some(expr) = value {
                     self.compile_expr(expr)?;
+                    self.unwind_try_handlers(0);
                     self.unwind_runtime_scopes(0);
                     self.chunk.emit(OpCode::Return);
                 } else {
+                    self.unwind_try_handlers(0);
                     self.unwind_runtime_scopes(0);
                     self.chunk.emit(OpCode::ReturnNone);
                 }
@@ -885,6 +903,7 @@ impl Compiler {
                     return Err("break can only be used inside a loop".to_string());
                 }
 
+                self.unwind_try_handlers(*self.loop_try_depths.last().expect("active loop"));
                 self.unwind_runtime_scopes(*self.loop_runtime_depths.last().expect("active loop"));
                 // Add a jump that will be patched later
                 let jump_index = self.chunk.emit(OpCode::Jump(0));
@@ -899,6 +918,7 @@ impl Compiler {
                     return Err("continue can only be used inside a loop".to_string());
                 }
 
+                self.unwind_try_handlers(*self.loop_try_depths.last().expect("active loop"));
                 self.unwind_runtime_scopes(*self.loop_runtime_depths.last().expect("active loop"));
                 let jump = self.chunk.emit(OpCode::Jump(0));
                 self.loop_continues.last_mut().expect("active loop").push(jump);
@@ -1104,6 +1124,7 @@ impl Compiler {
                 self.loop_ends.push(Vec::new());
                 self.loop_continues.push(Vec::new());
                 self.loop_runtime_depths.push(self.runtime_scope_depth);
+                self.loop_try_depths.push(self.active_try_depth);
 
                 // If there's a condition, check it
                 if let Some(cond_expr) = condition {
@@ -1149,6 +1170,7 @@ impl Compiler {
                 self.loop_starts.pop();
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
+                self.loop_try_depths.pop();
 
                 Ok(())
             }
@@ -1161,8 +1183,10 @@ impl Compiler {
                 // Emit BeginTry with placeholder catch address
                 let begin_try_index = self.chunk.emit(OpCode::BeginTry(0));
 
-                // Compile try block
+                // Only the try body owns this handler; entering catch pops it.
+                self.active_try_depth += 1;
                 self.compile_sequence(try_block)?;
+                self.active_try_depth -= 1;
 
                 // End try block
                 self.chunk.emit(OpCode::EndTry);
