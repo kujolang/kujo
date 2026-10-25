@@ -126,6 +126,8 @@ pub struct VMContext {
     pub return_value_kind: i64,
     /// Runtime failure preserved across the native ABI; never replay failed work.
     pub runtime_error: Option<String>,
+    /// Borrowed from the enclosing task; its owner outlives every native invocation.
+    pub(crate) task_cancellation: *const std::sync::atomic::AtomicBool,
     /// Fast argument passing for recursive calls
     /// These avoid HashMap creation for simple recursive functions
     pub call_name_ptr: *const u8,
@@ -298,6 +300,7 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            task_cancellation: std::ptr::null(),
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
@@ -339,6 +342,7 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            task_cancellation: std::ptr::null(),
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
@@ -394,6 +398,7 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            task_cancellation: std::ptr::null(),
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
@@ -2288,11 +2293,20 @@ pub unsafe extern "C" fn jit_local_initialization(
     }
 }
 
-/// Report a pending error after a direct recursive native call.
+/// Report a pending error or task cancellation across a native boundary.
 #[no_mangle]
-// SAFETY: ctx points to the live, exclusively borrowed native-call context.
+// SAFETY: ctx points to the live, exclusively borrowed native-call context;
+// its optional cancellation pointer is backed by the enclosing task's live Arc.
 pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
-    ctx.as_ref().map_or(1, |ctx| i64::from(ctx.runtime_error.is_some()))
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    if ctx
+        .task_cancellation
+        .as_ref()
+        .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::Acquire))
+    {
+        ctx.runtime_error.get_or_insert_with(|| "Task was cancelled".into());
+    }
+    i64::from(ctx.runtime_error.is_some())
 }
 
 /// Assign a named scalar binding from a compiled function (0 success, 1 error).
@@ -4339,6 +4353,9 @@ pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash:
 // remain valid throughout the enclosing native invocation.
 pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
+    if !ctx.task_cancellation.is_null() && jit_runtime_failed(ctx) != 0 {
+        return 1;
+    }
     let name = if ctx.call_name_ptr.is_null() {
         "<native>"
     } else {
@@ -5220,6 +5237,8 @@ pub extern "C" fn jit_make_dict_with_keys(
 
 /// JIT compiler for Kujo bytecode
 pub struct JitCompiler {
+    // Immutable per compiler: cached code must never cross cancellation policies.
+    cancellation_checks: bool,
     /// Cranelift JIT module
     module: JITModule,
 
@@ -5256,6 +5275,7 @@ pub struct JitCompiler {
 
 /// Bytecode translator - converts bytecode to Cranelift IR
 struct BytecodeTranslator {
+    cancellation_checks: bool,
     /// Stack simulation - maps stack depth to Cranelift values
     value_stack: Vec<cranelift::prelude::Value>,
     scalar_kinds: HashMap<cranelift::prelude::Value, cranelift::prelude::Value>,
@@ -5452,6 +5472,7 @@ struct BytecodeTranslator {
 impl BytecodeTranslator {
     fn new() -> Self {
         Self {
+            cancellation_checks: false,
             value_stack: Vec::new(),
             scalar_kinds: HashMap::new(),
             scalar_return_func: None,
@@ -6684,6 +6705,32 @@ impl BytecodeTranslator {
         instruction: &OpCode,
         constants: &[Constant],
     ) -> Result<bool, String> {
+        // Every backward control-flow edge is a cancellation safepoint, including
+        // conditional jumps and self-edges. The common non-task path skips the
+        // Rust helper; the token itself is read atomically only in that helper.
+        if self.cancellation_checks
+            && matches!(instruction, OpCode::Jump(target) | OpCode::JumpBack(target)
+            | OpCode::JumpIfFalse(target) | OpCode::JumpIfTrue(target) if *target <= pc)
+        {
+            let ctx = self.ctx_param.ok_or("Missing native cancellation context")?;
+            let token = builder.ins().load(
+                types::I64,
+                MemFlags::new(),
+                ctx,
+                std::mem::offset_of!(VMContext, task_cancellation) as i32,
+            );
+            let poll = builder.create_block();
+            let resume = builder.create_block();
+            builder.ins().brif(token, poll, &[], resume, &[]);
+            builder.switch_to_block(poll);
+            builder.seal_block(poll);
+            let helper = self.runtime_error_func.ok_or("Missing native cancellation helper")?;
+            let call = builder.ins().call(helper, &[ctx]);
+            self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+            builder.ins().jump(resume, &[]);
+            builder.switch_to_block(resume);
+            builder.seal_block(resume);
+        }
         if self.guard_loop_callback(builder, pc, instruction)? {
             return Ok(true);
         }
@@ -9970,6 +10017,10 @@ impl JitCompiler {
 
     /// Create a new JIT compiler instance
     pub fn new() -> Result<Self, String> {
+        Self::new_with_cancellation(false)
+    }
+
+    pub(crate) fn new_with_cancellation(cancellation_checks: bool) -> Result<Self, String> {
         let mut flag_builder = settings::builder();
         flag_builder.set("opt_level", "speed").map_err(|e| e.to_string())?;
         flag_builder.set("is_pic", "false").map_err(|e| e.to_string())?;
@@ -10083,6 +10134,7 @@ impl JitCompiler {
             execution_counts: HashMap::new(),
             compiled_cache: HashMap::new(),
             enabled: true,
+            cancellation_checks,
             loop_jit_blacklist: HashSet::new(),
             type_profiles: HashMap::new(),
             compiled_fn_info: HashMap::new(),
@@ -10673,6 +10725,7 @@ impl JitCompiler {
 
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
+            translator.cancellation_checks = self.cancellation_checks;
             translator.literal_values = literal_values;
             translator.field_call_sites = chunk
                 .instructions
@@ -11436,6 +11489,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
+            translator.cancellation_checks = self.cancellation_checks;
             translator.persist_successful_return_locals = persist_return_locals;
             translator.literal_values = literal_values;
             translator.field_call_sites = chunk
@@ -11740,6 +11794,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
+            translator.cancellation_checks = self.cancellation_checks;
             translator.literal_values = literal_values;
             translator.field_call_sites = chunk
                 .instructions
@@ -12389,6 +12444,7 @@ impl JitCompiler {
 
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
+            translator.cancellation_checks = self.cancellation_checks;
             translator.literal_values = literal_values;
             translator.field_call_sites = chunk
                 .instructions
@@ -12698,6 +12754,102 @@ impl Default for JitCompiler {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn native_cancellation_preserves_prior_errors_and_balanced_entry() {
+        let cancelled = std::sync::atomic::AtomicBool::new(true);
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.task_cancellation = &cancelled;
+        context.runtime_error = Some("original failure".into());
+        assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
+        assert_eq!(context.runtime_error.as_deref(), Some("original failure"));
+        assert_eq!(context.native_call_depth, 0);
+        context.runtime_error = None;
+        assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
+        assert_eq!(context.runtime_error.as_deref(), Some("Task was cancelled"));
+        assert_eq!(context.native_call_depth, 0);
+        context.runtime_error = None;
+        cancelled.store(false, std::sync::atomic::Ordering::Release);
+        assert_eq!(unsafe { jit_enter_function(&mut context) }, 0);
+        unsafe { jit_leave_function(&mut context) };
+        assert_eq!(context.native_call_depth, 0);
+        assert!(context.runtime_error.is_none());
+    }
+    #[test]
+    fn native_cancellation_stops_running_backedges() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::time::{Duration, Instant};
+        const CHILD: &str = "KUJO_NATIVE_CANCELLATION_TEST_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = tempfile::tempfile().unwrap();
+            let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "jit::tests::native_cancellation_stops_running_backedges",
+                    "--nocapture",
+                ])
+                .env(CHILD, "1")
+                .stdout(output.try_clone().unwrap())
+                .stderr(output.try_clone().unwrap())
+                .spawn()
+                .unwrap();
+            let deadline = Instant::now() + Duration::from_secs(15);
+            let status = loop {
+                if let Some(status) = child.try_wait().unwrap() {
+                    break status;
+                }
+                if Instant::now() >= deadline {
+                    child.kill().unwrap();
+                    child.wait().unwrap();
+                    panic!("native loop did not cooperate with cancellation");
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            };
+            use std::io::{Read, Seek};
+            let mut output = output;
+            output.rewind().unwrap();
+            let mut log = String::new();
+            output.read_to_string(&mut log).unwrap();
+            assert!(status.success(), "{log}");
+            return;
+        }
+        for mode in ["loop", "function", "direct"] {
+            let mut compiler = JitCompiler::new_with_cancellation(true).unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.emit(OpCode::JumpBack(0));
+            let mut context =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            let cancelled = Arc::new(AtomicBool::new(false));
+            context.task_cancellation = Arc::as_ptr(&cancelled);
+            let compiled = if mode == "loop" {
+                Some(compiler.compile(&chunk, 0).unwrap())
+            } else if mode == "function" {
+                Some(compiler.compile_function(&chunk, "spin").unwrap())
+            } else {
+                None
+            };
+            let direct = if mode == "direct" {
+                chunk.params.push("unused".into());
+                Some(compiler.compile_function_with_direct_arg(&chunk, "spin_direct").unwrap())
+            } else {
+                None
+            };
+            let token = cancelled.clone();
+            let canceller = std::thread::spawn(move || {
+                std::thread::sleep(Duration::from_millis(25));
+                token.store(true, Ordering::Release);
+            });
+            if let Some(compiled) = compiled {
+                assert_ne!(invoke_compiled_fn(compiled, &mut context), 0, "{mode}");
+            } else {
+                invoke_compiled_fn_with_arg(direct.unwrap(), &mut context, 0);
+            }
+            canceller.join().unwrap();
+            assert_eq!(context.runtime_error.as_deref(), Some("Task was cancelled"), "{mode}");
+            assert_eq!(context.native_call_depth, 0, "cancelled native frame leaked: {mode}");
+            assert_eq!(context.owned_roots.storage_state().1, 0, "cancelled roots leaked: {mode}");
+        }
+    }
     use super::*;
     #[test]
     fn native_pop_rebind_releases_dead_pairs_but_preserves_real_snapshots() {

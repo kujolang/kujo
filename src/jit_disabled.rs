@@ -16,6 +16,8 @@ pub struct VMContext {
     pub return_value_kind: i64,
     /// Runtime failure preserved across the native ABI; never replay failed work.
     pub runtime_error: Option<String>,
+    /// Borrowed from the enclosing task; its owner outlives every native invocation.
+    pub(crate) task_cancellation: *const std::sync::atomic::AtomicBool,
     pub call_name_ptr: *const u8,
     pub call_name_len: usize,
     pub native_call_depth: usize,
@@ -60,6 +62,7 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            task_cancellation: std::ptr::null(),
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
@@ -156,6 +159,10 @@ pub struct JitCompiler {
 }
 
 impl JitCompiler {
+    pub(crate) fn new_with_cancellation(_cancellation_checks: bool) -> Result<Self, String> {
+        Self::new()
+    }
+
     pub fn new() -> Result<Self, String> {
         Ok(Self {
             enabled: false,

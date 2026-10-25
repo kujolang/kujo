@@ -11,6 +11,13 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add native function-entry and backward-edge cancellation safepoints. Loop
+  checks are emitted only by compilers created for cancellable execution;
+  ordinary JIT loops retain their existing instruction paths. Native
+  contexts borrow the enclosing task token, preserve earlier errors and unwind
+  native frames on cancellation. Cancellable worker JIT remains disabled until
+  execution-policy propagation and end-to-end cancellation gates are complete.
+
 - Pass explicit JIT opt-in to isolated synchronous `parallel_map` bytecode
   workers. VM/interpreter modes remain opt-out; cancellable language tasks
   retain VM execution pending native cancellation support.

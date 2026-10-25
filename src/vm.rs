@@ -871,7 +871,7 @@ impl VM {
         if self.jit_compiler.is_some() {
             return true;
         }
-        match JitCompiler::new() {
+        match JitCompiler::new_with_cancellation(self.interpreter.task_cancellation.is_some()) {
             Ok(compiler) => {
                 self.jit_compiler = Some(compiler);
                 true
@@ -2655,6 +2655,11 @@ impl VM {
                             globals_ptr,
                             vm_ptr,
                         );
+                        vm_context.task_cancellation = self
+                            .interpreter
+                            .task_cancellation
+                            .as_ref()
+                            .map_or(std::ptr::null(), Arc::as_ptr);
                         vm_context.local_slots_ptr = match self.call_frames.last_mut() {
                             Some(frame) => &mut frame.local_slots as *mut Vec<Value>,
                             None => std::ptr::null_mut(),
@@ -3001,6 +3006,11 @@ impl VM {
                                             globals_ptr,
                                             vm_ptr,
                                         );
+                                        vm_context.task_cancellation = self
+                                            .interpreter
+                                            .task_cancellation
+                                            .as_ref()
+                                            .map_or(std::ptr::null(), Arc::as_ptr);
                                         vm_context.loop_environment_ptr = &mut *globals_guard;
                                         vm_context.loop_stack_base = self.stack.len();
                                         vm_context.local_slots_ptr =
@@ -4174,6 +4184,11 @@ impl VM {
                                                 has_return_value: false,
                                                 return_value_kind: 0,
                                                 runtime_error: None,
+                                                task_cancellation: self
+                                                    .interpreter
+                                                    .task_cancellation
+                                                    .as_ref()
+                                                    .map_or(std::ptr::null(), Arc::as_ptr),
                                                 call_name_ptr: func_name.as_ptr(),
                                                 call_name_len: func_name.len(),
                                                 native_call_depth: 0,
@@ -4318,6 +4333,11 @@ impl VM {
                                                     has_return_value: false,
                                                     return_value_kind: 0,
                                                     runtime_error: None,
+                                                    task_cancellation: self
+                                                        .interpreter
+                                                        .task_cancellation
+                                                        .as_ref()
+                                                        .map_or(std::ptr::null(), Arc::as_ptr),
                                                     call_name_ptr: func_name.as_ptr(),
                                                     call_name_len: func_name.len(),
                                                     native_call_depth: 0,
@@ -4502,6 +4522,11 @@ impl VM {
                                         has_return_value: false,
                                         return_value_kind: 0,
                                         runtime_error: None,
+                                        task_cancellation: self
+                                            .interpreter
+                                            .task_cancellation
+                                            .as_ref()
+                                            .map_or(std::ptr::null(), Arc::as_ptr),
                                         call_name_ptr: func_name.as_ptr(),
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
@@ -8433,6 +8458,11 @@ impl VM {
                                         has_return_value: false,
                                         return_value_kind: 0,
                                         runtime_error: None,
+                                        task_cancellation: self
+                                            .interpreter
+                                            .task_cancellation
+                                            .as_ref()
+                                            .map_or(std::ptr::null(), Arc::as_ptr),
                                         call_name_ptr: func_name.as_ptr(),
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
@@ -8614,6 +8644,11 @@ impl VM {
                             has_return_value: false,
                             return_value_kind: 0,
                             runtime_error: None,
+                            task_cancellation: self
+                                .interpreter
+                                .task_cancellation
+                                .as_ref()
+                                .map_or(std::ptr::null(), Arc::as_ptr),
                             call_name_ptr: func_name.as_ptr(),
                             call_name_len: func_name.len(),
                             native_call_depth: 0,
