@@ -3,8 +3,8 @@
 Reviewed scope: 2026-10-25. This is the human-readable tracker for
 `performance-plan.json`. Check a box only when its stated gate has evidence.
 Historical passes do not certify a later runtime revision. A timeout is incomplete,
-and a stopped case is cancelled, not failed. Sections 1 and 2 are authorized now;
-runtime optimization in sections 3–5 has not been restarted.
+and a stopped case is cancelled, not failed. Sections 1 and 2 have completed their available local diagnosis. The user has
+now authorized sections 3 and 4; section 5 has not been restarted.
 
 ## Completed foundation
 
@@ -76,43 +76,48 @@ not retained memory. A diagnostic input is not an official benchmark pass.
 - [x] Preserve local diagnostic before results before implementation.
 
 Gate: each optimization proposal has a reproduced bottleneck, not just a static
-hypothesis. No runtime optimization is authorized by completing this diagnosis.
+hypothesis. Subsequent user authorization now covers sections 3 and 4.
 
 Available local work in sections 1–2 is complete: [local isolation report](LOCAL_ISOLATION_2026_10_25.md).
 Clean-host acceptance and precise native CPU-time attribution remain open.
 The earlier [priority diagnosis](PRIORITY_DIAGNOSIS_2026_10_25.md) remains historical evidence.
-The reproduced global indexed-write copy/validation cost is an unfixed runtime
-finding, not authorization to begin sections 3–5. Local-state snapshot semantics
+The reproduced global indexed-write copy/validation cost was fixed in `787498d`. Local-state snapshot semantics
 passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally.
 
-## 3. Allocation and call-frame fixes (not started in this round)
+## 3. Allocation and call-frame fixes (verified fixes; remaining work explicit)
 
-- [ ] Remove demonstrated avoidable hot-call allocations.
-- [ ] Reduce argument conversion/copying/temporary vectors.
-- [ ] Reuse bounded frame storage with recursion/reentrancy isolation.
-- [ ] Avoid repeated immutable metadata scans.
-- [ ] Reduce environment materialization and imported-value normalization.
-- [ ] Transfer returns without unnecessary owners or copies.
-- [ ] Retain reusable callback state without stale globals.
-- [ ] Check pooling/cache retention and peak memory.
-- [ ] Test recursion, callbacks, exceptions, imports, captures and cancellation.
+Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.md),
+`allocation-collection-2026-10-25.json`; runtime commits `e1ac6ba`, `787498d`.
 
-Gate: lower measured costs with semantics intact and no unbounded retention.
+- [x] Remove demonstrated avoidable hot-call allocations (10,000-call allocation control).
+- [x] Reduce argument conversion/copying/temporary vectors (ordinary arguments move; legacy compatibility retained).
+- [x] Reuse bounded frame storage with recursion/reentrancy isolation (32 buffers, at most 256 slots each; values cleared).
+- [ ] Eliminate remaining repeated immutable metadata scans where measured; successful arity-check copies are removed, but parameter-slot/name scans remain.
+- [ ] Reduce fixed environment materialization for imported helpers: 64 calls still request 92,129 allocations / 13,840,564 bytes. Width-dependent normalization did not reproduce.
+- [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
+- [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
+- [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).
 
-## 4. Collection and access fixes (not started in this round)
+Gate: the reproduced call/frame costs are reduced with bounded retention.
+Section 3 remains open for fixed imported environment/setup cost.
 
-- [ ] Profile dictionary → array → struct access.
-- [ ] Preserve unique backing storage across repeated mutation.
-- [ ] Preserve real snapshots through copy-on-write detachment.
-- [ ] Reuse valid depth evidence without repeated full-container scans.
-- [ ] Verify cache invalidation for every relevant external mutation path.
-- [ ] Check sustained dictionary deletion, stack and queue costs.
-- [ ] Remove unnecessary iterator owners only where safe.
-- [ ] Review byte/string conversion and indexing costs.
-- [ ] Add scaling checks for accidental quadratic behavior.
-- [ ] Check peak memory as well as allocation traffic.
+## 4. Collection and access fixes (verified global-write fix; broader review open)
 
-Gate: demonstrably better scaling/cost with alias, error, bounds and depth contracts.
+- [x] Profile dictionary → array → struct access (prior diagnosis and 270 final ownership controls).
+- [x] Preserve unique backing storage across repeated global array/string-dictionary mutation, including scoped compiler-emitted stores.
+- [x] Preserve real snapshots through copy-on-write detachment (one snapshot and fresh-per-write controls).
+- [x] Reuse valid depth evidence without repeated full-container scans in the changed path.
+- [x] Verify changed-path invalidation for external growth, root replacement, deep-value rejection/repair and aliases; existing nested-path suites pass.
+- [x] Check sustained dictionary deletion, stack and queue costs (256/1,024/4,096 diagnostic operations; linear scaling).
+- [ ] Remove unnecessary iterator owners only where independently demonstrated safe; no iterator change this round.
+- [ ] Complete broader byte/string conversion and indexing cost review; byte semantics regressions passed, no new representation optimization claimed.
+- [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
+- [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
+- [ ] Resolve existing direct-global reentrant-index evaluation-order divergence before changing its behavior; this round preserves each runtime's baseline result.
+
+Gate: changed global paths have better allocation scaling with ownership, errors,
+bounds and depth checks intact. This does not close all collection representations
+or the separate semantic decision.
 
 ## 5. Compiled execution (not started in this round)
 
@@ -130,6 +135,9 @@ Gate: demonstrably better scaling/cost with alias, error, bounds and depth contr
 Gate: measured speed improvements, not just additional compilable functions.
 
 ## 6. Per-fix regression gate
+
+The report records this round's evidence. These reusable gates remain requirements
+for subsequent fixes; unchecked production/platform gates are not implied complete.
 
 - [ ] Reproduce the original issue before modifying it.
 - [ ] Add a test that detects its return.
@@ -203,7 +211,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [ ] Recheck all 150 test-size combinations after optimizations.
+- [x] Recheck all 150 test-size combinations after these optimizations (`787498d`; allocation-collection-2026-10-25.json). Repeat for later runtime changes.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.

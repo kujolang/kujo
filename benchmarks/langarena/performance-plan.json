@@ -4599,5 +4599,41 @@
       "benchmarks/langarena/probes/LOCAL_ISOLATION.md"
     ],
     "rejected_evidence": "Initial dictionary fixture reused k in the same scope; initial partial run retained separately and all accepted ownership observations rerun with corrected fixtures in local-isolation-2026-10-25-v2."
+  },
+  "allocation_collection_review_2026_10_25": {
+    "status": "verified_targeted_fixes_with_remaining_items",
+    "runtime_commits": [
+      "e1ac6ba",
+      "787498d"
+    ],
+    "before_runtime": "ea0ea3e",
+    "after_runtime": "787498d",
+    "scope": "Authorized sections 3 and 4; section 5 not restarted",
+    "report": "ALLOCATION_COLLECTION_FIXES_2026_10_25.md",
+    "evidence": "allocation-collection-2026-10-25.json",
+    "verification": {
+      "final_test_size_checksums": 150,
+      "final_integration_passed": 188,
+      "final_integration_ignored": 1,
+      "ownership_scaling_passed": 270,
+      "pre_final_library_passed": 1108,
+      "pre_final_library_ignored": 8,
+      "library_revision_limit": "Full library run preceded final StoreVar adjustment; final integration and checksum runs cover final code.",
+      "paired_workload_runs": 84,
+      "separate_resource_runs": 4,
+      "micro_observations": 78
+    },
+    "remaining": [
+      "Fixed imported-helper environment/setup allocations",
+      "Remaining parameter-slot/name metadata scans",
+      "Direct-global reentrant-index evaluation-order decision",
+      "Broader iterator/byte-string and specialized representation review",
+      "Clean-host comparison, precise native/fallback attribution, production/platform acceptance"
+    ],
+    "not_claimed": [
+      "All section 3 and 4 items complete",
+      "Goose/Rust competitive acceptance",
+      "150 production passes"
+    ]
   }
 }

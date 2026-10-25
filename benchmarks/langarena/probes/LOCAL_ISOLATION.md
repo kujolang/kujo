@@ -121,3 +121,35 @@ After the paired timing run, `neural_resources` performs four separate
 `/usr/bin/time -l` observations (original/candidate × VM/JIT), requiring the same
 exact checksum. Peak RSS is retained separately and these runs are excluded
 from the seven-round timing statistics.
+
+## Allocation/collection fix comparison
+
+The `priority_calls` stage runs seven alternating before/after pairs of unchanged
+QuickSort, MergeSort and NeuralNet test configurations in VM and JIT-enabled
+execution. It obtains each expected checksum from `test.json`, requires the exact
+checksum and summary lines, records phase checkpoints, and rejects timeouts or
+nonzero exits. Supply frozen executables as `$OUTPUT/original-kujo` and
+`$OUTPUT/candidate-kujo`; the report hashes both. In the October 25
+allocation/collection round, `original` is **ea0ea3e**, not the older f037705
+initial baseline. Run sequentially after builds and correctness checks:
+
+```sh
+ruby benchmarks/langarena/probes/local-isolation-run.rb "$OUTPUT" priority_calls
+ruby benchmarks/langarena/probes/local-isolation-run.rb "$OUTPUT" neural_resources
+```
+
+A report path must be fresh; the runner refuses to overwrite prior observations.
+Compare paired ratios and all sample ranges. Total process time includes startup,
+preparation, warmup and measured loops. The measured-loop duration is the last
+`run-N` timestamp minus `warmup-done`; these checkpoints are not independent CPU
+samples. Resource-accounting runs remain separate from paired timing.
+
+`call_validation.kujo` checks 10,000 eight-argument calls.
+`collection_reuse.kujo` checks dictionary deletion, stack pop and queue dequeue,
+with the mutation region marked as phase 4. Generate separate copies changing
+only `n` for width/scaling diagnostics, preserving the source and hash in evidence.
+These diagnostic kernels are not Arena workload substitutions. Run with the
+allocation probe for phase traffic and the standard CLI for wall/RSS observations.
+
+See [the fix report](../ALLOCATION_COLLECTION_FIXES_2026_10_25.md) for exact
+allocation observations, ownership restrictions and remaining gates.

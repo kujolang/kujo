@@ -1,0 +1,38 @@
+// Diagnostic only: vary n in generated copies; this is not an Arena workload.
+func exercise() {
+    let n := 256
+    mut table := dict()
+    mut stack := []
+    mut queue := Queue()
+    mut expected := 0
+    mut i := 0
+    while i < n {
+        table[str(i)] = i
+        stack = push(stack, i)
+        queue = queue_enqueue(queue, i)
+        expected += i
+        i += 1
+    }
+    env_set("KUJO_ALLOCATION_PHASE", "4")
+    mut total := 0
+    i = 0
+    while i < n {
+        let removed := remove(table, str(i))
+        table = removed[0]
+        total += removed[1]
+        let popped := pop(stack)
+        stack = popped[0]
+        total += popped[1]
+        let dequeued := queue_dequeue(queue)
+        queue = dequeued[0]
+        total += dequeued[1]
+        i += 1
+    }
+    env_set("KUJO_ALLOCATION_PHASE", "5")
+    assert_equal(total, expected * 3)
+    assert_equal(len(table), 0)
+    assert_equal(len(stack), 0)
+    assert_equal(queue_size(queue), 0)
+    print("COLLECTION REUSE PASS")
+}
+exercise()

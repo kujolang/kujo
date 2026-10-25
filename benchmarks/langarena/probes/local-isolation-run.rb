@@ -54,6 +54,21 @@ begin
     end
    end
   end
+ when 'priority_calls'
+  configurations=JSON.parse(File.read('benchmarks/langarena/test.json'))
+  7.times do |round|
+   ['Sort::Quick','Sort::Merge','Etc::NeuralNet'].each do |name|
+    expected=configurations.find{|c|c['name']==name}.fetch('checksum')
+    %w[vm jit].each do |mode|
+     (round.even? ? %w[original candidate] : %w[candidate original]).each do |variant|
+      argv=[root+'/'+variant+'-kujo','run','--scheduler-no-timeout'];argv<<'--jit' if mode=='jit'
+      argv+=['benchmarks/langarena/port.kujo','benchmarks/langarena/test.json',name,'--profile']
+      label="priority-#{name.gsub(/[^a-zA-Z0-9]/,'-')}-#{round}-#{mode}-#{variant}"
+      run.call(label,argv,{round:round+1,benchmark:name,runtime:mode,variant:variant},["#{name}: OK #{expected}",'Summary: 1, 1, 0'])
+     end
+    end
+   end
+  end
  when 'neural_resources'
   %w[vm jit].each do |mode|
    %w[original candidate].each do |variant|
