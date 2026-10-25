@@ -160,5 +160,14 @@
     "Preserve stable sort order and first-error behavior, including errors after prior side effects.",
     "Test nested callback operations, closure mutation, snapshots and recovery across VM/interpreter/JIT.",
     "Measure repeated compile/setup counts and paired release cost before acceptance."
-  ]
+  ],
+  "debug_trace": {
+    "source_runtime": "44b2fb1",
+    "env": "DEBUG_JIT=1",
+    "failed_wrapper_compile_message": "JIT: Could not compile script: Failed to translate instruction at PC 0: Stack underflow",
+    "count": 4096,
+    "stderr_sha256": "377335cd1a882fd960c0b20d64703bb7cae11f5cb2cb538a40588299a3e4bf1b",
+    "stdout": "PASS\n",
+    "interpretation": "The internal wrapper expects arguments/function already on the VM stack. Standalone script translation starts with an empty virtual stack. All4096 callback wrapper attempts fail before VM fallback. Skip script-level compilation for this internal entry while preserving callee JIT, then address VM reuse separately."
+  }
 }
