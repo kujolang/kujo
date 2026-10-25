@@ -496,7 +496,7 @@ impl NativeOwnedValues {
             return Err(OwnershipError::FrameOrder);
         }
         while let Some(index) = self.frames[token.depth].head {
-            drop(self.remove(index));
+            self.drop_root(index);
         }
         self.frames.pop();
         Ok(())
@@ -575,7 +575,8 @@ impl NativeOwnedValues {
     }
 
     pub(crate) fn release(&mut self, handle: Handle) -> Result<(), OwnershipError> {
-        drop(self.take(handle)?);
+        let index = self.current_index(handle)?;
+        self.drop_root(index);
         Ok(())
     }
 
@@ -612,15 +613,26 @@ impl NativeOwnedValues {
         }
     }
 
-    fn remove(&mut self, index: usize) -> Value {
+    #[inline]
+    fn detach(&mut self, index: usize) -> &mut Slot {
         self.unlink(index);
         let slot = &mut self.slots[index];
         self.lookup.remove(&slot.handle.0);
-        let value = slot.value.take().expect("live native root");
         slot.previous = None;
         slot.next = self.free;
         self.free = Some(index);
-        value
+        slot
+    }
+
+    fn remove(&mut self, index: usize) -> Value {
+        self.detach(index).value.take().expect("live native root")
+    }
+
+    /// Discard in place: releasing a root does not need to move a full Value
+    /// through the ownership-transfer return ABI. Detach before dropping, as
+    /// the transfer path does, and retain the existing frame/free-list order.
+    fn drop_root(&mut self, index: usize) {
+        self.detach(index).value = None;
     }
 }
 
@@ -628,6 +640,36 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn discarded_roots_drop_owners_while_taken_and_promoted_values_survive() {
+        let mut roots = NativeOwnedValues::default();
+        let outer = roots.enter_frame().unwrap();
+        let retained = Arc::new(vec![Value::Int(7)]);
+        let parent = roots.insert(Value::Array(retained.clone())).unwrap();
+        let inner = roots.enter_frame().unwrap();
+        assert_eq!(roots.release(parent), Err(OwnershipError::NotCurrentFrame));
+        let discarded = roots.duplicate(parent).unwrap();
+        assert_eq!(Arc::strong_count(&retained), 3);
+        roots.release(discarded).unwrap();
+        assert_eq!(Arc::strong_count(&retained), 2);
+        assert_eq!(roots.get(discarded).unwrap_err(), OwnershipError::StaleHandle);
+        let promoted = roots.duplicate(parent).unwrap();
+        roots.promote(promoted).unwrap();
+        let temporary = Arc::new(vec![Value::Int(9)]);
+        let weak = Arc::downgrade(&temporary);
+        roots.insert(Value::Array(temporary)).unwrap();
+        roots.leave_frame(inner).unwrap();
+        assert!(weak.upgrade().is_none());
+        let taken = roots.take(promoted).unwrap();
+        roots.leave_frame(outer).unwrap();
+        assert_eq!(Arc::strong_count(&retained), 2);
+        assert!(matches!(&taken, Value::Array(v) if Arc::ptr_eq(v, &retained)));
+        drop(taken);
+        assert_eq!(Arc::strong_count(&retained), 1);
+        assert!(roots.lookup.is_empty());
+        assert!(roots.slots.iter().all(|slot| slot.value.is_none()));
+    }
 
     #[test]
     fn recycled_call_roots_keep_capacity_but_not_values_or_handle_identities() {

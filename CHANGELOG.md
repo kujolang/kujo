@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Drop discarded native roots in place rather than returning full `Value`
+  payloads only to destroy them. Ownership transfers, frame order, stale-handle
+  checks, promotion and copy-on-write snapshots retain their existing behavior.
+
 - Add optional LangArena comparison resource measurements (peak RSS and Linux
   host counters). The comparison-only schema-v2 manifest references individual
   sample JSON and raw output files instead of an inline `results` array, avoiding
