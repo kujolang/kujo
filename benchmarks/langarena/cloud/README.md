@@ -97,7 +97,7 @@ candidate repository root, after generating `port.kujo`. Create a fresh output
 directory first. The arguments are:
 
 ```text
-BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME]
+BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME_OR_STAR] [resources]
 ```
 
 It runs original VM/JIT, candidate VM/JIT, Rust and Goose sequentially over every
@@ -108,17 +108,38 @@ minutes; set a longer deadline explicitly for production retries. A local tree
 case needed roughly 35 seconds per iteration and did not finish within ten
 minutes; that timeout does not establish a correctness failure.
 
+The schema-v2 `samples.json` manifest lists relative `result_files` in execution
+order. Each sample JSON contains measurements, status, configuration and relative
+`stdout_path`/`stderr_path` files with the captured output. Read those files
+relative to the manifest directory. This replaces the old inline `results` array:
+large output and multi-round resource snapshots cannot overflow a cumulative
+JSON write. Every referenced sample and output file is written before the
+manifest checkpoint; a failed write cannot announce a missing sample.
+
 The runner freezes the configuration and instrumented port in the output folder,
 records their hashes, checkpoints every result, retains failures and exits
 nonzero if any variant fails. It refuses existing evidence files. Kujo output
 must contain the exact expected checksum; Rust/Goose use their pinned upstream
 runner's checksum verdict. Binary/source provenance must accompany these reports
-from the bootstrap manifest. Peak RSS and host-load capture remain separate
-requirements; this runner does not claim to measure either. Cancellation stops
+from the bootstrap manifest. Add `* resources` after rounds and timeout to
+measure all cases with `/usr/bin/time`, or use an exact case name instead of `*`.
+Resource mode records `peak_rss_kib` (macOS bytes are converted to KiB), preserves
+the raw time output in stderr, and requires a positive measurement for a pass.
+On Linux it also saves before/after aggregate CPU jiffies (including steal),
+`/proc/meminfo`, load average and swap-page counters for each sample. These
+host-wide counters describe interference; they are not per-process CPU usage.
+On macOS only peak RSS is collected; CPU pressure remains a separate gate.
+Missing measurements, including those from killed processes, remain null and
+are never treated as zero. Truncated output is rejected. Wrapper startup is
+included in total wall time, while the benchmark measured loop stays unchanged.
+Cancellation stops
 with partial evidence retained. Do not interpret incomplete rows as timings.
 
 The lightweight host-fixture contract can be checked without real benchmark
 work using `bash benchmarks/langarena/tests/compare-suite.sh /absolute/kujo`.
 It exercises all 50 synthetic registry entries in VM, interpreter and JIT,
 wrong checksums, malformed times, deadlines, output preservation and selection.
+It also checks resource mode on the current host, both RSS parser formats and
+truncated output rejection. Linux resource collection still needs a real Linux
+run; passing macOS fixtures does not establish that gate.
 These are runner tests, not LangArena correctness or speed results.

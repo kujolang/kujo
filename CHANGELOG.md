@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add optional LangArena comparison resource measurements (peak RSS and Linux
+  host counters). The comparison-only schema-v2 manifest references individual
+  sample JSON and raw output files instead of an inline `results` array, avoiding
+  cumulative write limits. Truncated output is rejected as benchmark evidence.
+
 - Poll task cancellation in the inline VM callback dispatcher, preventing
   cancelled higher-order callbacks from retaining language-task capacity.
 

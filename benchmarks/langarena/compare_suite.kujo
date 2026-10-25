@@ -1,11 +1,37 @@
 # Sequential six-variant comparison over an unchanged configuration registry.
-# Usage: kujo run compare_suite.kujo BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME]
+# Usage: kujo run compare_suite.kujo BASELINE LATEST RUST GOOSE NEW_OUTPUT_DIRECTORY CONFIG [ROUNDS] [TIMEOUT_MS] [EXACT_NAME_OR_STAR] [resources]
 # Pin source/binary identities separately; baseline is the executable supplied by the caller.
 func parse_duration(text) {
     try { return to_float(text) } except error { return -1.0 }
 }
+func resource_snapshot(platform) {
+    mut snapshot := {"captured_ns": time_ns(), "platform": platform}
+    if platform == "Linux" {
+        snapshot["cpu_jiffies"] = split(read_file("/proc/stat"), "\n")[0]
+        snapshot["memory"] = read_file("/proc/meminfo")
+        snapshot["loadavg"] = read_file("/proc/loadavg")
+        mut swap := []
+        for line in split(read_file("/proc/vmstat"), "\n") {
+            if starts_with(line,"pswpin ") || starts_with(line,"pswpout ") { swap = push(swap,line) }
+        }
+        snapshot["swap_pages"] = swap
+    }
+    return snapshot
+}
+func peak_rss_kib(stderr, platform) {
+    mut peak := null
+    for line in split(stderr, "\n") {
+        if platform == "Linux" && contains(line,"Maximum resident set size (kbytes):") == 1 {
+            try { peak = to_float(trim(split(line,":")[1])) } except error { peak = null }
+        }
+        if platform == "Darwin" && contains(line,"maximum resident set size") == 1 {
+            try { peak = to_float(trim(split(line,"maximum resident set size")[0])) / 1024.0 } except error { peak = null }
+        }
+    }
+    return peak
+}
 let options := args()
-assert(len(options) >= 6 && len(options) <= 9, "Expected six to nine arguments")
+assert(len(options) >= 6 && len(options) <= 10, "Expected six to ten arguments")
 mut rounds := 7
 if len(options) >= 7 { rounds = to_int(options[6]) }
 mut timeout := 600000
@@ -13,6 +39,16 @@ if len(options) >= 8 { timeout = to_int(options[7]) }
 assert(rounds >= 1 && rounds <= 100, "Invalid rounds")
 assert(timeout >= 1 && timeout <= 86400000, "Invalid timeout")
 let binaries := {"Baseline VM": options[0], "Baseline JIT": options[0], "Latest VM": options[1], "Latest JIT": options[1], "Rust": options[2], "Goose": options[3]}
+mut resources := false
+mut platform := ""
+if len(options) == 10 {
+    assert_equal(options[9], "resources")
+    resources = true
+    let host := spawn_process(["uname","-s"])
+    assert(host.success,"Cannot identify resource measurement platform")
+    platform = trim(host.stdout)
+    assert(platform == "Linux" || platform == "Darwin","Resource mode requires Linux or macOS")
+}
 let directory := options[4]
 assert(!file_exists(directory + "/samples.json") && !file_exists(directory + "/timed-port.kujo") && !file_exists(directory + "/config.json"), "Output evidence already exists")
 let config_text := read_file(options[5])
@@ -23,7 +59,7 @@ for row in registry {
     let name := row["name"]
     assert(has_key(names, name) == 0, "Duplicate benchmark name")
     names[name] = true
-    if len(options) < 9 || options[8] == name { cases = push(cases, [name, directory + "/config.json", row]) }
+    if len(options) < 9 || options[8] == "*" || options[8] == name { cases = push(cases, [name, directory + "/config.json", row]) }
 }
 assert(len(cases) > 0, "No matching benchmarks")
 write_file(directory + "/config.json", config_text, true)
@@ -56,9 +92,23 @@ while round < rounds {
                 if language == "Latest JIT" || language == "Baseline JIT" { command = push(command, "--jit") }
                 command = push(push(command, config), name)
             }
+            mut host_before := null
+            mut host_after := null
+            if resources {
+                host_before = resource_snapshot(platform)
+                mut flag := "-l"
+                if platform == "Linux" { flag = "-v" }
+                command = ["/usr/bin/time", flag, ...command]
+            }
             let started := time_ns()
-            let result := spawn_process(command, {"timeout_ms": timeout, "max_output_bytes": 1048576})
+            let result := spawn_process(command, {"timeout_ms": timeout, "max_output_bytes": 1048576, "env": {"LC_ALL":"C"}})
             let wall := time_ns() - started
+            mut peak := null
+            if resources {
+                host_after = resource_snapshot(platform)
+                peak = peak_rss_kib(result.stderr,platform)
+            }
+            let resource_valid := !resources || (peak != null && peak > 0.0)
             mut measured := -1.0
             mut passed := false
             if language == "Baseline VM" || language == "Baseline JIT" || language == "Latest VM" || language == "Latest JIT" {
@@ -78,10 +128,15 @@ while round < rounds {
                     }
                 }
             }
-            let valid := passed && !result.timed_out && !result.cancelled && measured >= 0.0 && measured < 86400.0
-            results = push(results, {"round": round + 1, "benchmark": name, "config": selected[2], "language": language, "passed": valid, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout": result.stdout, "stderr": result.stderr})
-            write_file(directory + "/samples.json", to_json({"binaries": binaries, "kujo_runtime": "explicit per variant", "rounds": rounds, "timeout_ms": timeout, "configuration_sha256": sha256(config_text), "original_port_sha256": sha256(source), "timed_port_sha256": sha256(timed), "results": results}), true)
-            if !valid { failures += 1 print("FAILED " + language + " " + name + ": " + result.stdout + result.stderr) }
+            let valid := passed && resource_valid && !result.stdout_truncated && !result.stderr_truncated && !result.timed_out && !result.cancelled && measured >= 0.0 && measured < 86400.0
+            let sample_name := "sample-" + str(len(results))
+            write_file(directory + "/" + sample_name + ".stdout", result.stdout, true)
+            write_file(directory + "/" + sample_name + ".stderr", result.stderr, true)
+            let sample := {"round": round + 1, "benchmark": name, "config": selected[2], "language": language, "passed": valid, "peak_rss_kib": peak, "host_before": host_before, "host_after": host_after, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout_path": sample_name + ".stdout", "stderr_path": sample_name + ".stderr"}
+            write_file(directory + "/" + sample_name + ".json", to_json(sample), true)
+            results = push(results, sample_name + ".json")
+            write_file(directory + "/samples.json", to_json({"schema_version": 2, "binaries": binaries, "kujo_runtime": "explicit per variant", "resource_measurement": resources, "resource_platform": platform, "rounds": rounds, "timeout_ms": timeout, "configuration_sha256": sha256(config_text), "original_port_sha256": sha256(source), "timed_port_sha256": sha256(timed), "result_files": results}), true)
+            if !valid { failures += 1 print("FAILED " + language + " " + name + ": see " + sample_name + ".json and raw output files") }
             if valid { print("PASS measured_seconds=" + str(measured)) }
             assert(!result.cancelled, "Comparison cancelled; partial evidence retained")
             index += 1
