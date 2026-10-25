@@ -46,11 +46,13 @@ fn compiled_caller_can_update_bindings_through_a_cold_bytecode_callee() {
             after += 1
             return result
         }
-        func relay(a, b) { return calculate(a, b) }
+        func relay(a, b) { if a < 0 { return 0 } return calculate(a, b) }
         mut i := 0
-        while i < 200 { assert_equal(relay(6, 2), 9) i += 1 }
-        assert_equal(before, 200)
-        assert_equal(after, 200)
+        while i < 200 { assert_equal(relay(-1, 2), 0) i += 1 }
+        mut calls := 0
+        while calls < 20 { assert_equal(relay(6, 2), 9) calls += 1 }
+        assert_equal(before, 20)
+        assert_equal(after, 20)
         print("PASS")
     "#;
     let dir = tempfile::tempdir().unwrap();
