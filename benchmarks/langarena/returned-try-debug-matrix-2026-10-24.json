@@ -1,0 +1,937 @@
+{
+  "runtime_source_commit": "1627e577868a3c2f5a66a70cbc2a91d0edbfcef4",
+  "profile": "default-feature debug, unoptimized",
+  "scope": "VM test-size only; interpreter/JIT were not started after VM driver failed its completeness gate",
+  "identities_sha256": "952d1160f74fd89ca7ef192710492a8119b9f06420d78513c55479e5f9fcd583  /tmp/kujo-returned-try-2026-10-24/kujo\n78bbde6cab1fc76895abefba90a1f444e1d77b2762e11f4a5a35f60b2dfd7028  src/vm.rs\n4fa2412114313e95c50a09584aa46271fa3486e89b5447218b900733ede45b51  tests/returned_try_handlers.rs\n2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6  benchmarks/langarena/port.kujo\n424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797  benchmarks/langarena/test.json\n80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77  benchmarks/langarena/profile.kujo\n",
+  "summary": {
+    "passed": 49,
+    "timeout": 1,
+    "checksum_mismatches": 0
+  },
+  "limit": "Concurrent production benchmark and compiler/test activity; no controlled timing, speed regression or production correctness claim. Sort::Merge incomplete at120000ms. This predates the compiler try-exit cleanup.",
+  "report": {
+    "binary": "/tmp/kujo-returned-try-2026-10-24/kujo",
+    "config": "benchmarks/langarena/test.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 124,
+          "depth": 4,
+          "iterations": 3,
+          "name": "Binarytrees::Obj"
+        },
+        "elapsed_ns": 127883229.0,
+        "exitcode": 0,
+        "name": "Binarytrees::Obj",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=207002\n@profile create-done ns=670655\n@profile prepare-done ns=1013398\n@profile warmup-1 ns=3509801\n@profile warmup-done ns=3817973\n@profile run-1 ns=5989451\n@profile run-2 ns=8205496\n@profile run-3 ns=10346883\nBinarytrees::Obj: OK 124\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 124,
+          "depth": 4,
+          "iterations": 3,
+          "name": "Binarytrees::Arena"
+        },
+        "elapsed_ns": 135877937.0,
+        "exitcode": 0,
+        "name": "Binarytrees::Arena",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=200466\n@profile create-done ns=591652\n@profile prepare-done ns=921344\n@profile warmup-1 ns=4157409\n@profile warmup-done ns=4459276\n@profile run-1 ns=7658592\n@profile run-2 ns=10780574\n@profile run-3 ns=13767640\nBinarytrees::Arena: OK 124\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3562897308,
+          "iterations": 2,
+          "name": "Brainfuck::Array",
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 727960278.0,
+        "exitcode": 0,
+        "name": "Brainfuck::Array",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=199594\n@profile create-done ns=593151\n@profile prepare-done ns=921904\n@profile warmup-1 ns=196558194\n@profile warmup-done ns=196922519\n@profile run-1 ns=392464309\n@profile run-2 ns=600484219\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3562897308,
+          "iterations": 2,
+          "name": "Brainfuck::Recursion",
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 776379777.0,
+        "exitcode": 0,
+        "name": "Brainfuck::Recursion",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=203962\n@profile create-done ns=606227\n@profile prepare-done ns=943156\n@profile warmup-1 ns=216141225\n@profile warmup-done ns=216709218\n@profile run-1 ns=430748799\n@profile run-2 ns=650795719\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 720656960,
+          "iterations": 3,
+          "n": 40,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 1728738139.0,
+        "exitcode": 0,
+        "name": "Matmul::Single",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=210991\n@profile create-done ns=31609485\n@profile prepare-done ns=31993932\n@profile warmup-1 ns=412499867\n@profile warmup-done ns=412842160\n@profile run-1 ns=802107112\n@profile run-2 ns=1202446065\n@profile run-3 ns=1598389286\nMatmul::Single: OK 720656960\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2420334760,
+          "iterations": 3,
+          "n": 42,
+          "name": "Matmul::T4"
+        },
+        "elapsed_ns": 887567205.0,
+        "exitcode": 0,
+        "name": "Matmul::T4",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=218923\n@profile create-done ns=37753984\n@profile prepare-done ns=38160605\n@profile warmup-1 ns=214573448\n@profile warmup-done ns=214926316\n@profile run-1 ns=394193420\n@profile run-2 ns=570104717\n@profile run-3 ns=749432583\nMatmul::T4: OK 2420334760\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 4014223764,
+          "iterations": 3,
+          "n": 44,
+          "name": "Matmul::T8"
+        },
+        "elapsed_ns": 964835034.0,
+        "exitcode": 0,
+        "name": "Matmul::T8",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=237672\n@profile create-done ns=46213000\n@profile prepare-done ns=46653353\n@profile warmup-1 ns=243437401\n@profile warmup-done ns=244200849\n@profile run-1 ns=437205549\n@profile run-2 ns=628682315\n@profile run-3 ns=823966967\nMatmul::T8: OK 4014223764\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 418055336,
+          "iterations": 3,
+          "n": 46,
+          "name": "Matmul::T16"
+        },
+        "elapsed_ns": 1159082136.0,
+        "exitcode": 0,
+        "name": "Matmul::T16",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=262238\n@profile create-done ns=48679790\n@profile prepare-done ns=49120391\n@profile warmup-1 ns=311242149\n@profile warmup-done ns=311644773\n@profile run-1 ns=540606506\n@profile run-2 ns=776072884\n@profile run-3 ns=1010107089\nMatmul::T16: OK 418055336\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3894061047,
+          "iterations": 8192,
+          "name": "Base64::Encode",
+          "size": 30
+        },
+        "elapsed_ns": 1629922159.0,
+        "exitcode": 0,
+        "name": "Base64::Encode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=249987\n@profile create-done ns=748770\n@profile prepare-done ns=1429422\n@profile warmup-1 ns=2210626\n@profile warmup-163 ns=26138720\n@profile warmup-326 ns=49397862\n@profile warmup-489 ns=73558171\n@profile warmup-652 ns=97258642\n@profile warmup-815 ns=120345994\n@profile warmup-978 ns=145063561\n@profile warmup-1141 ns=167629243\n@profile warmup-1304 ns=191028600\n@profile warmup-1467 ns=214666411\n@profile warmup-1630 ns=237320425\n@profile warmup-1638 ns=238853865\n@profile warmup-done ns=239231363\n@profile run-1 ns=239863615\n@profile run-819 ns=359374136\n@profile run-1638 ns=478266398\n@profile run-2457 ns=597814845\n@profile run-3276 ns=717225209\n@profile run-4095 ns=836025198\n@profile run-4914 ns=955996787\n@profile run-5733 ns=1075877664\n@profile run-6552 ns=1221894279\n@profile run-7371 ns=1363200877\n@profile run-8190 ns=1482346187\n@profile run-8192 ns=1483092395\nBase64::Encode: OK 3894061047\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 732348015,
+          "iterations": 8192,
+          "name": "Base64::Decode",
+          "size": 23
+        },
+        "elapsed_ns": 1578827639.0,
+        "exitcode": 0,
+        "name": "Base64::Decode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=266487\n@profile create-done ns=775770\n@profile prepare-done ns=1513906\n@profile warmup-1 ns=2285598\n@profile warmup-163 ns=26703301\n@profile warmup-326 ns=50632859\n@profile warmup-489 ns=74285581\n@profile warmup-652 ns=98393429\n@profile warmup-815 ns=121714022\n@profile warmup-978 ns=145917939\n@profile warmup-1141 ns=169322291\n@profile warmup-1304 ns=192378185\n@profile warmup-1467 ns=216121771\n@profile warmup-1630 ns=240211953\n@profile warmup-1638 ns=241801708\n@profile warmup-done ns=242213452\n@profile run-1 ns=242862561\n@profile run-819 ns=363759297\n@profile run-1638 ns=486009931\n@profile run-2457 ns=608808059\n@profile run-3276 ns=727549236\n@profile run-4095 ns=846413773\n@profile run-4914 ns=966480793\n@profile run-5733 ns=1085315739\n@profile run-6552 ns=1198183278\n@profile run-7371 ns=1311385972\n@profile run-8190 ns=1426589424\n@profile run-8192 ns=1427351678\nBase64::Decode: OK 732348015\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 4,
+          "coords": 9,
+          "iterations": 3,
+          "name": "Json::Generate"
+        },
+        "elapsed_ns": 151698270.0,
+        "exitcode": 0,
+        "name": "Json::Generate",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=236732\n@profile create-done ns=4344635\n@profile prepare-done ns=4789369\n@profile warmup-1 ns=5991754\n@profile warmup-done ns=6409784\n@profile run-1 ns=7675350\n@profile run-2 ns=9016138\n@profile run-3 ns=10548591\nJson::Generate: OK 4\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2918383076,
+          "coords": 10,
+          "iterations": 3,
+          "name": "Json::ParseDom"
+        },
+        "elapsed_ns": 164195904.0,
+        "exitcode": 0,
+        "name": "Json::ParseDom",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=241491\n@profile create-done ns=760452\n@profile prepare-done ns=5999947\n@profile warmup-1 ns=8557933\n@profile warmup-done ns=8939927\n@profile run-1 ns=11204936\n@profile run-2 ns=13898711\n@profile run-3 ns=16410517\nJson::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1969907348,
+          "coords": 11,
+          "iterations": 3,
+          "name": "Json::ParseMapping"
+        },
+        "elapsed_ns": 158631515.0,
+        "exitcode": 0,
+        "name": "Json::ParseMapping",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=252745\n@profile create-done ns=764111\n@profile prepare-done ns=6187547\n@profile warmup-1 ns=9054610\n@profile warmup-done ns=9457661\n@profile run-1 ns=13044686\n@profile run-2 ns=15760391\n@profile run-3 ns=18265512\nJson::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3563398641,
+          "iterations": 3,
+          "name": "CSV::Parse",
+          "rows": 11
+        },
+        "elapsed_ns": 194706922.0,
+        "exitcode": 0,
+        "name": "CSV::Parse",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=302734\n@profile create-done ns=987404\n@profile prepare-done ns=4382506\n@profile warmup-1 ns=8162165\n@profile warmup-done ns=8719433\n@profile run-1 ns=12058029\n@profile run-2 ns=14920174\n@profile run-3 ns=17804075\nCSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 4660,
+          "iterations": 3,
+          "limit": 1000,
+          "name": "Etc::Sieve"
+        },
+        "elapsed_ns": 215785976.0,
+        "exitcode": 0,
+        "name": "Etc::Sieve",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=240414\n@profile create-done ns=704414\n@profile prepare-done ns=1096010\n@profile warmup-1 ns=17852942\n@profile warmup-done ns=18237844\n@profile run-1 ns=33756845\n@profile run-2 ns=50313158\n@profile run-3 ns=66442301\nEtc::Sieve: OK 4660\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1438660,
+          "h": 100,
+          "iterations": 3,
+          "name": "Etc::TextRaytracer",
+          "w": 100
+        },
+        "elapsed_ns": 32058570380.0,
+        "exitcode": 0,
+        "name": "Etc::TextRaytracer",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=276611\n@profile create-done ns=942999\n@profile prepare-done ns=1372164\n@profile warmup-1 ns=7520768041\n@profile warmup-done ns=7521156075\n@profile run-1 ns=14986531779\n@profile run-2 ns=23249074942\n@profile run-3 ns=31913405450\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1586674334,
+          "iterations": 2,
+          "name": "Etc::NeuralNet"
+        },
+        "elapsed_ns": 66019507332.0,
+        "exitcode": 0,
+        "name": "Etc::NeuralNet",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=230676\n@profile create-done ns=688099\n@profile prepare-done ns=7112835\n@profile warmup-1 ns=22011480859\n@profile warmup-done ns=22011956805\n@profile run-1 ns=43831356074\n@profile run-2 ns=65869544835\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 179773224,
+          "iterations": 2,
+          "name": "Etc::CacheSimulation",
+          "size": 1000,
+          "values": 2000
+        },
+        "elapsed_ns": 10784619232.0,
+        "exitcode": 0,
+        "name": "Etc::CacheSimulation",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=239346\n@profile create-done ns=734545\n@profile prepare-done ns=1140902\n@profile warmup-1 ns=1707179861\n@profile warmup-done ns=1707569497\n@profile run-1 ns=5367451582\n@profile run-2 ns=10627391526\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 4006235749,
+          "h": 20,
+          "iterations": 3,
+          "name": "Etc::GameOfLife",
+          "w": 20
+        },
+        "elapsed_ns": 568438079.0,
+        "exitcode": 0,
+        "name": "Etc::GameOfLife",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=264187\n@profile create-done ns=73200828\n@profile prepare-done ns=114883751\n@profile warmup-1 ns=192224971\n@profile warmup-done ns=192680832\n@profile run-1 ns=265951144\n@profile run-2 ns=336926515\n@profile run-3 ns=408926535\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 580539813,
+          "iterations": 2,
+          "name": "Etc::Words",
+          "word_len": 1,
+          "words": 600
+        },
+        "elapsed_ns": 467661347.0,
+        "exitcode": 0,
+        "name": "Etc::Words",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=366154\n@profile create-done ns=1159309\n@profile prepare-done ns=246804596\n@profile warmup-1 ns=273790546\n@profile warmup-done ns=274165359\n@profile run-1 ns=298874881\n@profile run-2 ns=325609589\nEtc::Words: OK 580539813\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 117,
+          "iterations": 2,
+          "lines_count": 10,
+          "name": "Etc::LogParser"
+        },
+        "elapsed_ns": 213788889.0,
+        "exitcode": 0,
+        "name": "Etc::LogParser",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=218778\n@profile create-done ns=651431\n@profile prepare-done ns=2710145\n@profile warmup-1 ns=67387229\n@profile warmup-done ns=67746500\n@profile run-1 ns=69741269\n@profile run-2 ns=71589398\nEtc::LogParser: OK 117\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1554169905,
+          "count": 12,
+          "iterations": 2,
+          "name": "Template::Regex"
+        },
+        "elapsed_ns": 207754013.0,
+        "exitcode": 0,
+        "name": "Template::Regex",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=245498\n@profile create-done ns=703182\n@profile prepare-done ns=2803064\n@profile warmup-1 ns=18009272\n@profile warmup-done ns=18383401\n@profile run-1 ns=26870371\n@profile run-2 ns=34815477\nTemplate::Regex: OK 1554169905\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 917360148,
+          "count": 10,
+          "iterations": 2,
+          "name": "Template::Parse"
+        },
+        "elapsed_ns": 309860081.0,
+        "exitcode": 0,
+        "name": "Template::Parse",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=236296\n@profile create-done ns=689317\n@profile prepare-done ns=2593680\n@profile warmup-1 ns=49140993\n@profile warmup-done ns=49509582\n@profile run-1 ns=95972336\n@profile run-2 ns=140359051\nTemplate::Parse: OK 917360148\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2548773,
+          "iterations": 2,
+          "name": "Sort::Quick",
+          "size": 100000
+        },
+        "elapsed_ns": 62839871762.0,
+        "exitcode": 0,
+        "name": "Sort::Quick",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=249780\n@profile create-done ns=712078\n@profile prepare-done ns=7340645513\n@profile warmup-1 ns=25834855662\n@profile warmup-done ns=25835282109\n@profile run-1 ns=44302888970\n@profile run-2 ns=62695483653\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2548773,
+          "iterations": 2,
+          "name": "Sort::Merge",
+          "size": 100000
+        },
+        "elapsed_ns": 120019660122.0,
+        "exitcode": -1,
+        "name": "Sort::Merge",
+        "runtime": "vm",
+        "status": "timeout",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=227051\n@profile create-done ns=680802\n@profile prepare-done ns=7558006906\n@profile warmup-1 ns=70642650313\n@profile warmup-done ns=70643050266\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2548773,
+          "iterations": 2,
+          "name": "Sort::Self",
+          "size": 100000
+        },
+        "elapsed_ns": 8618951260.0,
+        "exitcode": 0,
+        "name": "Sort::Self",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=488738\n@profile create-done ns=1176583\n@profile prepare-done ns=7860804421\n@profile warmup-1 ns=8065558568\n@profile warmup-done ns=8066127651\n@profile run-1 ns=8264837804\n@profile run-2 ns=8460559276\nSort::Self: OK 2548773\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 20,
+          "iterations": 3,
+          "jump_len": 100,
+          "jumps": 3,
+          "name": "Graph::BFS",
+          "vertices": 100
+        },
+        "elapsed_ns": 240067824.0,
+        "exitcode": 0,
+        "name": "Graph::BFS",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=476338\n@profile create-done ns=1419595\n@profile prepare-done ns=30960643\n@profile warmup-1 ns=40506605\n@profile warmup-done ns=40909548\n@profile run-1 ns=50448571\n@profile run-2 ns=58343514\n@profile run-3 ns=69498318\nGraph::BFS: OK 20\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 28,
+          "iterations": 3,
+          "jump_len": 100,
+          "jumps": 3,
+          "name": "Graph::DFS",
+          "vertices": 100
+        },
+        "elapsed_ns": 234264020.0,
+        "exitcode": 0,
+        "name": "Graph::DFS",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=268330\n@profile create-done ns=908365\n@profile prepare-done ns=30237599\n@profile warmup-1 ns=44179693\n@profile warmup-done ns=44565194\n@profile run-1 ns=56567345\n@profile run-2 ns=69184646\n@profile run-3 ns=82475612\nGraph::DFS: OK 28\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 36,
+          "iterations": 3,
+          "jump_len": 100,
+          "jumps": 3,
+          "name": "Graph::AStar",
+          "vertices": 100
+        },
+        "elapsed_ns": 227656764.0,
+        "exitcode": 0,
+        "name": "Graph::AStar",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=245986\n@profile create-done ns=732232\n@profile prepare-done ns=29255870\n@profile warmup-1 ns=41485538\n@profile warmup-done ns=41879169\n@profile run-1 ns=53978834\n@profile run-2 ns=65280124\n@profile run-3 ns=76416896\nGraph::AStar: OK 36\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1036619072,
+          "iterations": 3,
+          "name": "Hash::SHA256",
+          "size": 1000
+        },
+        "elapsed_ns": 688088467.0,
+        "exitcode": 0,
+        "name": "Hash::SHA256",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=236681\n@profile create-done ns=706674\n@profile prepare-done ns=91946900\n@profile warmup-1 ns=204539935\n@profile warmup-done ns=204921633\n@profile run-1 ns=318938886\n@profile run-2 ns=431347683\n@profile run-3 ns=542945736\nHash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3031698216,
+          "iterations": 3,
+          "name": "Hash::CRC32",
+          "size": 1000
+        },
+        "elapsed_ns": 1485048319.0,
+        "exitcode": 0,
+        "name": "Hash::CRC32",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=244299\n@profile create-done ns=725188\n@profile prepare-done ns=92432284\n@profile warmup-1 ns=404875092\n@profile warmup-done ns=405291147\n@profile run-1 ns=717441250\n@profile run-2 ns=1028778045\n@profile run-3 ns=1333548873\nHash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 774028720,
+          "iterations": 3,
+          "name": "Calculator::Ast",
+          "operations": 3
+        },
+        "elapsed_ns": 362165287.0,
+        "exitcode": 0,
+        "name": "Calculator::Ast",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=386422\n@profile create-done ns=936797\n@profile prepare-done ns=2560736\n@profile warmup-1 ns=53958496\n@profile warmup-done ns=54542397\n@profile run-1 ns=111435435\n@profile run-2 ns=163978486\n@profile run-3 ns=216528372\nCalculator::Ast: OK 774028720\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 3208680,
+          "iterations": 100,
+          "name": "Calculator::Interpreter",
+          "operations": 10
+        },
+        "elapsed_ns": 1429429590.0,
+        "exitcode": 0,
+        "name": "Calculator::Interpreter",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=419642\n@profile create-done ns=1014294\n@profile prepare-done ns=114060036\n@profile warmup-1 ns=124358355\n@profile warmup-2 ns=134999021\n@profile warmup-4 ns=155565731\n@profile warmup-6 ns=174538185\n@profile warmup-8 ns=194892867\n@profile warmup-10 ns=215653615\n@profile warmup-12 ns=234720065\n@profile warmup-14 ns=255115084\n@profile warmup-16 ns=275686803\n@profile warmup-18 ns=294536773\n@profile warmup-20 ns=314578949\n@profile warmup-done ns=315151053\n@profile run-1 ns=325005817\n@profile run-10 ns=411761039\n@profile run-20 ns=508676208\n@profile run-30 ns=605764129\n@profile run-40 ns=703242531\n@profile run-50 ns=801129894\n@profile run-60 ns=899248187\n@profile run-70 ns=998550117\n@profile run-80 ns=1093381032\n@profile run-90 ns=1190097983\n@profile run-100 ns=1283864767\nCalculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2309652669,
+          "h": 30,
+          "iterations": 2,
+          "name": "Maze::Generator",
+          "w": 200
+        },
+        "elapsed_ns": 11426484594.0,
+        "exitcode": 0,
+        "name": "Maze::Generator",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=234734\n@profile create-done ns=3294098366\n@profile prepare-done ns=3294700343\n@profile warmup-1 ns=5742627463\n@profile warmup-done ns=5743544619\n@profile run-1 ns=8339914007\n@profile run-2 ns=10984145054\nMaze::Generator: OK 2309652669\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 6771,
+          "h": 30,
+          "iterations": 2,
+          "name": "Maze::BFS",
+          "w": 200
+        },
+        "elapsed_ns": 8991288268.0,
+        "exitcode": 0,
+        "name": "Maze::BFS",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=233147\n@profile create-done ns=3313525660\n@profile prepare-done ns=6166593637\n@profile warmup-1 ns=7280854059\n@profile warmup-done ns=7281249413\n@profile run-1 ns=8048277739\n@profile run-2 ns=8822256374\nMaze::BFS: OK 6771\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 6771,
+          "h": 30,
+          "iterations": 2,
+          "name": "Maze::AStar",
+          "w": 200
+        },
+        "elapsed_ns": 13136500169.0,
+        "exitcode": 0,
+        "name": "Maze::AStar",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=238186\n@profile create-done ns=4093094657\n@profile prepare-done ns=6676455358\n@profile warmup-1 ns=9012507501\n@profile warmup-done ns=9013047761\n@profile run-1 ns=10959348961\n@profile run-2 ns=12956045624\nMaze::AStar: OK 6771\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 4428,
+          "iterations": 3,
+          "n": 5,
+          "name": "CLBG::Fannkuchredux"
+        },
+        "elapsed_ns": 266102435.0,
+        "exitcode": 0,
+        "name": "CLBG::Fannkuchredux",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=244746\n@profile create-done ns=765386\n@profile prepare-done ns=1174616\n@profile warmup-1 ns=29473329\n@profile warmup-done ns=29871771\n@profile run-1 ns=58810608\n@profile run-2 ns=87410606\n@profile run-3 ns=115654278\nCLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 2236342953,
+          "h": 30,
+          "iterations": 3,
+          "name": "CLBG::Mandelbrot",
+          "w": 30
+        },
+        "elapsed_ns": 1517423400.0,
+        "exitcode": 0,
+        "name": "CLBG::Mandelbrot",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=249684\n@profile create-done ns=804441\n@profile prepare-done ns=1220725\n@profile warmup-1 ns=336454629\n@profile warmup-done ns=336860164\n@profile run-1 ns=673675003\n@profile run-2 ns=1017895831\n@profile run-3 ns=1355849369\nCLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 338796608,
+          "iterations": 2,
+          "name": "CLBG::Nbody"
+        },
+        "elapsed_ns": 5945220043.0,
+        "exitcode": 0,
+        "name": "CLBG::Nbody",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=248256\n@profile create-done ns=1030205\n@profile prepare-done ns=2793353\n@profile warmup-1 ns=1975000860\n@profile warmup-done ns=1975394717\n@profile run-1 ns=3872498132\n@profile run-2 ns=5796841173\nCLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 1052168784,
+          "iterations": 10,
+          "name": "CLBG::Spectralnorm",
+          "size": 45
+        },
+        "elapsed_ns": 4409789199.0,
+        "exitcode": 0,
+        "name": "CLBG::Spectralnorm",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=249005\n@profile create-done ns=1606473\n@profile prepare-done ns=2035765\n@profile warmup-1 ns=344175518\n@profile warmup-2 ns=690112664\n@profile warmup-done ns=690591481\n@profile run-1 ns=1048434042\n@profile run-2 ns=1405793554\n@profile run-3 ns=1766037482\n@profile run-4 ns=2123779482\n@profile run-5 ns=2479724689\n@profile run-6 ns=2838728439\n@profile run-7 ns=3185642491\n@profile run-8 ns=3539007870\n@profile run-9 ns=3893014348\n@profile run-10 ns=4251847857\nCLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 200,
+          "iterations": 3,
+          "name": "Compress::BWTEncode",
+          "size": 50
+        },
+        "elapsed_ns": 704815933.0,
+        "exitcode": 0,
+        "name": "Compress::BWTEncode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=241316\n@profile create-done ns=724887\n@profile prepare-done ns=2769090\n@profile warmup-1 ns=140508475\n@profile warmup-done ns=140893514\n@profile run-1 ns=280064233\n@profile run-2 ns=416037003\n@profile run-3 ns=553723941\nCompress::BWTEncode: OK 200\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 100204,
+          "iterations": 3,
+          "name": "Compress::BWTDecode",
+          "size": 51
+        },
+        "elapsed_ns": 328448362.0,
+        "exitcode": 0,
+        "name": "Compress::BWTDecode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=326449\n@profile create-done ns=943752\n@profile prepare-done ns=136497526\n@profile warmup-1 ns=147989518\n@profile warmup-done ns=148372063\n@profile run-1 ns=159532892\n@profile run-2 ns=169291858\n@profile run-3 ns=180324619\nCompress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 56,
+          "iterations": 3,
+          "name": "Compress::HuffEncode",
+          "size": 52
+        },
+        "elapsed_ns": 248588717.0,
+        "exitcode": 0,
+        "name": "Compress::HuffEncode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=264723\n@profile create-done ns=791352\n@profile prepare-done ns=2944718\n@profile warmup-1 ns=26409650\n@profile warmup-done ns=26830917\n@profile run-1 ns=48486547\n@profile run-2 ns=71244183\n@profile run-3 ns=93323357\nCompress::HuffEncode: OK 56\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 100212,
+          "iterations": 3,
+          "name": "Compress::HuffDecode",
+          "size": 53
+        },
+        "elapsed_ns": 234116921.0,
+        "exitcode": 0,
+        "name": "Compress::HuffDecode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=295843\n@profile create-done ns=1023076\n@profile prepare-done ns=26527582\n@profile warmup-1 ns=39760276\n@profile warmup-done ns=40144432\n@profile run-1 ns=53831161\n@profile run-2 ns=68544840\n@profile run-3 ns=82259968\nCompress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 56,
+          "iterations": 3,
+          "name": "Compress::ArithEncode",
+          "size": 54
+        },
+        "elapsed_ns": 282038597.0,
+        "exitcode": 0,
+        "name": "Compress::ArithEncode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=283355\n@profile create-done ns=794195\n@profile prepare-done ns=3053296\n@profile warmup-1 ns=34411844\n@profile warmup-done ns=34997682\n@profile run-1 ns=64118617\n@profile run-2 ns=94980685\n@profile run-3 ns=124184359\nCompress::ArithEncode: OK 56\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 100220,
+          "iterations": 3,
+          "name": "Compress::ArithDecode",
+          "size": 55
+        },
+        "elapsed_ns": 404314702.0,
+        "exitcode": 0,
+        "name": "Compress::ArithDecode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=252964\n@profile create-done ns=752052\n@profile prepare-done ns=32799938\n@profile warmup-1 ns=88933345\n@profile warmup-done ns=89438719\n@profile run-1 ns=144798451\n@profile run-2 ns=200970253\n@profile run-3 ns=256575869\nCompress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 208,
+          "iterations": 3,
+          "name": "Compress::LZWEncode",
+          "size": 60
+        },
+        "elapsed_ns": 281146008.0,
+        "exitcode": 0,
+        "name": "Compress::LZWEncode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=248432\n@profile create-done ns=729349\n@profile prepare-done ns=3386122\n@profile warmup-1 ns=36076719\n@profile warmup-done ns=36480786\n@profile run-1 ns=66880616\n@profile run-2 ns=98037740\n@profile run-3 ns=128665888\nCompress::LZWEncode: OK 208\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 100244,
+          "iterations": 3,
+          "name": "Compress::LZWDecode",
+          "size": 61
+        },
+        "elapsed_ns": 280947182.0,
+        "exitcode": 0,
+        "name": "Compress::LZWDecode",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=248827\n@profile create-done ns=739811\n@profile prepare-done ns=35120440\n@profile warmup-1 ns=48327504\n@profile warmup-done ns=49227457\n@profile run-1 ns=60919037\n@profile run-2 ns=72847447\n@profile run-3 ns=86257997\nCompress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 7020,
+          "count": 10,
+          "iterations": 1,
+          "name": "Distance::Jaro",
+          "size": 5
+        },
+        "elapsed_ns": 186672681.0,
+        "exitcode": 0,
+        "name": "Distance::Jaro",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=239717\n@profile create-done ns=719178\n@profile prepare-done ns=12869519\n@profile warmup-1 ns=24858529\n@profile warmup-done ns=25239738\n@profile run-1 ns=36990624\nDistance::Jaro: OK 7020\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      },
+      {
+        "config": {
+          "checksum": 42,
+          "count": 2,
+          "iterations": 1,
+          "name": "Distance::NGram",
+          "size": 500
+        },
+        "elapsed_ns": 660498469.0,
+        "exitcode": 0,
+        "name": "Distance::NGram",
+        "runtime": "vm",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=519457\n@profile create-done ns=1681037\n@profile prepare-done ns=94994072\n@profile warmup-1 ns=298886537\n@profile warmup-done ns=299477627\n@profile run-1 ns=504360854\nDistance::NGram: OK 42\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 120000
+      }
+    ],
+    "runtime": "vm"
+  }
+}
