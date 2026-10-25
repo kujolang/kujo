@@ -1,4 +1,4 @@
-//! Fallible synchronous callback APIs. Always use the ordinary runtime bridge.
+//! Fallible synchronous callback APIs with operation-owned runtime state.
 use super::{Interpreter, Value};
 use crate::{builtins, runtime_limits};
 use std::sync::{Arc, Mutex};
@@ -7,8 +7,8 @@ fn callable(value: &Value) -> bool {
     matches!(value, Value::Function(..) | Value::BytecodeFunction { .. } | Value::NativeFunction(_))
 }
 
-/// One native operation owns the optional leaf VM. The fallback remains the
-/// ordinary bridge for callbacks with transitive effects or runtime state.
+/// One native operation owns a VM for its fixed synchronous bytecode callback.
+/// Interpreter-dependent callbacks borrow and return the caller's loader state.
 struct Callback<'a> {
     function: &'a Value,
     vm: Option<Box<crate::vm::VM>>,
@@ -28,7 +28,7 @@ impl<'a> Callback<'a> {
                     .vm_globals
                     .clone()
                     .unwrap_or_else(|| Arc::new(Mutex::new(interp.env.clone())));
-                self.vm = crate::vm::VM::reusable_leaf_callback(
+                self.vm = crate::vm::VM::reusable_sync_callback(
                     self.function,
                     globals,
                     interp.capability_policy().clone(),
@@ -41,7 +41,7 @@ impl<'a> Callback<'a> {
         }
         if let Some(vm) = self.vm.as_mut() {
             return vm
-                .call_reused_leaf_callback(self.function.clone(), args)
+                .call_reused_sync_callback(self.function.clone(), args, &mut interp.module_loader)
                 .unwrap_or_else(Value::Error);
         }
         match self.function {

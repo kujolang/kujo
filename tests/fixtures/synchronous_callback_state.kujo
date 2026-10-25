@@ -84,4 +84,14 @@ verify_leaf_capture()
 verify_leaf_capture()
 verify_callbacks()
 verify_callbacks()
+mut callback_marker := 0
+func observe_callback_marker(ignored) { return callback_marker }
+func compare_with_worker(a, b) {
+    callback_marker += 1
+    let observed := await parallel_map([0], observe_callback_marker, 1)
+    assert_equal(observed, [callback_marker])
+    return a - b
+}
+assert_equal(sort_by([4, 3, 2, 1], compare_with_worker), [1, 2, 3, 4])
+assert(callback_marker > 1, "workers must observe the current callback invocation")
 print("PASS")

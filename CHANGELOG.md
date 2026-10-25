@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain operation-owned VM hot state for synchronous sort and regex callbacks
+  that call helpers, create closures or import modules. Module-loader ownership,
+  current globals and temporary collection lifetimes are restored per call;
+  async and generator callbacks retain the existing fallback behavior.
+
 - Key native function caches and call-site guards by immutable bytecode identity
   instead of function names. Distinct same-name functions retain their own code
   and metadata after native compilation; bytecode mutation invalidates identity.

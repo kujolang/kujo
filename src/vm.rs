@@ -84,6 +84,8 @@ pub struct VM {
     /// Callback VMs resolve bytecode globals directly; defer the interpreter
     /// snapshot until an interpreter-dependent path actually needs it.
     interpreter_env_pending: bool,
+    /// Conservative by default; pure leaf callbacks can skip bridge state transfers.
+    callback_needs_interpreter_state: bool,
 
     /// Upvalues (captured variables) - indexed by upvalue ID
     /// These are heap-allocated shared references to captured variables
@@ -623,6 +625,7 @@ impl VM {
             chunk: BytecodeChunk::new(),
             interpreter: Interpreter::new_for_vm(),
             interpreter_env_pending: false,
+            callback_needs_interpreter_state: true,
             upvalues: Vec::new(),
             exception_handlers: Vec::new(),
             jit_compiler: None,
@@ -6382,10 +6385,9 @@ impl VM {
         result
     }
 
-    /// Reuse only fixed leaf callbacks. An explicit opcode allowlist keeps
-    /// imports, nested calls, closure creation and async/module state on the
-    /// fresh-VM bridge until their cache lifetimes are covered separately.
-    pub(crate) fn reusable_leaf_callback(
+    /// Reuse one VM for a fixed synchronous callback. Invocation boundaries
+    /// transfer the caller's loader and refresh lazy interpreter globals.
+    pub(crate) fn reusable_sync_callback(
         function: &Value,
         globals: Arc<Mutex<Environment>>,
         policy: RuntimeCapabilityPolicy,
@@ -6394,10 +6396,12 @@ impl VM {
         jit_requested: bool,
     ) -> Option<Self> {
         let Value::BytecodeFunction { chunk, .. } = function else { return None };
-        if chunk.is_async
-            || chunk.is_generator
-            || chunk.lexical_self.is_some()
-            || !chunk.instructions.iter().all(|op| {
+        if chunk.is_async || chunk.is_generator {
+            return None;
+        }
+        let mut vm = Self::with_task_policy(jit_requested, cancellation);
+        vm.callback_needs_interpreter_state = !(chunk.lexical_self.is_none()
+            && chunk.instructions.iter().all(|op| {
                 matches!(
                     op,
                     OpCode::LoadConst(_)
@@ -6439,11 +6443,7 @@ impl VM {
                         | OpCode::ReleaseDeadLocal(_)
                         | OpCode::ReleaseRebindLocal(_, _)
                 )
-            })
-        {
-            return None;
-        }
-        let mut vm = Self::with_task_policy(jit_requested, cancellation);
+            }));
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
         vm.set_callback_globals(globals);
@@ -6453,17 +6453,21 @@ impl VM {
         Some(vm)
     }
 
-    /// The operation owns this VM and one fixed leaf callback. Nested user
-    /// calls cannot enter it; failures end the operation and drop the VM.
-    pub(crate) fn call_reused_leaf_callback(
+    /// The operation owns this VM and one fixed callback. Nested operations
+    /// receive their own VMs; failures end this operation and drop its VM.
+    pub(crate) fn call_reused_sync_callback(
         &mut self,
         function: Value,
         args: &[Value],
+        module_loader: &mut crate::module::ModuleLoader,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         debug_assert!(self.call_frames.is_empty());
         debug_assert!(self.exception_handlers.is_empty());
         debug_assert_eq!(self.recursion_depth, 0);
+        if self.callback_needs_interpreter_state {
+            self.interpreter_env_pending = true;
+        }
         self.ip = 0;
         self.stack.clear();
         self.upvalues.clear();
@@ -6481,9 +6485,21 @@ impl VM {
         self.stack.extend_from_slice(args);
         self.stack.push(function);
         self.skip_execute_reset_once = true;
+        if self.callback_needs_interpreter_state {
+            std::mem::swap(&mut self.interpreter.module_loader, module_loader);
+        }
         let result = self.execute_preloaded_callback();
+        if self.callback_needs_interpreter_state {
+            std::mem::swap(&mut self.interpreter.module_loader, module_loader);
+        }
         self.stack.clear();
         self.jit_obj_stack.clear();
+        // A fresh bridge dropped this temporary environment after each call.
+        // Do not retain artificial collection aliases across invocations.
+        if self.callback_needs_interpreter_state && !self.interpreter_env_pending {
+            self.interpreter.env = Environment::new();
+            self.interpreter_env_pending = true;
+        }
         result
     }
 
@@ -10530,6 +10546,58 @@ mod tests {
         }
     }
 
+    #[test]
+    fn reused_callbacks_release_temporary_interpreter_collection_aliases() {
+        let mut chunk = BytecodeChunk::new();
+        chunk.name = Some("iterator_callback".into());
+        chunk.params = vec!["input".into()];
+        chunk.constants.push(Constant::Int(7));
+        chunk.emit(OpCode::LoadVar("input".into()));
+        // MakeIterator explicitly materializes the interpreter environment.
+        chunk.emit(OpCode::MakeIterator);
+        chunk.emit(OpCode::Pop);
+        chunk.emit(OpCode::LoadConst(0));
+        chunk.emit(OpCode::Return);
+        let function = Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        for jit in [false, true] {
+            if jit && !cfg!(feature = "runtime-jit") {
+                continue;
+            }
+            let retained = Arc::new(vec![Value::Int(99)]);
+            let input = Arc::new(vec![Value::Int(3)]);
+            let mut environment = Environment::new();
+            environment.define("retained".into(), Value::Array(retained.clone()));
+            let mut vm = VM::reusable_sync_callback(
+                &function,
+                Arc::new(Mutex::new(environment)),
+                RuntimeCapabilityPolicy::default(),
+                None,
+                None,
+                jit,
+            )
+            .unwrap();
+            assert!(vm.callback_needs_interpreter_state);
+            let mut loader = crate::module::ModuleLoader::default();
+            for _ in 0..3 {
+                let result = vm
+                    .call_reused_sync_callback(
+                        function.clone(),
+                        &[Value::Array(input.clone())],
+                        &mut loader,
+                    )
+                    .unwrap();
+                assert!(matches!(result, Value::Int(7)));
+                assert_eq!(Arc::strong_count(&retained), 2, "temporary global snapshot retained");
+                assert_eq!(Arc::strong_count(&input), 1, "callback argument retained");
+                assert!(vm.interpreter_env_pending);
+            }
+        }
+    }
+
     #[cfg(feature = "runtime-jit")]
     #[test]
     fn reused_callbacks_keep_one_inline_call_site() {
@@ -10547,11 +10615,22 @@ mod tests {
             captured: HashMap::new(),
             captured_binding_kinds: HashMap::new(),
         };
-        let mut vm = VM::new();
-        vm.set_jit_enabled(true);
+        let mut vm = VM::reusable_sync_callback(
+            &function,
+            Arc::new(Mutex::new(Environment::new())),
+            RuntimeCapabilityPolicy::default(),
+            None,
+            None,
+            true,
+        )
+        .unwrap();
+        assert!(!vm.callback_needs_interpreter_state);
+        let mut module_loader = crate::module::ModuleLoader::default();
         let mut wrapper_id = None;
         for _ in 0..200 {
-            let result = vm.call_reused_leaf_callback(function.clone(), &[Value::Int(5)]).unwrap();
+            let result = vm
+                .call_reused_sync_callback(function.clone(), &[Value::Int(5)], &mut module_loader)
+                .unwrap();
             assert!(matches!(result, Value::Int(6)));
             let id = vm.chunk.code_identity();
             assert_eq!(*wrapper_id.get_or_insert(id), id);
@@ -10559,7 +10638,7 @@ mod tests {
         }
         assert_eq!(vm.inline_cache.len(), 1);
         assert_eq!(vm.compiled_functions.len(), 1);
-        assert!(vm.call_reused_leaf_callback(function, &[]).is_err());
+        assert!(vm.call_reused_sync_callback(function, &[], &mut module_loader).is_err());
     }
 
     #[cfg(feature = "runtime-jit")]
