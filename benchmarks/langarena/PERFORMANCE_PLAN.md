@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Existing synchronous mapper global-write divergence requires contract review.**
+  [Reproducer evidence](parallel-global-policy-2026-10-24.json) on `d8d99d8`
+  shows VM/JIT worker global writes isolated from the parent, while interpreter
+  mappers update the parent global sequentially. Input array snapshots survive
+  in all modes. This predates worker JIT changes; no timing or cause-of-timeout
+  claim follows from it. SignalBox review: `sig_19be0a16-5350-4b21-b07e-3a7f397f15e3`.
+
 - **Try-exit fixes (`d8d99d8`) pass all 150 release test-size checksums.**
   [Audited results](try-exits-release-2026-10-24.json) retain the frozen binary,
   matching linker map, source revision and input hashes. This includes the VM

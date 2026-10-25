@@ -1,0 +1,12 @@
+mut marker := 7
+func work(input) {
+    mut values := input
+    values[0] += 1
+    marker += 1
+    return [values, marker]
+}
+let original := [10, 20]
+let result := await parallel_map([original, [30, 40], original], work, 2)
+print(to_json(result))
+print(to_json(original))
+print(marker)

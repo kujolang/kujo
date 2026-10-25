@@ -1,0 +1,24 @@
+{
+  "runtime_source_commit": "d8d99d8",
+  "binary_sha256": "d7b4a8915ee6df4d0d0b3b953f585e9bec754482f0c6f25261bb9966ab88b4b2",
+  "probe": "benchmarks/langarena/probes/parallel_global_policy.kujo",
+  "probe_sha256": "ce2ceeeef3efb11f425a2a520dfb83a21883984a0d94c36493aff1e829f9407d",
+  "reports": {
+    "vm": {
+      "stdout": "[[[11,20],8],[[31,40],8],[[11,20],8]]\n[10,20]\n7\n",
+      "stderr": "",
+      "exitcode": 0
+    },
+    "interpreter": {
+      "stdout": "[[[11,20],8],[[31,40],9],[[11,20],10]]\n[10,20]\n10\n",
+      "stderr": "",
+      "exitcode": 0
+    },
+    "jit": {
+      "stdout": "[[[11,20],8],[[31,40],8],[[11,20],8]]\n[10,20]\n7\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "exitcode": 0
+    }
+  },
+  "scope": "Existing synchronous parallel_map global-write divergence; input array value semantics preserved in all three modes. Intended cross-runtime global mutation contract requires review before changing behavior."
+}
