@@ -231,7 +231,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -242,17 +243,13 @@
         "process_peak_rss_bytes": 16973824
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
+        "name": "Binarytrees::Obj",
         "native_function_entries": 50,
         "native_boundary_entries": 50,
         "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -298,7 +295,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -309,17 +307,13 @@
         "process_peak_rss_bytes": 16617472
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
+        "name": "Binarytrees::Arena",
         "native_function_entries": 50,
         "native_boundary_entries": 50,
         "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -365,7 +359,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -376,17 +371,13 @@
         "process_peak_rss_bytes": 25653248
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 39,
-        "native_boundary_entries": 39,
+        "name": "Brainfuck::Array",
+        "native_function_entries": 42,
+        "native_boundary_entries": 42,
         "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -432,7 +423,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -443,17 +435,13 @@
         "process_peak_rss_bytes": 25952256
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 42,
-        "native_boundary_entries": 42,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Brainfuck::Recursion",
+        "native_function_entries": 72,
+        "native_boundary_entries": 72,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -499,7 +487,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -510,17 +499,13 @@
         "process_peak_rss_bytes": 18542592
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
+        "name": "Matmul::Single",
         "native_function_entries": 330,
-        "native_boundary_entries": 330,
-        "compile_attempts": 7,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "native_boundary_entries": 332,
+        "compile_attempts": 9,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -566,7 +551,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -577,17 +563,13 @@
         "process_peak_rss_bytes": 20275200
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 174,
-        "native_boundary_entries": 175,
-        "compile_attempts": 7,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Matmul::T4",
+        "native_function_entries": 358,
+        "native_boundary_entries": 361,
+        "compile_attempts": 57,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -633,7 +615,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -644,17 +627,13 @@
         "process_peak_rss_bytes": 21626880
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 182,
-        "native_boundary_entries": 183,
-        "compile_attempts": 7,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Matmul::T8",
+        "native_function_entries": 390,
+        "native_boundary_entries": 393,
+        "compile_attempts": 105,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -700,7 +679,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -711,17 +691,13 @@
         "process_peak_rss_bytes": 24354816
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 190,
-        "native_boundary_entries": 191,
-        "compile_attempts": 7,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Matmul::T16",
+        "native_function_entries": 438,
+        "native_boundary_entries": 441,
+        "compile_attempts": 201,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -767,7 +743,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -778,17 +755,13 @@
         "process_peak_rss_bytes": 18132992
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 9733,
-        "native_boundary_entries": 9734,
-        "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Base64::Encode",
+        "native_function_entries": 19497,
+        "native_boundary_entries": 19499,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -834,7 +807,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -845,17 +819,13 @@
         "process_peak_rss_bytes": 18124800
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 9733,
-        "native_boundary_entries": 9734,
-        "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Base64::Decode",
+        "native_function_entries": 19497,
+        "native_boundary_entries": 19499,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -901,7 +871,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -912,17 +883,13 @@
         "process_peak_rss_bytes": 16756736
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
+        "name": "Json::Generate",
         "native_function_entries": 5,
         "native_boundary_entries": 5,
         "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -968,7 +935,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -979,17 +947,13 @@
         "process_peak_rss_bytes": 18415616
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Json::ParseDom",
+        "native_function_entries": 32,
+        "native_boundary_entries": 32,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1035,7 +999,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1046,17 +1011,13 @@
         "process_peak_rss_bytes": 18149376
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Json::ParseMapping",
+        "native_function_entries": 32,
+        "native_boundary_entries": 32,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1102,7 +1063,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1113,17 +1075,13 @@
         "process_peak_rss_bytes": 17924096
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "CSV::Parse",
+        "native_function_entries": 843,
+        "native_boundary_entries": 843,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1169,7 +1127,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1180,17 +1139,13 @@
         "process_peak_rss_bytes": 17346560
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 4,
-        "native_boundary_entries": 4,
-        "compile_attempts": 2,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::Sieve",
+        "native_function_entries": 8,
+        "native_boundary_entries": 8,
+        "compile_attempts": 3,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1236,7 +1191,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1247,17 +1203,13 @@
         "process_peak_rss_bytes": 16801792
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 4,
-        "native_boundary_entries": 4,
-        "compile_attempts": 2,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::TextRaytracer",
+        "native_function_entries": 1109608,
+        "native_boundary_entries": 1109608,
+        "compile_attempts": 10,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1303,7 +1255,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1314,17 +1267,13 @@
         "process_peak_rss_bytes": 18644992
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::NeuralNet",
+        "native_function_entries": 156010,
+        "native_boundary_entries": 156010,
+        "compile_attempts": 8,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1370,7 +1319,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1381,17 +1331,13 @@
         "process_peak_rss_bytes": 23642112
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6190,
-        "native_boundary_entries": 6190,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::CacheSimulation",
+        "native_function_entries": 6193,
+        "native_boundary_entries": 6193,
+        "compile_attempts": 103,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1437,7 +1383,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1448,17 +1395,13 @@
         "process_peak_rss_bytes": 21680128
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 7,
-        "native_boundary_entries": 7,
-        "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::GameOfLife",
+        "native_function_entries": 611,
+        "native_boundary_entries": 611,
+        "compile_attempts": 7,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1504,7 +1447,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1515,17 +1459,13 @@
         "process_peak_rss_bytes": 19079168
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 4,
-        "native_boundary_entries": 4,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::Words",
+        "native_function_entries": 3537,
+        "native_boundary_entries": 3537,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1571,7 +1511,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1582,17 +1523,13 @@
         "process_peak_rss_bytes": 18014208
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 4,
-        "native_boundary_entries": 4,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Etc::LogParser",
+        "native_function_entries": 5,
+        "native_boundary_entries": 5,
+        "compile_attempts": 4,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1638,7 +1575,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1649,17 +1587,13 @@
         "process_peak_rss_bytes": 18571264
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 2,
-        "native_boundary_entries": 2,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Template::Regex",
+        "native_function_entries": 1106,
+        "native_boundary_entries": 1106,
+        "compile_attempts": 115,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1705,7 +1639,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1716,17 +1651,13 @@
         "process_peak_rss_bytes": 17993728
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 2,
-        "native_boundary_entries": 2,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Template::Parse",
+        "native_function_entries": 949,
+        "native_boundary_entries": 949,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1774,7 +1705,8 @@
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
         "task-workers-release-2026-10-24.json",
-        "task-workers-quicksort-production-2026-10-24.json"
+        "task-workers-quicksort-production-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1785,17 +1717,13 @@
         "process_peak_rss_bytes": 46120960
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 533800,
-        "native_boundary_entries": 533800,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Sort::Quick",
+        "native_function_entries": 900508,
+        "native_boundary_entries": 900508,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "passed unchanged full-size checksum at 44b2fb1; concurrent diagnostic run, not competitive timing acceptance",
       "latest_cpu_profile": {
@@ -1845,7 +1773,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1856,17 +1785,13 @@
         "process_peak_rss_bytes": 92352512
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 600001,
-        "native_boundary_entries": 600001,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Sort::Merge",
+        "native_function_entries": 999808,
+        "native_boundary_entries": 999808,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1912,7 +1837,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1923,17 +1849,13 @@
         "process_peak_rss_bytes": 58032128
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 1,
-        "native_boundary_entries": 1,
-        "compile_attempts": 2,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Sort::Self",
+        "native_function_entries": 99908,
+        "native_boundary_entries": 99908,
+        "compile_attempts": 3,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -1979,7 +1901,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1990,17 +1913,13 @@
         "process_peak_rss_bytes": 18776064
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Graph::BFS",
+        "native_function_entries": 118,
+        "native_boundary_entries": 118,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2046,7 +1965,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2057,17 +1977,13 @@
         "process_peak_rss_bytes": 18812928
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Graph::DFS",
+        "native_function_entries": 118,
+        "native_boundary_entries": 118,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2113,7 +2029,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2124,17 +2041,13 @@
         "process_peak_rss_bytes": 18468864
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 157,
-        "native_boundary_entries": 157,
-        "compile_attempts": 6,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Graph::AStar",
+        "native_function_entries": 506,
+        "native_boundary_entries": 506,
+        "compile_attempts": 8,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2180,7 +2093,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2191,17 +2105,13 @@
         "process_peak_rss_bytes": 18681856
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Hash::SHA256",
+        "native_function_entries": 8818,
+        "native_boundary_entries": 8818,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2247,7 +2157,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2258,17 +2169,13 @@
         "process_peak_rss_bytes": 18612224
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Hash::CRC32",
+        "native_function_entries": 907,
+        "native_boundary_entries": 907,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2314,7 +2221,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2325,17 +2233,13 @@
         "process_peak_rss_bytes": 17113088
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Calculator::Ast",
+        "native_function_entries": 4176,
+        "native_boundary_entries": 4176,
+        "compile_attempts": 12,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2381,7 +2285,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2392,17 +2297,13 @@
         "process_peak_rss_bytes": 18558976
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 122,
-        "native_boundary_entries": 122,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Calculator::Interpreter",
+        "native_function_entries": 25393,
+        "native_boundary_entries": 25394,
+        "compile_attempts": 115,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2448,7 +2349,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2459,17 +2361,13 @@
         "process_peak_rss_bytes": 58175488
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Maze::Generator",
+        "native_function_entries": 194699,
+        "native_boundary_entries": 194699,
+        "compile_attempts": 11,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2515,7 +2413,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2526,17 +2425,13 @@
         "process_peak_rss_bytes": 42663936
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Maze::BFS",
+        "native_function_entries": 131504,
+        "native_boundary_entries": 131504,
+        "compile_attempts": 12,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2582,7 +2477,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2593,17 +2489,13 @@
         "process_peak_rss_bytes": 42692608
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Maze::AStar",
+        "native_function_entries": 171704,
+        "native_boundary_entries": 171704,
+        "compile_attempts": 16,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2649,7 +2541,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2660,17 +2553,13 @@
         "process_peak_rss_bytes": 18280448
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 4,
-        "native_boundary_entries": 4,
-        "compile_attempts": 2,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "CLBG::Fannkuchredux",
+        "native_function_entries": 1359,
+        "native_boundary_entries": 1359,
+        "compile_attempts": 5,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2716,7 +2605,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2727,17 +2617,13 @@
         "process_peak_rss_bytes": 18341888
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "CLBG::Mandelbrot",
+        "native_function_entries": 423,
+        "native_boundary_entries": 423,
+        "compile_attempts": 4,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2783,7 +2669,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2794,17 +2681,13 @@
         "process_peak_rss_bytes": 16752640
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 7,
-        "native_boundary_entries": 7,
+        "name": "CLBG::Nbody",
+        "native_function_entries": 8,
+        "native_boundary_entries": 8,
         "compile_attempts": 5,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2850,7 +2733,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2861,17 +2745,13 @@
         "process_peak_rss_bytes": 18575360
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 51,
-        "native_boundary_entries": 51,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "CLBG::Spectralnorm",
+        "native_function_entries": 97153,
+        "native_boundary_entries": 97153,
+        "compile_attempts": 6,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2917,7 +2797,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2928,17 +2809,13 @@
         "process_peak_rss_bytes": 17006592
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 49,
-        "native_boundary_entries": 49,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::BWTEncode",
+        "native_function_entries": 50,
+        "native_boundary_entries": 57,
+        "compile_attempts": 4194,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -2984,7 +2861,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2995,17 +2873,13 @@
         "process_peak_rss_bytes": 17100800
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 37,
-        "native_boundary_entries": 37,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::BWTDecode",
+        "native_function_entries": 38,
+        "native_boundary_entries": 41,
+        "compile_attempts": 1023,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3051,7 +2925,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3062,17 +2937,13 @@
         "process_peak_rss_bytes": 17305600
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::HuffEncode",
+        "native_function_entries": 355,
+        "native_boundary_entries": 359,
+        "compile_attempts": 153,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3118,7 +2989,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3129,17 +3001,13 @@
         "process_peak_rss_bytes": 17895424
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::HuffDecode",
+        "native_function_entries": 374,
+        "native_boundary_entries": 379,
+        "compile_attempts": 154,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3185,7 +3053,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3196,17 +3065,13 @@
         "process_peak_rss_bytes": 18243584
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::ArithEncode",
+        "native_function_entries": 1057,
+        "native_boundary_entries": 1057,
+        "compile_attempts": 112,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3252,7 +3117,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3263,17 +3129,13 @@
         "process_peak_rss_bytes": 18432000
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::ArithDecode",
+        "native_function_entries": 3548,
+        "native_boundary_entries": 3548,
+        "compile_attempts": 111,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3319,7 +3181,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3330,17 +3193,13 @@
         "process_peak_rss_bytes": 18288640
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 5,
-        "native_boundary_entries": 5,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::LZWEncode",
+        "native_function_entries": 1586,
+        "native_boundary_entries": 1586,
+        "compile_attempts": 105,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3386,7 +3245,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3397,17 +3257,13 @@
         "process_peak_rss_bytes": 18481152
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 6,
-        "native_boundary_entries": 6,
-        "compile_attempts": 4,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Compress::LZWDecode",
+        "native_function_entries": 256,
+        "native_boundary_entries": 256,
+        "compile_attempts": 106,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3453,7 +3309,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3464,17 +3321,13 @@
         "process_peak_rss_bytes": 18743296
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 3,
-        "native_boundary_entries": 3,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Distance::Jaro",
+        "native_function_entries": 567,
+        "native_boundary_entries": 567,
+        "compile_attempts": 8,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     },
@@ -3520,7 +3373,8 @@
         "builtin-pool-release-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-native-census-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3531,17 +3385,13 @@
         "process_peak_rss_bytes": 18456576
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-24-path-append-release.json",
-        "runtime_source_sha256": {
-          "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
-          "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
-          "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
-          "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
-        },
-        "native_function_entries": 3,
-        "native_boundary_entries": 3,
-        "compile_attempts": 3,
-        "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+        "name": "Distance::NGram",
+        "native_function_entries": 7268,
+        "native_boundary_entries": 7268,
+        "compile_attempts": 7,
+        "artifact": "task-workers-native-census-2026-10-24.json",
+        "runtime_commit": "44b2fb1",
+        "limitation": "Entries may include harness/helpers; not native kernel time or competitive acceptance."
       },
       "production_jit": "pending for current candidate"
     }
