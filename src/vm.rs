@@ -850,6 +850,17 @@ impl VM {
         self.interpreter.module_loader.add_search_path(path);
     }
 
+    /// Set cancellation before the fresh VM can create a native-code cache.
+    pub(crate) fn with_task_policy(
+        jit_requested: bool,
+        cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+    ) -> Self {
+        let mut vm = Self::new();
+        vm.interpreter.task_cancellation = cancellation;
+        vm.set_jit_enabled(jit_requested);
+        vm
+    }
+
     /// Enable or disable JIT compilation
     pub fn set_jit_enabled(&mut self, enabled: bool) {
         self.jit_enabled = enabled;
@@ -6356,10 +6367,8 @@ impl VM {
         jit_requested: bool,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
-        let mut vm = VM::new();
+        let mut vm = VM::with_task_policy(jit_requested, cancellation);
         vm.cooperative_suspend_enabled = false;
-        vm.interpreter.task_cancellation = cancellation;
-        vm.set_jit_enabled(jit_requested);
         vm.set_capability_policy(policy);
         vm.set_callback_globals(globals);
         if let Some(output) = output {
@@ -6384,16 +6393,14 @@ impl VM {
         cancelled: Arc<std::sync::atomic::AtomicBool>,
         jit_requested: bool,
     ) -> Result<Value, String> {
-        let mut vm = VM::new();
+        let mut vm = VM::with_task_policy(jit_requested, Some(cancelled));
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
         vm.set_globals(Arc::new(Mutex::new(environment)));
         if let Some(output) = output {
             vm.interpreter.set_output(output);
         }
-        vm.interpreter.task_cancellation = Some(cancelled);
         vm.task_async_entry = true;
-        vm.set_jit_enabled(jit_requested);
         let mut wrapper = BytecodeChunk::new();
         wrapper.emit(OpCode::Call(args.len()));
         wrapper.emit(OpCode::Return);

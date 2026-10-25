@@ -729,7 +729,8 @@ fn try_parallel_map_with_bytecode(
     let mapper = mapper.clone();
     let base_env = interp.env.clone();
     let capability_policy = interp.capability_policy().clone();
-    let jit_requested = interp.vm_jit_requested && interp.task_cancellation.is_none();
+    let jit_requested = interp.vm_jit_requested;
+    let cancellation = interp.task_cancellation.clone();
     let elements = array.as_ref().clone();
     let (tx, rx) = tokio::sync::oneshot::channel();
     AsyncRuntime::spawn_task(async move {
@@ -740,6 +741,7 @@ fn try_parallel_map_with_bytecode(
             let mapper = mapper.clone();
             let worker_env = base_env.clone();
             let worker_policy = capability_policy.clone();
+            let worker_cancellation = cancellation.clone();
             tokio::task::spawn_blocking(move || {
                 (
                     idx,
@@ -749,6 +751,7 @@ fn try_parallel_map_with_bytecode(
                         worker_env,
                         worker_policy,
                         jit_requested,
+                        worker_cancellation,
                     ),
                 )
             })
@@ -802,6 +805,7 @@ fn execute_bytecode_mapper(
     mut environment: Environment,
     capability_policy: RuntimeCapabilityPolicy,
     jit_requested: bool,
+    cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
 ) -> Result<Value, String> {
     const MAPPER: &str = "__kujo_parallel_mapper";
     const ARGUMENT: &str = "__kujo_parallel_argument";
@@ -823,8 +827,7 @@ fn execute_bytecode_mapper(
         OpCode::ReturnNone,
     ];
 
-    let mut vm = VM::new();
-    vm.set_jit_enabled(jit_requested);
+    let mut vm = VM::with_task_policy(jit_requested, cancellation);
     vm.set_capability_policy(capability_policy);
     vm.set_globals(Arc::clone(&shared_environment));
     match vm.execute_until_suspend(wrapper)? {
@@ -5696,6 +5699,57 @@ mod tests {
                 assert!(msg.contains("expects string elements"));
             }
             _ => panic!("Expected Value::Error for invalid mapper element types"),
+        }
+    }
+
+    #[test]
+    fn parallel_bytecode_workers_inherit_parent_cancellation() {
+        use std::sync::atomic::AtomicBool;
+        for jit in [false, true] {
+            for cancel_before_dispatch in [true, false] {
+                let cancelled = Arc::new(AtomicBool::new(cancel_before_dispatch));
+                let mut interp = Interpreter::new();
+                interp.vm_jit_requested = jit;
+                interp.task_cancellation = Some(cancelled.clone());
+                let mapper = if cancel_before_dispatch {
+                    bytecode_increment_mapper()
+                } else {
+                    let mut chunk = BytecodeChunk::new();
+                    chunk.name = Some("cancelled_parallel_loop".into());
+                    chunk.params = vec!["x".into()];
+                    chunk.local_names = vec!["x".into()];
+                    chunk.local_count = 1;
+                    chunk.emit(OpCode::JumpBack(0));
+                    Value::BytecodeFunction {
+                        chunk,
+                        captured: HashMap::new(),
+                        captured_binding_kinds: HashMap::new(),
+                    }
+                };
+                let promise = try_parallel_map_with_bytecode(
+                    &mut interp,
+                    &mapper,
+                    &Arc::new(vec![Value::Int(1)]),
+                    Some(1),
+                )
+                .unwrap();
+                let canceller = std::thread::spawn(move || {
+                    if !cancel_before_dispatch {
+                        std::thread::sleep(Duration::from_millis(100));
+                        cancelled.store(true, Ordering::Release);
+                    }
+                });
+                let Value::Promise { receiver, .. } = promise else { panic!("expected promise") };
+                let receiver = receiver.lock().unwrap().clone();
+                let outcome = AsyncRuntime::block_on(async {
+                    tokio::time::timeout(Duration::from_secs(5), receiver).await
+                });
+                canceller.join().unwrap();
+                let result = outcome
+                    .expect("nested mapper ignored parent cancellation")
+                    .expect("mapper completion channel closed");
+                assert!(result.unwrap_err().contains("Task was cancelled"));
+            }
         }
     }
 

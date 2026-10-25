@@ -56,6 +56,7 @@ fn async_detached_and_callback_work_inherit_jit_only_when_requested() {
     for body in [
         "async func worker(n) { return kernel(n) } assert_equal(await parallel_map([20000,20000], worker, 2), [199990000,199990000])",
         "assert_equal(map([20000,20000], kernel), [199990000,199990000])",
+        "func parent() { return await parallel_map([20000,20000],kernel,2) } assert_equal(await await_task(spawn_task(parent)),[199990000,199990000])",
         "func replacement(c) { assert_equal(kernel(20000),199990000) return \"x\" } assert_equal(regex_replace_with(\"aa\",\"a\",replacement),\"xx\")",
         "shared_set(\"done\",0) spawn { func inner(n) { mut sum := 0 mut i := 0 while i < n { sum += i i += 1 } return sum } let value := inner(20000) shared_set(\"done\",value) } while shared_get(\"done\") == 0 {} assert_equal(shared_get(\"done\"),199990000)",
     ] {
@@ -149,5 +150,41 @@ fn native_task_cancellation_crosses_callback_bridges_and_recovers_admission() {
                 }
             }
         }
+    }
+}
+
+#[test]
+fn nested_parallel_workers_preserve_values_capabilities_and_errors() {
+    let source = r#"
+        func mapper(input) {
+            mut changed := input
+            changed[0] += 1
+            return changed
+        }
+        func denied(input) { read_file("must-not-open") return input }
+        func fail(input) { throw("nested mapper failure") }
+        func parent() {
+            let original := [10,20]
+            assert_equal(await parallel_map([original,[30,40],original],mapper,2),
+                [[11,20],[31,40],[11,20]])
+            assert_equal(original,[10,20])
+            mut caught := false
+            try { await parallel_map([1],denied,1) }
+            except error { caught = contains(error.message,"Capability denied") == 1 }
+            assert(caught,"nested worker must retain capability denial")
+            caught = false
+            try { await parallel_map([1],fail,1) }
+            except error { caught = contains(error.message,"nested mapper failure") == 1 }
+            assert(caught,"nested mapper failure must reach parent")
+            return original
+        }
+        assert_equal(await await_task(spawn_task(parent)),[10,20])
+        print("PASS")
+    "#;
+    for mode in ["vm", "interpreter", "jit"] {
+        if mode == "jit" && !cfg!(feature = "runtime-jit") {
+            continue;
+        }
+        run(source, mode);
     }
 }

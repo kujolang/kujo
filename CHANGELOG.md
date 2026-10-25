@@ -25,8 +25,8 @@ This file records user-visible changes to Kujo, following
   native frames on cancellation.
 
 - Pass explicit JIT opt-in to isolated synchronous `parallel_map` bytecode
-  workers. VM/interpreter modes remain opt-out; nested synchronous parallel
-  workers inside cancellable tasks still await cancellation-token propagation.
+  workers. VM/interpreter modes remain opt-out. Nested synchronous parallel
+  workers inherit the enclosing task cancellation token before native compilation.
 
 - Unwind exited `try` handlers before `break`, `continue` and `return`, while
   retaining handlers around loops that remain active after those exits.
