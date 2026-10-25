@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Discard VM exception handlers when their function returns from inside `try`,
+  preserving the caller's active handlers. Later errors now retain their intended
+  diagnostics instead of jumping into a returned function's catch block.
+
 - Transfer native callback arguments in order with one exact-sized allocation,
   preserving owned values, evaluation order and malformed-stack error behavior.
 

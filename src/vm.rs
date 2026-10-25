@@ -4738,6 +4738,7 @@ impl VM {
                     let return_value = self.stack.pop().ok_or("Stack underflow in return")?;
 
                     if let Some(frame) = self.call_frames.pop() {
+                        self.discard_returned_frame_handlers();
                         // Pop from function call stack for error reporting
                         self.function_call_stack.pop();
 
@@ -4765,6 +4766,7 @@ impl VM {
                 OpCode::ReturnNone => {
                     measurement::add(Metric::Returns, 1);
                     if let Some(frame) = self.call_frames.pop() {
+                        self.discard_returned_frame_handlers();
                         self.function_call_stack.pop();
                         // Decrement recursion depth
                         if self.recursion_depth > 0 {
@@ -6393,6 +6395,19 @@ impl VM {
             Value::Error(message) => Err(message),
             Value::ErrorObject { message, .. } => Err(message),
             other => Ok(other),
+        }
+    }
+
+    // A return can bypass EndTry. Only handlers belonging to the frame that
+    // just returned (or deeper frames) are expired; the caller's handlers stay
+    // available for its next error. Depth order makes the common empty case O(1).
+    fn discard_returned_frame_handlers(&mut self) {
+        while self
+            .exception_handlers
+            .last()
+            .is_some_and(|handler| handler.frame_offset > self.call_frames.len())
+        {
+            self.exception_handlers.pop();
         }
     }
 
@@ -9069,6 +9084,7 @@ impl VM {
                                 self.stack.pop().ok_or("Stack underflow in return")?;
 
                             if let Some(frame) = self.call_frames.pop() {
+                                self.discard_returned_frame_handlers();
                                 // Pop from function call stack
                                 self.function_call_stack.pop();
                                 self.recursion_depth = self.recursion_depth.saturating_sub(1);
@@ -9090,6 +9106,7 @@ impl VM {
                         OpCode::ReturnNone => {
                             measurement::add(Metric::Returns, 1);
                             if let Some(frame) = self.call_frames.pop() {
+                                self.discard_returned_frame_handlers();
                                 self.function_call_stack.pop();
                                 self.recursion_depth = self.recursion_depth.saturating_sub(1);
                                 self.ip = saved_ip;
