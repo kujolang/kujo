@@ -7,6 +7,17 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Native cancellation primitive (`4a2d3c8`).**
+  [Validation and cost probe](native-cancellation-2026-10-24.json) cover compiled
+  loops, functions and direct-argument calls with bounded cancellation tests,
+  1,099 library and 34 integration passes, formatting and minimal-feature checks.
+  Immutable compiler policy emits backward-edge checks only for cancellable
+  execution. An unconditional candidate slowed all seven debug pairs and was
+  rejected; the specialized candidate has mixed local timings (4/7 faster).
+  These are process totals under concurrent load, not release acceptance.
+  Cancellable task JIT is still disabled: policy propagation, native-worker
+  cancellation/admission tests and release performance remain pending.
+
 - **Synchronous worker JIT opt-in (`e20dc03`).**
   [Coverage and validation](worker-jit-policy-2026-10-24.json) show two native
   entries from two synchronous workers, previously zero. VM/interpreter remain

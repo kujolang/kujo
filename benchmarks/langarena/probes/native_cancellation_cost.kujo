@@ -1,0 +1,15 @@
+func kernel(n) {
+    mut sum := 0
+    mut i := 0
+    while i < n { sum += i i += 1 }
+    return sum
+}
+assert_equal(kernel(20000), 199990000)
+mut total := 0
+mut iteration := 0
+while iteration < 100 {
+    total += kernel(20000)
+    iteration += 1
+}
+assert_equal(total, 19999000000)
+print("native cancellation cost checksum verified")
