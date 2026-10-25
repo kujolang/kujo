@@ -253,7 +253,8 @@
         "native_boundary_entries": 50,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Binarytrees::Arena",
@@ -319,7 +320,8 @@
         "native_boundary_entries": 50,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Brainfuck::Array",
@@ -385,7 +387,8 @@
         "native_boundary_entries": 39,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Brainfuck::Recursion",
@@ -451,7 +454,8 @@
         "native_boundary_entries": 42,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Matmul::Single",
@@ -517,7 +521,8 @@
         "native_boundary_entries": 330,
         "compile_attempts": 7,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Matmul::T4",
@@ -583,7 +588,8 @@
         "native_boundary_entries": 175,
         "compile_attempts": 7,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Matmul::T8",
@@ -649,7 +655,8 @@
         "native_boundary_entries": 183,
         "compile_attempts": 7,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Matmul::T16",
@@ -715,7 +722,8 @@
         "native_boundary_entries": 191,
         "compile_attempts": 7,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Base64::Encode",
@@ -781,7 +789,8 @@
         "native_boundary_entries": 9734,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Base64::Decode",
@@ -847,7 +856,8 @@
         "native_boundary_entries": 9734,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Json::Generate",
@@ -913,7 +923,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Json::ParseDom",
@@ -979,7 +990,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Json::ParseMapping",
@@ -1045,7 +1057,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "CSV::Parse",
@@ -1111,7 +1124,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::Sieve",
@@ -1177,7 +1191,8 @@
         "native_boundary_entries": 4,
         "compile_attempts": 2,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::TextRaytracer",
@@ -1243,7 +1258,8 @@
         "native_boundary_entries": 4,
         "compile_attempts": 2,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::NeuralNet",
@@ -1309,7 +1325,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::CacheSimulation",
@@ -1375,7 +1392,8 @@
         "native_boundary_entries": 6190,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::GameOfLife",
@@ -1441,7 +1459,8 @@
         "native_boundary_entries": 7,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::Words",
@@ -1507,7 +1526,8 @@
         "native_boundary_entries": 4,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Etc::LogParser",
@@ -1573,7 +1593,8 @@
         "native_boundary_entries": 4,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Template::Regex",
@@ -1639,7 +1660,8 @@
         "native_boundary_entries": 2,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Template::Parse",
@@ -1705,7 +1727,8 @@
         "native_boundary_entries": 2,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Sort::Quick",
@@ -1714,7 +1737,7 @@
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "44b2fb1 frozen release test-size checksum passed; fallback allowed. Native kernel time and full production coverage are not certified.",
-      "cpu_profile": "Mapped post-fix sample at50f8357: allocation/value movement, indexed reads/root bookkeeping and environment lookup remain visible. Counts include startup/warmup/idle threads, not CPU percentages.",
+      "cpu_profile": "44b2fb1 matched linker-map sample: indexed reads/writes, root bookkeeping and Value cloning; dynamic code attribution incomplete",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "Seven rotating rounds at test size: JIT median3.449s, Goose.022s, Rust.019s; approximately157x/182x. Shared thermally throttled host; not controlled acceptance.",
@@ -1750,7 +1773,8 @@
         "quicksort-production-profile-2026-10-24.json",
         "consuming-release-2026-10-24.json",
         "try-exits-release-2026-10-24.json",
-        "task-workers-release-2026-10-24.json"
+        "task-workers-release-2026-10-24.json",
+        "task-workers-quicksort-production-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1773,7 +1797,7 @@
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
       },
-      "production_jit": "passed at aa30071: unchanged400000 elements/50 iterations/checksum61757772. One preceding-release case; latest4e42bd2/full-suite acceptance pending.",
+      "production_jit": "passed unchanged full-size checksum at 44b2fb1; concurrent diagnostic run, not competitive timing acceptance",
       "latest_cpu_profile": {
         "evidence": "quicksort-production-profile-2026-10-24.json",
         "limit": "Partial-symbol warmup sample; idle threads and concurrent compilation; not CPU percentages or timing acceptance."
@@ -1843,7 +1867,8 @@
         "native_boundary_entries": 600001,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Sort::Self",
@@ -1909,7 +1934,8 @@
         "native_boundary_entries": 1,
         "compile_attempts": 2,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Graph::BFS",
@@ -1975,7 +2001,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Graph::DFS",
@@ -2041,7 +2068,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Graph::AStar",
@@ -2107,7 +2135,8 @@
         "native_boundary_entries": 157,
         "compile_attempts": 6,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Hash::SHA256",
@@ -2173,7 +2202,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Hash::CRC32",
@@ -2239,7 +2269,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Calculator::Ast",
@@ -2305,7 +2336,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Calculator::Interpreter",
@@ -2371,7 +2403,8 @@
         "native_boundary_entries": 122,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Maze::Generator",
@@ -2437,7 +2470,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Maze::BFS",
@@ -2503,7 +2537,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Maze::AStar",
@@ -2569,7 +2604,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "CLBG::Fannkuchredux",
@@ -2635,7 +2671,8 @@
         "native_boundary_entries": 4,
         "compile_attempts": 2,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "CLBG::Mandelbrot",
@@ -2701,7 +2738,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "CLBG::Nbody",
@@ -2767,7 +2805,8 @@
         "native_boundary_entries": 7,
         "compile_attempts": 5,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "CLBG::Spectralnorm",
@@ -2833,7 +2872,8 @@
         "native_boundary_entries": 51,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::BWTEncode",
@@ -2899,7 +2939,8 @@
         "native_boundary_entries": 49,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::BWTDecode",
@@ -2965,7 +3006,8 @@
         "native_boundary_entries": 37,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::HuffEncode",
@@ -3031,7 +3073,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::HuffDecode",
@@ -3097,7 +3140,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::ArithEncode",
@@ -3163,7 +3207,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::ArithDecode",
@@ -3229,7 +3274,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::LZWEncode",
@@ -3295,7 +3341,8 @@
         "native_boundary_entries": 5,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Compress::LZWDecode",
@@ -3361,7 +3408,8 @@
         "native_boundary_entries": 6,
         "compile_attempts": 4,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Distance::Jaro",
@@ -3427,7 +3475,8 @@
         "native_boundary_entries": 3,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     },
     {
       "name": "Distance::NGram",
@@ -3493,7 +3542,8 @@
         "native_boundary_entries": 3,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
-      }
+      },
+      "production_jit": "pending for current candidate"
     }
   ],
   "initial_audit": [

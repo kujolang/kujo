@@ -1,0 +1,397 @@
+{
+  "runtime_commit": "44b2fb1",
+  "build_checkout_commit": "dd48f2e6bf64ac2f8ee52f8721cda45393bb0b3d",
+  "binary_sha256": "b10709b6d28da5eff281f308a9e3794a97139bcfae943ddae9893b6945e01eb9",
+  "map_sha256": "7d289e2052039081f113e20e84db765e3a8e343734faac5adada4fd59675bca0",
+  "sample_sha256": "26a4487859e91ede0bfcfa30137f215f7b10867bcde27188e7dc2e77f7627416",
+  "binary_uuid": "UUID: C6EBAB18-D8A9-3762-9D58-80376E4497F8 (x86_64) /tmp/kujo-task-workers-release-2026-10-24/kujo",
+  "preferred_text_address": "0x100000000",
+  "sample_header": "Analysis of sampling kujo (pid 7751) every 1 millisecond\nProcess:         kujo [7751]\nPath:            /private/tmp/*/kujo\nLoad Address:    0x10e43d000\nIdentifier:      kujo\nVersion:         0\nCode Type:       X86-64\nPlatform:        macOS\nParent Process:  kujo [7745]\nTarget Type:     live task\n\nDate/Time:       2026-10-24 23:14:58.990 -0400\nLaunch Time:     2026-10-24 23:14:33.625 -0400\nOS Version:      macOS 26.6.2 (25G83)\nReport Version:  7\nAnalysis Tool:   /usr/bin/sample\n\nPhysical footprint:         71.0M\nPhysical footprint (peak):  123.2M\nIdle exit:                  untracked\n----\n\n",
+  "mapping_method": "Only live linker symbols; sampled image offset plus verified preferred __TEXT address must lie inside symbol start/size range. Linker map read byte-preservingly as Latin-1; relevant symbols are ASCII. Dynamically generated code is not mapped.",
+  "mapped_top_of_stack": [
+    {
+      "samples": 93,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x3ea"
+    },
+    {
+      "samples": 32,
+      "symbol": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "offset": "0x14e"
+    },
+    {
+      "samples": 27,
+      "symbol": "__RNvNtNtNtCsfJuDB63p7eE_3std3sys3env4unix13env_read_lock.llvm.7297527715975214666",
+      "offset": "0x47"
+    },
+    {
+      "samples": 27,
+      "symbol": "__ZN5alloc3vec16Vec$LT$T$C$A$GT$14extend_trusted17h5cb0e3ccdef3ad80E",
+      "offset": "0xd4"
+    },
+    {
+      "samples": 26,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x4e3"
+    },
+    {
+      "samples": 24,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x423"
+    },
+    {
+      "samples": 21,
+      "symbol": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "offset": "0x8ec"
+    },
+    {
+      "samples": 17,
+      "symbol": "__ZN5alloc4sync16Arc$LT$T$C$A$GT$8make_mut17h7d570137aee79b97E",
+      "offset": "0x23"
+    },
+    {
+      "samples": 16,
+      "symbol": "__RNCNvNtNtNtCsfJuDB63p7eE_3std3sys3env4unix6getenv0B9_.llvm.7297527715975214666",
+      "offset": "0xbb"
+    },
+    {
+      "samples": 16,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x418"
+    },
+    {
+      "samples": 15,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x426"
+    },
+    {
+      "samples": 15,
+      "symbol": "_jit_load_operand",
+      "offset": "0x3d2"
+    },
+    {
+      "samples": 14,
+      "symbol": "_jit_duplicate_operand",
+      "offset": "0x8c"
+    },
+    {
+      "samples": 13,
+      "symbol": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "offset": "0x76"
+    },
+    {
+      "samples": 13,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x71"
+    },
+    {
+      "samples": 12,
+      "symbol": "_jit_release_operand",
+      "offset": "0x11d"
+    },
+    {
+      "samples": 12,
+      "symbol": "__ZN5alloc3vec16Vec$LT$T$C$A$GT$14extend_trusted17h5cb0e3ccdef3ad80E",
+      "offset": "0xc2"
+    },
+    {
+      "samples": 11,
+      "symbol": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9d4a1b7165e36018E",
+      "offset": "0x406"
+    },
+    {
+      "samples": 10,
+      "symbol": "__ZN4kujo12native_owned15NativeCallRoots17current_value_mut17h3f0b6c4c07be5443E",
+      "offset": "0xca"
+    },
+    {
+      "samples": 9,
+      "symbol": "_jit_load_operand",
+      "offset": "0x1d8"
+    },
+    {
+      "samples": 9,
+      "symbol": "_jit_release_operand",
+      "offset": "0x120"
+    },
+    {
+      "samples": 9,
+      "symbol": "_jit_take_parameter",
+      "offset": "0x2eb"
+    },
+    {
+      "samples": 8,
+      "symbol": "__RNvNtCsfJuDB63p7eE_3std3env4__var",
+      "offset": "0x68"
+    },
+    {
+      "samples": 8,
+      "symbol": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "offset": "0x273"
+    },
+    {
+      "samples": 8,
+      "symbol": "__ZN71_$LT$core..hash..sip..Hasher$LT$S$GT$$u20$as$u20$core..hash..Hasher$GT$5write17h30460f5ec8535b61E",
+      "offset": "0xfa"
+    },
+    {
+      "samples": 7,
+      "symbol": "_jit_take_parameter",
+      "offset": "0x336"
+    },
+    {
+      "samples": 7,
+      "symbol": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "offset": "0x17"
+    },
+    {
+      "samples": 7,
+      "symbol": "__ZN4kujo2vm2VM22call_function_from_jit17hfa80fec8fd4c69eeE",
+      "offset": "0x373"
+    },
+    {
+      "samples": 7,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x6"
+    },
+    {
+      "samples": 7,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x3be"
+    },
+    {
+      "samples": 6,
+      "symbol": "_jit_duplicate_operand",
+      "offset": "0x8f"
+    },
+    {
+      "samples": 6,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x92"
+    },
+    {
+      "samples": 6,
+      "symbol": "_jit_indexed_write",
+      "offset": "0xaa"
+    },
+    {
+      "samples": 6,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x4e6"
+    },
+    {
+      "samples": 6,
+      "symbol": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "offset": "0x3a"
+    },
+    {
+      "samples": 6,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0xa"
+    },
+    {
+      "samples": 6,
+      "symbol": "__ZN4kujo3jit18invoke_compiled_fn17ha415c12b2702a52eE",
+      "offset": "0xa3"
+    },
+    {
+      "samples": 6,
+      "symbol": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "offset": "0x39f"
+    },
+    {
+      "samples": 6,
+      "symbol": "__ZN71_$LT$core..hash..sip..Hasher$LT$S$GT$$u20$as$u20$core..hash..Hasher$GT$5write17h30460f5ec8535b61E",
+      "offset": "0x108"
+    },
+    {
+      "samples": 5,
+      "symbol": "_jit_indexed_write",
+      "offset": "0x18f"
+    },
+    {
+      "samples": 5,
+      "symbol": "_jit_load_operand",
+      "offset": "0x3d5"
+    },
+    {
+      "samples": 5,
+      "symbol": "_jit_load_operand",
+      "offset": "0x4d9"
+    },
+    {
+      "samples": 5,
+      "symbol": "_jit_load_operand",
+      "offset": "0x50b"
+    },
+    {
+      "samples": 5,
+      "symbol": "__RNCNvNtNtNtCsfJuDB63p7eE_3std3sys3env4unix6getenv0B9_.llvm.7297527715975214666",
+      "offset": "0x8"
+    },
+    {
+      "samples": 5,
+      "symbol": "__RNvNtCsfJuDB63p7eE_3std3env4__var",
+      "offset": "0x71"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned15NativeCallRoots17current_value_mut17h3f0b6c4c07be5443E",
+      "offset": "0x6d"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9d4a1b7165e36018E",
+      "offset": "0x2ae"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9d4a1b7165e36018E",
+      "offset": "0x3c5"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "offset": "0xc9"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "offset": "0xdd"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "offset": "0x151"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo2vm2VM17set_indexed_value17h6d3d4629840d5724E",
+      "offset": "0x29a"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x0"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo3jit12indexed_read17hac2dc6f14718a4f5E",
+      "offset": "0x523"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN4kujo3jit9VMContext17take_return_value17h2465802c3861970cE",
+      "offset": "0x162"
+    },
+    {
+      "samples": 5,
+      "symbol": "__ZN71_$LT$core..hash..sip..Hasher$LT$S$GT$$u20$as$u20$core..hash..Hasher$GT$5write17h30460f5ec8535b61E",
+      "offset": "0x9"
+    }
+  ],
+  "collapsed_top_of_stack": "__ulock_wait  (in libsystem_kernel.dylib)        5718\n        _platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)        346\n        __findenv_locked  (in libsystem_c.dylib)        251\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2bc9a  [0x10f168c9a]        93\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdcb4e  [0x10f019b4e]        32\n        DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)        28\n        _platform_memcmp$VARIANT$Base  (in libsystem_platform.dylib)        28\n        ???  (in kujo)  load address 0x10e43d000 + 0x156b317  [0x10f9a8317]        27\n        ???  (in kujo)  load address 0x10e43d000 + 0xe2c294  [0x10f269294]        27\n        ???  (in kujo)  load address 0x10e43d000 + 0x1072c23  [0x10f4afc23]        26\n        ???  (in kujo)  load address 0x10e43d000 + 0x1072b63  [0x10f4afb63]        24\n        os_unfair_lock_unlock  (in libsystem_platform.dylib)        22\n        ???  (in kujo)  load address 0x10e43d000 + 0xf5c11c  [0x10f39911c]        21\n        ???  (in kujo)  load address 0x10e43d000 + 0xe32f33  [0x10f26ff33]        17\n        DYLD-STUB$$memcpy  (in kujo)        17\n        ???  (in kujo)  load address 0x10e43d000 + 0x154971b  [0x10f98671b]        16\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2bcc8  [0x10f168cc8]        16\n        pthread_mutex_unlock  (in libsystem_pthread.dylib)        16\n        ???  (in kujo)  load address 0x10e43d000 + 0x1072b66  [0x10f4afb66]        15\n        ???  (in kujo)  load address 0x10e43d000 + 0x1074292  [0x10f4b1292]        15\n        ???  (in kujo)  load address 0x10e43d000 + 0x106f2dc  [0x10f4ac2dc]        14\n        ???  (in kujo)  load address 0x10e43d000 + 0x902626  [0x10ed3f626]        13\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2b921  [0x10f168921]        13\n        pthread_mutex_lock  (in libsystem_pthread.dylib)        13\n        ???  (in kujo)  load address 0x10e43d000 + 0x107c7cd  [0x10f4b97cd]        12\n        ???  (in kujo)  load address 0x10e43d000 + 0xe2c282  [0x10f269282]        12\n        os_unfair_lock_lock_with_options  (in libsystem_platform.dylib)        12\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdc4d6  [0x10f0194d6]        11\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdb42a  [0x10f01842a]        10\n        tiny_malloc_should_clear  (in libsystem_malloc.dylib)        10\n        ???  (in kujo)  load address 0x10e43d000 + 0x1074098  [0x10f4b1098]        9\n        ???  (in kujo)  load address 0x10e43d000 + 0x107c7d0  [0x10f4b97d0]        9\n        ???  (in kujo)  load address 0x10e43d000 + 0x107e30b  [0x10f4bb30b]        9\n        ???  (in kujo)  load address 0x10e43d000 + 0x1563cf8  [0x10f9a0cf8]        8\n        ???  (in kujo)  load address 0x10e43d000 + 0x902823  [0x10ed3f823]        8\n        ???  (in kujo)  load address 0x10e43d000 + 0xf5ebda  [0x10f39bbda]        8\n        free_tiny  (in libsystem_malloc.dylib)        8\n        ???  (in <unknown binary>)  [0x7fbd75f4802e]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0x107e356  [0x10f4bb356]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0x9025c7  [0x10ed3f5c7]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0xcf5433  [0x10f132433]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2b8b6  [0x10f1688b6]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2bc6e  [0x10f168c6e]        7\n        ???  (in kujo)  load address 0x10e43d000 + 0x106f2df  [0x10f4ac2df]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0x10727d2  [0x10f4af7d2]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0x10727ea  [0x10f4af7ea]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0x1072c26  [0x10f4afc26]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0x9025ea  [0x10ed3f5ea]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2b8ba  [0x10f1688ba]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0xd4cc83  [0x10f189c83]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0xf5bbcf  [0x10f398bcf]        6\n        ???  (in kujo)  load address 0x10e43d000 + 0xf5ebe8  [0x10f39bbe8]        6\n        ???  (in <unknown binary>)  [0x7fbd75f47974]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x10728cf  [0x10f4af8cf]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x1074295  [0x10f4b1295]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x1074399  [0x10f4b1399]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x10743cb  [0x10f4b13cb]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x1549668  [0x10f986668]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0x1563d01  [0x10f9a0d01]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdb3cd  [0x10f0183cd]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdc37e  [0x10f01937e]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdc495  [0x10f019495]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdc9a9  [0x10f0199a9]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdcadd  [0x10f019add]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xbdcb51  [0x10f019b51]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xce181a  [0x10f11e81a]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2b8b0  [0x10f1688b0]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xd2bdd3  [0x10f168dd3]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xd4f1d2  [0x10f18c1d2]        5\n        ???  (in kujo)  load address 0x10e43d000 + 0xf5eae9  [0x10f39bae9]        5\n        getenv  (in libsystem_c.dylib)        5",
+  "indexed_read_disassembly": "\n/tmp/kujo-task-workers-release-2026-10-24/kujo:\tfile format mach-o 64-bit x86-64\n\nDisassembly of section __TEXT,__text:\n\n0000000100000a40 <__text>:\n100d2bc60: 0f 85 8e 00 00 00           \tjne\t0x100d2bcf4 <__text+0xd2b2b4>\n100d2bc66: 48 8b 40 08                 \tmovq\t0x8(%rax), %rax\n100d2bc6a: 48 8b 50 20                 \tmovq\t0x20(%rax), %rdx\n100d2bc6e: 4c 89 e1                    \tmovq\t%r12, %rcx\n100d2bc71: 4d 85 e4                    \ttestq\t%r12, %r12\n100d2bc74: 79 08                       \tjns\t0x100d2bc7e <__text+0xd2b23e>\n100d2bc76: 48 89 d1                    \tmovq\t%rdx, %rcx\n100d2bc79: 4c 01 e1                    \taddq\t%r12, %rcx\n100d2bc7c: 78 76                       \tjs\t0x100d2bcf4 <__text+0xd2b2b4>\n100d2bc7e: 48 39 d1                    \tcmpq\t%rdx, %rcx\n100d2bc81: 73 71                       \tjae\t0x100d2bcf4 <__text+0xd2b2b4>\n100d2bc83: 48 8b 40 18                 \tmovq\t0x18(%rax), %rax\n100d2bc87: 48 89 ca                    \tmovq\t%rcx, %rdx\n100d2bc8a: 48 c1 e2 07                 \tshlq\t$0x7, %rdx\n100d2bc8e: 48 8d 0c ca                 \tleaq\t(%rdx,%rcx,8), %rcx\n100d2bc92: 48 8d 34 08                 \tleaq\t(%rax,%rcx), %rsi\n100d2bc96: 48 8b 04 08                 \tmovq\t(%rax,%rcx), %rax\n100d2bc9a: 4d 8d 65 cd                 \tleaq\t-0x33(%r13), %r12\n100d2bc9e: 48 89 c1                    \tmovq\t%rax, %rcx\n100d2bca1: 4c 31 e1                    \txorq\t%r12, %rcx\n100d2bca4: 48 85 c0                    \ttestq\t%rax, %rax\n100d2bca7: b8 28 00 00 00              \tmovl\t$0x28, %eax\n100d2bcac: 48 0f 48 c1                 \tcmovsq\t%rcx, %rax\n100d2bcb0: 48 ff c8                    \tdecq\t%rax\n100d2bcb3: 48 83 f8 05                 \tcmpq\t$0x5, %rax\n100d2bcb7: 0f 87 e2 02 00 00           \tja\t0x100d2bf9f <__text+0xd2b55f>\n100d2bcbd: 48 8d 0d c4 03 00 00        \tleaq\t0x3c4(%rip), %rcx       ## 0x100d2c088 <__text+0xd2b648>\n100d2bcc4: 48 63 04 81                 \tmovslq\t(%rcx,%rax,4), %rax\n100d2bcc8: 48 01 c8                    \taddq\t%rcx, %rax\n100d2bccb: ff e0                       \tjmpq\t*%rax\n100d2bccd: 4c 8b 7e 08                 \tmovq\t0x8(%rsi), %r15\n100d2bcd1: 45 31 f6                    \txorl\t%r14d, %r14d\n100d2bcd4: e9 a1 00 00 00              \tjmp\t0x100d2bd7a <__text+0xd2b33a>\n100d2bcd9: 48 83 c0 20                 \taddq\t$0x20, %rax\n100d2bcdd: 48 89 85 68 fd ff ff        \tmovq\t%rax, -0x298(%rbp)\n100d2bce4: 4c 89 ad 60 fd ff ff        \tmovq\t%r13, -0x2a0(%rbp)\n100d2bceb: 4d 85 ff                    \ttestq\t%r15, %r15\n100d2bcee: 0f 84 65 ff ff ff           \tje\t0x100d2bc59 <__text+0xd2b219>\n",
+  "input_sha256": {
+    "port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77"
+  },
+  "production": {
+    "binary": "/tmp/kujo-task-workers-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 61757772,
+          "iterations": 50,
+          "name": "Sort::Quick",
+          "size": 400000
+        },
+        "elapsed_ns": 319317611466.0,
+        "exitcode": 0,
+        "measurements": {
+          "path": "/tmp/kujo-task-workers-quicksort-production-2026-10-24/result.json.case-23.measurements.json",
+          "report": {
+            "counters": {
+              "bytecode_compile_wall_ns": 22003420,
+              "detached_tasks_observed": 0,
+              "jit_cache_lookup_hits": 0,
+              "jit_cache_lookup_misses": 0,
+              "jit_call_dispatches": 59108302,
+              "jit_compile_entries": 6,
+              "jit_compile_inclusive_wall_ns": 95579755,
+              "jit_native_boundary_entries": 59107908,
+              "jit_native_function_entries": 59107908,
+              "jit_owned_argument_dispatches": 39138751,
+              "jit_type_guard_failures": 0,
+              "jit_type_guard_passes": 0,
+              "promise_pending_polls": 0,
+              "promise_polls": 0,
+              "promise_ready_polls": 0,
+              "scheduler_rounds": 0,
+              "source_parse_wall_ns": 17762397,
+              "task_bodies_exited": 0,
+              "task_cancellations_published": 0,
+              "task_completions_published": 0,
+              "task_queue_wall_ns": 0,
+              "tasks_admission_rejected": 0,
+              "tasks_admitted": 0,
+              "tasks_started": 0,
+              "vm_call_opcodes": 975,
+              "vm_capture_cells_created": 0,
+              "vm_capture_value_shallow_bytes": 0,
+              "vm_closures_created": 162,
+              "vm_entries": 1,
+              "vm_generator_resume_attempts": 0,
+              "vm_generator_state_drops": 0,
+              "vm_generator_state_shallow_bytes": 0,
+              "vm_generator_states_created": 0,
+              "vm_inclusive_wall_ns": 319199872928,
+              "vm_native_call_opcodes": 0,
+              "vm_return_opcodes": 392,
+              "vm_setup_wall_ns": 374527
+            },
+            "cpu_seconds": 314.863557,
+            "outcome": "success",
+            "process_peak_rss_bytes": 135077888,
+            "runtime": "vm",
+            "runtime_version": "1.9.0",
+            "schema": "kujo.runtime-measurements/v1",
+            "scope": "process",
+            "snapshot_consistency": "independent_counters",
+            "unsupported": [
+              "total_heap_bytes",
+              "total_value_allocations",
+              "total_value_drops",
+              "retained_capture_graph_bytes",
+              "provider_usage",
+              "provider_cost"
+            ],
+            "waited_for_detached": false,
+            "wall_ns": 319237357867
+          },
+          "sha256": "824c79457184ecc18128e0f8b8668dacbf3a895515b65797528ed0bf20ae646f",
+          "status": "available"
+        },
+        "name": "Sort::Quick",
+        "runtime": "jit",
+        "status": "passed",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=107863\n@profile create-done ns=332961\n@profile prepare-done ns=3212303255\n@profile warmup-1 ns=8571435958\n@profile warmup-2 ns=13629996717\n@profile warmup-3 ns=18443097318\n@profile warmup-4 ns=23402128338\n@profile warmup-5 ns=30027376223\n@profile warmup-6 ns=35304536206\n@profile warmup-7 ns=40351592032\n@profile warmup-8 ns=45563135646\n@profile warmup-9 ns=51016219226\n@profile warmup-10 ns=56356987076\n@profile warmup-done ns=56357202564\n@profile run-1 ns=61943352786\n@profile run-5 ns=82729037746\n@profile run-10 ns=108437827245\n@profile run-15 ns=134462904583\n@profile run-20 ns=160249693360\n@profile run-25 ns=185953808163\n@profile run-30 ns=211711772631\n@profile run-35 ns=239153823526\n@profile run-40 ns=266513023800\n@profile run-45 ns=293200841665\n@profile run-50 ns=319183772703\nSort::Quick: OK 61757772\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 900000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "interpretation": [
+    "Production JIT QuickSort passed the unchanged 400000-element, 50-iteration checksum.",
+    "Matched indexed_read +0x3ea sample lies immediately after element-tag load; disassembly shows index*136 address arithmetic, bounds checks and generic scalar-tag dispatch.",
+    "Native indexed writes, root removal/encoding and Value cloning also appear. Samples identify investigation targets, not call counts or time percentages.",
+    "Native entries include harness/helpers; counts do not measure native kernel time.",
+    "Concurrent checksums and old production sweep plus this profiler prevent a controlled speed comparison. No claim against baseline, Goose or Rust."
+  ],
+  "raw_sample_path": "/tmp/kujo-task-workers-quicksort-production-2026-10-24/sample.txt"
+}
