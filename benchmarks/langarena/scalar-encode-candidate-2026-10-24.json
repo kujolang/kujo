@@ -1,0 +1,309 @@
+{
+  "candidate": "integer-first scalar encode check",
+  "decision": "not adopted; mixed/noisy helper-level timing and Boolean-path slowdown do not clear performance acceptance",
+  "runtime_unchanged": true,
+  "scope": "Optimized standalone Rust wrappers using the actual 136-byte Kujo Value type from an existing debug/non-LTO rlib. Setup/drop are outside timed loops. Generic fallback is inlined equally in both wrappers. 2000000 operations per variant/case, seven alternating pairs. This is not the full indexed-read helper or an end-to-end benchmark.",
+  "source": "benchmarks/langarena/probes/scalar_encode_candidate.rs",
+  "source_sha256": "189565f0964419fc74373d167d8edd3b31e18bb3bdb7413e346acf9ce5286c61",
+  "compiled_probe_source_sha256": "4b9b89b05fd3ffeac394283e811fef887480c034127062e595391ec5063fbd4e",
+  "binary_sha256": "685c1657ab10338512c66e96896485be3709a1baa2128356cdca86ca188b810e",
+  "library_path": "target/debug/deps/libkujo-f2954510d2a1ce69.rlib",
+  "library_sha256": "14ceaa00536130063e37914302be0747f084b56a374ed59fff82f4c7705045df",
+  "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2\n",
+  "semantic_checks": "Int extrema, signed zero, NaN payload, both Booleans, null, string and array matched baseline encoding; per-case accumulated results matched. Not a full runtime regression gate.",
+  "summary": {
+    "integer": {
+      "median_after_over_before": 0.9127723696156562,
+      "favorable_pairs": 4,
+      "pairs": 7
+    },
+    "float": {
+      "median_after_over_before": 1.0010648807993323,
+      "favorable_pairs": 3,
+      "pairs": 7
+    },
+    "boolean": {
+      "median_after_over_before": 1.0185149589174018,
+      "favorable_pairs": 1,
+      "pairs": 7
+    },
+    "null": {
+      "median_after_over_before": 0.9251622197146864,
+      "favorable_pairs": 4,
+      "pairs": 7
+    },
+    "owned": {
+      "median_after_over_before": 0.8597693525983711,
+      "favorable_pairs": 4,
+      "pairs": 7
+    },
+    "mixed": {
+      "median_after_over_before": 0.8557262690585163,
+      "favorable_pairs": 4,
+      "pairs": 7
+    }
+  },
+  "raw": {
+    "value_size": 136,
+    "samples": [
+      {
+        "round": 1,
+        "case": "integer",
+        "before_ns": 10962954,
+        "after_ns": 9429710
+      },
+      {
+        "round": 1,
+        "case": "float",
+        "before_ns": 9764097,
+        "after_ns": 9657937
+      },
+      {
+        "round": 1,
+        "case": "boolean",
+        "before_ns": 10026954,
+        "after_ns": 9942199
+      },
+      {
+        "round": 1,
+        "case": "null",
+        "before_ns": 10115935,
+        "after_ns": 9010628
+      },
+      {
+        "round": 1,
+        "case": "owned",
+        "before_ns": 9755150,
+        "after_ns": 8387179
+      },
+      {
+        "round": 1,
+        "case": "mixed",
+        "before_ns": 10968659,
+        "after_ns": 9002660
+      },
+      {
+        "round": 2,
+        "case": "integer",
+        "before_ns": 9411479,
+        "after_ns": 10657018
+      },
+      {
+        "round": 2,
+        "case": "float",
+        "before_ns": 9453658,
+        "after_ns": 10429972
+      },
+      {
+        "round": 2,
+        "case": "boolean",
+        "before_ns": 9398229,
+        "after_ns": 11297606
+      },
+      {
+        "round": 2,
+        "case": "null",
+        "before_ns": 9009102,
+        "after_ns": 9765401
+      },
+      {
+        "round": 2,
+        "case": "owned",
+        "before_ns": 8232477,
+        "after_ns": 8928682
+      },
+      {
+        "round": 2,
+        "case": "mixed",
+        "before_ns": 9146678,
+        "after_ns": 10342239
+      },
+      {
+        "round": 3,
+        "case": "integer",
+        "before_ns": 10468128,
+        "after_ns": 9555018
+      },
+      {
+        "round": 3,
+        "case": "float",
+        "before_ns": 10139163,
+        "after_ns": 10149960
+      },
+      {
+        "round": 3,
+        "case": "boolean",
+        "before_ns": 10194244,
+        "after_ns": 10373885
+      },
+      {
+        "round": 3,
+        "case": "null",
+        "before_ns": 10193274,
+        "after_ns": 9430432
+      },
+      {
+        "round": 3,
+        "case": "owned",
+        "before_ns": 10141349,
+        "after_ns": 8512444
+      },
+      {
+        "round": 3,
+        "case": "mixed",
+        "before_ns": 11645318,
+        "after_ns": 9533796
+      },
+      {
+        "round": 4,
+        "case": "integer",
+        "before_ns": 10002995,
+        "after_ns": 10877970
+      },
+      {
+        "round": 4,
+        "case": "float",
+        "before_ns": 9927554,
+        "after_ns": 10923500
+      },
+      {
+        "round": 4,
+        "case": "boolean",
+        "before_ns": 10157215,
+        "after_ns": 11904089
+      },
+      {
+        "round": 4,
+        "case": "null",
+        "before_ns": 9629088,
+        "after_ns": 10257255
+      },
+      {
+        "round": 4,
+        "case": "owned",
+        "before_ns": 8559741,
+        "after_ns": 9382461
+      },
+      {
+        "round": 4,
+        "case": "mixed",
+        "before_ns": 9535549,
+        "after_ns": 10682672
+      },
+      {
+        "round": 5,
+        "case": "integer",
+        "before_ns": 10937529,
+        "after_ns": 9750770
+      },
+      {
+        "round": 5,
+        "case": "float",
+        "before_ns": 10338022,
+        "after_ns": 9788957
+      },
+      {
+        "round": 5,
+        "case": "boolean",
+        "before_ns": 10104862,
+        "after_ns": 10258142
+      },
+      {
+        "round": 5,
+        "case": "null",
+        "before_ns": 10168401,
+        "after_ns": 9316833
+      },
+      {
+        "round": 5,
+        "case": "owned",
+        "before_ns": 10248233,
+        "after_ns": 8572891
+      },
+      {
+        "round": 5,
+        "case": "mixed",
+        "before_ns": 10966317,
+        "after_ns": 9367433
+      },
+      {
+        "round": 6,
+        "case": "integer",
+        "before_ns": 9766833,
+        "after_ns": 11117417
+      },
+      {
+        "round": 6,
+        "case": "float",
+        "before_ns": 9780124,
+        "after_ns": 11147188
+      },
+      {
+        "round": 6,
+        "case": "boolean",
+        "before_ns": 9885550,
+        "after_ns": 11767773
+      },
+      {
+        "round": 6,
+        "case": "null",
+        "before_ns": 9306138,
+        "after_ns": 10133574
+      },
+      {
+        "round": 6,
+        "case": "owned",
+        "before_ns": 8510023,
+        "after_ns": 9468946
+      },
+      {
+        "round": 6,
+        "case": "mixed",
+        "before_ns": 9495833,
+        "after_ns": 10662210
+      },
+      {
+        "round": 7,
+        "case": "integer",
+        "before_ns": 11071073,
+        "after_ns": 10072869
+      },
+      {
+        "round": 7,
+        "case": "float",
+        "before_ns": 10301507,
+        "after_ns": 9886947
+      },
+      {
+        "round": 7,
+        "case": "boolean",
+        "before_ns": 10066671,
+        "after_ns": 10253055
+      },
+      {
+        "round": 7,
+        "case": "null",
+        "before_ns": 10597979,
+        "after_ns": 9348144
+      },
+      {
+        "round": 7,
+        "case": "owned",
+        "before_ns": 10167014,
+        "after_ns": 8498997
+      },
+      {
+        "round": 7,
+        "case": "mixed",
+        "before_ns": 10987870,
+        "after_ns": 9402609
+      }
+    ]
+  },
+  "limitations": [
+    "Shared host and concurrent census/production work; no controlled timing acceptance.",
+    "First attempt to link release LTO archives failed due Apple LLVM17 versus Rust LLVM22; existing non-LTO library used instead.",
+    "Assembly shortening alone is insufficient justification for a runtime change.",
+    "No claim about suite speed, Goose, Rust or production throughput."
+  ]
+}
