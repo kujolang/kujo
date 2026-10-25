@@ -1,0 +1,40 @@
+{
+  "runtime_commit": "ea0ea3e",
+  "scope": "Unchanged production Sieve case in JIT mode; not all50 or other runtimes",
+  "binary_input_hashes": {
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+    "/tmp/kujo-nonleaf-production-2026-10-25/frozen/benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "/tmp/kujo-nonleaf-production-2026-10-25/kujo-timed": "399aa7bfbfa80551a138cf6046b4a539cc3aeab2f1fd4b3cca2948a2d7136e80",
+    "/tmp/kujo-nonleaf-release-2026-10-25/kujo": "36ae7ad967dfafbb125701ec97153a66e669c6d86e757b000e41d27a7e858505"
+  },
+  "results": [
+    {
+      "config": {
+        "checksum": 1042248060,
+        "iterations": 270,
+        "limit": 3000000,
+        "name": "Etc::Sieve"
+      },
+      "elapsed_ns": 1605530664552.0,
+      "exitcode": 0,
+      "name": "Etc::Sieve",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n     1605.55 real      1491.35 user       101.45 sys\n           471728128  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n            37816124  page reclaims\n                   0  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                   4  voluntary context switches\n              261050  involuntary context switches\n       8476623338052  instructions retired\n       4146064184338  cycles elapsed\n           463347712  peak memory footprint\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=131426\n@profile create-done ns=368593\n@profile prepare-done ns=562998\n@profile warmup-1 ns=4891534983\n@profile warmup-5 ns=25100700417\n@profile warmup-10 ns=51198843317\n@profile warmup-15 ns=77309929094\n@profile warmup-20 ns=102990148147\n@profile warmup-25 ns=129343895893\n@profile warmup-30 ns=156947128000\n@profile warmup-35 ns=183532618212\n@profile warmup-40 ns=211345823084\n@profile warmup-45 ns=238301647711\n@profile warmup-50 ns=265733942603\n@profile warmup-54 ns=287797661728\n@profile warmup-done ns=287797870266\n@profile run-1 ns=293292425376\n@profile run-27 ns=428358894693\n@profile run-54 ns=562958282870\n@profile run-81 ns=679991011764\n@profile run-108 ns=795763000689\n@profile run-135 ns=944643763599\n@profile run-162 ns=1099589871496\n@profile run-189 ns=1247918368079\n@profile run-216 ns=1364346323728\n@profile run-243 ns=1474374370874\n@profile run-270 ns=1605427656159\nEtc::Sieve: OK 1042248060\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 3600000
+    }
+  ],
+  "maximum_resident_bytes": {
+    "Etc::Sieve": 471728128
+  },
+  "limitations": [
+    "Uncontrolled local laptop and one sample per case; not stable competitive rankings.",
+    "Process elapsed includes startup, setup, warmup and benchmark iterations.",
+    "JIT may fall back to VM; native-time coverage is not certified.",
+    "Full all50 JIT, VM and interpreter production verification remains incomplete; both Brainfuck JIT cases timed out."
+  ]
+}
