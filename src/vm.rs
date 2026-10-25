@@ -8,8 +8,8 @@ use crate::ast::Pattern;
 use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, CaptureSource, Constant, OpCode};
 use crate::http_request_utils;
 use crate::interpreter::{
-    BindingKind, CallableArity, DenseIntDict, DenseIntDictInt, DictMap, Environment, IntDictMap,
-    Interpreter, NativeCapability, RuntimeCapabilityPolicy, Value,
+    BindingKind, DenseIntDict, DenseIntDictInt, DictMap, Environment, IntDictMap, Interpreter,
+    NativeCapability, RuntimeCapabilityPolicy, Value,
 };
 use crate::jit::{
     invoke_compiled_fn, invoke_compiled_fn_with_arg, CompiledFn, CompiledFnInfo, JitCompiler,
@@ -134,6 +134,7 @@ pub struct VM {
     /// Empty buffers only; active calls own their argument storage exclusively.
     #[cfg(feature = "runtime-jit")]
     native_argument_pool: Vec<Vec<Value>>,
+    frame_slot_pool: Vec<FrameSlotStorage>,
 
     /// Maximum recursion depth observed (for profiling)
     max_recursion_depth: usize,
@@ -370,6 +371,13 @@ pub struct GeneratorState {
 
 type CapturedSlot = (Arc<Mutex<Value>>, BytecodeBindingKind);
 
+#[derive(Default)]
+struct FrameSlotStorage {
+    values: Vec<Value>,
+    kinds: Vec<BytecodeBindingKind>,
+    initialized: Vec<bool>,
+}
+
 /// Call frame for function calls
 #[derive(Debug, Clone)]
 pub(crate) struct CallFrame {
@@ -581,7 +589,7 @@ impl VM {
 
         if let Some(handler) = self.exception_handlers.pop() {
             while self.call_frames.len() > handler.frame_offset {
-                if let Some(frame) = self.call_frames.pop() {
+                if let Some(frame) = self.pop_call_frame() {
                     self.function_call_stack.pop();
                     if self.recursion_depth > 0 {
                         self.recursion_depth -= 1;
@@ -642,6 +650,7 @@ impl VM {
             native_root_pool: Vec::new(),
             #[cfg(feature = "runtime-jit")]
             native_argument_pool: Vec::new(),
+            frame_slot_pool: Vec::new(),
             max_recursion_depth: 0,
             inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
@@ -4070,8 +4079,8 @@ impl VM {
                     // Stack layout: [... arg1, arg2, ..., argN, function]
                     let function = self.stack.pop().ok_or("Stack underflow in Call")?;
 
-                    // Collect arguments
-                    let mut args = Vec::new();
+                    // Reserve once: growing a Value vector repeatedly is costly at hot call sites.
+                    let mut args = Vec::with_capacity(arg_count.min(self.stack.len()));
                     for _ in 0..arg_count {
                         args.push(self.stack.pop().ok_or("Stack underflow in Call args")?);
                     }
@@ -4084,15 +4093,18 @@ impl VM {
                             captured: _,
                             captured_binding_kinds: _,
                         } => {
-                            let raw_args = args;
-                            let args = self.prepare_bytecode_call_args(chunk, raw_args.clone())?;
+                            let raw_arg_count = args.len();
+                            // Only legacy methods need a second view of the receiver
+                            // for lexical field binding. Ordinary arguments move once.
+                            let raw_args = Self::legacy_receiver_args(chunk, &args);
+                            let args = self.prepare_bytecode_call_args(chunk, args)?;
 
                             self.record_jit_dispatch(&args);
                             // Track function calls for JIT compilation
                             if self.jit_enabled
                                 && !chunk.is_generator
                                 && !chunk.is_async
-                                && raw_args.len() == args.len()
+                                && raw_arg_count == args.len()
                                 && !Self::requires_closure_vm(chunk)
                                 // Scalar arguments use the immediate ABI; other parameters move
                                 // from named callee bindings into frame-local owned roots.
@@ -4705,7 +4717,7 @@ impl VM {
                                                     func_name
                                                 );
                                             }
-                                            for arg in &raw_args {
+                                            for arg in raw_args.as_ref().unwrap_or(&args) {
                                                 self.stack.push(arg.clone());
                                             }
                                             self.stack.push(function.clone());
@@ -4724,9 +4736,11 @@ impl VM {
                                 }
                             }
 
-                            if let Err(error) =
-                                self.call_bytecode_function(function, raw_args, args)
-                            {
+                            if let Err(error) = self.call_bytecode_function(
+                                function,
+                                raw_args.unwrap_or_default(),
+                                args,
+                            ) {
                                 self.throw_runtime_value(Value::Error(error))?;
                             }
                         }
@@ -4767,7 +4781,7 @@ impl VM {
                     measurement::add(Metric::Returns, 1);
                     let return_value = self.stack.pop().ok_or("Stack underflow in return")?;
 
-                    if let Some(frame) = self.call_frames.pop() {
+                    if let Some(frame) = self.pop_call_frame() {
                         self.discard_returned_frame_handlers();
                         // Pop from function call stack for error reporting
                         self.function_call_stack.pop();
@@ -4795,7 +4809,7 @@ impl VM {
 
                 OpCode::ReturnNone => {
                     measurement::add(Metric::Returns, 1);
-                    if let Some(frame) = self.call_frames.pop() {
+                    if let Some(frame) = self.pop_call_frame() {
                         self.discard_returned_frame_handlers();
                         self.function_call_stack.pop();
                         // Decrement recursion depth
@@ -5224,13 +5238,6 @@ impl VM {
                     // Pop index and value from stack
                     let index = self.stack.pop().ok_or("Stack underflow")?;
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-                    let binding_name = self
-                        .chunk
-                        .local_names
-                        .get(slot)
-                        .cloned()
-                        .unwrap_or_else(|| format!("<local:{}>", slot));
-
                     let frame =
                         self.call_frames.last_mut().ok_or("IndexSetInPlace requires call frame")?;
 
@@ -5240,6 +5247,12 @@ impl VM {
                         .copied()
                         .unwrap_or(BytecodeBindingKind::Mutable);
                     if !matches!(kind, BytecodeBindingKind::Mutable) {
+                        let binding_name = self
+                            .chunk
+                            .local_names
+                            .get(slot)
+                            .cloned()
+                            .unwrap_or_else(|| format!("<local:{}>", slot));
                         self.throw_runtime_value(Value::Error(Self::local_mutation_error(
                             kind,
                             &binding_name,
@@ -5644,7 +5657,7 @@ impl VM {
                             } else {
                                 // Early return from current function with Err(...)
                                 let early_return = Value::Result { is_ok: false, value };
-                                if let Some(frame) = self.call_frames.pop() {
+                                if let Some(frame) = self.pop_call_frame() {
                                     self.function_call_stack.pop();
                                     if self.recursion_depth > 0 {
                                         self.recursion_depth -= 1;
@@ -5667,7 +5680,7 @@ impl VM {
                                 // Early return from current function with None
                                 let early_return =
                                     Value::Option { is_some: false, value: Box::new(Value::Null) };
-                                if let Some(frame) = self.call_frames.pop() {
+                                if let Some(frame) = self.pop_call_frame() {
                                     self.function_call_stack.pop();
                                     if self.recursion_depth > 0 {
                                         self.recursion_depth -= 1;
@@ -6605,6 +6618,46 @@ impl VM {
         }
     }
 
+    fn take_frame_slots(&mut self, chunk: &BytecodeChunk) -> FrameSlotStorage {
+        let mut storage = self.frame_slot_pool.pop().unwrap_or_default();
+        debug_assert!(storage.values.is_empty());
+        storage.values.resize(chunk.local_count, Value::Null);
+        storage.kinds.extend_from_slice(&chunk.local_binding_kinds);
+        if storage.kinds.len() < chunk.local_count {
+            storage.kinds.resize(chunk.local_count, BytecodeBindingKind::Mutable);
+        }
+        storage.initialized.resize(chunk.local_count, false);
+        storage
+    }
+
+    fn pop_call_frame(&mut self) -> Option<CallFrame> {
+        let mut frame = self.call_frames.pop()?;
+        // Suspended and recursive frames never enter this pool. Drop every Value
+        // before retaining storage, including values holding closures/resources.
+        if self.frame_slot_pool.len() < 32
+            && (1..=256).contains(&frame.local_slots.capacity())
+            && frame.local_slot_binding_kinds.capacity() <= 256
+            && frame.local_slot_initialized.capacity() <= 256
+        {
+            let mut storage = FrameSlotStorage {
+                values: std::mem::take(&mut frame.local_slots),
+                kinds: std::mem::take(&mut frame.local_slot_binding_kinds),
+                initialized: std::mem::take(&mut frame.local_slot_initialized),
+            };
+            storage.values.clear();
+            storage.kinds.clear();
+            storage.initialized.clear();
+            self.frame_slot_pool.push(storage);
+        }
+        Some(frame)
+    }
+
+    fn legacy_receiver_args(chunk: &BytecodeChunk, args: &[Value]) -> Option<Vec<Value>> {
+        (chunk.name.as_deref().is_some_and(|name| name.contains('.'))
+            && !chunk.params.first().is_some_and(|name| name == "self"))
+        .then(|| args.to_vec())
+    }
+
     fn prepare_bytecode_call_args(
         &self,
         chunk: &BytecodeChunk,
@@ -6612,29 +6665,24 @@ impl VM {
     ) -> Result<Vec<Value>, String> {
         let param_names = &chunk.params;
 
-        let callable_name = chunk.name.clone().unwrap_or_else(|| "<lambda>".to_string());
-        let is_method = chunk.name.as_deref().map(|name| name.contains('.')).unwrap_or(false)
+        let is_method = chunk.name.as_deref().is_some_and(|name| name.contains('.'))
             && matches!(args.first(), Some(Value::Struct { .. }));
-
-        if is_method {
-            let has_self_param = param_names.first().map(|p| p == "self").unwrap_or(false);
-            let external_params: Vec<String> = if has_self_param {
-                param_names.iter().skip(1).cloned().collect()
-            } else {
-                param_names.clone()
-            };
-
-            let arity = CallableArity::exact(callable_name, external_params);
-            let external_args_count = args.len().saturating_sub(1);
-            arity.validate(external_args_count)?;
-
-            // Compatibility: allow legacy methods compiled without explicit self.
-            if !has_self_param && args.len() == param_names.len() + 1 {
-                args.remove(0);
-            }
-        } else {
-            let arity = CallableArity::exact(callable_name, param_names.clone());
-            arity.validate(args.len())?;
+        let has_self_param = param_names.first().is_some_and(|p| p == "self");
+        let expected = param_names.len() - usize::from(is_method && has_self_param);
+        let received = args.len() - usize::from(is_method);
+        // Successful exact-arity checks need only counts. Keep the existing error
+        // contract, but do not clone the callable name or every parameter string.
+        if received != expected {
+            return Err(format!(
+                "{} expects {} arguments, got {}",
+                chunk.name.as_deref().unwrap_or("<lambda>"),
+                expected,
+                received
+            ));
+        }
+        // Compatibility: legacy methods expose receiver fields as lexical names.
+        if is_method && !has_self_param {
+            args.remove(0);
         }
 
         Ok(args)
@@ -6728,16 +6776,11 @@ impl VM {
                 };
             let param_names = &chunk.params;
 
-            let mut local_slots = vec![Value::Null; chunk.local_count];
-            let mut local_slot_binding_kinds =
-                if chunk.local_binding_kinds.len() < chunk.local_count {
-                    let mut kinds = chunk.local_binding_kinds.clone();
-                    kinds.resize(chunk.local_count, BytecodeBindingKind::Mutable);
-                    kinds
-                } else {
-                    chunk.local_binding_kinds.clone()
-                };
-            let mut local_slot_initialized = vec![false; chunk.local_count];
+            let FrameSlotStorage {
+                values: mut local_slots,
+                kinds: mut local_slot_binding_kinds,
+                initialized: mut local_slot_initialized,
+            } = self.take_frame_slots(&chunk);
 
             if let Some(fields) = compat_receiver_fields {
                 for (field_name, field_value) in Arc::unwrap_or_clone(fields) {
@@ -8948,8 +8991,13 @@ impl VM {
                 let call_frame_depth = self.call_frames.len();
 
                 // Set up the call (creates call frame, switches chunk, resets IP)
-                let prepared_args = self.prepare_bytecode_call_args(chunk, args.clone())?;
-                self.call_bytecode_function(function, args, prepared_args)?;
+                let receiver_args = Self::legacy_receiver_args(chunk, &args);
+                let prepared_args = self.prepare_bytecode_call_args(chunk, args)?;
+                self.call_bytecode_function(
+                    function,
+                    receiver_args.unwrap_or_default(),
+                    prepared_args,
+                )?;
 
                 // Execute until this function returns
                 // (call_frames will pop back to call_frame_depth)
@@ -9255,7 +9303,7 @@ impl VM {
                             let return_value =
                                 self.stack.pop().ok_or("Stack underflow in return")?;
 
-                            if let Some(frame) = self.call_frames.pop() {
+                            if let Some(frame) = self.pop_call_frame() {
                                 self.discard_returned_frame_handlers();
                                 // Pop from function call stack
                                 self.function_call_stack.pop();
@@ -9277,7 +9325,7 @@ impl VM {
 
                         OpCode::ReturnNone => {
                             measurement::add(Metric::Returns, 1);
-                            if let Some(frame) = self.call_frames.pop() {
+                            if let Some(frame) = self.pop_call_frame() {
                                 self.discard_returned_frame_handlers();
                                 self.function_call_stack.pop();
                                 self.recursion_depth = self.recursion_depth.saturating_sub(1);
@@ -10705,6 +10753,66 @@ mod tests {
             // Invalid arity remains a language error after native promotion.
             assert!(vm.call_function_from_jit(function, vec![]).is_err());
         }
+    }
+
+    #[test]
+    fn frame_slot_pool_has_fixed_retention_limits() {
+        let mut vm = VM::new();
+        let make_function = |count| {
+            let mut chunk = BytecodeChunk::new();
+            chunk.local_count = count;
+            Value::BytecodeFunction {
+                chunk,
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+            }
+        };
+        for _ in 0..40 {
+            vm.call_bytecode_function(make_function(1), Vec::new(), Vec::new()).unwrap();
+        }
+        for _ in 0..40 {
+            vm.pop_call_frame().unwrap();
+        }
+        assert_eq!(vm.frame_slot_pool.len(), 32);
+        vm.call_bytecode_function(make_function(257), Vec::new(), Vec::new()).unwrap();
+        vm.pop_call_frame().unwrap();
+        assert_eq!(vm.frame_slot_pool.len(), 31, "oversized frame was retained");
+        for storage in &vm.frame_slot_pool {
+            assert!(storage.values.is_empty() && storage.values.capacity() <= 256);
+            assert!(storage.kinds.is_empty() && storage.kinds.capacity() <= 256);
+            assert!(storage.initialized.is_empty() && storage.initialized.capacity() <= 256);
+        }
+    }
+
+    #[test]
+    fn frame_slot_pool_releases_values_and_resets_metadata() {
+        let mut vm = VM::new();
+        let mut chunk = BytecodeChunk::new();
+        chunk.name = Some("frame".into());
+        chunk.params.push("x".into());
+        chunk.local_names.push("x".into());
+        chunk.local_count = 1;
+        chunk.local_binding_kinds.push(BytecodeBindingKind::LetImmutable);
+        let function = Value::BytecodeFunction {
+            chunk: chunk.clone(),
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        let value = Arc::new(vec![Value::Int(7)]);
+        let weak = Arc::downgrade(&value);
+        vm.call_bytecode_function(function, Vec::new(), vec![Value::Array(value)]).unwrap();
+        let pointer = vm.call_frames.last().unwrap().local_slots.as_ptr();
+        let retired = vm.pop_call_frame().unwrap();
+        assert!(retired.local_slots.is_empty());
+        assert!(weak.upgrade().is_none(), "pool retained an argument");
+        let storage = vm.take_frame_slots(&chunk);
+        assert_eq!(storage.values.as_ptr(), pointer);
+        assert!(matches!(storage.values[0], Value::Null));
+        assert_eq!(storage.kinds, vec![BytecodeBindingKind::LetImmutable]);
+        assert_eq!(storage.initialized, vec![false]);
+        let active = vm.take_frame_slots(&chunk);
+        assert_ne!(active.values.as_ptr(), storage.values.as_ptr());
+        assert!(vm.frame_slot_pool.is_empty());
     }
 
     #[cfg(feature = "runtime-jit")]

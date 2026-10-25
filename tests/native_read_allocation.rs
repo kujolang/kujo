@@ -202,3 +202,38 @@ fn warmed_compiled_call_setup_has_bounded_allocations() {
         }
     }
 }
+
+#[test]
+fn vm_call_validation_does_not_allocate_per_parameter() {
+    let mut counts = Vec::new();
+    for arity in [1usize, 8] {
+        let mut chunk = BytecodeChunk::new();
+        chunk.name = Some("callee".into());
+        for n in 0..arity {
+            let name = format!("argument_{n}");
+            chunk.params.push(name.clone());
+            chunk.local_names.push(name);
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+        }
+        chunk.local_count = arity;
+        chunk.emit(OpCode::LoadLocal(0));
+        chunk.emit(OpCode::Return);
+        let function = Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        let mut vm = kujo::vm::VM::new();
+        vm.set_jit_enabled(false);
+        let inputs: Vec<_> =
+            (0..128).map(|_| (function.clone(), vec![Value::Int(7); arity])).collect();
+        ALLOCATIONS.with(|v| v.set(0));
+        TRACK.with(|v| v.set(true));
+        for (f, args) in inputs {
+            assert!(matches!(vm.call_function_from_jit(f, args).unwrap(), Value::Int(7)));
+        }
+        TRACK.with(|v| v.set(false));
+        counts.push(ALLOCATIONS.with(Cell::get));
+    }
+    assert_eq!(counts[0], counts[1], "parameter metadata allocation slope: {counts:?}");
+}

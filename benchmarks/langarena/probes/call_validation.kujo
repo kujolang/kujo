@@ -1,0 +1,7 @@
+func leaf(a,b,c,d,e,f,g,h) { return a+b+c+d+e+f+g+h }
+mut sum := 0
+mut i := 0
+env_set("KUJO_ALLOCATION_PHASE", "4")
+while i < 10000 { sum += leaf(1,2,3,4,5,6,7,8) i += 1 }
+env_set("KUJO_ALLOCATION_PHASE", "5")
+assert_equal(sum, 360000)
