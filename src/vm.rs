@@ -6398,6 +6398,105 @@ impl VM {
         vm.execute_preloaded_callback()
     }
 
+    /// Reuse only fixed leaf callbacks. An explicit opcode allowlist keeps
+    /// imports, nested calls, closure creation and async/module state on the
+    /// fresh-VM bridge until their cache lifetimes are covered separately.
+    pub(crate) fn reusable_leaf_callback(
+        function: &Value,
+        globals: Arc<Mutex<Environment>>,
+        policy: RuntimeCapabilityPolicy,
+        output: Option<Arc<Mutex<Vec<u8>>>>,
+        cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+        jit_requested: bool,
+    ) -> Option<Self> {
+        let Value::BytecodeFunction { chunk, .. } = function else { return None };
+        if chunk.is_async
+            || chunk.is_generator
+            || chunk.lexical_self.is_some()
+            || !chunk.instructions.iter().all(|op| {
+                matches!(
+                    op,
+                    OpCode::LoadConst(_)
+                        | OpCode::LoadVar(_)
+                        | OpCode::LoadGlobal(_)
+                        | OpCode::LoadLocal(_)
+                        | OpCode::LoadCapture(_)
+                        | OpCode::StoreCapture(_)
+                        | OpCode::DefineLocal(_)
+                        | OpCode::StoreLocal(_)
+                        | OpCode::Pop
+                        | OpCode::Dup
+                        | OpCode::Add
+                        | OpCode::Sub
+                        | OpCode::Mul
+                        | OpCode::Div
+                        | OpCode::Mod
+                        | OpCode::Negate
+                        | OpCode::Equal
+                        | OpCode::NotEqual
+                        | OpCode::LessThan
+                        | OpCode::GreaterThan
+                        | OpCode::LessEqual
+                        | OpCode::GreaterEqual
+                        | OpCode::Not
+                        | OpCode::And
+                        | OpCode::Or
+                        | OpCode::Jump(_)
+                        | OpCode::JumpIfFalse(_)
+                        | OpCode::JumpIfTrue(_)
+                        | OpCode::JumpBack(_)
+                        | OpCode::Return
+                        | OpCode::ReturnNone
+                        | OpCode::IndexGet
+                        | OpCode::IndexGetInPlace(_)
+                        | OpCode::FieldGet(_)
+                        | OpCode::PushScope
+                        | OpCode::PopScope
+                        | OpCode::ReleaseDeadLocal(_)
+                        | OpCode::ReleaseRebindLocal(_, _)
+                )
+            })
+        {
+            return None;
+        }
+        let mut vm = Self::with_task_policy(jit_requested, cancellation);
+        vm.cooperative_suspend_enabled = false;
+        vm.set_capability_policy(policy);
+        vm.set_callback_globals(globals);
+        if let Some(output) = output {
+            vm.interpreter.set_output(output);
+        }
+        Some(vm)
+    }
+
+    /// The operation owns this VM and one fixed leaf callback. Nested user
+    /// calls cannot enter it; failures end the operation and drop the VM.
+    pub(crate) fn call_reused_leaf_callback(
+        &mut self,
+        function: Value,
+        args: &[Value],
+    ) -> Result<Value, String> {
+        let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
+        debug_assert!(self.call_frames.is_empty());
+        debug_assert!(self.exception_handlers.is_empty());
+        debug_assert_eq!(self.recursion_depth, 0);
+        self.ip = 0;
+        self.stack.clear();
+        self.upvalues.clear();
+        self.function_call_stack.clear();
+        let mut wrapper = BytecodeChunk::new();
+        wrapper.emit(OpCode::Call(args.len()));
+        wrapper.emit(OpCode::Return);
+        self.set_chunk(wrapper);
+        self.stack.extend_from_slice(args);
+        self.stack.push(function);
+        self.skip_execute_reset_once = true;
+        let result = self.execute_preloaded_callback();
+        self.stack.clear();
+        self.jit_obj_stack.clear();
+        result
+    }
+
     pub(crate) fn execute_language_task(
         function: Value,
         args: Vec<Value>,

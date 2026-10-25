@@ -1,16 +1,53 @@
 //! Fallible synchronous callback APIs. Always use the ordinary runtime bridge.
 use super::{Interpreter, Value};
 use crate::{builtins, runtime_limits};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 fn callable(value: &Value) -> bool {
     matches!(value, Value::Function(..) | Value::BytecodeFunction { .. } | Value::NativeFunction(_))
 }
 
-fn invoke(interp: &mut Interpreter, callback: &Value, args: &[Value]) -> Value {
-    match callback {
-        Value::NativeFunction(name) => super::call_native_function(interp, name, args),
-        _ => interp.call_user_function(callback, args),
+/// One native operation owns the optional leaf VM. The fallback remains the
+/// ordinary bridge for callbacks with transitive effects or runtime state.
+struct Callback<'a> {
+    function: &'a Value,
+    vm: Option<Box<crate::vm::VM>>,
+    initialized: bool,
+}
+
+impl<'a> Callback<'a> {
+    fn new(function: &'a Value) -> Self {
+        Self { function, vm: None, initialized: false }
+    }
+
+    fn invoke(&mut self, interp: &mut Interpreter, args: &[Value]) -> Value {
+        if !self.initialized {
+            self.initialized = true;
+            if matches!(self.function, Value::BytecodeFunction { .. }) {
+                let globals = interp
+                    .vm_globals
+                    .clone()
+                    .unwrap_or_else(|| Arc::new(Mutex::new(interp.env.clone())));
+                self.vm = crate::vm::VM::reusable_leaf_callback(
+                    self.function,
+                    globals,
+                    interp.capability_policy().clone(),
+                    interp.output_buffer(),
+                    interp.task_cancellation.clone(),
+                    interp.vm_jit_requested,
+                )
+                .map(Box::new);
+            }
+        }
+        if let Some(vm) = self.vm.as_mut() {
+            return vm
+                .call_reused_leaf_callback(self.function.clone(), args)
+                .unwrap_or_else(Value::Error);
+        }
+        match self.function {
+            Value::NativeFunction(name) => super::call_native_function(interp, name, args),
+            _ => interp.call_user_function(self.function, args),
+        }
     }
 }
 
@@ -41,6 +78,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
     let Some(regex) = builtins::cached_regex(pattern) else {
         return Some(Value::Error("regex_replace_with invalid regex pattern".into()));
     };
+    let mut callback = Callback::new(callback);
     let mut output = String::new();
     let mut end = 0;
     for (count, captures) in regex.captures_iter(text).enumerate() {
@@ -66,7 +104,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
                 Value::Null
             });
         }
-        let replacement = invoke(interp, callback, &[Value::Array(Arc::new(groups))]);
+        let replacement = callback.invoke(interp, &[Value::Array(Arc::new(groups))]);
         match replacement {
             Value::Str(replacement) => {
                 if let Err(error) = append(&mut output, &replacement) {
@@ -95,6 +133,7 @@ fn sort_by(interp: &mut Interpreter, args: &[Value]) -> Value {
     if !callable(callback) {
         return Value::Error("sort_by expects a synchronous function".into());
     }
+    let mut callback = Callback::new(callback);
     // Sort indices, not deep values. Explicit fallible merges avoid Rust sort's
     // comparator panics and stop at the first callback failure.
     let mut order: Vec<usize> = (0..items.len()).collect();
@@ -111,11 +150,9 @@ fn sort_by(interp: &mut Interpreter, args: &[Value]) -> Value {
                 } else if left == middle {
                     false
                 } else {
-                    match invoke(
-                        interp,
-                        callback,
-                        &[items[order[left]].clone(), items[order[right]].clone()],
-                    ) {
+                    match callback
+                        .invoke(interp, &[items[order[left]].clone(), items[order[right]].clone()])
+                    {
                         Value::Int(result) => result <= 0,
                         error @ (Value::Error(_) | Value::ErrorObject { .. }) => return error,
                         _ => {

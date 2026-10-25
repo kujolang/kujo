@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse a private VM within synchronous `sort_by` and `regex_replace_with`
+  operations for fixed leaf bytecode callbacks. Closures retain snapshot cell
+  semantics; callbacks with calls, imports, async or other unsupported state
+  continue through the existing fresh-VM bridge.
+
 - Avoid standalone-script JIT compilation for internal callback and task wrappers
   whose arguments are already on the VM stack. Callee JIT, cancellation,
   capability checks, and callback value semantics remain enabled.

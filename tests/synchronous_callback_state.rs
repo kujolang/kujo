@@ -48,3 +48,27 @@ fn preloaded_callbacks_skip_script_compilation_but_keep_callee_jit() {
         "callback wrapper compilation repeated: {report}"
     );
 }
+
+#[cfg(feature = "runtime-jit")]
+#[test]
+fn leaf_comparators_reuse_hot_native_execution_within_one_sort() {
+    let directory = tempfile::tempdir().unwrap();
+    let metrics = directory.path().join("leaf-metrics.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["run", "--untrusted", "--scheduler-no-timeout", "--jit", "--measurements"])
+        .arg(&metrics)
+        .arg(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/benchmarks/langarena/probes/sort_callback_setup.kujo"
+        ))
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
+    let report: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(metrics).unwrap()).unwrap();
+    assert!(
+        report["counters"]["jit_native_function_entries"].as_u64().unwrap() > 3000,
+        "comparators did not retain their hot-call state: {report}"
+    );
+}

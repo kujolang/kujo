@@ -53,6 +53,35 @@ func verify_callbacks() {
     assert(caught, "callback must retain restricted capabilities")
     assert_equal(sort_by([2, 1], ascending), [1, 2])
 }
+func verify_leaf_capture() {
+    mut calls := 0
+    func compare(a, b) {
+        if a == null { return calls }
+        calls += 1
+        return a[0] - b[0]
+    }
+    let rows := [[4], [3], [2], [1]]
+    assert_equal(sort_by(rows, compare), [[1], [2], [3], [4]])
+    assert_equal(compare(null, null), 4)
+    assert_equal(calls, 0)
+    assert_equal(rows, [[4], [3], [2], [1]])
+    assert_equal(sort_by(rows, compare), [[1], [2], [3], [4]])
+    assert_equal(compare(null, null), 8)
+    mut attempts := 0
+    func divide(a, b) {
+        if a == null { return attempts }
+        attempts += 1
+        return a / (a - b)
+    }
+    mut caught := false
+    try { sort_by([1, 1], divide) }
+    except error { caught = true }
+    assert(caught, "leaf callback arithmetic error must propagate")
+    assert_equal(divide(null, null), 1)
+    assert_equal(sort_by([2, 1], ascending), [1, 2])
+}
+verify_leaf_capture()
+verify_leaf_capture()
 verify_callbacks()
 verify_callbacks()
 print("PASS")
