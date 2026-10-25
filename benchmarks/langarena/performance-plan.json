@@ -191,11 +191,11 @@
   "benchmarks": [
     {
       "name": "Binarytrees::Obj",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -229,7 +229,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -255,11 +256,11 @@
     },
     {
       "name": "Binarytrees::Arena",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -293,7 +294,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -319,11 +321,11 @@
     },
     {
       "name": "Brainfuck::Array",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -357,7 +359,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -383,11 +386,11 @@
     },
     {
       "name": "Brainfuck::Recursion",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -421,7 +424,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -447,11 +451,11 @@
     },
     {
       "name": "Matmul::Single",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -485,7 +489,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -511,11 +516,11 @@
     },
     {
       "name": "Matmul::T4",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -549,7 +554,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -575,11 +581,11 @@
     },
     {
       "name": "Matmul::T8",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -613,7 +619,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -639,11 +646,11 @@
     },
     {
       "name": "Matmul::T16",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -677,7 +684,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -703,11 +711,11 @@
     },
     {
       "name": "Base64::Encode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -741,7 +749,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -767,11 +776,11 @@
     },
     {
       "name": "Base64::Decode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -805,7 +814,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -831,11 +841,11 @@
     },
     {
       "name": "Json::Generate",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -869,7 +879,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -895,11 +906,11 @@
     },
     {
       "name": "Json::ParseDom",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -933,7 +944,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -959,11 +971,11 @@
     },
     {
       "name": "Json::ParseMapping",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -997,7 +1009,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1023,11 +1036,11 @@
     },
     {
       "name": "CSV::Parse",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1061,7 +1074,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1087,11 +1101,11 @@
     },
     {
       "name": "Etc::Sieve",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1125,7 +1139,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1151,11 +1166,11 @@
     },
     {
       "name": "Etc::TextRaytracer",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1189,7 +1204,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1215,11 +1231,11 @@
     },
     {
       "name": "Etc::NeuralNet",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1253,7 +1269,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1279,11 +1296,11 @@
     },
     {
       "name": "Etc::CacheSimulation",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1317,7 +1334,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1343,11 +1361,11 @@
     },
     {
       "name": "Etc::GameOfLife",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1381,7 +1399,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1407,11 +1426,11 @@
     },
     {
       "name": "Etc::Words",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1445,7 +1464,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1471,11 +1491,11 @@
     },
     {
       "name": "Etc::LogParser",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1509,7 +1529,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1535,11 +1556,11 @@
     },
     {
       "name": "Template::Regex",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1573,7 +1594,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1599,11 +1621,11 @@
     },
     {
       "name": "Template::Parse",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1637,7 +1659,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1663,11 +1686,11 @@
     },
     {
       "name": "Sort::Quick",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "Mapped post-fix sample at50f8357: allocation/value movement, indexed reads/root bookkeeping and environment lookup remain visible. Counts include startup/warmup/idle threads, not CPU percentages.",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1702,7 +1725,8 @@
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
         "quicksort-production-profile-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1733,11 +1757,11 @@
     },
     {
       "name": "Sort::Merge",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1771,7 +1795,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1797,11 +1822,11 @@
     },
     {
       "name": "Sort::Self",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1835,7 +1860,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1861,11 +1887,11 @@
     },
     {
       "name": "Graph::BFS",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1899,7 +1925,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1925,11 +1952,11 @@
     },
     {
       "name": "Graph::DFS",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1963,7 +1990,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1989,11 +2017,11 @@
     },
     {
       "name": "Graph::AStar",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2027,7 +2055,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2053,11 +2082,11 @@
     },
     {
       "name": "Hash::SHA256",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2091,7 +2120,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2117,11 +2147,11 @@
     },
     {
       "name": "Hash::CRC32",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2155,7 +2185,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2181,11 +2212,11 @@
     },
     {
       "name": "Calculator::Ast",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2219,7 +2250,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2245,11 +2277,11 @@
     },
     {
       "name": "Calculator::Interpreter",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2283,7 +2315,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2309,11 +2342,11 @@
     },
     {
       "name": "Maze::Generator",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2347,7 +2380,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2373,11 +2407,11 @@
     },
     {
       "name": "Maze::BFS",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2411,7 +2445,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2437,11 +2472,11 @@
     },
     {
       "name": "Maze::AStar",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2475,7 +2510,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2501,11 +2537,11 @@
     },
     {
       "name": "CLBG::Fannkuchredux",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2539,7 +2575,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2565,11 +2602,11 @@
     },
     {
       "name": "CLBG::Mandelbrot",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2603,7 +2640,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2629,11 +2667,11 @@
     },
     {
       "name": "CLBG::Nbody",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2667,7 +2705,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2693,11 +2732,11 @@
     },
     {
       "name": "CLBG::Spectralnorm",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2731,7 +2770,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2757,11 +2797,11 @@
     },
     {
       "name": "Compress::BWTEncode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2795,7 +2835,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2821,11 +2862,11 @@
     },
     {
       "name": "Compress::BWTDecode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2859,7 +2900,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2885,11 +2927,11 @@
     },
     {
       "name": "Compress::HuffEncode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2923,7 +2965,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2949,11 +2992,11 @@
     },
     {
       "name": "Compress::HuffDecode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2987,7 +3030,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3013,11 +3057,11 @@
     },
     {
       "name": "Compress::ArithEncode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3051,7 +3095,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3077,11 +3122,11 @@
     },
     {
       "name": "Compress::ArithDecode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3115,7 +3160,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3141,11 +3187,11 @@
     },
     {
       "name": "Compress::LZWEncode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3179,7 +3225,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3205,11 +3252,11 @@
     },
     {
       "name": "Compress::LZWDecode",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3243,7 +3290,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3269,11 +3317,11 @@
     },
     {
       "name": "Distance::Jaro",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3307,7 +3355,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -3333,11 +3382,11 @@
     },
     {
       "name": "Distance::NGram",
-      "test_vm": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
-      "test_interpreter": "passed at 4e42bd2 frozen release; exact test-size registry/config/checksum audited",
+      "test_vm": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
+      "test_interpreter": "passed at d8d99d8 frozen release; exact test-size registry/config/checksum audited",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "4e42bd2 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
+      "jit_correctness_and_coverage": "d8d99d8 frozen release test-size checksum passed; fallback allowed. Native kernel time and production coverage are not certified.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -3371,7 +3420,8 @@
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-release-2026-10-24.json"
+        "consuming-release-2026-10-24.json",
+        "try-exits-release-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -4070,6 +4120,13 @@
       "rss_samples": 8,
       "evidence": "consuming-release-2026-10-24.json",
       "limit": "CPU speed limit 55 to 71 percent; local directional timing only; production/platform/competitive gates remain open"
+    },
+    {
+      "runtime_commit": "d8d99d8",
+      "build_checkout_commit": "635363364eaf51036be4d23648ffbf2def78f0c0",
+      "test_size_passes": 150,
+      "evidence": "try-exits-release-2026-10-24.json",
+      "limit": "Frozen release and matching linker map verified; concurrent production workload. No controlled speed, production, native coverage or platform acceptance."
     }
   ],
   "review_pause": {

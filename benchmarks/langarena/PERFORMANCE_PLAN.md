@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Try-exit fixes (`d8d99d8`) pass all 150 release test-size checksums.**
+  [Audited results](try-exits-release-2026-10-24.json) retain the frozen binary,
+  matching linker map, source revision and input hashes. This includes the VM
+  returned-handler and compiler loop-exit fixes. Production and controlled
+  performance gates remain open; the concurrent production sweep uses the older
+  `4e42bd2` binary. Later worker-policy changes require fresh verification.
+
 - **Worker JIT policy remains a gap.** The
   [worker coverage probe](worker-jit-coverage-2026-10-24.json) on frozen `4e42bd2`
   performs two identical integer-kernel calls per variant. Direct execution
