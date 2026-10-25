@@ -1,0 +1,19 @@
+# Run with --jit --measurements REPORT and one mode: direct, parallel, async.
+# Counts describe native entry coverage, not elapsed speed or CPU percentages.
+func kernel(n) {
+    mut sum := 0
+    mut i := 0
+    while i < n { sum += i i += 1 }
+    return sum
+}
+async func worker(n) { return kernel(n) }
+let options := args()
+assert_equal(len(options), 1)
+let mode := options[0]
+mut result := []
+if mode == "direct" { result = [kernel(20000), kernel(20000)] }
+else if mode == "parallel" { result = await parallel_map([20000, 20000], kernel, 2) }
+else if mode == "async" { result = await parallel_map([20000, 20000], worker, 2) }
+else { throw("Expected direct, parallel or async") }
+assert_equal(result, [199990000, 199990000])
+print("worker coverage output verified")

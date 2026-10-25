@@ -7,6 +7,19 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Worker JIT policy remains a gap.** The
+  [worker coverage probe](worker-jit-coverage-2026-10-24.json) on frozen `4e42bd2`
+  performs two identical integer-kernel calls per variant. Direct execution
+  records two native function entries; synchronous and async `parallel_map`
+  record none, despite `--jit`, and all outputs match. Mapper VMs start with JIT
+  disabled; cancellable language tasks explicitly disable it. This can limit
+  threaded workloads, but the probe does not quantify its production speed cost.
+  Propagate execution policy explicitly and establish cancellation checks in
+  native loops/calls before enabling cancellable workers. Required gates include
+  cancellation latency and admission release, capability inheritance, isolated
+  globals, snapshots, ordering, errors, nested tasks and VM/interpreter/JIT parity.
+  Do not enable JIT globally or remove cancellation to improve benchmark scores.
+
 - **Consumed native call operands (`4e42bd2`).** [Evidence](CONSUMING_CALLS_2026_10_24.md)
   records zero isolated marshalling allocations and QuickSort JIT unique requests
   14,638→7,322. Borrowed APIs stay reusable; nested ownership and errors pass
