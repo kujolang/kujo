@@ -95,7 +95,9 @@
         "builtin-argument-pool-2026-10-24.json",
         "consuming-calls-2026-10-24.json",
         "native-root-discard-2026-10-24.json",
-        "root-discard-paired-2026-10-25.json"
+        "root-discard-paired-2026-10-25.json",
+        "preloaded-callback-wrapper-2026-10-25.json",
+        "leaf-callback-reuse-2026-10-25.json"
       ]
     },
     {

@@ -1,0 +1,22 @@
+# Focused callback setup/scaling probe, not a LangArena workload replacement.
+func compare(a, b) { return a - b }
+func run(size) {
+    mut values := []
+    mut i := size - 1
+    while i >= 0 { values = push(values, i) i -= 1 }
+    let saved := values
+    mut round := 0
+    while round < 4 {
+        let sorted := sort_by(values, compare)
+        i = 0
+        while i < size { assert_equal(sorted[i], i) i += 1 }
+        assert_equal(values, saved)
+        round += 1
+    }
+    print("PASS")
+}
+let options := args()
+assert_equal(len(options), 1)
+let size := to_int(options[0])
+assert(size > 0 && size <= 65536, "size out of range")
+run(size)

@@ -1,0 +1,28 @@
+let options := args()
+assert_equal(len(options), 4)
+let binaries := [options[0], options[1]]
+let probe := options[2]
+let directory := options[3]
+mut samples := []
+mut round := 0
+while round < 7 {
+    for size in [256, 4096] {
+        mut slot := 0
+        while slot < 4 {
+            let variant := (round + slot) % 4
+            mut command := [binaries[variant % 2], "run", "--scheduler-no-timeout", "--untrusted"]
+            if variant >= 2 { command = push(command, "--jit") }
+            command = push(push(command, probe), str(size))
+            print("START " + str(round + 1) + " size=" + str(size) + " variant=" + str(variant))
+            let started := time_ns()
+            let result := spawn_process(command, {"timeout_ms": 60000, "max_output_bytes": 1048576})
+            let wall := time_ns() - started
+            let valid := result.success && trim(result.stdout) == "PASS" && !result.stdout_truncated && !result.stderr_truncated
+            samples = push(samples, {"round": round + 1, "size": size, "variant": variant, "wall_ns": wall, "passed": valid, "exitcode": result.exitcode, "stdout": result.stdout, "stderr": result.stderr, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated})
+            write_file(directory + "/samples-v2.json", to_json({"binaries": binaries, "samples": samples}), true)
+            assert(valid, result.stdout + result.stderr)
+            slot += 1
+        }
+    }
+    round += 1
+}
