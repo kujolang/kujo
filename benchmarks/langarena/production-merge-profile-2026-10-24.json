@@ -22,5 +22,24 @@
     "Profiler may perturb production elapsed time.",
     "Sample physical footprint is not the per-process peak RSS comparison metric.",
     "Production checksum was not complete at capture; repeat with current frozen binary and matching map before prioritizing source changes."
-  ]
+  ],
+  "production_outcome": {
+    "config": {
+      "checksum": 61757772,
+      "iterations": 50,
+      "name": "Sort::Merge",
+      "size": 400000
+    },
+    "elapsed_ns": 600051158633.0,
+    "exitcode": -1,
+    "name": "Sort::Merge",
+    "runtime": "jit",
+    "status": "timeout",
+    "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+    "stderr_truncated": false,
+    "stdout": "@profile create-start ns=124165\n@profile create-done ns=369246\n@profile prepare-done ns=3258703095\n@profile warmup-1 ns=28477746040\n@profile warmup-2 ns=54447852008\n@profile warmup-3 ns=80596622216\n@profile warmup-4 ns=107026045481\n@profile warmup-5 ns=132269785928\n@profile warmup-6 ns=157668721411\n@profile warmup-7 ns=182898128830\n@profile warmup-8 ns=208443496911\n@profile warmup-9 ns=233719942058\n@profile warmup-10 ns=258757256406\n@profile warmup-done ns=258757475505\n@profile run-1 ns=283725635789\n@profile run-5 ns=385362713697\n@profile run-10 ns=512819678319\n",
+    "stdout_truncated": false,
+    "timeout_ms": 600000
+  },
+  "outcome_interpretation": "Ten warmup iterations and at least ten of fifty measured iterations completed before the 600-second deadline. No final checksum; incomplete, not a demonstrated semantic failure. The five-second profiler and concurrent compilation make elapsed times diagnostic only."
 }
