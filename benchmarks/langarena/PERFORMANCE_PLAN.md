@@ -7,6 +7,27 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Nested worker cancellation/JIT (`44b2fb1`).**
+  [Coverage and gates](nested-worker-policy-2026-10-24.json) verify parent-token
+  propagation before lazy compilation, pre-cancelled and delayed-cancellation
+  mappers, and nested value/capability/error contracts across all three runtimes.
+  Native entries increase from zero to two in the unchanged debug probe.
+  1,100 library tests and 32 integration tests pass, with formatting and
+  minimal-feature checks. Fresh release, production, memory and controlled
+  competitive measurements remain required; this is not a speed claim.
+
+
+- **Task and callback JIT propagation (`da7177b`).**
+  [Native coverage and cancellation gates](task-jit-policy-2026-10-24.json)
+  show async workers reaching two native function entries, previously zero,
+  with correct output. Cancellation across direct, map and regex callback paths
+  releases all forty cancelled bodies before sixteen sentinel tasks can be
+  admitted simultaneously. 1,099 library and 55 integration tests pass, plus
+  formatting and minimal-feature checks. This fixes a pre-existing inline VM
+  callback cancellation leak. These are debug correctness/coverage gates;
+  fresh release, production and controlled speed gates remain open.
+
+
 - **Native cancellation primitive (`4a2d3c8`).**
   [Validation and cost probe](native-cancellation-2026-10-24.json) cover compiled
   loops, functions and direct-argument calls with bounded cancellation tests,
@@ -15,17 +36,19 @@ a target to test, not a guarantee. This document explains the execution order;
   execution. An unconditional candidate slowed all seven debug pairs and was
   rejected; the specialized candidate has mixed local timings (4/7 faster).
   These are process totals under concurrent load, not release acceptance.
-  Cancellable task JIT is still disabled: policy propagation, native-worker
-  cancellation/admission tests and release performance remain pending.
+  This primitive originally left task JIT disabled; the task/callback entry
+  above records subsequent policy and cancellation/admission verification.
+  Release performance remains pending.
 
 - **Synchronous worker JIT opt-in (`e20dc03`).**
   [Coverage and validation](worker-jit-policy-2026-10-24.json) show two native
   entries from two synchronous workers, previously zero. VM/interpreter remain
-  opt-out; cancellable async workers still record zero native entries. All
+  opt-out; cancellable async workers recorded zero native entries at this
+  revision (superseded by the task/callback entry above). All
   1,097 library tests and 30 targeted integrations pass, plus formatting and
   no-default-features checks. Each worker compiles independently, so cold-mapper
   cost, release speed and full-suite revalidation remain unmeasured. Native
-  cancellation and callback/task policy propagation remain required.
+  cancellation and callback/task policy propagation were subsequent prerequisites.
 
 - **Existing synchronous mapper global-write divergence requires contract review.**
   [Reproducer evidence](parallel-global-policy-2026-10-24.json) on `d8d99d8`
@@ -57,8 +80,8 @@ a target to test, not a guarantee. This document explains the execution order;
   interpreter and JIT modes (57 child executions), including repeatable
   cancellation, admission recovery, capability denial, capture isolation and
   generator delegation. All pass on the `d8d99d8` runtime. This establishes
-  JIT-mode policy parity only; native worker execution remains unimplemented
-  and still needs its own coverage and cancellation-latency evidence.
+  JIT-mode policy parity only; later entries above track native-worker
+  coverage and cancellation evidence separately.
 
 - **Consumed native call operands (`4e42bd2`).** [Evidence](CONSUMING_CALLS_2026_10_24.md)
   records zero isolated marshalling allocations and QuickSort JIT unique requests

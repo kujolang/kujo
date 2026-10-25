@@ -1,0 +1,4 @@
+func kernel(n) { mut total := 0 mut i := 0 while i < n { total += i i += 1 } return total }
+func parent() { return await parallel_map([20000,20000],kernel,2) }
+assert_equal(await await_task(spawn_task(parent)),[199990000,199990000])
+print("PASS")
