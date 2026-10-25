@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Leaf callback release (`5532fe0`) passes all 150 test-size checksums.**
+  [Frozen release audit](leaf-callback-release-2026-10-25.json) verifies all 50
+  unchanged configurations in VM, interpreter and JIT, including exact output,
+  source identity, executable hashes and matching linker map. Timing overlapped
+  a debug build and is not performance acceptance. This release predates the
+  callback module-cache correction (`7aee500`) and the pending JIT function
+  identity fix. Production, memory and controlled competitor gates remain open.
+
 - **Task/worker release (`44b2fb1`) passes all 150 test-size checksums.**
   [Frozen release audit](task-workers-release-2026-10-24.json) verifies every
   registry/config/checksum, binary UUID, matching linker map and frozen input
