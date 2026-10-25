@@ -22,7 +22,7 @@ for tool in git rustup clang clang++ cmake make pkg-config sha256sum; do
 done
 
 kujo_baseline_revision=f037705190bb6ef765238f9c091086eae0e97485
-kujo_revision=d8d99d8c8e3b64f6f6da83efcfa8da9b8b8e67b4
+kujo_revision=44b2fb1a55cbca81623e0d053eb6602ec6d72690
 arena_revision=3c9f84ddaeec834c0631747cb789e8cfd602f993
 goose_revision=ea1f368c109c083a2161580ff1d74c70200b6cc8
 toolchain=1.96.0

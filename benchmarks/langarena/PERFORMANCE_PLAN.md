@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Task/worker release (`44b2fb1`) passes all 150 test-size checksums.**
+  [Frozen release audit](task-workers-release-2026-10-24.json) verifies every
+  registry/config/checksum, binary UUID, matching linker map and frozen input
+  identity across VM/interpreter/JIT. This includes task/callback and nested
+  worker policy/cancellation fixes. Fallback is allowed; full production,
+  controlled competitive speed, memory and platform acceptance remain open.
+
 - **Nested worker cancellation/JIT (`44b2fb1`).**
   [Coverage and gates](nested-worker-policy-2026-10-24.json) verify parent-token
   propagation before lazy compilation, pre-cancelled and delayed-cancellation
