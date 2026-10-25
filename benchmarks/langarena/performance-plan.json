@@ -4368,5 +4368,17 @@
     "verification": "1088 library tests (8 ignored),34 targeted integrations,150/150 frozen-release test-size checksums; VM/interpreter/JIT semantics preserved.",
     "timing": "Seven rotating release rounds: JIT median paired speedup1.1567x,7/7 favorable; VM0.9849x. CPU speed limit100% to48%; local evidence only.",
     "memory": "Allocation traffic falls; two RSS samples per variant show3.2% higher mean peak RSS after. Cache retention bounded; no peak-memory reduction claim."
+  },
+  "diagnostic_review_2026_10_25": {
+    "scope": "Sections 1 and 2 only; runtime fixes not restarted",
+    "tracker": "PERFORMANCE_CHECKLIST.md",
+    "source": "c1ba7dc",
+    "runtime": "ea0ea3e",
+    "test_size": "150/150 verified in nonleaf-release-2026-10-25.json",
+    "production": "13 JIT passes, five timeouts, GameOfLife cancelled; VM/interpreter not started",
+    "comparison": "One round six variants, all50 test-size in nonleaf-comparison-all50-2026-10-25.json; original JIT17/50, others50/50",
+    "platform": "Linux/Windows21 runtime+3static verified; macOS cancelled at pause",
+    "clean_host": "User confirmed no dedicated Linux host; gate pending",
+    "prior_temp_artifacts": "Frozen /tmp executables removed; committed reports retained. Surviving target/release/kujo SHA256 matches verified candidate."
   }
 }
