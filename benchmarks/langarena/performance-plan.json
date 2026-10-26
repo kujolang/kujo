@@ -12,6 +12,18 @@
     "Unverified and timed-out cases remain visible; no extrapolated pass claims",
     "Local laptop load varies continuously: elapsed timings are diagnostic only; defer speed acceptance and Goose/Rust comparisons to a clean server while retaining local correctness, ownership and allocation/scaling gates"
   ],
+  "ordered_capture_verification_2026_10_26": {
+    "runtime_commit": "b34a0b81037d475b7ff5ae15a3143c6048b1b19b",
+    "status": "verified",
+    "report": "LIVE_CAPTURE_OWNER_2026_10_26.md",
+    "evidence": "live-capture-owner-2026-10-26.json",
+    "library_passes": 1128,
+    "integration_distinct_passes": 283,
+    "ordered_scenarios": 33,
+    "test_size_checksums": 150,
+    "allocation_result": "Linear append growth preserved; constant +56 requested bytes and -1 request at each size in VM and JIT entry paths.",
+    "remaining": "Imported user-binding materialization, later checklist stages, full production and clean-host acceptance remain open."
+  },
   "stages": [
     {
       "id": "baseline",

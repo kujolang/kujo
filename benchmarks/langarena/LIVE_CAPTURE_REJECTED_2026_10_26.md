@@ -1,5 +1,9 @@
 # Live captured-local prototype: rejected on allocation scaling
 
+Historical rejected candidate. The visibility defect described below was later
+resolved in `b34a0b8`; see [verified owner-backed storage](LIVE_CAPTURE_OWNER_2026_10_26.md).
+The measurements and rejection below remain valid for the discarded prototype.
+
 The experimental shared-map implementation fixed the known visibility cases,
 but it is **not accepted**. Both runtime source files were restored to `2e020ee`.
 The interpreter defect remains open. No full correctness acceptance or release

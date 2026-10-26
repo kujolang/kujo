@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest frozen release `ea0ea3e`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`nonleaf-release-2026-10-25.json`).
-- [x] Latest relevant gate: 1,105 library passes, eight ignored; 74 targeted
-  integration passes (`nonleaf-callback-reuse-2026-10-25.json`).
+- [x] Latest verified runtime `b34a0b8`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`live-capture-owner-2026-10-26.json`).
+- [x] Latest relevant gate: 1,128 library passes, eight ignored; 283 distinct
+  integration passes, one unrelated ignored (`live-capture-owner-2026-10-26.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -104,10 +104,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Preserve different-binding captured writes across overlapping ordinary task callbacks. Runtime `0b87ccb` passes all correctness gates and 15 local timing groups; see [verification and measured costs](ORDINARY_TASK_WRITE_VERIFICATION_2026_10_26.md).
 - [x] Refresh task globals from each submission while retaining captured locals and separate module/callback namespaces (`2b13158`). See [current verification](TASK_GLOBALS_CALLBACK_LOADER_2026_10_26.md).
 - [x] Avoid discarded callback module-loader discovery (`2e020ee`), retaining cache, capability and error behavior.
-- [ ] Preserve channel-ordered capture visibility across active task/caller reentry; scalar and collection cases still fail in the interpreter. Submission/await synchronization alone is insufficient. [Initial fix gate and access-path review](ORDERED_CAPTURE_FIX_GATE_2026_10_26.md). [Expanded 27-case gate and rejected quadratic-copy prototype](LIVE_CAPTURE_REJECTED_2026_10_26.md).
+- [x] Preserve channel-ordered capture visibility across active task/caller reentry with public owner maps and independent snapshots intact. All 33 scenarios, 1,128 library tests, 283 distinct integration tests, linear append allocation controls and 150 test-size checksums pass. Interpreter regressions are enabled by default. See [owner-backed verification](LIVE_CAPTURE_OWNER_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for user-defined binding materialization and task capture ownership; native preload copying and synchronous captured-state reentry are fixed. Follow-up evidence:
+Section 3 remains open for user-defined binding materialization; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 
@@ -222,7 +222,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations after these optimizations (`787498d`; allocation-collection-2026-10-25.json). Repeat for later runtime changes.
+- [x] Recheck all 150 test-size combinations after these optimizations (`b34a0b8`; live-capture-owner-2026-10-26.json). Repeat for later runtime changes.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.

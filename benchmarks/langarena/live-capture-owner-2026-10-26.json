@@ -1,0 +1,2053 @@
+{
+  "status": "verified",
+  "base_commit": "58bcb173d8749b8e097c61a4951e09bdd761b14e",
+  "binary_sha256": "2900e8e0c2c742b3c52cc4d4d1485d6889d62e6c8601dc1763427fd5e3286589",
+  "library_sha256": "d92b2f0052a442941e792b9a32e036fd0274937466f7d58edc8cd83602c917de",
+  "toolchain": {
+    "observations": [
+      {
+        "argv": [
+          "rustc",
+          "-Vv"
+        ],
+        "stdout": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2\n"
+      },
+      {
+        "argv": [
+          "cargo",
+          "-V"
+        ],
+        "stdout": "cargo 1.96.0 (30a34c682 2026-05-25)\n"
+      },
+      {
+        "argv": [
+          "uname",
+          "-sm"
+        ],
+        "stdout": "Darwin x86_64\n"
+      }
+    ],
+    "limitation": "Captured during release build; local elapsed timings remain diagnostic only"
+  },
+  "source_hashes": {
+    "src/interpreter/environment.rs": "5e5177787a57f9ea51606242cf2c296065090c4216fbe7f35a3e4e7929857185",
+    "src/interpreter/mod.rs": "9e0bbd952eee7858bd24de36b92980d292e9e6723bec7d72fb1122e90832fff1",
+    "src/vm.rs": "0cda1e5ca807d9dad586fc28d8287e11fb4f85d667effaa7c9333270541f9d6b",
+    "tests/ordered_task_capture_contracts.rs": "374865381fda0c66301dea36b2643209b889022096bd362facbdf9037bbee10a",
+    "tests/ordered_capture_field_contracts.rs": "9166661cf242655fb49866af9f73aeef801a625f2ef414bdf36d637309245956",
+    "tests/captured_scope_embedding_contracts.rs": "37860e89e9bee7d4fa6a515bdf33f33146d466fd1fa530d5e1489ff9663142b3",
+    "tests/fixtures/ordered_capture_snapshot_helper.kujo": "dc0b2360b045d543b15e64eff17eab3ecc957fdd5d540fcf391eef6beaf72d0f",
+    "tests/fixtures/ordered_capture_fields_generator.kujo": "5750f9ce02daa2bc07cc61d4693a9621d5a487afedf4802a3180400321b21217",
+    "benchmarks/langarena/test.json": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+    "benchmarks/langarena/profile.kujo": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77"
+  },
+  "library": {
+    "status": "passed",
+    "passed": 1128,
+    "failed": 0,
+    "ignored": 8,
+    "execution_seconds": 13.69,
+    "test_binary": "target/release/deps/kujo-41f925c897c40754",
+    "test_binary_sha256": "9b9700f5f23f6f5f4e6f6d0e53976ff1c68970b0986a318365a341eba9c513ca",
+    "source_manifest_sha256": "0dfc7a94efcd2e4becd9129aba0bca0ce880be9460f881da40e054b382ff09b6",
+    "new_test_results": [
+      "test interpreter::environment::live_capture_storage_tests::live_capture_definitions_publish_values_and_binding_kinds ... ok",
+      "test interpreter::environment::live_capture_storage_tests::live_capture_helper_parameters_do_not_alias_suspended_locals ... ok",
+      "test interpreter::environment::live_capture_storage_tests::live_capture_host_mutation_does_not_hold_the_shared_lock ... ok",
+      "test interpreter::environment::live_capture_storage_tests::live_capture_leaf_mutation_keeps_one_collection_owner ... ok",
+      "test interpreter::environment::live_capture_storage_tests::live_capture_snapshots_globals_and_immutable_guards_remain_separate ... ok",
+      "test interpreter::environment::live_capture_storage_tests::rejected_live_capture_mutations_release_temporary_values ... ok",
+      "test vm::tests::named_script_capture_reads_live_environment_storage ... ok"
+    ],
+    "limits": "Library tests only; normal release, ordered integration, allocation and all150 checksum gates pending"
+  },
+  "ordered_scenarios": 33,
+  "ordered_output": "\nrunning 3 tests\ntest vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest interpreter_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s\n\n",
+  "fields_output": "\nrunning 3 tests\ntest vm_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest interpreter_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest jit_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s\n\n",
+  "integration_output": "\nrunning 284 tests\ntest byte_concat_contracts::consuming_bytes_preserve_argument_and_destination_effects ... ok\ntest byte_concat_contracts::consuming_bytes_keep_aliases_closures_and_nested_snapshots ... ok\ntest byte_concat_contracts::profile_byte_growth ... ignored, manual byte growth scaling measurements\ntest byte_concat_contracts::large_byte_growth_uses_the_same_contract_in_both_runtimes ... ok\ntest byte_conversion_contracts::byte_materialization_preserves_inputs_validation_and_snapshots_in_all_runtimes ... ok\ntest byte_mutation_contracts::byte_writes_preserve_copies_at_every_assignment_scope ... ok\ntest byte_mutation_contracts::invalid_byte_writes_are_atomic_and_catchable ... ok\ntest bytecode_source::code_identity_tests::shared_code_preserves_identity_and_mutation_invalidates_it ... ok\ntest bytecode_source::sharing_tests::bytecode_clones_share_storage_and_edits_detach ... ok\ntest bytecode_source::sharing_tests::dispatch_metadata_is_shared_by_code_and_invalidated_on_every_edit ... ok\ntest bytecode_source::sharing_tests::editing_nested_bytecode_does_not_change_callable_snapshots ... ok\ntest bytecode_source::sharing_tests::named_binding_cache_is_shared_invalidated_and_not_part_of_code_equality ... ok\ntest bytecode_source::sharing_tests::parameter_binding_cache_tracks_slots_names_and_code_edits ... ok\ntest call_frame_ownership_contracts::callers_keep_their_code_across_repeated_unwinds_and_generator_resumes ... ok\ntest call_frame_ownership_contracts::moved_call_frames_propagate_unhandled_recursive_exceptions ... ok\ntest call_frame_ownership_contracts::moved_call_frames_restore_recursive_returns_and_exception_handlers ... ok\ntest callback_module_cache::callback_circular_import_errors_restore_loader_state ... ok\ntest callback_module_cache::callback_errors_return_module_cache_to_the_caller ... ok\ntest byte_mutation_contracts::utf8_conversion_is_explicit_and_strict ... ok\ntest callback_module_cache::callback_imports_share_the_callers_unchanged_module_cache ... ok\ntest callback_module_cache::callback_module_cache_still_reloads_changed_source ... ok\ntest callback_module_cache::callback_module_initializers_retain_capabilities_and_recover_after_denial ... ok\ntest callback_module_cache::nested_callbacks_return_the_same_module_cache_to_each_caller ... ok\ntest captured_bridge_contracts::imported_closure_reentry_through_bytecode_relay_keeps_current_capture ... ok\ntest captured_index_reentry_contracts::reentrant_index_reads_current_capture_without_changing_saved_snapshots ... ok\ntest captured_scope_embedding_contracts::captured_scope_map_reads_and_host_writes_remain_effective ... ok\ntest captured_task_helper_contracts::async_capture_journals_exclude_helper_parameters_and_restore_caller_writes ... ok\ntest closure_capture_audit::a_capture_escaped_before_throw_survives_defining_frame_unwind ... ok\ntest closure_capture_audit::a_recursive_named_closure_keeps_its_capture_after_parent_return ... ok\ntest closure_capture_audit::captured_array_and_dictionary_mutations_persist_across_calls ... ok\ntest closure_capture_audit::captured_let_and_const_reject_scalar_and_collection_writes ... ok\ntest closure_capture_audit::captured_scalar_collection_struct_enum_and_callable_values_survive_return ... ok\ntest closure_capture_audit::captures_survive_script_block_exit_and_root_loop_shadowing ... ok\ntest closure_capture_audit::closure_must_capture_the_binding_visible_at_its_definition ... ok\ntest closure_capture_audit::closures_capture_runtime_created_bindings_and_legacy_receiver_fields ... ok\ntest closure_capture_audit::conditional_capture_survives_early_return_and_block_exit ... ok\ntest closure_capture_audit::deterministic_nested_capture_programs_retain_grandparent_parameters ... ok\ntest closure_capture_audit::for_iteration_binding_shadows_an_already_captured_name ... ok\ntest closure_capture_audit::loop_iterable_resolves_before_the_iteration_binding ... ok\ntest closure_capture_audit::nested_function_must_not_define_a_global_binding ... ok\ntest closure_capture_audit::redefining_a_named_function_preserves_earlier_function_values ... ok\ntest closure_capture_audit::script_block_captures_include_destructuring_and_new_bare_bindings ... ok\ntest closure_capture_audit::script_block_const_capture_survives_scope_and_remains_immutable ... ok\ntest closure_capture_audit::v1_aliases_share_a_closure_but_factory_calls_are_independent ... ok\ntest closure_capture_audit::v1_capture_mutation_survives_a_caught_throw ... ok\ntest closure_capture_audit::v1_parent_assignment_does_not_update_an_existing_capture ... ok\ntest closure_capture_audit::v1_separately_created_siblings_have_independent_capture_snapshots ... ok\ntest closure_capture_audit::v1_transitive_captures_snapshot_the_intermediate_capture ... ok\ntest closure_capture_audit::v1_while_and_loop_captures_keep_iteration_snapshots ... ok\ntest closure_capture_contracts::captured_calls_ignore_name_only_jit_cache_entries ... ok\ntest closure_capture_contracts::captures_use_definition_site_slots_and_indexed_access ... ok\ntest closure_capture_contracts::dropping_last_closure_releases_its_capture_cell ... ok\ntest closure_capture_contracts::jit_to_vm_bridge_can_return_and_reinvoke_a_new_closure ... ok\ntest closure_capture_contracts::local_shadowing_and_global_reads_do_not_capture_outer_values ... ok\ntest closure_capture_contracts::malformed_capture_operands_return_errors_instead_of_panicking ... ok\ntest closure_capture_contracts::returned_named_recursive_closure_uses_frame_self_binding ... ok\ntest closure_capture_contracts::transitively_used_captures_are_forwarded_without_retaining_unused_locals ... ok\ntest closure_capture_contracts::vm_generator_retains_snapshot_across_yields_after_factory_return ... ok\ntest collection_ownership_contracts::append_keeps_each_runtimes_callable_resolution_order ... ok\ntest captured_reentry_contracts::same_capture_reentry_preserves_writes_without_sharing_distinct_snapshots ... ok\ntest collection_ownership_contracts::append_rebinding_preserves_aliases_callbacks_shadowing_and_failures ... ok\ntest collection_ownership_contracts::collection_fast_paths_preserve_existing_vm_depth_checks ... ok\ntest collection_ownership_contracts::benchmark_state_writes_preserve_snapshots_and_failed_writes ... ok\ntest collection_ownership_contracts::collection_fast_paths_survive_optimizer_relocation_and_jit_fallback ... ok\ntest collection_ownership_contracts::fixed_key_dictionary_updates_preserve_snapshots_in_both_runtimes ... ok\ntest collection_ownership_contracts::field_appends_preserve_evaluation_order_aliases_and_fallbacks ... ok\ntest collection_ownership_contracts::nested_writes_keep_error_atomicity_and_expression_order ... ok\ntest collection_ownership_contracts::lifo_updates_preserve_snapshots_order_and_empty_contracts ... ok\ntest collection_removal_contracts::dictionary_deletion_preserves_pairs_aliases_and_key_contracts ... ok\ntest collection_removal_contracts::failed_nested_pop_writeback_keeps_overdeep_host_state_unchanged ... ok\ntest collection_ownership_contracts::queue_updates_preserve_snapshots_order_and_nested_values ... ok\ntest collection_removal_contracts::field_and_indexed_pops_preserve_snapshots_and_removed_values ... ok\ntest collection_removal_contracts::integer_keyed_parents_keep_indexed_pop_value_semantics ... ok\ntest collection_removal_contracts::indexed_pop_fallbacks_preserve_index_effects_and_shadowing ... ok\ntest collection_removal_contracts::nested_map_removal_rechecks_destination_after_key_effects ... ok\ntest collection_removal_contracts::removal_fallbacks_keep_callable_effects_and_immutable_errors ... ok\ntest collection_removal_contracts::repeated_removal_keeps_retained_pairs_and_callable_aliases ... ok\ntest collection_removal_contracts::repeated_checked_removals_preserve_parent_snapshots_and_external_writes ... ok\ntest concurrency_lifecycle_contracts::async_submission_returns_before_body_completes ... ok\ntest concurrency_lifecycle_contracts::cancellation_is_repeatable_and_cooperatively_stops_language_loops ... ok\ntest concurrency_lifecycle_contracts::cross_feature_task_spawn_and_generator_captures_keep_their_owners ... ok\ntest concurrency_lifecycle_contracts::cancellation_releases_execution_capacity_after_language_body_exits ... ok\ntest concurrency_lifecycle_contracts::detached_spawn_keeps_mutability_and_does_not_mutate_parent_copy ... ok\ntest concurrency_lifecycle_contracts::detached_spawn_runs_with_snapshot_capture_after_factory_return ... ok\ntest concurrency_lifecycle_contracts::detached_work_does_not_implicitly_join_at_process_exit ... ok\ntest concurrency_lifecycle_contracts::explicit_delegation_depth_is_bounded_and_restores_the_top_level_caller ... ok\ntest concurrency_lifecycle_contracts::generator_can_await_an_ordinary_async_call ... ok\ntest concurrency_lifecycle_contracts::ordinary_generators_work_inside_async_calls ... ok\ntest concurrency_lifecycle_contracts::overlapping_async_calls_preserve_changes_to_different_captured_bindings ... ok\ntest concurrency_lifecycle_contracts::recursive_async_admission_fails_boundedly ... ok\ntest concurrency_lifecycle_contracts::shared_integer_overflow_is_catchable_and_preserves_store ... ok\ntest concurrency_lifecycle_contracts::task_cancellation_reaches_explicitly_delegated_generators ... ok\ntest concurrency_lifecycle_contracts::task_callbacks_and_detached_workers_inherit_all_host_denials ... ok\ntest concurrency_lifecycle_contracts::unrelated_unsupported_values_do_not_block_spawn ... ok\ntest concurrency_lifecycle_contracts::tasks_preserve_restricted_capabilities ... ok\ntest concurrency_lifecycle_contracts::yield_in_loop_condition_restarts_after_continue_and_finishes ... ok\ntest concurrency_lifecycle_contracts::unsupported_inner_spawn_capture_never_falls_back_to_outer_value ... ok\ntest global_indexed_write_contracts::cached_global_depth_checks_reject_growth_and_allow_repair ... ok\ntest global_indexed_write_contracts::malformed_call_counts_report_underflow_without_reserving_unbounded_storage ... ok\ntest helper_ownership_contracts::argument_effects_and_repeated_arguments_keep_snapshots ... ok\ntest global_indexed_write_contracts::global_writes_preserve_snapshots_errors_and_replacement_root_order ... ok\ntest helper_ownership_contracts::caught_failures_and_immutable_rebinding_keep_original_values ... ok\ntest helper_ownership_contracts::caught_helper_index_errors_preserve_the_caller_snapshot ... ok\ntest helper_ownership_contracts::helper_rebinding_preserves_aliases_and_recursive_updates ... ok\ntest helper_ownership_contracts::helper_rebinding_preserves_named_arity_diagnostics ... ok\ntest helper_ownership_contracts::imported_helpers_preserve_value_semantics_and_failure_recovery ... ok\ntest helper_ownership_contracts::helpers_preserve_byte_dictionary_and_struct_snapshots ... ok\ntest helper_ownership_contracts::nested_blocks_cannot_consume_parameters_used_afterward ... ok\ntest helper_ownership_contracts::parameter_aliases_remain_live_when_used_by_nested_expressions ... ok\ntest imported_collection_contracts::callback_and_await_results_keep_nested_dictionary_behavior ... ok\ntest imported_collection_contracts::imported_nested_writes_preserve_aliases_closures_and_struct_rows ... ok\ntest imported_native_defaults_contracts::imported_native_defaults_keep_aliases_overrides_captures_and_recursion ... ok\ntest imported_native_defaults_contracts::late_native_default_override_updates_its_global_owner_after_loop_warmup ... ok\ntest imported_recursion_contracts::ast_recursion_grows_a_small_embedding_stack ... ok\ntest imported_recursion_contracts::direct_recursion_has_the_same_supported_depth ... ok\ntest imported_collection_contracts::imported_helpers_read_and_update_every_dictionary_shape ... ok\ntest imported_recursion_contracts::excessive_imported_depth_is_catchable_and_recovers ... ok\ntest imported_recursion_contracts::imported_mutual_recursion_preserves_module_bindings_in_both_runtimes ... ok\ntest imported_setup_contracts::imported_setup_preserves_permissions_state_recursion_and_callbacks_in_all_runtimes ... ok\ntest imported_vm_callback::byte_length_is_exact_in_all_restricted_runtimes ... ok\ntest imported_task_globals_contracts::imported_task_closures_preserve_module_globals ... ok\ntest imported_vm_callback::cross_runtime_recursion_fails_without_aborting_process ... ok\ntest imported_vm_callback::imported_async_function_preserves_callback_globals ... ok\ntest imported_vm_callback::imported_callback_arity_is_enforced ... ok\ntest imported_vm_callback::imported_callback_cannot_gain_capabilities ... ok\ntest imported_vm_callback::imported_callback_errors_are_catchable_and_do_not_poison_next_call ... ok\ntest imported_vm_callback::closures_retain_function_local_imports_after_return ... ok\ntest imported_vm_callback::imported_function_can_await_vm_callback_results ... ok\ntest imported_vm_callback::imported_callbacks_preserve_results_captures_and_globals ... ok\ntest jit_callback_depth::sequential_cold_callbacks_do_not_accumulate_recursion_depth ... ok\ntest jit_cold_callback::native_caller_can_invoke_full_vm_array_helper_and_recover_errors ... ok\ntest native_read_allocation::byte_materialization_does_not_grow_the_output_buffer_repeatedly ... ok\ntest native_read_allocation::compiled_local_field_reads_do_not_copy_fixed_dictionary_storage ... ok\ntest native_read_allocation::empty_local_scopes_do_not_allocate_permission_storage ... ok\ntest native_read_allocation::environment_snapshots_do_not_duplicate_permission_names ... ok\ntest native_read_allocation::fixed_dictionary_reads_do_not_clone_the_container ... ok\ntest native_read_allocation::imported_environment_snapshots_do_not_copy_native_preload_tables ... ok\ntest native_read_allocation::repeated_global_writes_do_not_copy_or_rescan_the_container ... ok\ntest native_read_allocation::vm_call_validation_does_not_allocate_per_parameter ... ok\ntest native_read_allocation::warmed_compiled_call_setup_has_bounded_allocations ... ok\ntest ordered_capture_field_contracts::interpreter_ordered_fields_preserve_generator_and_immutable_snapshots ... ignored, Known interpreter ordered capture defect; mandatory explicit fix gate\ntest ordered_capture_field_contracts::jit_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest ordered_capture_field_contracts::vm_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest ordered_task_capture_contracts::interpreter_channel_ordered_capture_visibility_preserves_snapshots ... ignored, Known interpreter active-capture visibility defect; run explicitly as the pending fix gate\ntest index_root_order_contracts::indexed_assignment_reads_replacement_after_index_in_all_runtimes ... ok\ntest ordered_task_capture_contracts::jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest ordered_task_capture_contracts::vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest ordinary_task_capture_contracts::ordinary_task_capture_writes_survive_aliases_and_helper_calls ... ok\ntest parameter_slot_contracts::edited_parameter_order_does_not_reuse_snapshot_slot_mappings ... ok\ntest parameter_slot_contracts::slotted_and_unslotted_legacy_named_parameters_keep_their_values ... ok\ntest ordinary_task_reentry_contracts::ordinary_task_journals_preserve_nested_calls_and_snapshots ... ok\ntest stack_swap_contracts::swap_underflow_cannot_use_suspended_caller_operands ... ok\ntest scalar_depth_semantics::scalar_append_and_nested_snapshots_preserve_values_in_both_runtimes ... ok\ntest synchronous_callback_state::helper_call_comparators_retain_hot_state_within_one_sort ... ok\ntest synchronous_callback_state::leaf_comparators_reuse_hot_native_execution_within_one_sort ... ok\ntest synchronous_callback_state::preloaded_callbacks_skip_script_compilation_but_keep_callee_jit ... ok\ntest synchronous_callback_state::synchronous_callbacks_preserve_nested_state_errors_and_capabilities ... ok\ntest task_embedded_globals_contracts::embedded_task_callbacks_preserve_current_globals_across_calls_and_errors ... ok\ntest task_callback_global_isolation_contracts::task_callbacks_preserve_global_isolation_and_captured_locals ... ok\ntest task_global_snapshot_contracts::task_closures_refresh_submission_globals ... ok\ntest vm_interpreter_parity_surfaces::global_immutability_survives_function_isolation ... ok\ntest vm_interpreter_parity_surfaces::immutable_loop_declarations_preserve_function_jit_eligibility ... ok\ntest vm_interpreter_parity_surfaces::lexical_capture_and_block_assignment_survive_function_isolation ... ok\ntest vm_interpreter_parity_surfaces::top_level_functions_cannot_overwrite_caller_locals ... ok\ntest vm_interpreter_parity_surfaces::top_level_functions_cannot_read_caller_locals ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_break_and_continue_inside_loop ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_inner_scope_shadowing_without_leaking ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_lexical_bindings_to_shadow_native_names ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_mutable_bindings_to_reassign_and_mutate ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_reusing_loop_local_names_in_sibling_while_scopes ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_allow_top_level_return_for_script_exit ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_assignment_updates_outer_binding_when_present ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_closure_captures_nearest_lexical_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_define_collection_and_callable_equality_contract ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_define_cross_type_numeric_and_string_ordering_contract ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_dotted_import_resolution_prefers_flat_module_before_nested_path ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_async_function_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_async_function_arity_too_many ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_break_outside_loop ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_break_outside_loop_inside_function ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_closure_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_closure_arity_too_many ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_continue_outside_loop ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_continue_outside_loop_inside_function ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_function_arity_too_few ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_function_arity_too_many ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_generator_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_generator_arity_too_many ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_indexing_non_indexable_value ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_invalid_index_assignment_target ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_invalid_map_key_type ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_method_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_method_arity_too_many ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_missing_integer_map_key ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_missing_string_map_key ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_native_function_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_native_function_arity_too_few ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_nested_missing_map_key ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_out_of_bounds_array_index ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_out_of_bounds_string_index ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_range_native_arity ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_struct_generator_method_arity_mismatch ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_identifier_in_binary_expression ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_identifier_in_condition ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_identifier_inside_closure ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_identifier_inside_function ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_method_receiver ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_undefined_top_level_identifier ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_unknown_method_member ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_unsupported_binary_operation ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_error_on_unsupported_unary_operation ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_execute_exception_fixture_without_runtime_arity_drift ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_function_fallthrough_and_bare_return_yield_null ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_initialize_fresh_loop_local_bindings ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_keep_loop_closure_snapshots_independent ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_keep_missing_struct_fields_as_runtime_errors ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_keep_string_literals_explicit ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_arg_parser_method_chains ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_async_named_nested_capture_isolation ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_async_named_nested_capture_mutation ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_bounded_namespace_aware_xml_parsing ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_callable_arity_success_paths ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_custom_enum_constructor_calls_without_recursion ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_dict_override_and_dict_method_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_dotted_from_import_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_dotted_imported_function_invocation_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_enum_match_binding_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_generator_iteration_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_import_all_function_invocation_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_import_export_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_imported_async_function_invocation_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_imported_function_dict_index_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_imported_function_invocation_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_inference_regression_runtime_surfaces ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_legacy_method_without_self_field_lookup ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_named_nested_capture_mutation ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_null_equality_contract ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_null_optional_and_pipe_operator_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_spawn_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_spread_destructuring_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_struct_method_behavior_contract ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_struct_method_named_chain_collision_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_struct_op_add_overload_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_struct_relational_overloads ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_struct_unary_overload_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_successful_captured_map_update ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_successful_local_map_update ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_successful_nested_map_update ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_throw_call_stack_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_top_level_function_hoisting_surface ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_truthiness_semantics_across_conditionals ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_match_valid_index_assignment_success_path ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_nan_and_infinity_comparisons_match_policy ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_parallel_map_preserve_global_dependencies_and_order ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_preserve_contains_result_types ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_preserve_variadic_native_contracts ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_block_variable_leakage ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_boolean_ordering_comparisons ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_cross_type_ordering_comparisons ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_duplicate_const_declaration_in_same_scope ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_duplicate_let_declaration_in_same_scope ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_float_division_by_zero ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_float_modulo_by_zero ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_in_place_mutation_of_const_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_in_place_mutation_of_immutable_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_integer_add_overflow ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_integer_division_overflow ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_integer_multiply_overflow ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_integer_subtract_overflow ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_local_reassignment_of_immutable_let_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_loop_variable_leakage ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_overflow_in_local_in_place_addition ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_reassignment_of_captured_immutable_let_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_reassignment_of_const_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_reject_reassignment_of_immutable_let_binding ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_resolve_defined_identifiers ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_short_circuit_logical_operators_evaluate_rhs_when_required ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_short_circuit_logical_operators_skip_rhs_when_possible ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_still_reject_duplicate_source_declarations ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_support_legacy_struct_generator_field_bindings ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_support_struct_generator_methods ... ok\ntest task_module_snapshot_contracts::nested_module_tasks_preserve_distinct_global_snapshots ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_unwind_loop_scopes_after_exceptions ... ok\ntest vm_interpreter_parity_surfaces::vm_and_interpreter_unwind_loop_scopes_on_continue_break_and_return ... ok\n\ntest result: ok. 281 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 6.87s\n\n",
+  "explicit_interpreter_outputs": [
+    "\nrunning 1 test\ntest ordered_task_capture_contracts::interpreter_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 283 filtered out; finished in 0.28s\n\n",
+    "\nrunning 1 test\ntest ordered_capture_field_contracts::interpreter_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 283 filtered out; finished in 0.04s\n\n"
+  ],
+  "enabled_regressions": [
+    {
+      "name": "ordered_task_capture_contracts",
+      "source_sha256": "374865381fda0c66301dea36b2643209b889022096bd362facbdf9037bbee10a",
+      "status": "passed",
+      "output": "\nrunning 3 tests\ntest jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest interpreter_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s\n\n"
+    },
+    {
+      "name": "ordered_capture_field_contracts",
+      "source_sha256": "9166661cf242655fb49866af9f73aeef801a625f2ef414bdf36d637309245956",
+      "status": "passed",
+      "output": "\nrunning 3 tests\ntest jit_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest vm_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\ntest interpreter_ordered_fields_preserve_generator_and_immutable_snapshots ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s\n\n"
+    }
+  ],
+  "allocation": {
+    "status": "passed",
+    "baseline_probe_sha256": "8ab4ea1eb1fad7c5593275203eff0b8a44d0b8412b17c3bcdf85f965d68e7848",
+    "candidate_probe_sha256": "06ca60b1c21d310b9f79b0874ac679caae13358da09621831fa57dece33fcd77",
+    "rows": [
+      {
+        "mode": "vm",
+        "size": 512,
+        "requests": 6818,
+        "bytes": 1184553,
+        "stdout": "PASS\n",
+        "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "vm",
+        "size": 1024,
+        "requests": 8867,
+        "bytes": 1467689,
+        "stdout": "PASS\n",
+        "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "vm",
+        "size": 2048,
+        "requests": 12964,
+        "bytes": 2033961,
+        "stdout": "PASS\n",
+        "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "vm",
+        "size": 4096,
+        "requests": 21157,
+        "bytes": 3166505,
+        "stdout": "PASS\n",
+        "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "jit",
+        "size": 512,
+        "requests": 6818,
+        "bytes": 1184553,
+        "stdout": "PASS\n",
+        "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "jit",
+        "size": 1024,
+        "requests": 8867,
+        "bytes": 1467689,
+        "stdout": "PASS\n",
+        "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "jit",
+        "size": 2048,
+        "requests": 12964,
+        "bytes": 2033961,
+        "stdout": "PASS\n",
+        "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be",
+        "request_delta": -1,
+        "byte_delta": 56
+      },
+      {
+        "mode": "jit",
+        "size": 4096,
+        "requests": 21157,
+        "bytes": 3166505,
+        "stdout": "PASS\n",
+        "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8",
+        "request_delta": -1,
+        "byte_delta": 56
+      }
+    ],
+    "conclusion": "Identical linear byte slope in VM/JIT entry paths; constant +56 requested bytes and -1 request at every size. Allocation traffic only; no elapsed-speed or retained-memory claim."
+  },
+  "checksums": {
+    "vm": {
+      "raw_report_sha256": "21be4375f6a733868a1d476e131da399402682200902dae025621de5a684577f",
+      "results": [
+        {
+          "name": "Binarytrees::Obj",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Obj: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Binarytrees::Arena",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Arena: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Array",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Recursion",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::Single",
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::Single: OK 720656960\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T4",
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T4: OK 2420334760\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T8",
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T8: OK 4014223764\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T16",
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T16: OK 418055336\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Encode",
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Encode: OK 3894061047\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Decode",
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Decode: OK 732348015\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::Generate",
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::Generate: OK 4\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseDom",
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseMapping",
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CSV::Parse",
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Sieve",
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Sieve: OK 4660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::TextRaytracer",
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::NeuralNet",
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::CacheSimulation",
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::GameOfLife",
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Words",
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Words: OK 580539813\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::LogParser",
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::LogParser: OK 117\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Regex",
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Regex: OK 1554169905\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Parse",
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Parse: OK 917360148\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Quick",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Merge",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Merge: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Self",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Self: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::BFS",
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::BFS: OK 20\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::DFS",
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::DFS: OK 28\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::AStar",
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::AStar: OK 36\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::SHA256",
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::CRC32",
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Ast",
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Ast: OK 774028720\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Interpreter",
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::Generator",
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::Generator: OK 2309652669\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::BFS",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::BFS: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::AStar",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::AStar: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Fannkuchredux",
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Mandelbrot",
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Nbody",
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Spectralnorm",
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTEncode",
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTEncode: OK 200\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTDecode",
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffDecode",
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithDecode",
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWEncode",
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWEncode: OK 208\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWDecode",
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::Jaro",
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::Jaro: OK 7020\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::NGram",
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::NGram: OK 42\nSummary: 1, 1, 0\n"
+        }
+      ]
+    },
+    "interpreter": {
+      "raw_report_sha256": "c0e535ff8accb22d0d1d59564e14476fc66bcda41e3b287136dad31a5f067bff",
+      "results": [
+        {
+          "name": "Binarytrees::Obj",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Obj: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Binarytrees::Arena",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Arena: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Array",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Recursion",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::Single",
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::Single: OK 720656960\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T4",
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T4: OK 2420334760\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T8",
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T8: OK 4014223764\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T16",
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T16: OK 418055336\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Encode",
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Encode: OK 3894061047\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Decode",
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Decode: OK 732348015\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::Generate",
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::Generate: OK 4\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseDom",
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseMapping",
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CSV::Parse",
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Sieve",
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Sieve: OK 4660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::TextRaytracer",
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::NeuralNet",
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::CacheSimulation",
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::GameOfLife",
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Words",
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Words: OK 580539813\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::LogParser",
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::LogParser: OK 117\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Regex",
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Regex: OK 1554169905\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Parse",
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Parse: OK 917360148\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Quick",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Merge",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Merge: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Self",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Self: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::BFS",
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::BFS: OK 20\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::DFS",
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::DFS: OK 28\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::AStar",
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::AStar: OK 36\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::SHA256",
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::CRC32",
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Ast",
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Ast: OK 774028720\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Interpreter",
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::Generator",
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::Generator: OK 2309652669\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::BFS",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::BFS: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::AStar",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::AStar: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Fannkuchredux",
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Mandelbrot",
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Nbody",
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Spectralnorm",
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTEncode",
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTEncode: OK 200\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTDecode",
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffDecode",
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithDecode",
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWEncode",
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWEncode: OK 208\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWDecode",
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::Jaro",
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::Jaro: OK 7020\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::NGram",
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::NGram: OK 42\nSummary: 1, 1, 0\n"
+        }
+      ]
+    },
+    "jit": {
+      "raw_report_sha256": "1d7cc5ac17412a947d9c9dd59651d39d1915657e83e54c757cd2892e3b4d01ab",
+      "results": [
+        {
+          "name": "Binarytrees::Obj",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Obj"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Obj: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Binarytrees::Arena",
+          "config": {
+            "checksum": 124,
+            "depth": 4,
+            "iterations": 3,
+            "name": "Binarytrees::Arena"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Binarytrees::Arena: OK 124\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Array",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Array",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Brainfuck::Recursion",
+          "config": {
+            "checksum": 3562897308,
+            "iterations": 2,
+            "name": "Brainfuck::Recursion",
+            "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+            "warmup_iterations": 1,
+            "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Brainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::Single",
+          "config": {
+            "checksum": 720656960,
+            "iterations": 3,
+            "n": 40,
+            "name": "Matmul::Single"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::Single: OK 720656960\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T4",
+          "config": {
+            "checksum": 2420334760,
+            "iterations": 3,
+            "n": 42,
+            "name": "Matmul::T4"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T4: OK 2420334760\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T8",
+          "config": {
+            "checksum": 4014223764,
+            "iterations": 3,
+            "n": 44,
+            "name": "Matmul::T8"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T8: OK 4014223764\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Matmul::T16",
+          "config": {
+            "checksum": 418055336,
+            "iterations": 3,
+            "n": 46,
+            "name": "Matmul::T16"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Matmul::T16: OK 418055336\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Encode",
+          "config": {
+            "checksum": 3894061047,
+            "iterations": 8192,
+            "name": "Base64::Encode",
+            "size": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Encode: OK 3894061047\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Base64::Decode",
+          "config": {
+            "checksum": 732348015,
+            "iterations": 8192,
+            "name": "Base64::Decode",
+            "size": 23
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Base64::Decode: OK 732348015\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::Generate",
+          "config": {
+            "checksum": 4,
+            "coords": 9,
+            "iterations": 3,
+            "name": "Json::Generate"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::Generate: OK 4\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseDom",
+          "config": {
+            "checksum": 2918383076,
+            "coords": 10,
+            "iterations": 3,
+            "name": "Json::ParseDom"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Json::ParseMapping",
+          "config": {
+            "checksum": 1969907348,
+            "coords": 11,
+            "iterations": 3,
+            "name": "Json::ParseMapping"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Json::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CSV::Parse",
+          "config": {
+            "checksum": 3563398641,
+            "iterations": 3,
+            "name": "CSV::Parse",
+            "rows": 11
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Sieve",
+          "config": {
+            "checksum": 4660,
+            "iterations": 3,
+            "limit": 1000,
+            "name": "Etc::Sieve"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Sieve: OK 4660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::TextRaytracer",
+          "config": {
+            "checksum": 1438660,
+            "h": 100,
+            "iterations": 3,
+            "name": "Etc::TextRaytracer",
+            "w": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::NeuralNet",
+          "config": {
+            "checksum": 1586674334,
+            "iterations": 2,
+            "name": "Etc::NeuralNet"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::CacheSimulation",
+          "config": {
+            "checksum": 179773224,
+            "iterations": 2,
+            "name": "Etc::CacheSimulation",
+            "size": 1000,
+            "values": 2000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::GameOfLife",
+          "config": {
+            "checksum": 4006235749,
+            "h": 20,
+            "iterations": 3,
+            "name": "Etc::GameOfLife",
+            "w": 20
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::Words",
+          "config": {
+            "checksum": 580539813,
+            "iterations": 2,
+            "name": "Etc::Words",
+            "word_len": 1,
+            "words": 600
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::Words: OK 580539813\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Etc::LogParser",
+          "config": {
+            "checksum": 117,
+            "iterations": 2,
+            "lines_count": 10,
+            "name": "Etc::LogParser"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Etc::LogParser: OK 117\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Regex",
+          "config": {
+            "checksum": 1554169905,
+            "count": 12,
+            "iterations": 2,
+            "name": "Template::Regex"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Regex: OK 1554169905\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Template::Parse",
+          "config": {
+            "checksum": 917360148,
+            "count": 10,
+            "iterations": 2,
+            "name": "Template::Parse"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Template::Parse: OK 917360148\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Quick",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Quick",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Quick: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Merge",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Merge",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Merge: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Sort::Self",
+          "config": {
+            "checksum": 2548773,
+            "iterations": 2,
+            "name": "Sort::Self",
+            "size": 100000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Sort::Self: OK 2548773\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::BFS",
+          "config": {
+            "checksum": 20,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::BFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::BFS: OK 20\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::DFS",
+          "config": {
+            "checksum": 28,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::DFS",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::DFS: OK 28\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Graph::AStar",
+          "config": {
+            "checksum": 36,
+            "iterations": 3,
+            "jump_len": 100,
+            "jumps": 3,
+            "name": "Graph::AStar",
+            "vertices": 100
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Graph::AStar: OK 36\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::SHA256",
+          "config": {
+            "checksum": 1036619072,
+            "iterations": 3,
+            "name": "Hash::SHA256",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Hash::CRC32",
+          "config": {
+            "checksum": 3031698216,
+            "iterations": 3,
+            "name": "Hash::CRC32",
+            "size": 1000
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Hash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Ast",
+          "config": {
+            "checksum": 774028720,
+            "iterations": 3,
+            "name": "Calculator::Ast",
+            "operations": 3
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Ast: OK 774028720\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Calculator::Interpreter",
+          "config": {
+            "checksum": 3208680,
+            "iterations": 100,
+            "name": "Calculator::Interpreter",
+            "operations": 10
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Calculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::Generator",
+          "config": {
+            "checksum": 2309652669,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::Generator",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::Generator: OK 2309652669\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::BFS",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::BFS",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::BFS: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Maze::AStar",
+          "config": {
+            "checksum": 6771,
+            "h": 30,
+            "iterations": 2,
+            "name": "Maze::AStar",
+            "w": 200
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Maze::AStar: OK 6771\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Fannkuchredux",
+          "config": {
+            "checksum": 4428,
+            "iterations": 3,
+            "n": 5,
+            "name": "CLBG::Fannkuchredux"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Mandelbrot",
+          "config": {
+            "checksum": 2236342953,
+            "h": 30,
+            "iterations": 3,
+            "name": "CLBG::Mandelbrot",
+            "w": 30
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Nbody",
+          "config": {
+            "checksum": 338796608,
+            "iterations": 2,
+            "name": "CLBG::Nbody"
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "CLBG::Spectralnorm",
+          "config": {
+            "checksum": 1052168784,
+            "iterations": 10,
+            "name": "CLBG::Spectralnorm",
+            "size": 45
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "CLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTEncode",
+          "config": {
+            "checksum": 200,
+            "iterations": 3,
+            "name": "Compress::BWTEncode",
+            "size": 50
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTEncode: OK 200\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::BWTDecode",
+          "config": {
+            "checksum": 100204,
+            "iterations": 3,
+            "name": "Compress::BWTDecode",
+            "size": 51
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::HuffEncode",
+            "size": 52
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::HuffDecode",
+          "config": {
+            "checksum": 100212,
+            "iterations": 3,
+            "name": "Compress::HuffDecode",
+            "size": 53
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithEncode",
+          "config": {
+            "checksum": 56,
+            "iterations": 3,
+            "name": "Compress::ArithEncode",
+            "size": 54
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithEncode: OK 56\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::ArithDecode",
+          "config": {
+            "checksum": 100220,
+            "iterations": 3,
+            "name": "Compress::ArithDecode",
+            "size": 55
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWEncode",
+          "config": {
+            "checksum": 208,
+            "iterations": 3,
+            "name": "Compress::LZWEncode",
+            "size": 60
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWEncode: OK 208\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Compress::LZWDecode",
+          "config": {
+            "checksum": 100244,
+            "iterations": 3,
+            "name": "Compress::LZWDecode",
+            "size": 61
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Compress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::Jaro",
+          "config": {
+            "checksum": 7020,
+            "count": 10,
+            "iterations": 1,
+            "name": "Distance::Jaro",
+            "size": 5
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::Jaro: OK 7020\nSummary: 1, 1, 0\n"
+        },
+        {
+          "name": "Distance::NGram",
+          "config": {
+            "checksum": 42,
+            "count": 2,
+            "iterations": 1,
+            "name": "Distance::NGram",
+            "size": 500
+          },
+          "status": "passed",
+          "exitcode": 0,
+          "checksum_output": "Distance::NGram: OK 42\nSummary: 1, 1, 0\n"
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Test-size inputs only, not full production acceptance.",
+    "Local elapsed times are diagnostic; clean-host Goose/Rust comparison remains pending.",
+    "JIT mode permits fallback; no native-only or overall speedup claim.",
+    "Imported user-binding materialization and later checklist stages remain open."
+  ],
+  "audit_directory": ".audit-evidence/live-capture-v4-2026-10-26",
+  "runtime_commit": "b34a0b81037d475b7ff5ae15a3143c6048b1b19b"
+}
