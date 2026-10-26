@@ -3404,6 +3404,15 @@ impl VM {
                     self.stack.pop().ok_or("Stack underflow")?;
                 }
 
+                OpCode::Swap => {
+                    let count = self.stack.len();
+                    let base = self.call_frames.last().map_or(0, |frame| frame.stack_offset);
+                    if count.saturating_sub(base) < 2 {
+                        return Err("Stack underflow in Swap".into());
+                    }
+                    self.stack.swap(count - 1, count - 2);
+                }
+
                 OpCode::Dup => {
                     let value = self.stack.last().ok_or("Stack underflow")?.clone();
                     self.stack.push(value);
@@ -5199,10 +5208,10 @@ impl VM {
                     let index = self.stack.pop().ok_or("Stack underflow")?;
                     let object = self.stack.pop().ok_or("Stack underflow")?;
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-                    // The compiler's global assignment keeps a loaded snapshot while
-                    // evaluating the index. Release that temporary only if the current
-                    // destination still has the identical backing storage. Reentrant
-                    // indices that replace the binding keep the original slow path.
+                    // Release a loaded temporary only when its destination still has
+                    // identical backing storage. Compiler-emitted writes load after
+                    // evaluating the index; legacy bytecode may retain an older root.
+                    // Genuine snapshots must remain on the ordinary detachment path.
                     let mut operands = Some((object, index, value));
                     let mut fast_result = None;
                     let global_target = match self.chunk.instructions.get(self.ip) {
@@ -6495,6 +6504,7 @@ impl VM {
                         | OpCode::StoreLocal(_)
                         | OpCode::Pop
                         | OpCode::Dup
+                        | OpCode::Swap
                         | OpCode::Add
                         | OpCode::Sub
                         | OpCode::Mul
@@ -9021,6 +9031,7 @@ impl VM {
                             | OpCode::EnsureMutableGlobalForMutation(_)
                             | OpCode::Pop
                             | OpCode::Dup
+                            | OpCode::Swap
                             | OpCode::Add
                             | OpCode::Sub
                             | OpCode::Mul
@@ -9256,6 +9267,16 @@ impl VM {
 
                         OpCode::Pop => {
                             self.stack.pop().ok_or("Stack underflow")?;
+                        }
+
+                        OpCode::Swap => {
+                            let count = self.stack.len();
+                            let base =
+                                self.call_frames.last().map_or(0, |frame| frame.stack_offset);
+                            if count.saturating_sub(base) < 2 {
+                                return Err("Stack underflow in Swap".into());
+                            }
+                            self.stack.swap(count - 1, count - 2);
                         }
 
                         OpCode::Dup => {

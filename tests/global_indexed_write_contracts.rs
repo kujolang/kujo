@@ -1,7 +1,7 @@
 use std::process::Command;
 
 #[test]
-fn global_writes_preserve_snapshots_errors_and_prior_reentrant_index_order() {
+fn global_writes_preserve_snapshots_errors_and_replacement_root_order() {
     for mode in ["vm", "interpreter", "jit"] {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_kujo"));
         cmd.args(["run", "tests/fixtures/global_indexed_write.kujo", "--untrusted"]);
@@ -16,10 +16,8 @@ fn global_writes_preserve_snapshots_errors_and_prior_reentrant_index_order() {
         }
         let out = cmd.output().unwrap();
         assert!(out.status.success(), "{mode}: {}", String::from_utf8_lossy(&out.stderr));
-        // Existing simple-global-assignment behavior differs: VM loads the root
-        // before the index; interpreter reads it after. This optimization must
-        // preserve each path. Nested assignment has a separate canonical contract.
-        let expected = if mode == "interpreter" { "[42, 9, 9]" } else { "[42, 199, 7]" };
+        // Index side effects complete before loading the destination root.
+        let expected = "[42, 9, 9]";
         assert_eq!(String::from_utf8_lossy(&out.stdout).trim(), expected, "{mode}");
     }
 }

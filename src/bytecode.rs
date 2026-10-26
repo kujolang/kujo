@@ -97,6 +97,9 @@ pub enum OpCode {
     /// Duplicate top value on stack
     Dup,
 
+    /// Exchange the top two values without cloning either value.
+    Swap,
+
     // === Arithmetic Operations ===
     /// Pop two values, add them, push result
     Add,

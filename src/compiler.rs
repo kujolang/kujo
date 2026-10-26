@@ -2161,21 +2161,22 @@ impl Compiler {
                         self.chunk.emit(OpCode::IndexSetInPlace(slot));
                         return Ok(());
                     } else if self.scope_depth == 0 && !self.is_upvalue(name) {
-                        // Global in-place mutation should preserve mutable-binding checks.
+                        // Evaluate the index before checking/loading its replacement root.
+                        self.compile_expr(index)?;
                         self.chunk.emit(OpCode::EnsureMutableGlobalForMutation(name.clone()));
                         self.compile_expr(object)?;
-                        self.compile_expr(index)?;
+                        self.chunk.emit(OpCode::Swap);
                         self.chunk.emit(OpCode::IndexSet);
                         self.chunk.emit(OpCode::StoreGlobal(name.clone()));
                         return Ok(());
                     }
                 }
 
-                // Default path: load object, index, then set
-                // Value is already on stack
-                // Need: [value, object, index]
-                self.compile_expr(object)?;
+                // Read the root after the index, then restore IndexSet's operand order.
+                // Swap moves values without retaining another collection snapshot.
                 self.compile_expr(index)?;
+                self.compile_expr(object)?;
+                self.chunk.emit(OpCode::Swap);
                 self.chunk.emit(OpCode::IndexSet);
 
                 // Nested targets were handled above; this is a binding root.

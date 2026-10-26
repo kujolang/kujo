@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Align VM/JIT direct indexed writes with the interpreter: evaluate the index
+  before reading the target binding, so an index expression that replaces the
+  container updates that replacement. Preserve snapshots, expression side effects
+  on errors and compound assignment's existing separate read/write evaluations.
+
 - Share immutable native-default metadata in imported module environments instead
   of copying unchanged native bindings for every helper call. User overrides,
   aliases, immutable declarations and snapshots remain independent; native JIT

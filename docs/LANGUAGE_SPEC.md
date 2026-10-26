@@ -331,7 +331,7 @@ let or_value := false || 5
   `items[0].values[1] += 2`). Updates write back to that binding and preserve
   independent copies. Missing intermediate entries and invalid indices fail;
   assignment does not create intermediate containers.
-- Nested simple assignment evaluates the right-hand side first, then target indices
+- Simple indexed and nested assignment evaluates the right-hand side first, then target indices
   once each from root to leaf. The root is read after index evaluation. A failed
   write does not publish a partially updated root; side effects from evaluating
   expressions are not rolled back. Compound assignment retains its existing

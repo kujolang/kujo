@@ -5697,6 +5697,7 @@ impl BytecodeTranslator {
 
             // Stack manipulation
             OpCode::Dup => (0, 1), // Peek + push copy
+            OpCode::Swap => (2, 2),
 
             // Control flow (vary by type)
             OpCode::Return | OpCode::ReturnNone => (0, 0), // Terminates
@@ -6958,6 +6959,14 @@ impl BytecodeTranslator {
             OpCode::Pop => {
                 let value = self.pop_value()?;
                 self.release_operand(builder, value);
+            }
+
+            OpCode::Swap => {
+                let count = self.value_stack.len();
+                if count < 2 {
+                    return Err("Stack underflow in Swap".into());
+                }
+                self.value_stack.swap(count - 1, count - 2);
             }
 
             OpCode::Dup => {
@@ -10249,7 +10258,7 @@ impl JitCompiler {
             OpCode::Not | OpCode::And | OpCode::Or => true,
 
             // Stack operations
-            OpCode::Pop | OpCode::Dup => true,
+            OpCode::Pop | OpCode::Dup | OpCode::Swap => true,
 
             // Variable operations
             OpCode::LoadVar(_)
