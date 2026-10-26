@@ -124,11 +124,12 @@ Section 3 remains open for user-defined binding materialization; native preload 
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
-- [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Captured-state reentry remains a separate open item in section 3.
+- [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Subsequent captured-state reentry and ordered-visibility fixes are verified in section 3; imported environment materialization remains open.
 
 Gate: changed global paths have better allocation scaling with ownership, errors,
-bounds and depth checks intact. This does not close all collection representations
-or the separate captured-state reentry bug.
+bounds and depth checks intact. Broader collection representation costs and imported
+environment materialization remain open; the reproduced captured-state reentry
+defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (not started in this round)
 
