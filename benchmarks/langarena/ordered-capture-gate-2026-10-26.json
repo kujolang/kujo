@@ -1,0 +1,20 @@
+{
+  "runtime_commit": "2e020ee",
+  "binary_sha256": "cd257176be16a5393e2618ce4027b75c0ff2cbca8caaece5a130c71cc82d206e",
+  "test_source_sha256": "f2a221813dc5ef9602118c1ec0ce4f370ad4982b4690dc77f8f615205bb9fa0a",
+  "verification": "Standalone Rust test harness, CARGO_BIN_EXE_kujo set to the exact verified V7 release; --include-ignored --nocapture. No dependency or runtime rebuild.",
+  "status": "known_interpreter_defect_reproduced",
+  "cases": {
+    "vm": {
+      "passed": 8
+    },
+    "jit": {
+      "passed": 8
+    },
+    "interpreter": {
+      "failed": 8
+    }
+  },
+  "log_sha256": "561d4d484770269d585e97ef6231c32a2c8f55c4b8c520bb78c2e8851613348a",
+  "output": "\nrunning 3 tests\ntest vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\nthread 'interpreter_channel_ordered_capture_visibility_preserves_snapshots' (3497237) panicked at tests/ordered_task_capture_contracts.rs:95:5:\ninterpreter/scalar/worker_writes=true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/scalar/worker_writes=false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/array/worker_writes=true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/array/worker_writes=false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/dictionary/worker_writes=true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/dictionary/worker_writes=false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/nested_row/worker_writes=true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/nested_row/worker_writes=false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest interpreter_channel_ordered_capture_visibility_preserves_snapshots ... FAILED\n\nfailures:\n\nfailures:\n    interpreter_channel_ordered_capture_visibility_preserves_snapshots\n\ntest result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s\n\n"
+}

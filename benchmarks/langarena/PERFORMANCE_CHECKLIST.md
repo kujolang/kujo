@@ -104,7 +104,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Preserve different-binding captured writes across overlapping ordinary task callbacks. Runtime `0b87ccb` passes all correctness gates and 15 local timing groups; see [verification and measured costs](ORDINARY_TASK_WRITE_VERIFICATION_2026_10_26.md).
 - [x] Refresh task globals from each submission while retaining captured locals and separate module/callback namespaces (`2b13158`). See [current verification](TASK_GLOBALS_CALLBACK_LOADER_2026_10_26.md).
 - [x] Avoid discarded callback module-loader discovery (`2e020ee`), retaining cache, capability and error behavior.
-- [ ] Preserve channel-ordered capture visibility across active task/caller reentry; scalar and collection cases still fail in the interpreter. Submission/await synchronization alone is insufficient.
+- [ ] Preserve channel-ordered capture visibility across active task/caller reentry; scalar and collection cases still fail in the interpreter. Submission/await synchronization alone is insufficient. [Current 24-case fix gate and access-path review](ORDERED_CAPTURE_FIX_GATE_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for user-defined binding materialization and task capture ownership; native preload copying and synchronous captured-state reentry are fixed. Follow-up evidence:
