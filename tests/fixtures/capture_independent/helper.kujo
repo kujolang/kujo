@@ -1,0 +1,19 @@
+const offset := 40
+const hidden := 42
+struct Box {
+ value: int
+ func op_add(other) { return value + other.value }
+}
+export func box(n) { return Box { value: n } }
+export func first(items) { return items[0] }
+export func sum(n) { mut total := 0 mut i := 0 while i < n { total += i i += 1 } return total }
+export func local_write(items, value) { items[0] = value return items }
+export func dependent(value) { return value + offset }
+export func scoped(flag) { if flag { let hidden := 1 } return hidden }
+export func overloaded(a, b) { return a + b }
+export func called(f, x) { return f(x) }
+export func divide(value) { return value / 0 }
+export func immutable(value) { let item := value item = 2 return item }
+export func unknown(value) { return absent + value }
+export func count(n) { if n == 0 { return 0 } return 1 + count(n - 1) }
+export func collect(iter) { mut total := 0 for x in iter { total += x } return total }

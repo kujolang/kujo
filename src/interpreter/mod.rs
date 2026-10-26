@@ -20,6 +20,7 @@
 pub(crate) mod assignment;
 mod async_runtime;
 mod capabilities;
+mod capture_independence;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
@@ -2639,6 +2640,7 @@ impl Interpreter {
                 Err(error) => Value::Error(error),
             },
             Value::Function(params, body, captured_env) => {
+                let body_ref = body.get();
                 let arity = Self::function_arity(name.unwrap_or("<anonymous function>"), params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
                     return error;
@@ -2650,9 +2652,12 @@ impl Interpreter {
                     .unwrap_or_else(|| format!("<function with {} params>", params.len()));
                 self.call_stack.push(func_name);
 
-                // If this is a closure with captured environment, use it
-                // Otherwise just create a new scope on top of current
-                if let Some(closure_env_ref) = captured_env {
+                // Keep the captured owner alive even when the body cannot observe it.
+                // Independent bodies use the normal isolated parameter/local scope.
+                if let Some(closure_env_ref) = captured_env
+                    .as_ref()
+                    .filter(|_| !body_ref.can_skip_capture_setup(params, &args))
+                {
                     self.enter_captured_environment(closure_env_ref);
                     self.env.push_scope();
                     if let Some(name) = &body.lexical_name {
@@ -2674,7 +2679,7 @@ impl Interpreter {
                     // Execute function body
                     if let Err(error) = self
                         .with_function_context(name.unwrap_or("<anonymous function>"), |interp| {
-                            interp.eval_stmts(&body.get())
+                            interp.eval_stmts(&body_ref)
                         })
                     {
                         self.env.pop_scope();
@@ -2721,7 +2726,7 @@ impl Interpreter {
                     // Execute function body
                     if let Err(error) = self
                         .with_function_context(name.unwrap_or("<anonymous function>"), |interp| {
-                            interp.eval_stmts(&body.get())
+                            interp.eval_stmts(&body_ref)
                         })
                     {
                         self.leave_global_call_environment(caller_scopes);
@@ -6225,6 +6230,7 @@ impl Interpreter {
                         }
                     }
                     Value::Function(params, body, captured_env) => {
+                        let body_ref = body.get();
                         // Push to call stack
                         self.call_stack.push(callable_name.clone());
 
@@ -6247,8 +6253,11 @@ impl Interpreter {
                         }
 
                         // Handle closure with captured environment
-                        if let Some(closure_env_ref) = captured_env {
-                            self.enter_captured_environment(&closure_env_ref);
+                        if let Some(closure_env_ref) = captured_env
+                            .as_ref()
+                            .filter(|_| !body_ref.can_skip_capture_setup(&params, &evaluated_args))
+                        {
+                            self.enter_captured_environment(closure_env_ref);
                             self.env.push_scope();
                             if let Some(name) = &body.lexical_name {
                                 self.env.define(
@@ -6267,7 +6276,7 @@ impl Interpreter {
 
                             if let Err(error) = self
                                 .with_function_context(callable_name.as_str(), |interp| {
-                                    interp.eval_stmts(&body.get())
+                                    interp.eval_stmts(&body_ref)
                                 })
                             {
                                 self.env.pop_scope();
@@ -6307,7 +6316,7 @@ impl Interpreter {
 
                             if let Err(error) = self
                                 .with_function_context(callable_name.as_str(), |interp| {
-                                    interp.eval_stmts(&body.get())
+                                    interp.eval_stmts(&body_ref)
                                 })
                             {
                                 self.leave_global_call_environment(caller_scopes);
@@ -6393,6 +6402,7 @@ impl Interpreter {
                             return self.call_native_function(name, args);
                         }
                         Value::Function(params, body, captured_env) => {
+                            let body_ref = body.get();
                             // Push function name to call stack
                             self.call_stack.push(name.clone());
 
@@ -6414,8 +6424,10 @@ impl Interpreter {
                             }
 
                             // Handle closure with captured environment
-                            if let Some(closure_env_ref) = captured_env {
-                                self.enter_captured_environment(&closure_env_ref);
+                            if let Some(closure_env_ref) = captured_env.as_ref().filter(|_| {
+                                !body_ref.can_skip_capture_setup(&params, &evaluated_args)
+                            }) {
+                                self.enter_captured_environment(closure_env_ref);
                                 self.env.push_scope();
                                 if let Some(name) = &body.lexical_name {
                                     self.env.define(
@@ -6442,7 +6454,7 @@ impl Interpreter {
 
                                 if let Err(error) = self
                                     .with_function_context(name.as_str(), |interp| {
-                                        interp.eval_stmts(&body.get())
+                                        interp.eval_stmts(&body_ref)
                                     })
                                 {
                                     self.env.pop_scope();
@@ -6490,7 +6502,7 @@ impl Interpreter {
 
                                 if let Err(error) = self
                                     .with_function_context(name.as_str(), |interp| {
-                                        interp.eval_stmts(&body.get())
+                                        interp.eval_stmts(&body_ref)
                                     })
                                 {
                                     self.leave_global_call_environment(caller_scopes);

@@ -1,0 +1,38 @@
+from helper import box
+from helper import first
+from helper import sum
+from helper import local_write
+from helper import dependent
+from helper import scoped
+from helper import overloaded
+from helper import called
+from helper import divide
+from helper import immutable
+from helper import unknown
+from helper import count
+from helper import collect
+const offset := 999
+const hidden := 999
+const absent := 999
+struct Box { value: int func op_add(other) { return 999 } }
+let original := [1, 2]
+assert_equal(first(original), 1)
+assert_equal(sum(10), 45)
+assert_equal(local_write(original, 9)[0], 9)
+assert_equal(original[0], 1)
+assert_equal(dependent(2), 42)
+assert_equal(scoped(true), 42)
+assert_equal(scoped(false), 42)
+assert_equal(overloaded(box(2), box(3)), 5)
+assert_equal(first([box(2)]).value, 2)
+func make() { let factor := 3 func callback(x) { return factor * x } return callback }
+assert_equal(called(make(), 7), 21)
+mut caught := 0
+try { divide(1) } except err { caught += 1 }
+try { immutable(1) } except err { caught += 1 }
+try { unknown(1) } except err { caught += 1 }
+assert_equal(caught, 3)
+assert_equal(count(4), 4)
+assert_equal(collect([3, 4]), 7)
+assert_equal(dependent(2), 42)
+print("CAPTURE INDEPENDENCE PASS")

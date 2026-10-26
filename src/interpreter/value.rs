@@ -126,6 +126,7 @@ pub struct LeakyFunctionBody {
 #[derive(Clone)]
 struct FunctionBodyStorage {
     body: Vec<Stmt>,
+    capture_independence: OnceLock<Option<super::capture_independence::Proof>>,
 }
 
 struct StoredFunctionBody {
@@ -205,6 +206,34 @@ pub struct FunctionBodyRef {
     storage: Arc<FunctionBodyStorage>,
 }
 
+impl FunctionBodyRef {
+    /// Cache syntax analysis with the immutable body, not an environment or
+    /// callable's publicly constructible parameter list. Recheck actual parameter
+    /// names and dynamic operand kinds on every invocation.
+    pub(crate) fn can_skip_capture_setup(&self, params: &[String], args: &[Value]) -> bool {
+        let Some(proof) = self
+            .storage
+            .capture_independence
+            .get_or_init(|| super::capture_independence::analyze(&self.storage.body))
+        else {
+            return false;
+        };
+        proof.required_parameters.iter().all(|name| params.contains(name))
+            && (!proof.primitive_arguments
+                || args.iter().all(|value| {
+                    matches!(
+                        value,
+                        Value::Int(_)
+                            | Value::Float(_)
+                            | Value::Bool(_)
+                            | Value::Str(_)
+                            | Value::Bytes(_)
+                            | Value::Null
+                    )
+                }))
+    }
+}
+
 impl Deref for FunctionBodyRef {
     type Target = Vec<Stmt>;
 
@@ -240,7 +269,7 @@ impl Drop for LeakyFunctionBody {
 impl LeakyFunctionBody {
     pub fn new(body: Vec<Stmt>) -> Self {
         let id = NEXT_FUNCTION_BODY_ID.fetch_add(1, Ordering::Relaxed);
-        let storage = Arc::new(FunctionBodyStorage { body });
+        let storage = Arc::new(FunctionBodyStorage { body, capture_independence: OnceLock::new() });
 
         let mut store = function_body_store().lock().unwrap();
         store.insert(id, StoredFunctionBody { refs: 1, storage });
@@ -259,7 +288,12 @@ impl LeakyFunctionBody {
         if let Some(entry) = store.get(&self.id) {
             FunctionBodyRef { storage: Arc::clone(&entry.storage) }
         } else {
-            FunctionBodyRef { storage: Arc::new(FunctionBodyStorage { body: Vec::new() }) }
+            FunctionBodyRef {
+                storage: Arc::new(FunctionBodyStorage {
+                    body: Vec::new(),
+                    capture_independence: OnceLock::new(),
+                }),
+            }
         }
     }
 

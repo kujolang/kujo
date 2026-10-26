@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid cloning captured environments for synchronous helpers proven to use only
+  parameters and local values. Keep lexical setup for callbacks, captured names,
+  overloaded operators and unsupported syntax; preserve collection snapshots.
+
 - Make channel-ordered writes to captured locals visible to active aliases in the
   interpreter, including field writes and writes before caught errors. Preserve
   independent closure and generator snapshots, public captured-scope map access,
