@@ -4691,5 +4691,22 @@
       "hot_native_entries": 314
     },
     "scope_limit": "Native-default candidate remains frozen for its separate validation; this decision does not claim an implemented parity fix."
+  },
+  "capture_reentry_review_2026_10_26": {
+    "status": "open",
+    "scope": "Interpreter recursive captured-state visibility and persistence, checklist section3",
+    "evidence": [
+      "CAPTURE_REENTRY_PARITY_2026_10_26.md",
+      "capture-reentry-parity-2026-10-26.json"
+    ],
+    "baseline_runtime": "0d0f365",
+    "reproduced_on_corrected_native_defaults_candidate": true,
+    "finding": "VM and JIT-enabled read [9,9,9] after a recursive capture write; interpreter reads [1,2,3] on both repeat calls. No indexed assignment in this control.",
+    "constraints": [
+      "Preserve separate closure/factory snapshots and same-closure alias identity",
+      "Verify synchronous call routes, unwinding and existing asynchronous write journals",
+      "Measure call/environment costs and recheck captured-root assignment after correction"
+    ],
+    "fix_applied": false
   }
 }

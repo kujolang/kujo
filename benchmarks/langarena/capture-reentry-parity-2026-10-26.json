@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "scope": "Unresolved captured recursive write/read parity; no indexed assignment in this control",
+  "source": "func factory() {\n    mut data := [1,2,3]\n    func step(n) {\n        if n == 0 { data = [9,9,9] return 0 }\n        let index := step(0)\n        return data\n    }\n    return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+  "expected_stdout": "[9, 9, 9]\n[9, 9, 9]\n",
+  "contract": "docs/LANGUAGE_SPEC.md lines234-239: aliases and repeat calls of the same closure share its cells",
+  "rows": [
+    {
+      "build": "baseline_0d0f365",
+      "binary_sha256": "0555105d0ed82ab4282b279539f640673ab82a177f3272889c0065c8277af591",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-2026-10-25/before-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[9, 9, 9]\n[9, 9, 9]\n",
+      "stderr": "",
+      "matches_shared_capture_contract": true
+    },
+    {
+      "build": "baseline_0d0f365",
+      "binary_sha256": "0555105d0ed82ab4282b279539f640673ab82a177f3272889c0065c8277af591",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-2026-10-25/before-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[1, 2, 3]\n[1, 2, 3]\n",
+      "stderr": "",
+      "matches_shared_capture_contract": false
+    },
+    {
+      "build": "baseline_0d0f365",
+      "binary_sha256": "0555105d0ed82ab4282b279539f640673ab82a177f3272889c0065c8277af591",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-2026-10-25/before-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[9, 9, 9]\n[9, 9, 9]\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "matches_shared_capture_contract": true
+    },
+    {
+      "build": "corrected_native_defaults_candidate",
+      "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[9, 9, 9]\n[9, 9, 9]\n",
+      "stderr": "",
+      "matches_shared_capture_contract": true
+    },
+    {
+      "build": "corrected_native_defaults_candidate",
+      "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[1, 2, 3]\n[1, 2, 3]\n",
+      "stderr": "",
+      "matches_shared_capture_contract": false
+    },
+    {
+      "build": "corrected_native_defaults_candidate",
+      "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-2026-10-25/capture-reentry.kujo"
+      ],
+      "exit_code": 0,
+      "stdout": "[9, 9, 9]\n[9, 9, 9]\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "matches_shared_capture_contract": true
+    }
+  ]
+}
