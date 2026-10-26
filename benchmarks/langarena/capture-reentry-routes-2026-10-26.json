@@ -1,0 +1,314 @@
+{
+  "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+  "cases": {
+    "direct_inner_write": [
+      "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } step(0) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+      "9\n9\n"
+    ],
+    "outer_write_visible_to_inner": [
+      "func factory() {\n mut data := 1\n func step(n) { if n == 0 { return data } data = 9 let seen := step(0) return [seen,data] }\n return step\n}\nlet step := factory()\nprint(step(1))\n",
+      "[9, 9]\n"
+    ],
+    "callback_inner_write": [
+      "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } let ignored := map([0],step) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+      "9\n9\n"
+    ],
+    "computed_callee_inner_write": [
+      "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } let aliases := [step] aliases[0](0) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+      "9\n9\n"
+    ],
+    "caught_inner_error": [
+      "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 throw(\"inner\") } try { step(0) } except err {} return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+      "9\n9\n"
+    ],
+    "distinct_factory_and_alias_control": [
+      "func factory() { mut data := 1 func step() { data += 1 return data } return step }\nlet first := factory()\nlet alias := first\nlet second := factory()\nprint(first())\nprint(alias())\nprint(second())\nprint(first())\n",
+      "2\n3\n2\n4\n"
+    ]
+  },
+  "rows": [
+    {
+      "case": "direct_inner_write",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/direct_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "direct_inner_write",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/direct_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n1\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": false
+    },
+    {
+      "case": "direct_inner_write",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/direct_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "outer_write_visible_to_inner",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/outer_write_visible_to_inner.kujo"
+      ],
+      "exit": 0,
+      "stdout": "[9, 9]\n",
+      "stderr": "",
+      "expected_stdout": "[9, 9]\n",
+      "matches": true
+    },
+    {
+      "case": "outer_write_visible_to_inner",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/outer_write_visible_to_inner.kujo"
+      ],
+      "exit": 0,
+      "stdout": "[1, 9]\n",
+      "stderr": "",
+      "expected_stdout": "[9, 9]\n",
+      "matches": false
+    },
+    {
+      "case": "outer_write_visible_to_inner",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/outer_write_visible_to_inner.kujo"
+      ],
+      "exit": 0,
+      "stdout": "[9, 9]\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "[9, 9]\n",
+      "matches": true
+    },
+    {
+      "case": "callback_inner_write",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/callback_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "callback_inner_write",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/callback_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n1\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": false
+    },
+    {
+      "case": "callback_inner_write",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/callback_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "computed_callee_inner_write",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/computed_callee_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "computed_callee_inner_write",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/computed_callee_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n1\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": false
+    },
+    {
+      "case": "computed_callee_inner_write",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/computed_callee_inner_write.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "caught_inner_error",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/caught_inner_error.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "caught_inner_error",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/caught_inner_error.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n1\n",
+      "stderr": "",
+      "expected_stdout": "9\n9\n",
+      "matches": false
+    },
+    {
+      "case": "caught_inner_error",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/caught_inner_error.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n9\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "9\n9\n",
+      "matches": true
+    },
+    {
+      "case": "distinct_factory_and_alias_control",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/distinct_factory_and_alias_control.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n3\n2\n4\n",
+      "stderr": "",
+      "expected_stdout": "2\n3\n2\n4\n",
+      "matches": true
+    },
+    {
+      "case": "distinct_factory_and_alias_control",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--interpreter",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/distinct_factory_and_alias_control.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n3\n2\n4\n",
+      "stderr": "",
+      "expected_stdout": "2\n3\n2\n4\n",
+      "matches": true
+    },
+    {
+      "case": "distinct_factory_and_alias_control",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/import-native-defaults-final-2026-10-26/candidate-kujo",
+        "run",
+        "--untrusted",
+        "--jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/distinct_factory_and_alias_control.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n3\n2\n4\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "expected_stdout": "2\n3\n2\n4\n",
+      "matches": true
+    }
+  ],
+  "scope": "Additional synchronous capture reentry diagnostics, not native execution or timing evidence"
+}

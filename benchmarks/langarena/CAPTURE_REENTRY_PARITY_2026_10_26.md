@@ -32,7 +32,29 @@ self-resolution succeeds here, but state updates are lost. A separate control in
 which an index helper is a newly created closure preserves its own independent
 snapshot on all three runtimes; that isolation must remain intact.
 
+## Synchronous call routes and exception control
+
+An additional 18 observations on the corrected candidate isolate five failures
+and one passing control. Exact sources, outputs and binary identity are in
+`capture-reentry-routes-2026-10-26.json`.
+
+| Case | VM / JIT-enabled | Interpreter |
+| --- | --- | --- |
+| Direct recursive inner write | `9`, `9` | `1`, `1` |
+| Outer write read by recursive inner call | `[9, 9]` | `[1, 9]` |
+| Reentry through `map` callback | `9`, `9` | `1`, `1` |
+| Reentry through indexed callable value | `9`, `9` | `1`, `1` |
+| Inner write followed by caught exception | `9`, `9` | `1`, `1` |
+| Distinct factory instances plus same-closure alias | `2`, `3`, `2`, `4` | `2`, `3`, `2`, `4` |
+
+All processes exit zero; expected-output comparisons identify the failures. These
+cases cover direct, computed-callee and native-callback interpreter invocation
+routes. They establish that both entering and leaving a recursive activation
+need correct shared-state visibility. The passing factory/alias control is an
+invariant for the fix, not evidence that recursive capture state is correct.
+
 ## Required follow-up
+
 
 - Preserve visibility and persistence of writes when the **same** captured closure
   is entered recursively or through aliases/callbacks.
