@@ -5,6 +5,13 @@
 
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex, Weak};
+
+#[derive(Clone, Debug)]
+struct LiveCapture {
+    owner: Weak<Mutex<Environment>>,
+    limit: usize,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BindingKind {
@@ -122,7 +129,8 @@ impl CaptureWrites {
 #[derive(Clone, Debug)]
 pub struct Environment {
     /// Explicit writable bindings. Module-native defaults may be stored separately;
-    /// use `get` for lexical lookup, including those unchanged preloads.
+    /// Public captured owners retain actual values. Private active invocations use
+    /// owner-backed local views; lexical reads should go through `get`.
     pub scopes: Vec<HashMap<String, Value>>,
     // Module snapshots share only immutable native name metadata. Mutable globals
     // remain ordinary owned maps, including every override of a default.
@@ -133,6 +141,7 @@ pub struct Environment {
     global_owner: std::sync::Arc<()>,
     // Lexical provenance survives task snapshots; execution ownership does not.
     global_source: std::sync::Arc<()>,
+    live_capture: Option<LiveCapture>,
     capture_writes: Option<(usize, CaptureWrites)>,
     // Allocation-free conservative proof for read-only synchronous activations.
     // Local parameters are outside the captured prefix; unknown transitions
@@ -141,6 +150,100 @@ pub struct Environment {
 }
 
 impl Environment {
+    /// Create a private invocation view without replacing publicly exposed owner
+    /// values or retaining a second current collection value in the invocation.
+    pub(crate) fn capture_activation(owner: &Arc<Mutex<Self>>) -> Self {
+        let captured = owner.lock().unwrap_or_else(|p| p.into_inner());
+        debug_assert!(captured.live_capture.is_none(), "capture owners must own real values");
+        let mut activation = captured.clone();
+        if activation.scopes.len() > 1 {
+            for scope in activation.scopes.iter_mut().skip(1) {
+                for value in scope.values_mut() {
+                    *value = Value::Null;
+                }
+            }
+            activation.live_capture =
+                Some(LiveCapture { owner: Arc::downgrade(owner), limit: activation.scopes.len() });
+        }
+        activation
+    }
+
+    fn capture_owner(link: &Option<LiveCapture>, index: usize) -> Option<Arc<Mutex<Self>>> {
+        link.as_ref()
+            .filter(|link| index > 0 && index < link.limit)
+            .and_then(|link| link.owner.upgrade())
+    }
+
+    fn capture_value(link: &Option<LiveCapture>, index: usize, name: &str) -> Option<Value> {
+        Self::capture_owner(link, index).and_then(|owner| {
+            owner
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .scopes
+                .get(index)
+                .and_then(|scope| scope.get(name))
+                .cloned()
+        })
+    }
+
+    fn publish_capture_value(
+        link: &Option<LiveCapture>,
+        index: usize,
+        name: &str,
+        value: &Value,
+    ) -> bool {
+        if let Some(owner) = Self::capture_owner(link, index) {
+            if let Some(slot) = owner
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .scopes
+                .get_mut(index)
+                .and_then(|scope| scope.get_mut(name))
+            {
+                *slot = value.clone();
+                return true;
+            }
+        }
+        false
+    }
+
+    fn materialized_scopes(&self) -> Vec<HashMap<String, Value>> {
+        let mut scopes = self.scopes.clone();
+        if let Some(link) = &self.live_capture {
+            if let Some(owner) = link.owner.upgrade() {
+                let owner = owner.lock().unwrap_or_else(|p| p.into_inner());
+                for (index, scope) in scopes.iter_mut().enumerate().take(link.limit).skip(1) {
+                    if let Some(shared) = owner.scopes.get(index) {
+                        for (name, value) in scope.iter_mut() {
+                            if let Some(current) = shared.get(name) {
+                                *value = current.clone();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        scopes
+    }
+
+    /// Local writes from this activation have already reached the public owner.
+    pub(crate) fn has_live_capture(&self) -> bool {
+        self.live_capture.is_some()
+    }
+
+    pub(super) fn detached_snapshot(&self) -> Self {
+        Self {
+            scopes: self.materialized_scopes(),
+            native_defaults: self.native_defaults.clone(),
+            binding_kinds: self.binding_kinds.clone(),
+            global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
+            live_capture: None,
+            capture_writes: self.capture_writes.clone(),
+            capture_observation: self.capture_observation,
+        }
+    }
+
     pub(crate) fn observe_capture_writes(&mut self, inherit: bool) {
         let changed = inherit && self.capture_observation.map_or(true, |(_, changed)| changed);
         self.capture_observation = Some((self.scopes.len(), changed));
@@ -164,6 +267,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
+            live_capture: self.live_capture.clone(),
             capture_writes: self.capture_writes.clone(),
             capture_observation: self.capture_observation,
         }
@@ -184,7 +288,15 @@ impl Environment {
 
     pub(crate) fn restore_capture_locals(&mut self, completed: &Self, count: usize) {
         self.invalidate_capture_observation();
-        self.scopes[1..count].clone_from_slice(&completed.scopes[1..count]);
+        if self.live_capture.is_some() {
+            for (target, source) in
+                self.scopes[1..count].iter_mut().zip(&completed.scopes[1..count])
+            {
+                *target = source.keys().map(|name| (name.clone(), Value::Null)).collect();
+            }
+        } else {
+            self.scopes[1..count].clone_from_slice(&completed.scopes[1..count]);
+        }
         self.binding_kinds[1..count].clone_from_slice(&completed.binding_kinds[1..count]);
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &completed.capture_writes)
@@ -252,7 +364,9 @@ impl Environment {
         let Some((_, writes)) = &after.capture_writes else {
             return;
         };
-        for (index, name) in writes.iter().filter(|(index, _)| *index >= first_scope) {
+        for (index, name) in writes.iter().filter(|(index, _)| {
+            *index >= first_scope && (*index == 0 || after.live_capture.is_none())
+        }) {
             if let (Some(target), Some(value)) = (
                 self.scopes.get_mut(*index),
                 after.scopes.get(*index).and_then(|scope| scope.get(name)),
@@ -292,6 +406,7 @@ impl Environment {
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             global_source: std::sync::Arc::new(()),
+            live_capture: None,
             capture_writes: None,
             capture_observation: None,
         }
@@ -306,6 +421,9 @@ impl Environment {
         body: &[crate::ast::Stmt],
         lexical_self: Option<&str>,
     ) -> Self {
+        if self.live_capture.is_some() {
+            return self.detached_snapshot().capture_for_callable(params, body, lexical_self);
+        }
         let names = self
             .scopes
             .iter()
@@ -427,6 +545,7 @@ impl Environment {
                 .then(|| std::sync::Arc::new(selected_defaults)),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
+            live_capture: None,
             capture_writes: None,
             capture_observation: None,
         }
@@ -453,6 +572,9 @@ impl Environment {
     }
 
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
+        if self.live_capture.is_some() {
+            return self.detached_snapshot().visible_bindings();
+        }
         let mut visible = self
             .native_defaults
             .iter()
@@ -494,6 +616,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: std::sync::Arc::new(()),
             global_source: self.global_source.clone(),
+            live_capture: None,
             capture_writes: None,
             capture_observation: None,
         }
@@ -523,6 +646,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
+            live_capture: self.live_capture.take(),
             capture_writes: self
                 .capture_writes
                 .as_ref()
@@ -539,6 +663,7 @@ impl Environment {
     }
 
     pub(crate) fn leave_global_function(&mut self, caller: Environment) {
+        self.live_capture = caller.live_capture;
         self.scopes.truncate(1);
         self.binding_kinds.truncate(1);
         self.scopes.extend(caller.scopes);
@@ -559,9 +684,11 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
+            live_capture: self.live_capture.take(),
             capture_writes: None,
             capture_observation: None,
         };
+        self.live_capture = owner.live_capture.take();
         self.scopes.append(&mut owner.scopes);
         self.binding_kinds.append(&mut owner.binding_kinds);
         previous
@@ -574,6 +701,7 @@ impl Environment {
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             global_source: std::sync::Arc::new(()),
+            live_capture: None,
             capture_writes: None,
             capture_observation: None,
         }
@@ -591,11 +719,12 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
+            live_capture: None,
             capture_writes: None,
             capture_observation: None,
         };
         if capture_locals {
-            result.scopes.extend(self.scopes.iter().skip(1).cloned());
+            result.scopes.extend(self.materialized_scopes().into_iter().skip(1));
             result.binding_kinds.extend(self.binding_kinds.iter().skip(1).cloned());
         }
         result
@@ -613,8 +742,11 @@ impl Environment {
     /// Returns a cloned value if found
     pub fn get(&self, name: &str) -> Option<Value> {
         // Search from innermost to outermost scope
-        for scope in self.scopes.iter().rev() {
+        for (index, scope) in self.scopes.iter().enumerate().rev() {
             if let Some(value) = scope.get(name) {
+                if self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit) {
+                    return Self::capture_value(&self.live_capture, index, name);
+                }
                 return Some(value.clone());
             }
         }
@@ -633,8 +765,21 @@ impl Environment {
             self.scopes.len().saturating_sub(1),
             &name,
         );
+        let index = self.scopes.len().saturating_sub(1);
+        let shared = if let Some(owner) = Self::capture_owner(&self.live_capture, index) {
+            let mut owner = owner.lock().unwrap_or_else(|p| p.into_inner());
+            owner.scopes[index].insert(name.clone(), value.clone());
+            if kind == BindingKind::Mutable {
+                owner.binding_kinds[index].remove(&name);
+            } else {
+                owner.binding_kinds[index].insert(name.clone(), kind);
+            }
+            true
+        } else {
+            false
+        };
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name.clone(), value);
+            scope.insert(name.clone(), if shared { Value::Null } else { value });
         }
         if let Some(kinds) = self.binding_kinds.last_mut() {
             if kind == BindingKind::Mutable {
@@ -689,7 +834,8 @@ impl Environment {
                     index,
                     &name,
                 );
-                scope.insert(name, value);
+                let shared = Self::publish_capture_value(&self.live_capture, index, &name, &value);
+                scope.insert(name, if shared { Value::Null } else { value });
                 return;
             }
         }
@@ -717,7 +863,9 @@ impl Environment {
                     scope_index,
                     &name,
                 );
-                scope.insert(name, value);
+                let shared =
+                    Self::publish_capture_value(&self.live_capture, scope_index, &name, &value);
+                scope.insert(name, if shared { Value::Null } else { value });
                 return Ok(());
             }
         }
@@ -749,7 +897,13 @@ impl Environment {
                     index,
                     name,
                 );
+                if let Some(current) = Self::capture_value(&self.live_capture, index, name) {
+                    *value = current;
+                }
                 f(value);
+                if Self::publish_capture_value(&self.live_capture, index, name, value) {
+                    *value = Value::Null;
+                }
                 return true;
             }
         }
@@ -781,7 +935,13 @@ impl Environment {
                     scope_index,
                     name,
                 );
+                if let Some(current) = Self::capture_value(&self.live_capture, scope_index, name) {
+                    *value = current;
+                }
                 f(value);
+                if Self::publish_capture_value(&self.live_capture, scope_index, name, value) {
+                    *value = Value::Null;
+                }
                 return Ok(());
             }
         }
@@ -792,6 +952,40 @@ impl Environment {
             return Ok(());
         }
         Err(format!("Undefined variable: {}", name))
+    }
+
+    /// Runtime-only leaf mutation. The operation must not execute Kujo code,
+    /// inspect another environment, or invoke host callbacks while holding a cell.
+    /// Public host mutation callbacks use `mutate_checked` outside this lock.
+    pub(crate) fn mutate_checked_runtime(
+        &mut self,
+        name: &str,
+        operation: impl FnOnce(&mut Value),
+    ) -> Result<(), String> {
+        let index = self.scopes.iter().rposition(|scope| scope.contains_key(name));
+        if let Some(index) = index {
+            if let Some(owner) = Self::capture_owner(&self.live_capture, index) {
+                let mut owner = owner.lock().unwrap_or_else(|p| p.into_inner());
+                let kind =
+                    owner.binding_kinds[index].get(name).copied().unwrap_or(BindingKind::Mutable);
+                if !kind.allows_mutation() {
+                    return Err(kind.mutation_error(name));
+                }
+                if let Some(value) =
+                    owner.scopes.get_mut(index).and_then(|scope| scope.get_mut(name))
+                {
+                    Self::record_capture_write(
+                        &mut self.capture_writes,
+                        &mut self.capture_observation,
+                        index,
+                        name,
+                    );
+                    operation(value);
+                    return Ok(());
+                }
+            }
+        }
+        self.mutate_checked(name, operation)
     }
 
     /// An atomic, fallible mutation reports whether it actually changed a binding.
@@ -811,7 +1005,19 @@ impl Environment {
                 if !kind.allows_mutation() {
                     return Err(kind.mutation_error(name));
                 }
-                let changed = f(value)?;
+                let current = Self::capture_value(&self.live_capture, scope_index, name);
+                let shared = current.is_some();
+                if let Some(current) = current {
+                    *value = current;
+                }
+                let result = f(value);
+                if shared {
+                    if matches!(result, Ok(true)) {
+                        Self::publish_capture_value(&self.live_capture, scope_index, name, value);
+                    }
+                    *value = Value::Null;
+                }
+                let changed = result?;
                 if changed {
                     Self::record_capture_write(
                         &mut self.capture_writes,
@@ -1120,5 +1326,136 @@ mod capture_journal_scope_tests {
         assert!(matches!(owner.get("value"), Some(Value::Int(5))));
         assert_eq!(nested.capture_writes.as_ref().unwrap().1.len(), 3);
         assert_eq!(invocation.capture_writes.as_ref().unwrap().1.len(), 2);
+    }
+}
+
+#[cfg(test)]
+mod live_capture_storage_tests {
+    use super::*;
+
+    fn captured() -> (Arc<Mutex<Environment>>, Environment) {
+        let mut env = Environment::new();
+        env.define("global".into(), Value::Int(1));
+        env.push_scope();
+        env.define("items".into(), Value::Array(Arc::new(Vec::with_capacity(256))));
+        env.define_with_kind("fixed".into(), Value::Int(7), BindingKind::LetImmutable);
+        let owner = Arc::new(Mutex::new(env));
+        let view = Environment::capture_activation(&owner);
+        (owner, view)
+    }
+
+    #[test]
+    fn live_capture_definitions_publish_values_and_binding_kinds() {
+        let (owner, mut env) = captured();
+        env.define_with_kind("new_binding".into(), Value::Int(9), BindingKind::Const);
+        assert!(matches!(env.get("new_binding"), Some(Value::Int(9))));
+        {
+            let owner = owner.lock().unwrap();
+            assert!(matches!(owner.scopes[1].get("new_binding"), Some(Value::Int(9))));
+            assert_eq!(owner.binding_kinds[1].get("new_binding"), Some(&BindingKind::Const));
+        }
+        let mut alias = Environment::capture_activation(&owner);
+        assert!(alias.assign_checked("new_binding".into(), Value::Int(10)).is_err());
+        env.define("new_binding".into(), Value::Int(11));
+        let mut alias = Environment::capture_activation(&owner);
+        alias.assign_checked("new_binding".into(), Value::Int(12)).unwrap();
+        assert!(matches!(env.get("new_binding"), Some(Value::Int(12))));
+    }
+
+    #[test]
+    fn live_capture_leaf_mutation_keeps_one_collection_owner() {
+        let (_owner, env) = captured();
+        let mut alias = env.clone();
+        let mut storage = None;
+        for n in 0..128 {
+            alias
+                .mutate_checked_runtime("items", |value| {
+                    let Value::Array(items) = value else { panic!("expected array") };
+                    assert_eq!(
+                        Arc::strong_count(items),
+                        1,
+                        "activation must not retain a second value"
+                    );
+                    let pointer = Arc::as_ptr(items);
+                    if let Some(previous) = storage {
+                        assert_eq!(pointer, previous);
+                    }
+                    storage = Some(pointer);
+                    Arc::make_mut(items).push(Value::Int(n));
+                })
+                .unwrap();
+        }
+        let Some(Value::Array(items)) = env.get("items") else { panic!("expected array") };
+        assert_eq!(items.len(), 128);
+    }
+
+    #[test]
+    fn live_capture_snapshots_globals_and_immutable_guards_remain_separate() {
+        let (_owner, env) = captured();
+        let snapshot = env.detached_snapshot();
+        let mut alias = env.clone();
+        alias.assign_checked("global".into(), Value::Int(9)).unwrap();
+        alias
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(9));
+            })
+            .unwrap();
+        assert!(matches!(env.get("global"), Some(Value::Int(1))));
+        assert!(matches!(snapshot.get("items"), Some(Value::Array(items)) if items.is_empty()));
+        assert!(matches!(env.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        assert!(alias
+            .mutate_checked_runtime("fixed", |_| panic!("immutable mutation ran"))
+            .is_err());
+        assert!(matches!(env.get("fixed"), Some(Value::Int(7))));
+    }
+
+    #[test]
+    fn live_capture_host_mutation_does_not_hold_the_shared_lock() {
+        let (_owner, env) = captured();
+        let mut alias = env.clone();
+        alias
+            .mutate_checked("items", |value| {
+                assert!(matches!(env.get("fixed"), Some(Value::Int(7))));
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(9));
+            })
+            .unwrap();
+        assert!(matches!(env.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        let cells = Arc::downgrade(&_owner);
+        drop(alias);
+        drop(env);
+        drop(_owner);
+        assert!(cells.upgrade().is_none(), "shared storage outlived its owners");
+    }
+
+    #[test]
+    fn live_capture_helper_parameters_do_not_alias_suspended_locals() {
+        let (_owner, mut env) = captured();
+        let alias = env.clone();
+        let caller = env.enter_global_function();
+        env.define("items".into(), Value::Int(3));
+        env.assign_checked("items".into(), Value::Int(4)).unwrap();
+        assert!(matches!(alias.get("items"), Some(Value::Array(items)) if items.is_empty()));
+        env.leave_global_function(caller);
+        env.mutate_checked_runtime("items", |value| {
+            let Value::Array(items) = value else { panic!("expected array") };
+            Arc::make_mut(items).push(Value::Int(9));
+        })
+        .unwrap();
+        assert!(matches!(alias.get("items"), Some(Value::Array(items)) if items.len() == 1));
+    }
+    #[test]
+    fn rejected_live_capture_mutations_release_temporary_values() {
+        let (_owner, mut env) = captured();
+        env.track_capture_writes();
+        assert!(!env.try_mutate_checked("items", |_| Ok(false)).unwrap());
+        assert!(env.try_mutate_checked("items", |_| Err("rejected".into())).is_err());
+        assert!(env.capture_writes.as_ref().unwrap().1.is_empty());
+        env.mutate_checked_runtime("items", |value| {
+            let Value::Array(items) = value else { panic!("expected array") };
+            assert_eq!(Arc::strong_count(items), 1);
+        })
+        .unwrap();
     }
 }

@@ -2411,6 +2411,11 @@ impl Interpreter {
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner())
                     .merge_task_capture_writes(&snapshot);
+            } else if snapshot.has_live_capture() {
+                owner
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner())
+                    .copy_global_scope_from(&snapshot);
             } else {
                 *owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = snapshot;
             }
@@ -2449,7 +2454,7 @@ impl Interpreter {
         let active = self.active_capture_index(captured);
         let mut environment = match active {
             Some(index) => self.active_capture_snapshot(index),
-            None => captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone(),
+            None => Environment::capture_activation(captured),
         };
         let globals = if self.task_cancellation.is_none() {
             CapturedGlobals::Snapshot
@@ -2525,6 +2530,8 @@ impl Interpreter {
         let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         if self.task_cancellation.is_some() {
             owner.merge_task_capture_writes(&completed);
+        } else if completed.has_live_capture() {
+            owner.copy_global_scope_from(&completed);
         } else {
             *owner = completed;
         }
@@ -3691,54 +3698,57 @@ impl Interpreter {
         let index_clone = index_value.clone();
         let value_clone = value.clone();
 
-        let mutate_result = self.env.mutate_checked(container_name, |container| match container {
-            Value::Bytes(bytes) => {
-                assignment_error = assignment::write_byte(bytes, &index_clone, &value_clone).err();
-            }
-            Value::Array(arr) => {
-                let idx = match &index_clone {
-                    Value::Int(i) => *i,
-                    _ => {
-                        assignment_error = Some(
-                            "Invalid index assignment: unsupported array index type".to_string(),
-                        );
+        let mutate_result =
+            self.env.mutate_checked_runtime(container_name, |container| match container {
+                Value::Bytes(bytes) => {
+                    assignment_error =
+                        assignment::write_byte(bytes, &index_clone, &value_clone).err();
+                }
+                Value::Array(arr) => {
+                    let idx = match &index_clone {
+                        Value::Int(i) => *i,
+                        _ => {
+                            assignment_error = Some(
+                                "Invalid index assignment: unsupported array index type"
+                                    .to_string(),
+                            );
+                            return;
+                        }
+                    };
+
+                    let arr_mut = Arc::make_mut(arr);
+                    let resolved = if idx < 0 { (arr_mut.len() as i64) + idx } else { idx };
+                    if resolved < 0 || resolved as usize >= arr_mut.len() {
+                        assignment_error = Some(format!("Index out of bounds: {}", idx));
                         return;
                     }
-                };
 
-                let arr_mut = Arc::make_mut(arr);
-                let resolved = if idx < 0 { (arr_mut.len() as i64) + idx } else { idx };
-                if resolved < 0 || resolved as usize >= arr_mut.len() {
-                    assignment_error = Some(format!("Index out of bounds: {}", idx));
-                    return;
+                    arr_mut[resolved as usize] = value_clone.clone();
                 }
-
-                arr_mut[resolved as usize] = value_clone.clone();
-            }
-            other
-                if other.dictionary_len().is_some()
-                    && !matches!(index_clone, Value::Int(_) | Value::Str(_)) =>
-            {
-                assignment_error =
-                    Some("Invalid index assignment: unsupported map key type".into());
-            }
-            Value::Dict(dict) => {
-                let key = Self::stringify_value(&index_clone);
-                Arc::make_mut(dict).insert(key.into(), value_clone.clone());
-            }
-            other if other.dictionary_len().is_some() => {
-                let mut dict: DictMap = Value::map_entries(other)
-                    .expect("dictionary entries")
-                    .into_iter()
-                    .map(|(key, value)| (Arc::from(key), value))
-                    .collect();
-                dict.insert(Self::stringify_value(&index_clone).into(), value_clone.clone());
-                *other = Value::Dict(Arc::new(dict));
-            }
-            _ => {
-                assignment_error = Some("Invalid index assignment".to_string());
-            }
-        });
+                other
+                    if other.dictionary_len().is_some()
+                        && !matches!(index_clone, Value::Int(_) | Value::Str(_)) =>
+                {
+                    assignment_error =
+                        Some("Invalid index assignment: unsupported map key type".into());
+                }
+                Value::Dict(dict) => {
+                    let key = Self::stringify_value(&index_clone);
+                    Arc::make_mut(dict).insert(key.into(), value_clone.clone());
+                }
+                other if other.dictionary_len().is_some() => {
+                    let mut dict: DictMap = Value::map_entries(other)
+                        .expect("dictionary entries")
+                        .into_iter()
+                        .map(|(key, value)| (Arc::from(key), value))
+                        .collect();
+                    dict.insert(Self::stringify_value(&index_clone).into(), value_clone.clone());
+                    *other = Value::Dict(Arc::new(dict));
+                }
+                _ => {
+                    assignment_error = Some("Invalid index assignment".to_string());
+                }
+            });
 
         if let Err(error) = mutate_result {
             return Value::Error(error);
@@ -3819,7 +3829,7 @@ impl Interpreter {
             let original = values.next().unwrap();
             let item = values.next().unwrap();
             let mut error = None;
-            let result = self.env.mutate_checked(name, |root| {
+            let result = self.env.mutate_checked_runtime(name, |root| {
                 error = if native == "concat" {
                     assignment::concat_bytes_path(root, &path, original, item, None).err()
                 } else {
@@ -3838,7 +3848,7 @@ impl Interpreter {
         let mut appended = false;
         // No callbacks run while borrowing the destination. A callback that
         // reassigned it during argument evaluation forces ordinary call semantics.
-        let _ = self.env.mutate_checked(target, |root| {
+        let _ = self.env.mutate_checked_runtime(target, |root| {
             appended = if native == "concat" {
                 assignment::concat_bytes_rebinding(root, &mut original, item.as_ref().unwrap())
             } else {
@@ -3880,7 +3890,7 @@ impl Interpreter {
         }
         let mut original = Some(original);
         let mut appended = false;
-        let _ = self.env.mutate_checked(name, |root| {
+        let _ = self.env.mutate_checked_runtime(name, |root| {
             appended = assignment::concat_string_rebinding(root, &mut original, &suffix);
         });
         if appended {
@@ -3947,7 +3957,7 @@ impl Interpreter {
             });
         }
         let mut error = None;
-        let result = self.env.mutate_checked(name, |root| {
+        let result = self.env.mutate_checked_runtime(name, |root| {
             error = assignment::update_in_place(root, &path, value).err();
         });
         match result.err().or(error) {
@@ -3963,7 +3973,7 @@ impl Interpreter {
         match object {
             Expr::Identifier(name) => {
                 let mut assignment_error: Option<String> = None;
-                let mutate_result = self.env.mutate_checked(name.as_str(), |obj_value| {
+                let mutate_result = self.env.mutate_checked_runtime(name.as_str(), |obj_value| {
                     if let Value::Struct { name: _, fields } = obj_value {
                         Arc::make_mut(fields).insert(field_name.clone(), value_clone.clone());
                     } else {
@@ -4733,7 +4743,7 @@ impl Interpreter {
                                     })
                                     .collect();
                                 let mut pair = None;
-                                let _ = self.env.mutate_checked(root, |value| {
+                                let _ = self.env.mutate_checked_runtime(root, |value| {
                                     pair = assignment::collection_rebinding_path(
                                         value,
                                         &path,
@@ -5643,7 +5653,7 @@ impl Interpreter {
                             let func = Value::Function(
                                 params.clone(),
                                 LeakyFunctionBody::new(body.clone()),
-                                Some(Arc::new(Mutex::new(self.env.clone()))),
+                                Some(Arc::new(Mutex::new(self.env.detached_snapshot()))),
                             );
                             method_map.insert(method_name.clone(), func);
                         }

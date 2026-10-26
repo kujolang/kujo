@@ -4948,16 +4948,17 @@ impl VM {
                                             )?;
                                         Some((value, *kind))
                                     }
-                                    CaptureSource::Named(name) if frame.is_none() => self
-                                        .globals
-                                        .lock()
-                                        .unwrap()
-                                        .scopes
-                                        .iter()
-                                        .skip(1)
-                                        .rev()
-                                        .find_map(|scope| scope.get(name).cloned())
-                                        .map(|value| (value, BytecodeBindingKind::Mutable)),
+                                    CaptureSource::Named(name) if frame.is_none() => {
+                                        let environment = self.globals.lock().unwrap();
+                                        environment
+                                            .scopes
+                                            .iter()
+                                            .skip(1)
+                                            .any(|scope| scope.contains_key(name))
+                                            .then(|| environment.get(name))
+                                            .flatten()
+                                            .map(|value| (value, BytecodeBindingKind::Mutable))
+                                    }
                                     CaptureSource::Named(name) => frame.and_then(|frame| {
                                         frame.locals.get(name).cloned().map(|value| {
                                             (
@@ -10600,6 +10601,31 @@ mod tests {
         let ast = parser.parse();
         let mut compiler = Compiler::new();
         compiler.compile(&ast).expect("compile should succeed")
+    }
+
+    #[test]
+    fn named_script_capture_reads_live_environment_storage() {
+        let mut chunk = compile_chunk("func read() { return item } return read()");
+        let child = chunk
+            .constants
+            .iter_mut()
+            .find_map(|constant| match constant {
+                Constant::Function(child) => Some(child),
+                _ => None,
+            })
+            .expect("compiled function");
+        child.upvalues = vec!["item".into()];
+        child.capture_sources = Some(vec![CaptureSource::Named("item".into())]);
+        let mut env = Environment::new();
+        env.define("item".into(), Value::Int(11));
+        env.push_scope();
+        env.define("item".into(), Value::Int(7));
+        let owner = Arc::new(Mutex::new(env));
+        let env = Environment::capture_activation(&owner);
+        let mut vm = VM::new();
+        vm.set_globals(Arc::new(Mutex::new(env)));
+        let result = vm.execute(chunk);
+        assert!(matches!(result, Ok(Value::Int(7))), "unexpected result: {result:?}");
     }
 
     #[test]

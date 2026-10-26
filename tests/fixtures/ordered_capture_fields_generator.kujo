@@ -1,0 +1,47 @@
+struct Row { value: int }
+func factory(direction) {
+ let ready := channel()
+ let proceed := channel()
+ mut data := Row { value: 1 }
+ let saved := data
+ func step(n) {
+  if n == 0 {
+   if direction == 0 {
+    try { data.value = 9 throw("after write") } except err {}
+    ready.send(1)
+    proceed.receive()
+    return 0
+   }
+   ready.send(1)
+   proceed.receive()
+   return data.value
+  }
+  if n == 2 { return data.value }
+  if n == 3 { return saved.value }
+  func* values() { yield data.value }
+  let iterator := values()
+  let handle := spawn_task(func() { return step(0) })
+  ready.receive()
+  mut yielded := 0
+  for value in iterator { yielded = value }
+  mut immutable_error := false
+  try { saved.value = 2 } except err { immutable_error = true }
+  if direction == 0 {
+   let seen := data.value
+   proceed.send(1)
+   await await_task(handle)
+   return [seen, yielded, immutable_error]
+  }
+  try { data.value = 9 throw("after caller write") } except err {}
+  proceed.send(1)
+  let seen := await await_task(handle)
+  return [seen, yielded, immutable_error]
+ }
+ return step
+}
+for direction in [0, 1] {
+ let step := factory(direction)
+ print(step(1))
+ print(step(2))
+ print(step(3))
+}

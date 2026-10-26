@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Make channel-ordered writes to captured locals visible to active aliases in the
+  interpreter, including field writes and writes before caught errors. Preserve
+  independent closure and generator snapshots, public captured-scope map access,
+  binding permissions and linear captured-array append allocation growth.
+
 - Avoid unused module search-path and working-directory discovery when creating
   callback VMs that borrow the caller's module loader. Preserve ordinary VM
   initialization, import caches, capability checks and callback error recovery.

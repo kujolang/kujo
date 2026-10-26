@@ -122,7 +122,6 @@ fn jit_channel_ordered_capture_visibility_preserves_snapshots() {
 }
 
 #[test]
-#[ignore = "Known interpreter active-capture visibility defect; run explicitly as the pending fix gate"]
 fn interpreter_channel_ordered_capture_visibility_preserves_snapshots() {
     verify("interpreter");
 }
