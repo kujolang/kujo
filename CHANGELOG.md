@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reserve byte-array conversion output once while preserving ordered type/range
+  validation and source/output value snapshots.
+
 - Store only immutable binding-permission exceptions in interpreter environments.
   Imported/captured calls no longer copy redundant mutable/native permission names;
   immutable snapshots, redefinition and helper ownership retain their behavior.

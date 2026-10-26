@@ -334,3 +334,22 @@ fn empty_local_scopes_do_not_allocate_permission_storage() {
     TRACK.with(|v| v.set(false));
     assert_eq!(ALLOCATIONS.with(Cell::get), 0);
 }
+
+#[test]
+fn byte_materialization_does_not_grow_the_output_buffer_repeatedly() {
+    let mut interpreter = kujo::interpreter::Interpreter::new();
+    let mut counts = Vec::new();
+    for width in [8, 128, 2048] {
+        let args = [Value::array(vec![Value::Int(7); width])];
+        drop(interpreter.call_native_function_impl("bytes", &args));
+        ALLOCATIONS.with(|v| v.set(0));
+        TRACK.with(|v| v.set(true));
+        let result = interpreter.call_native_function_impl("bytes", &args);
+        TRACK.with(|v| v.set(false));
+        counts.push(ALLOCATIONS.with(Cell::get));
+        let Value::Bytes(data) = result else { panic!("bytes() did not return bytes") };
+        assert_eq!(data.len(), width);
+        assert!(data.iter().all(|value| *value == 7));
+    }
+    assert!(counts.iter().all(|count| *count == counts[0]), "buffer growth: {counts:?}");
+}

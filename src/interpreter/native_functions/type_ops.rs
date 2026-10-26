@@ -207,7 +207,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::Array(arr)) = arg_values.first() {
-                let mut byte_vec = Vec::new();
+                let mut byte_vec = Vec::with_capacity(arr.len());
                 for val in arr.iter() {
                     match val {
                         Value::Int(n) => {
