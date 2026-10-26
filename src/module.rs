@@ -201,14 +201,24 @@ impl ModuleLoader {
 
     /// Creates a new module loader with default search paths.
     pub fn new() -> Self {
-        let search_paths = initial_module_search_paths();
+        #[cfg(test)]
+        MODULE_LOADER_INITIALIZATIONS.with(|count| count.set(count.get() + 1));
+        let mut loader = Self::transfer_placeholder();
+        loader.search_paths = initial_module_search_paths();
+        loader.automatic_search_starts.push(current_working_directory());
+        loader
+    }
+
+    /// Empty parking space while a callback borrows its caller's loader.
+    /// This must be replaced before executing code that can import modules.
+    pub(crate) fn transfer_placeholder() -> Self {
         ModuleLoader {
             capability_policy: RuntimeCapabilityPolicy::trusted(),
             loaded_modules: HashMap::new(),
             loading_stack: Vec::new(),
             loading_stack_index: HashMap::new(),
-            search_paths,
-            automatic_search_starts: vec![current_working_directory()],
+            search_paths: Vec::new(),
+            automatic_search_starts: Vec::new(),
             automatic_search_paths: RefCell::new(None),
         }
     }
@@ -571,6 +581,16 @@ pub fn configured_module_search_paths() -> Vec<PathBuf> {
 
 fn current_working_directory() -> PathBuf {
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+}
+
+#[cfg(test)]
+thread_local! {
+    static MODULE_LOADER_INITIALIZATIONS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+#[cfg(test)]
+pub(crate) fn module_loader_initialization_count() -> usize {
+    MODULE_LOADER_INITIALIZATIONS.with(std::cell::Cell::get)
 }
 
 /// Returns the installed package roots belonging to the nearest Kennel project.

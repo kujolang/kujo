@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid unused module search-path and working-directory discovery when creating
+  callback VMs that borrow the caller's module loader. Preserve ordinary VM
+  initialization, import caches, capability checks and callback error recovery.
+
 - Refresh captured ordinary and async task globals from each submission while
   retaining captured local state. Preserve separate module and caller namespaces,
   callback writes and caught errors without publishing task-global changes back

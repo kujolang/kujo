@@ -625,13 +625,17 @@ impl VM {
     }
 
     pub fn new() -> Self {
+        Self::with_interpreter(Interpreter::new_for_vm())
+    }
+
+    fn with_interpreter(interpreter: Interpreter) -> Self {
         let vm = Self {
             stack: Vec::new(),
             call_frames: Vec::new(),
             globals: Arc::new(Mutex::new(Environment::new())),
             ip: 0,
             chunk: BytecodeChunk::new(),
-            interpreter: Interpreter::new_for_vm(),
+            interpreter,
             interpreter_env_pending: false,
             callback_needs_interpreter_state: true,
             upvalues: Vec::new(),
@@ -846,6 +850,19 @@ impl VM {
         cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
     ) -> Self {
         let mut vm = Self::new();
+        vm.interpreter.task_cancellation = cancellation;
+        vm.set_jit_enabled(jit_requested);
+        vm
+    }
+
+    // Both callback entrypoints transfer the caller's loader before execution
+    // that can import (pure reusable callbacks never need a loader).
+    // Avoid discovering search roots for a loader that will only park that transfer.
+    fn with_callback_policy(
+        jit_requested: bool,
+        cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+    ) -> Self {
+        let mut vm = Self::with_interpreter(Interpreter::new_for_callback_vm());
         vm.interpreter.task_cancellation = cancellation;
         vm.set_jit_enabled(jit_requested);
         vm
@@ -6452,7 +6469,7 @@ impl VM {
         module_loader: &mut crate::module::ModuleLoader,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
-        let mut vm = VM::with_task_policy(jit_requested, cancellation);
+        let mut vm = VM::with_callback_policy(jit_requested, cancellation);
         vm.interpreter.task_capture_globals = task_capture_globals;
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
@@ -6498,7 +6515,7 @@ impl VM {
         if chunk.is_async || chunk.is_generator {
             return None;
         }
-        let mut vm = Self::with_task_policy(jit_requested, cancellation);
+        let mut vm = Self::with_callback_policy(jit_requested, cancellation);
         vm.callback_needs_interpreter_state = !(chunk.lexical_self.is_none()
             && chunk.instructions.iter().all(|op| {
                 matches!(
@@ -10341,6 +10358,68 @@ mod tests {
             let mut hasher = std::collections::hash_map::DefaultHasher::new();
             name.hash(&mut hasher);
             assert_eq!(names.get(&hasher.finish()).map(String::as_str), Some(name));
+        }
+    }
+
+    #[test]
+    fn callback_bridges_do_not_initialize_discarded_module_loaders() {
+        use crate::module::module_loader_initialization_count as count;
+        let before = count();
+        let _ordinary = VM::new();
+        assert_eq!(count(), before + 1, "ordinary VMs retain normal module discovery");
+        let script = compile_chunk("func read(x) { return x + 1 }");
+        let chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some((**chunk).clone()),
+                _ => None,
+            })
+            .unwrap();
+        let function = Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        for jit in [false, true] {
+            if jit && !cfg!(feature = "runtime-jit") {
+                continue;
+            }
+            let globals = Arc::new(Mutex::new(Environment::new()));
+            let mut loader = crate::module::ModuleLoader::new();
+            let initialized = count();
+            let mut reused = VM::reusable_sync_callback(
+                &function,
+                globals.clone(),
+                RuntimeCapabilityPolicy::trusted(),
+                None,
+                None,
+                jit,
+            )
+            .unwrap();
+            for args in [vec![Value::Int(5)], vec![], vec![Value::Int(5)]] {
+                let fresh = VM::call_interpreter_callback(
+                    function.clone(),
+                    args.clone(),
+                    globals.clone(),
+                    RuntimeCapabilityPolicy::trusted(),
+                    None,
+                    None,
+                    None,
+                    jit,
+                    &mut loader,
+                );
+                let repeated =
+                    reused.call_reused_sync_callback(function.clone(), &args, &mut loader);
+                if args.is_empty() {
+                    assert!(fresh.is_err());
+                    assert!(repeated.is_err());
+                } else {
+                    assert!(matches!(fresh, Ok(Value::Int(6))));
+                    assert!(matches!(repeated, Ok(Value::Int(6))));
+                }
+                assert_eq!(count(), initialized, "callback initialized an unused loader");
+            }
         }
     }
 

@@ -473,6 +473,14 @@ impl Interpreter {
         Self::with_environment(RuntimeCapabilityPolicy::trusted(), Environment::default())
     }
 
+    pub(crate) fn new_for_callback_vm() -> Self {
+        Self::with_environment_and_loader(
+            RuntimeCapabilityPolicy::trusted(),
+            Environment::default(),
+            ModuleLoader::transfer_placeholder(),
+        )
+    }
+
     pub fn with_capability_policy(capability_policy: RuntimeCapabilityPolicy) -> Self {
         let mut interpreter = Self::with_environment(capability_policy, Environment::default());
         interpreter.register_builtins();
@@ -480,7 +488,14 @@ impl Interpreter {
     }
 
     fn with_environment(capability_policy: RuntimeCapabilityPolicy, env: Environment) -> Self {
-        let mut module_loader = ModuleLoader::new();
+        Self::with_environment_and_loader(capability_policy, env, ModuleLoader::new())
+    }
+
+    fn with_environment_and_loader(
+        capability_policy: RuntimeCapabilityPolicy,
+        env: Environment,
+        mut module_loader: ModuleLoader,
+    ) -> Self {
         module_loader.set_capability_policy(capability_policy.clone());
         Interpreter {
             environment_activations: Vec::new(),
