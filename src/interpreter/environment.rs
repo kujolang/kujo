@@ -105,6 +105,103 @@ impl CaptureWrites {
     }
 }
 
+/// Recycled private frame storage. Values and environment identities never survive
+/// recycling; only map capacity, binding names and binding-kind metadata do.
+#[derive(Default)]
+struct CaptureStorage {
+    scopes: Vec<HashMap<String, Value>>,
+    binding_kinds: Vec<HashMap<String, BindingKind>>,
+    capacity: usize,
+    key_bytes: usize,
+}
+
+#[derive(Default)]
+pub(crate) struct CaptureStoragePool {
+    frames: Vec<CaptureStorage>,
+    capacity: usize,
+    key_bytes: usize,
+}
+
+impl CaptureStoragePool {
+    const MAX_FRAMES: usize = 4;
+    const MAX_CAPACITY: usize = 8192;
+    const MAX_KEY_BYTES: usize = 128 * 1024;
+    const MAX_SCOPES: usize = 128;
+
+    fn take(&mut self) -> CaptureStorage {
+        let Some(frame) = self.frames.pop() else { return CaptureStorage::default() };
+        self.capacity -= frame.capacity;
+        self.key_bytes -= frame.key_bytes;
+        frame
+    }
+
+    pub(crate) fn recycle(&mut self, mut environment: Environment) {
+        if environment.scopes.capacity() > Self::MAX_SCOPES
+            || environment.binding_kinds.capacity() > Self::MAX_SCOPES
+        {
+            return;
+        }
+        let capacity = environment
+            .scopes
+            .iter()
+            .map(HashMap::capacity)
+            .chain(environment.binding_kinds.iter().map(HashMap::capacity))
+            .fold(0usize, usize::saturating_add);
+        if capacity > Self::MAX_CAPACITY {
+            return;
+        }
+        let key_bytes = environment
+            .scopes
+            .iter()
+            .flat_map(HashMap::keys)
+            .chain(environment.binding_kinds.iter().flat_map(HashMap::keys))
+            .map(String::capacity)
+            .fold(0usize, usize::saturating_add);
+        if key_bytes > Self::MAX_KEY_BYTES {
+            return;
+        }
+        // Do not keep collections, functions, host handles, captures or global
+        // identities alive in an idle frame. Clear outside the owner lock.
+        for scope in &mut environment.scopes {
+            for value in scope.values_mut() {
+                *value = Value::Null;
+            }
+        }
+        let frame = CaptureStorage {
+            scopes: std::mem::take(&mut environment.scopes),
+            binding_kinds: std::mem::take(&mut environment.binding_kinds),
+            capacity,
+            key_bytes,
+        };
+        drop(environment);
+        while self.frames.len() >= Self::MAX_FRAMES
+            || self.capacity + capacity > Self::MAX_CAPACITY
+            || self.key_bytes + key_bytes > Self::MAX_KEY_BYTES
+        {
+            let old = self.frames.remove(0);
+            self.capacity -= old.capacity;
+            self.key_bytes -= old.key_bytes;
+        }
+        self.capacity += capacity;
+        self.key_bytes += key_bytes;
+        self.frames.push(frame);
+    }
+}
+
+// HashMap::clone_from clears/reallocates keys. Refill existing entries instead,
+// while consulting the actual source keys/kinds on every invocation. Rust hosts
+// may edit the public owner map; no cached shape/version assumption is valid.
+fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMap<String, T>) {
+    target.retain(|name, _| source.contains_key(name));
+    for (name, value) in source {
+        if let Some(slot) = target.get_mut(name) {
+            slot.clone_from(value);
+        } else {
+            target.insert(name.clone(), value.clone());
+        }
+    }
+}
+
 /// Variable storage using lexical scoping
 ///
 /// The Environment maintains a stack of scopes (Vec<HashMap>). When looking up
@@ -152,20 +249,47 @@ pub struct Environment {
 impl Environment {
     /// Create a private invocation view without replacing publicly exposed owner
     /// values or retaining a second current collection value in the invocation.
+    #[cfg(test)]
     pub(crate) fn capture_activation(owner: &Arc<Mutex<Self>>) -> Self {
+        Self::capture_activation_with_pool(owner, &mut CaptureStoragePool::default())
+    }
+
+    pub(crate) fn capture_activation_with_pool(
+        owner: &Arc<Mutex<Self>>,
+        pool: &mut CaptureStoragePool,
+    ) -> Self {
         let captured = owner.lock().unwrap_or_else(|p| p.into_inner());
         debug_assert!(captured.live_capture.is_none(), "capture owners must own real values");
-        let mut activation = captured.clone();
-        if activation.scopes.len() > 1 {
-            for scope in activation.scopes.iter_mut().skip(1) {
-                for value in scope.values_mut() {
-                    *value = Value::Null;
+        let mut storage = pool.take();
+        storage.scopes.resize_with(captured.scopes.len(), HashMap::new);
+        storage.binding_kinds.resize_with(captured.binding_kinds.len(), HashMap::new);
+        for (index, (target, source)) in storage.scopes.iter_mut().zip(&captured.scopes).enumerate()
+        {
+            if index == 0 {
+                refill_capture_map(target, source);
+            } else {
+                target.retain(|name, _| source.contains_key(name));
+                for name in source.keys() {
+                    if !target.contains_key(name) {
+                        target.insert(name.clone(), Value::Null);
+                    }
                 }
             }
-            activation.live_capture =
-                Some(LiveCapture { owner: Arc::downgrade(owner), limit: activation.scopes.len() });
         }
-        activation
+        for (target, source) in storage.binding_kinds.iter_mut().zip(&captured.binding_kinds) {
+            refill_capture_map(target, source);
+        }
+        let limit = captured.scopes.len();
+        Self {
+            scopes: storage.scopes,
+            binding_kinds: storage.binding_kinds,
+            native_defaults: captured.native_defaults.clone(),
+            global_owner: captured.global_owner.clone(),
+            global_source: captured.global_source.clone(),
+            live_capture: (limit > 1).then(|| LiveCapture { owner: Arc::downgrade(owner), limit }),
+            capture_writes: captured.capture_writes.clone(),
+            capture_observation: captured.capture_observation,
+        }
     }
 
     fn capture_owner(link: &Option<LiveCapture>, index: usize) -> Option<Arc<Mutex<Self>>> {
@@ -284,6 +408,18 @@ impl Environment {
         {
             target.extend(writes.iter().filter(|(index, _)| *index == 0).cloned());
         }
+    }
+
+    /// Publish the completed globals at the same boundary as copy_global_scope_from,
+    /// then let the caller recycle the retired map rather than reallocating its keys.
+    pub(crate) fn publish_global_scope_from(&mut self, source: &mut Self) {
+        self.invalidate_capture_observation();
+        if let (Some((_, target)), Some((_, writes))) =
+            (&mut self.capture_writes, &source.capture_writes)
+        {
+            target.extend(writes.iter().filter(|(index, _)| *index == 0).cloned());
+        }
+        self.swap_global_scope(source);
     }
 
     pub(crate) fn restore_capture_locals(&mut self, completed: &Self, count: usize) {
@@ -1457,5 +1593,137 @@ mod live_capture_storage_tests {
             assert_eq!(Arc::strong_count(items), 1);
         })
         .unwrap();
+    }
+}
+
+#[cfg(test)]
+mod capture_storage_pool_tests {
+    use super::*;
+
+    #[test]
+    fn recycling_releases_values_and_environment_identities() {
+        let mut env = Environment::new();
+        let items = Arc::new(vec![Value::Int(7)]);
+        let weak_items = Arc::downgrade(&items);
+        let weak_identity = Arc::downgrade(&env.global_owner);
+        let defaults = Arc::new(HashMap::from([("native".into(), "print".into())]));
+        let weak_defaults = Arc::downgrade(&defaults);
+        env.native_defaults = Some(defaults);
+        env.define("items".into(), Value::Array(items));
+        let mut pool = CaptureStoragePool::default();
+        pool.recycle(env);
+        assert!(weak_items.upgrade().is_none());
+        assert!(weak_identity.upgrade().is_none());
+        assert!(weak_defaults.upgrade().is_none());
+        assert_eq!(pool.frames.len(), 1);
+        assert!(matches!(pool.frames[0].scopes[0]["items"], Value::Null));
+    }
+
+    #[test]
+    fn reused_frames_follow_public_owner_keys_values_and_kinds() {
+        let mut initial = Environment::new();
+        initial.define("removed".into(), Value::Int(1));
+        initial.define_with_kind("changed".into(), Value::Int(2), BindingKind::Const);
+        initial.push_scope();
+        initial.define("local".into(), Value::Int(3));
+        let owner = Arc::new(Mutex::new(initial));
+        let mut pool = CaptureStoragePool::default();
+        let first = Environment::capture_activation_with_pool(&owner, &mut pool);
+        pool.recycle(first);
+        {
+            let mut original = owner.lock().unwrap();
+            original.scopes[0].remove("removed");
+            original.scopes[0].insert("changed".into(), Value::Int(20));
+            original.binding_kinds[0].remove("changed");
+            original.scopes[0].insert("added".into(), Value::Int(4));
+            original.scopes[1].remove("local");
+            original.scopes[1].insert("new_local".into(), Value::Int(5));
+            original.binding_kinds[1].insert("new_local".into(), BindingKind::LetImmutable);
+        }
+        let mut next = Environment::capture_activation_with_pool(&owner, &mut pool);
+        assert!(next.get("removed").is_none());
+        assert!(next.get("local").is_none());
+        assert!(matches!(next.get("changed"), Some(Value::Int(20))));
+        assert!(matches!(next.get("added"), Some(Value::Int(4))));
+        assert!(matches!(next.get("new_local"), Some(Value::Int(5))));
+        assert!(matches!(next.scopes[1]["new_local"], Value::Null));
+        next.assign_checked("changed".into(), Value::Int(21)).unwrap();
+        assert!(next.assign_checked("new_local".into(), Value::Int(6)).is_err());
+        assert!(matches!(owner.lock().unwrap().scopes[1]["new_local"], Value::Int(5)));
+    }
+
+    #[test]
+    fn reuse_keeps_existing_name_storage_without_stale_defaults_or_scopes() {
+        let mut old = Environment::new();
+        old.define("reused".into(), Value::Int(1));
+        old.push_scope();
+        old.define("stale".into(), Value::Int(2));
+        old.native_defaults = Some(Arc::new(HashMap::from([("gone".into(), "print".into())])));
+        let key = old.scopes[0].keys().find(|k| k.as_str() == "reused").unwrap().as_ptr();
+        let mut pool = CaptureStoragePool::default();
+        pool.recycle(old);
+        let mut fresh = Environment::new();
+        fresh.define("reused".into(), Value::Int(9));
+        let owner = Arc::new(Mutex::new(fresh));
+        let next = Environment::capture_activation_with_pool(&owner, &mut pool);
+        assert_eq!(next.scopes[0].keys().find(|k| k.as_str() == "reused").unwrap().as_ptr(), key);
+        assert_eq!(next.scopes.len(), 1);
+        assert!(next.native_defaults.is_none());
+        assert!(next.get("stale").is_none());
+        assert!(matches!(next.get("reused"), Some(Value::Int(9))));
+        assert_eq!(pool.capacity, 0);
+        assert_eq!(pool.key_bytes, 0);
+    }
+
+    #[test]
+    fn pool_bounds_retained_frames_maps_and_reserved_key_bytes() {
+        let mut pool = CaptureStoragePool::default();
+        for _ in 0..10 {
+            let mut env = Environment::new();
+            env.define("value".into(), Value::Int(1));
+            pool.recycle(env);
+        }
+        assert_eq!(pool.frames.len(), CaptureStoragePool::MAX_FRAMES);
+        assert_eq!(pool.capacity, pool.frames.iter().map(|f| f.capacity).sum::<usize>());
+        assert_eq!(pool.key_bytes, pool.frames.iter().map(|f| f.key_bytes).sum::<usize>());
+        let before = (pool.frames.len(), pool.capacity, pool.key_bytes);
+        let mut huge_map = Environment::new();
+        huge_map.scopes[0].reserve(CaptureStoragePool::MAX_CAPACITY + 1);
+        pool.recycle(huge_map);
+        let mut huge_name = Environment::new();
+        let mut name = String::with_capacity(CaptureStoragePool::MAX_KEY_BYTES + 1);
+        name.push('x');
+        huge_name.scopes[0].insert(name, Value::Int(1));
+        pool.recycle(huge_name);
+        let mut huge_scopes = Environment::new();
+        huge_scopes.scopes.reserve(CaptureStoragePool::MAX_SCOPES + 1);
+        pool.recycle(huge_scopes);
+        assert_eq!((pool.frames.len(), pool.capacity, pool.key_bytes), before);
+        while !pool.frames.is_empty() {
+            pool.take();
+        }
+        assert_eq!((pool.capacity, pool.key_bytes), (0, 0));
+    }
+
+    #[test]
+    fn moving_published_globals_matches_copy_and_retains_local_owner_values() {
+        let mut owner = Environment::new();
+        owner.define("global".into(), Value::Int(1));
+        owner.push_scope();
+        owner.define("local".into(), Value::Int(2));
+        owner.track_capture_writes();
+        let mut completed = owner.clone();
+        completed.assign_checked("global".into(), Value::Int(3)).unwrap();
+        let mut expected = owner.clone();
+        expected.copy_global_scope_from(&completed);
+        owner.publish_global_scope_from(&mut completed);
+        assert!(matches!(owner.get("global"), Some(Value::Int(3))));
+        assert!(matches!(owner.get("local"), Some(Value::Int(2))));
+        assert!(matches!(completed.get("global"), Some(Value::Int(1))));
+        assert_eq!(
+            owner.capture_writes.as_ref().unwrap().1.iter().collect::<HashSet<_>>(),
+            expected.capture_writes.as_ref().unwrap().1.iter().collect::<HashSet<_>>()
+        );
+        assert!(Arc::ptr_eq(&owner.global_source, &expected.global_source));
     }
 }

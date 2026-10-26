@@ -57,15 +57,23 @@ begin
   end
   report[:deltas] = deltas
   # Compare exact integer64-call deltas. No absolute allocator-count threshold,
-  # VM/JIT equality assumption, or assertion that the still-open write cost is flat.
+  # VM/JIT equality assumption, or assertion that collection-width costs are flat.
   report[:flat_read_setup] = %w[vm jit].all? do |mode|
     reads = deltas.select { |r| r[:mode] == mode && r[:operation] == 'read' }
     reads.length == 4 && reads.map { |r| [r[:requests], r[:bytes]] }.uniq.length == 1
   end
   raise 'Read-only helper setup still scales with unrelated module bindings or array width' unless report[:flat_read_setup]
+  # Warmed captured-frame storage must remove repeated map/name allocations for
+  # these bounded owners. Array detachment as width grows is a separate open cost.
+  report[:flat_write_binding_setup] = %w[vm jit].all? do |mode|
+    writes = deltas.select { |r| r[:mode] == mode && r[:operation] == 'write' && r[:width] == 128 }
+    writes.map { |r| r[:bindings] }.sort == [0, 128, 2048] &&
+      writes.map { |r| [r[:requests], r[:bytes]] }.uniq.length == 1
+  end
+  raise 'Write-helper setup still scales with unrelated module bindings' unless report[:flat_write_binding_setup]
   report[:status] = 'passed'
   save.call
-  puts '32 allocation/semantic controls passed; read-only setup is flat in VM and JIT'
+  puts '32 controls passed; read setup and bounded write-binding setup are flat in VM and JIT'
 rescue => error
   report[:status] = 'failed'
   report[:error] = error.message

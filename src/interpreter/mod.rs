@@ -398,6 +398,7 @@ enum GlobalCallEnvironment {
 
 pub struct Interpreter {
     environment_activations: Vec<EnvironmentActivation>,
+    capture_storage_pool: environment::CaptureStoragePool,
 
     pub env: Environment,
     pub return_value: Option<Value>,
@@ -500,6 +501,7 @@ impl Interpreter {
         module_loader.set_capability_policy(capability_policy.clone());
         Interpreter {
             environment_activations: Vec::new(),
+            capture_storage_pool: environment::CaptureStoragePool::default(),
             env,
             return_value: None,
             control_flow: ControlFlow::None,
@@ -2455,7 +2457,9 @@ impl Interpreter {
         let active = self.active_capture_index(captured);
         let mut environment = match active {
             Some(index) => self.active_capture_snapshot(index),
-            None => Environment::capture_activation(captured),
+            None => {
+                Environment::capture_activation_with_pool(captured, &mut self.capture_storage_pool)
+            }
         };
         let globals = if self.task_cancellation.is_none() {
             CapturedGlobals::Snapshot
@@ -2526,16 +2530,20 @@ impl Interpreter {
             _ => {}
         }
         if !publish || !changed {
+            self.capture_storage_pool.recycle(completed);
             return;
         }
-        let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        if self.task_cancellation.is_some() {
-            owner.merge_task_capture_writes(&completed);
-        } else if completed.has_live_capture() {
-            owner.copy_global_scope_from(&completed);
-        } else {
-            *owner = completed;
+        {
+            let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+            if self.task_cancellation.is_some() {
+                owner.merge_task_capture_writes(&completed);
+            } else if completed.has_live_capture() {
+                owner.publish_global_scope_from(&mut completed);
+            } else {
+                completed = std::mem::replace(&mut *owner, completed);
+            }
         }
+        self.capture_storage_pool.recycle(completed);
     }
 
     fn enter_shared_environment(&mut self, environment: Environment) -> SuspendedEnvironment {
