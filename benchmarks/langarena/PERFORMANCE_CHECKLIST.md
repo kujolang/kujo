@@ -99,11 +99,11 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).
-- [ ] Fix interpreter captured-state reentry: a recursive call writes its shared capture, but the outer activation restores/publishes stale state. A fresh-read control reproduces VM/JIT versus interpreter divergence on the baseline and current candidate; see [capture reentry evidence](CAPTURE_REENTRY_PARITY_2026_10_26.md). Preserve separate-closure snapshots and verify every synchronous call route.
+- [x] Fix synchronous captured-state reentry, including callbacks, helper/generator suspension and VM bridges, while preserving independent snapshots. Runtime `45360b9` passes 48 focused cases, 259 integrations plus nine callback tests, 1,114 library tests, all 150 checksums, and helper/priority timing gates. See [verification and measured limits](CAPTURE_REENTRY_VERIFICATION_2026_10_26.md). Task ownership defects remain below.
 - [ ] Preserve different-binding captured writes across overlapping ordinary task callbacks, prevent helper-local parameters from entering an async captured-write journal, and refresh task globals from each submission while retaining captured locals. Both baseline and reentry candidate reproduce these gaps; see [task-write evidence](CAPTURE_TASK_WRITE_PARITY_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for user-defined binding materialization and captured-state reentry; the native preload-copying component is fixed. Follow-up evidence:
+Section 3 remains open for user-defined binding materialization and task capture ownership; native preload copying and synchronous captured-state reentry are fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 
