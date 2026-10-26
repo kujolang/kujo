@@ -436,9 +436,14 @@ impl Environment {
             binding_kinds: self.binding_kinds.split_off(1),
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
-            capture_writes: None,
+            capture_writes: self.capture_writes.as_ref().map(|(limit, _)| (*limit, HashSet::new())),
             capture_observation: None,
         };
+        // Helper locals replace suspended caller indices; only globals belong
+        // to the active capture journal until the caller scopes are restored.
+        if let Some((limit, _)) = &mut self.capture_writes {
+            *limit = 1;
+        }
         self.push_scope();
         caller
     }
@@ -448,6 +453,11 @@ impl Environment {
         self.binding_kinds.truncate(1);
         self.scopes.extend(caller.scopes);
         self.binding_kinds.extend(caller.binding_kinds);
+        if let (Some((limit, _)), Some((saved_limit, _))) =
+            (&mut self.capture_writes, caller.capture_writes)
+        {
+            *limit = saved_limit;
+        }
     }
 
     /// Swap only non-global scopes when suspending an execution owner. Global
@@ -905,5 +915,42 @@ mod module_native_default_tests {
         assert!(overridden.assign_checked("floor".into(), Value::Null).is_err());
         assert!(overridden.scopes[0].contains_key("abs"));
         assert!(overridden.scopes[0].contains_key("floor"));
+    }
+}
+
+#[cfg(test)]
+mod helper_capture_journal_tests {
+    use super::*;
+
+    #[test]
+    fn nested_helpers_preserve_actual_writes_and_exclude_parameter_scopes() {
+        let mut owner = Environment::new();
+        owner.define("global".into(), Value::Int(0));
+        owner.push_scope();
+        owner.define("untouched".into(), Value::Int(0));
+        owner.define("changed".into(), Value::Int(0));
+        let mut invocation = owner.clone();
+        invocation.track_capture_writes();
+        invocation.push_scope();
+        let caller = invocation.enter_global_function();
+        invocation.define("untouched".into(), Value::Int(12));
+        let helper = invocation.enter_global_function();
+        invocation.define("untouched".into(), Value::Int(34));
+        invocation.assign_checked("global".into(), Value::Int(9)).unwrap();
+        invocation.leave_global_function(helper);
+        assert!(matches!(invocation.get("untouched"), Some(Value::Int(12))));
+        invocation.leave_global_function(caller);
+        invocation.assign_checked("changed".into(), Value::Int(1)).unwrap();
+        invocation.pop_scope();
+        owner.assign_checked("untouched".into(), Value::Int(42)).unwrap();
+        owner.merge_capture_writes(&invocation);
+        assert!(matches!(owner.get("untouched"), Some(Value::Int(42))));
+        assert!(matches!(owner.get("changed"), Some(Value::Int(1))));
+        assert!(matches!(owner.get("global"), Some(Value::Int(9))));
+        let (limit, writes) = invocation.capture_writes.as_ref().unwrap();
+        assert_eq!(*limit, 2);
+        assert_eq!(writes.len(), 2);
+        assert!(writes.contains(&(0, "global".into())));
+        assert!(writes.contains(&(1, "changed".into())));
     }
 }

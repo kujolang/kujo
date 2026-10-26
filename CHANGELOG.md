@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep ordinary global-helper parameters out of async captured-write journals,
+  including nested helpers and caught helper errors. Restore the caller's capture
+  scope afterward so subsequent captured writes remain tracked.
+
 - Preserve current captured state during recursive calls, callbacks, global-helper
   and generator suspension, including reentry through a separate VM bridge.
   Separately created closures and saved collection snapshots remain independent.
