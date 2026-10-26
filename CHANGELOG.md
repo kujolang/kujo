@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Cache ordinary VM parameter slots and legacy named aliases per immutable code
+  object; bytecode edits invalidate the cache and callable snapshots stay isolated.
+
 - Reserve byte-array conversion output once while preserving ordered type/range
   validation and source/output value snapshots.
 

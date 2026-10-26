@@ -487,6 +487,7 @@ struct BytecodeStorage {
     data: BytecodeData,
     named_bindings: OnceLock<HashSet<String>>,
     call_metadata: OnceLock<CallMetadata>,
+    parameter_bindings: OnceLock<Vec<(Option<usize>, bool)>>,
 }
 
 /// Dispatch facts belong to immutable code storage, not a function's name.
@@ -504,6 +505,7 @@ impl std::fmt::Debug for BytecodeStorage {
             .field("data", &self.data)
             .field("named_bindings", &self.named_bindings)
             .field("call_metadata", &self.call_metadata)
+            .field("parameter_bindings", &self.parameter_bindings)
             .finish()
     }
 }
@@ -529,6 +531,7 @@ impl std::ops::DerefMut for BytecodeChunk {
         storage.identity = next_code_id();
         storage.named_bindings.take();
         storage.call_metadata.take();
+        storage.parameter_bindings.take();
         &mut storage.data
     }
 }
@@ -603,6 +606,7 @@ impl BytecodeChunk {
             },
             named_bindings: OnceLock::new(),
             call_metadata: OnceLock::new(),
+            parameter_bindings: OnceLock::new(),
         }))
     }
 
@@ -647,6 +651,20 @@ impl BytecodeChunk {
                     .collect()
             })
             .contains(name)
+    }
+
+    /// Resolve parameter slots and legacy named aliases once per immutable code
+    /// allocation. Every public bytecode edit invalidates this cache via DerefMut.
+    pub(crate) fn parameter_bindings(&self) -> &[(Option<usize>, bool)] {
+        self.0.parameter_bindings.get_or_init(|| {
+            self.params
+                .iter()
+                .map(|name| {
+                    let slot = self.local_names.iter().position(|local| local == name);
+                    (slot, slot.is_some() && self.uses_named_binding(name))
+                })
+                .collect()
+        })
     }
 
     /// Add a constant to the pool and return its index
@@ -817,6 +835,31 @@ mod sharing_tests {
         // Unique mutation must invalidate metadata too.
         edited.instructions.clear();
         assert!(!edited.uses_named_binding("x"));
+    }
+
+    #[test]
+    fn parameter_binding_cache_tracks_slots_names_and_code_edits() {
+        let mut original = BytecodeChunk::new();
+        original.params = vec!["b".into(), "missing".into()];
+        original.local_names = vec!["a".into(), "b".into()];
+        original.emit(OpCode::LoadVar("b".into()));
+        assert_eq!(original.parameter_bindings(), &[(Some(1), true), (None, false)]);
+        let mut edited = original.clone();
+        assert!(std::ptr::eq(original.parameter_bindings(), edited.parameter_bindings()));
+        edited.params.reverse();
+        assert!(edited.0.parameter_bindings.get().is_none());
+        assert_eq!(edited.parameter_bindings(), &[(None, false), (Some(1), true)]);
+        edited.local_names.swap(0, 1);
+        assert_eq!(edited.parameter_bindings(), &[(None, false), (Some(0), true)]);
+        edited.instructions.clear();
+        assert_eq!(edited.parameter_bindings(), &[(None, false), (Some(0), false)]);
+        assert_eq!(original.parameter_bindings(), &[(Some(1), true), (None, false)]);
+        edited.params = original.params.clone();
+        edited.local_names = original.local_names.clone();
+        edited.instructions = original.instructions.clone();
+        assert_eq!(original, edited, "cache state must not affect code equality");
+        edited.local_names.clear();
+        assert_eq!(edited.parameter_bindings(), &[(None, false), (None, false)]);
     }
 
     #[test]

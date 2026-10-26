@@ -6867,13 +6867,15 @@ impl VM {
             }
 
             // Bind each argument to its corresponding parameter name
-            for (param_name, arg_value) in param_names.iter().zip(call_args) {
-                if let Some(slot) = chunk.local_names.iter().position(|name| name == param_name) {
+            for ((param_name, arg_value), (slot, named)) in
+                param_names.iter().zip(call_args).zip(chunk.parameter_bindings())
+            {
+                if let Some(slot) = *slot {
                     local_slots[slot] = arg_value;
                     local_slot_binding_kinds[slot] = BytecodeBindingKind::Mutable;
                     local_slot_initialized[slot] = true;
                     // Hand-built/legacy chunks may still address a parameter by name.
-                    if chunk.uses_named_binding(param_name) {
+                    if *named {
                         locals.insert(param_name.clone(), local_slots[slot].clone());
                         locals_binding_kinds
                             .insert(param_name.clone(), BytecodeBindingKind::Mutable);
