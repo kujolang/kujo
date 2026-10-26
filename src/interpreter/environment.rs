@@ -61,6 +61,8 @@ impl BindingKind {
 #[derive(Clone, Debug)]
 pub struct Environment {
     pub scopes: Vec<HashMap<String, Value>>,
+    // Missing entries mean Mutable. Store only immutable exceptions, avoiding
+    // duplicate name storage for native preloads and ordinary mutable bindings.
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
     capture_writes: Option<(usize, HashSet<(usize, String)>)>,
@@ -237,7 +239,8 @@ impl Environment {
             return;
         };
         if index >= first_scope
-            && self.binding_kinds[index].get(name) == Some(&BindingKind::Mutable)
+            && self.binding_kinds[index].get(name).copied().unwrap_or(BindingKind::Mutable)
+                == BindingKind::Mutable
         {
             let value = self.scopes[index].get_mut(name).unwrap();
             if super::assignment::same_storage(value, argument) {
@@ -384,7 +387,13 @@ impl Environment {
             scope.insert(name.clone(), value);
         }
         if let Some(kinds) = self.binding_kinds.last_mut() {
-            kinds.insert(name, kind);
+            if kind == BindingKind::Mutable {
+                // A definition can replace an immutable binding through host APIs;
+                // remove its old exception rather than leaving stale permissions.
+                kinds.remove(&name);
+            } else {
+                kinds.insert(name, kind);
+            }
         }
     }
 
@@ -567,5 +576,30 @@ mod conditional_mutation_tests {
             })
             .unwrap());
         assert_eq!(env.capture_writes.as_ref().unwrap().1.len(), 1);
+    }
+}
+
+#[cfg(test)]
+mod permission_snapshot_tests {
+    use super::*;
+
+    #[test]
+    fn sparse_permissions_preserve_snapshot_immutability_and_redefinition() {
+        let mut original = Environment::new();
+        original.define_with_kind("locked".into(), Value::Int(1), BindingKind::Const);
+        original.define("mutable".into(), Value::Int(7));
+        assert_eq!(original.binding_kinds[0].len(), 1);
+        let mut snapshot = original.clone();
+        snapshot.define("locked".into(), Value::Int(2));
+        assert!(snapshot.binding_kinds[0].is_empty());
+        snapshot.assign_checked("locked".into(), Value::Int(3)).unwrap();
+        assert!(original.assign_checked("locked".into(), Value::Int(4)).is_err());
+        assert!(matches!(original.get("locked"), Some(Value::Int(1))));
+        snapshot.push_scope();
+        snapshot.define_with_kind("local".into(), Value::Int(5), BindingKind::LetImmutable);
+        let child = snapshot.clone();
+        snapshot.pop_scope();
+        assert!(child.ensure_mutable_for_mutation("local").is_err());
+        assert!(snapshot.get("local").is_none());
     }
 }

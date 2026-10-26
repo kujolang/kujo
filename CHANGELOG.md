@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Store only immutable binding-permission exceptions in interpreter environments.
+  Imported/captured calls no longer copy redundant mutable/native permission names;
+  immutable snapshots, redefinition and helper ownership retain their behavior.
+
 - Avoid parameter-name allocations and redundant argument snapshots during ordinary
   VM calls; retain legacy receiver adaptation and existing arity diagnostics.
   Reuse bounded, cleared local-slot buffers after VM returns and exception unwinds.

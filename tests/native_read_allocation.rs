@@ -299,3 +299,38 @@ fn repeated_global_writes_do_not_copy_or_rescan_the_container() {
         );
     }
 }
+
+#[test]
+fn environment_snapshots_do_not_duplicate_permission_names() {
+    use kujo::interpreter::Environment;
+    let mut environment = Environment::new();
+    let width = 1024;
+    for index in 0..width {
+        environment.define(format!("binding_{index}"), Value::Int(index as i64));
+    }
+    ALLOCATIONS.with(|v| v.set(0));
+    TRACK.with(|v| v.set(true));
+    let snapshot = environment.clone();
+    TRACK.with(|v| v.set(false));
+    let count = ALLOCATIONS.with(Cell::get);
+    // Value-map keys still need copying. A second per-binding allocation slope
+    // means the immutable permission metadata is being copied again.
+    assert!(count < width + 32, "snapshot allocations={count}, bindings={width}");
+    assert!(matches!(snapshot.get("binding_1023"), Some(Value::Int(1023))));
+}
+
+#[test]
+fn empty_local_scopes_do_not_allocate_permission_storage() {
+    let mut environment = kujo::interpreter::Environment::new();
+    // Warm the vectors once; subsequent scope creation/pop must not allocate.
+    environment.push_scope();
+    environment.pop_scope();
+    ALLOCATIONS.with(|v| v.set(0));
+    TRACK.with(|v| v.set(true));
+    for _ in 0..128 {
+        environment.push_scope();
+        environment.pop_scope();
+    }
+    TRACK.with(|v| v.set(false));
+    assert_eq!(ALLOCATIONS.with(Cell::get), 0);
+}
