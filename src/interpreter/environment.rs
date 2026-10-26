@@ -37,6 +37,67 @@ impl BindingKind {
     }
 }
 
+// Most captured calls write zero or one binding. Keep that journal inline;
+// promote to a hash set only when an invocation writes distinct bindings.
+#[derive(Clone, Debug, Default)]
+enum CaptureWrites {
+    #[default]
+    Empty,
+    One((usize, String)),
+    Many(HashSet<(usize, String)>),
+}
+
+impl CaptureWrites {
+    fn record(&mut self, index: usize, name: &str) {
+        if matches!(self, Self::One((scope, existing)) if *scope == index && existing == name) {
+            return;
+        }
+        self.insert((index, name.to_owned()));
+    }
+
+    fn insert(&mut self, write: (usize, String)) {
+        match self {
+            Self::Empty => *self = Self::One(write),
+            Self::One(existing) if *existing == write => {}
+            Self::One(_) => {
+                let Self::One(previous) = std::mem::take(self) else { unreachable!() };
+                *self = Self::Many(HashSet::from([previous, write]));
+            }
+            Self::Many(writes) => {
+                writes.insert(write);
+            }
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &(usize, String)> {
+        let (first, rest) = match self {
+            Self::Empty => (None, None),
+            Self::One(write) => (Some(write), None),
+            Self::Many(writes) => (None, Some(writes)),
+        };
+        first.into_iter().chain(rest.into_iter().flat_map(|writes| writes.iter()))
+    }
+
+    fn extend(&mut self, writes: impl IntoIterator<Item = (usize, String)>) {
+        for write in writes {
+            self.insert(write);
+        }
+    }
+
+    #[cfg(test)]
+    fn is_empty(&self) -> bool {
+        matches!(self, Self::Empty)
+    }
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.iter().count()
+    }
+    #[cfg(test)]
+    fn contains(&self, write: &(usize, String)) -> bool {
+        self.iter().any(|item| item == write)
+    }
+}
+
 /// Variable storage using lexical scoping
 ///
 /// The Environment maintains a stack of scopes (Vec<HashMap>). When looking up
@@ -70,7 +131,7 @@ pub struct Environment {
     // duplicate name storage for native preloads and ordinary mutable bindings.
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
-    capture_writes: Option<(usize, HashSet<(usize, String)>)>,
+    capture_writes: Option<(usize, CaptureWrites)>,
     // Allocation-free conservative proof for read-only synchronous activations.
     // Local parameters are outside the captured prefix; unknown transitions
     // invalidate the proof rather than assuming they cannot change captures.
@@ -172,28 +233,32 @@ impl Environment {
         self.scopes[0].insert(name.to_owned(), value);
     }
 
-    /// Track writes only for an async captured invocation. Ordinary environments
+    /// Track writes for captured invocations inside language tasks. Ordinary environments
     /// allocate no journal. Same-binding read-modify-write remains non-atomic.
     pub(crate) fn track_capture_writes(&mut self) {
-        self.capture_writes = Some((self.scopes.len(), HashSet::new()));
+        self.capture_writes = Some((self.scopes.len(), CaptureWrites::default()));
     }
 
     pub(crate) fn merge_capture_writes(&mut self, after: &Self) {
         let Some((_, writes)) = &after.capture_writes else {
             return;
         };
-        for (index, name) in writes {
+        for (index, name) in writes.iter() {
             if let (Some(target), Some(value)) = (
                 self.scopes.get_mut(*index),
                 after.scopes.get(*index).and_then(|scope| scope.get(name)),
             ) {
-                target.insert(name.clone(), value.clone());
+                if let Some(existing) = target.get_mut(name) {
+                    *existing = value.clone();
+                } else {
+                    target.insert(name.clone(), value.clone());
+                }
             }
         }
     }
 
     fn record_capture_write(
-        journal: &mut Option<(usize, HashSet<(usize, String)>)>,
+        journal: &mut Option<(usize, CaptureWrites)>,
         observation: &mut Option<(usize, bool)>,
         index: usize,
         name: &str,
@@ -205,7 +270,7 @@ impl Environment {
         }
         if let Some((limit, writes)) = journal {
             if index < *limit {
-                writes.insert((index, name.to_owned()));
+                writes.record(index, name);
             }
         }
     }
@@ -436,7 +501,10 @@ impl Environment {
             binding_kinds: self.binding_kinds.split_off(1),
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
-            capture_writes: self.capture_writes.as_ref().map(|(limit, _)| (*limit, HashSet::new())),
+            capture_writes: self
+                .capture_writes
+                .as_ref()
+                .map(|(limit, _)| (*limit, CaptureWrites::default())),
             capture_observation: None,
         };
         // Helper locals replace suspended caller indices; only globals belong
@@ -952,5 +1020,36 @@ mod helper_capture_journal_tests {
         assert_eq!(writes.len(), 2);
         assert!(writes.contains(&(0, "global".into())));
         assert!(writes.contains(&(1, "changed".into())));
+    }
+}
+
+#[cfg(test)]
+mod capture_journal_scope_tests {
+    use super::{Environment, Value};
+
+    #[test]
+    fn repeated_and_shadowed_writes_merge_without_clobbering_other_bindings() {
+        let mut owner = Environment::new();
+        owner.define("value".into(), Value::Int(0));
+        owner.push_scope();
+        owner.define("value".into(), Value::Int(1));
+        owner.define("other".into(), Value::Int(2));
+        let mut invocation = owner.clone();
+        invocation.track_capture_writes();
+        invocation.assign_checked("value".into(), Value::Int(3)).unwrap();
+        invocation.assign_checked("value".into(), Value::Int(4)).unwrap();
+        let caller = invocation.enter_global_function();
+        invocation.assign_checked("value".into(), Value::Int(5)).unwrap();
+        invocation.leave_global_function(caller);
+        let mut nested = invocation.clone();
+        nested.assign_checked("other".into(), Value::Int(6)).unwrap();
+        invocation.merge_capture_writes(&nested);
+        owner.merge_capture_writes(&nested);
+        assert!(matches!(owner.get("value"), Some(Value::Int(4))));
+        assert!(matches!(owner.get("other"), Some(Value::Int(6))));
+        owner.pop_scope();
+        assert!(matches!(owner.get("value"), Some(Value::Int(5))));
+        assert_eq!(nested.capture_writes.as_ref().unwrap().1.len(), 3);
+        assert_eq!(invocation.capture_writes.as_ref().unwrap().1.len(), 2);
     }
 }

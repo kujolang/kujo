@@ -2303,6 +2303,11 @@ impl Interpreter {
             None => captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone(),
         };
         environment.observe_capture_writes(active.is_some());
+        // Task aliases may finish independently. Publish only this invocation's
+        // writes, never its stale snapshot of another task's captured bindings.
+        if self.task_cancellation.is_some() {
+            environment.track_capture_writes();
+        }
         let count = environment.scopes.len();
         let caller = std::mem::replace(&mut self.env, environment);
         self.environment_activations
@@ -2319,7 +2324,12 @@ impl Interpreter {
         if let Some(index) = self.active_capture_index(&captured) {
             self.restore_active_capture(index, &completed);
         }
-        *captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = completed;
+        let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if self.task_cancellation.is_some() {
+            owner.merge_capture_writes(&completed);
+        } else {
+            *owner = completed;
+        }
     }
 
     fn enter_shared_environment(&mut self, environment: Environment) -> SuspendedEnvironment {

@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Merge only written captured bindings when ordinary interpreter task callbacks
+  complete, preserving unrelated writes from task aliases. Keep recursive calls,
+  callbacks and independent collection snapshots intact.
+
 - Keep ordinary global-helper parameters out of async captured-write journals,
   including nested helpers and caught helper errors. Restore the caller's capture
   scope afterward so subsequent captured writes remain tracked.
