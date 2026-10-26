@@ -94,7 +94,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Reuse bounded frame storage with recursion/reentrancy isolation (32 buffers, at most 256 slots each; values cleared).
 - [x] Cache ordinary parameter-slot/name metadata per immutable code object; public code edits invalidate the cache. Legacy receiver-field lookup remains unchanged.
 - [x] Remove redundant mutable permission entries from imported environment snapshots: 64 calls fall from 92,129 requests / 13,840,564 bytes to 61,977 / 11,334,789.
-- [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes.
+- [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four controls and 12 runtime snapshot/state checks passed; optimization remains open.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).

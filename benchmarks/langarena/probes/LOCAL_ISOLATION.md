@@ -174,3 +174,13 @@ The [follow-up report](../IMPORTED_SETUP_AND_BYTES_2026_10_25.md) preserves all
 commands and sources are embedded in its JSON evidence. Compilation must finish
 before timing; test-size and diagnostic results do not establish clean-host or
 competitive acceptance.
+
+`import_environment_allocations.rs` loads an actual module capture and separates
+whole-environment, global-map, binding-name, native-name and other-value cloning.
+Compile against the normal release `kujo` library with `rustc --edition=2021 -O
+-C lto=thin`, `--extern kujo=PATH` and `-L dependency=target/release/deps`, then
+pass a directory containing `import_probe.kujo` exporting `first`. It requires
+an AST function with a captured environment. Each component measures 64 warmed
+clones. Never execute its filtered non-native counterfactual as an environment.
+The [attribution report](../IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) and
+JSON preserve the exact build/fixture/runner inputs and the native-view constraints.

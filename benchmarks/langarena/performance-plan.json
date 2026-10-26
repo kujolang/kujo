@@ -4667,5 +4667,15 @@
       "Universal call/JIT speedup",
       "Production-size or Goose/Rust acceptance"
     ]
+  },
+  "imported_environment_attribution_2026_10_25": {
+    "status": "measured_optimization_pending",
+    "runtime": "0d0f365",
+    "report": "IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md",
+    "evidence": "import-environment-attribution-2026-10-25.json",
+    "attribution_controls": 4,
+    "runtime_state_checks": 12,
+    "result": "Map storage accounts for about94% of global-map requested bytes in the base fixture; cloned names dominate request count. Array-width slope absent; binding-count slope present.",
+    "next_gate": "Environment storage sharing must preserve public scopes API, native mutable-map view exclusivity, reentrant snapshots, async journals and first-write costs."
   }
 }
