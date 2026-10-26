@@ -158,7 +158,7 @@ for subsequent fixes; unchecked production/platform gates are not implied comple
 - [ ] Run targeted tests, formatting and required builds.
 - [ ] Broaden regression tests according to the affected runtime surface.
 - [ ] Compare matching release builds before/after.
-- [ ] Investigate repeatable slowdowns above 5%.
+- [ ] Investigate repeatable slowdowns above 5% on a controlled host. Loaded-laptop timings are diagnostic only; preserve correctness and allocation/scaling gates locally.
 - [ ] Reject unreviewed tradeoffs that damage other workloads.
 - [ ] Commit/push each verified logical change separately.
 - [ ] Resolve parallel-callback global-write semantics against the canonical

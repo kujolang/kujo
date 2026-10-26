@@ -9,7 +9,8 @@
     "No benchmark-name special cases or benchmark-specific native kernels",
     "No suppressed correctness checks; retain value semantics, errors, cancellation and capabilities",
     "Experimental JIT remains opt-in until reliability and portability justify promotion",
-    "Unverified and timed-out cases remain visible; no extrapolated pass claims"
+    "Unverified and timed-out cases remain visible; no extrapolated pass claims",
+    "Local laptop load varies continuously: elapsed timings are diagnostic only; defer speed acceptance and Goose/Rust comparisons to a clean server while retaining local correctness, ownership and allocation/scaling gates"
   ],
   "stages": [
     {
@@ -187,7 +188,7 @@
     },
     {
       "id": "regression_gates",
-      "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns",
+      "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns on a controlled host, not variable-load laptop timings",
       "status": "pending",
       "evidence": [
         "builtin-pool-release-2026-10-24.json",
