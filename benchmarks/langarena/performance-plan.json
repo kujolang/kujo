@@ -35,6 +35,23 @@
     "remaining": ["Unrelated user-binding copies per imported helper call", "Module-global array copy-on-write per mutating call"],
     "limits": "No runtime change or speed claim; VM/JIT allocation differences are retained. Task globals, public maps and native pointer lifetimes must remain correct."
   },
+  "capture_independent_helpers_verification_2026_10_26": {
+    "runtime_commit": "2c342ef1817bc6931feb84cbfc039f3dc1f26f1f",
+    "status": "verified",
+    "report": "CAPTURE_INDEPENDENT_HELPERS_2026_10_26.md",
+    "evidence": "capture-independent-helpers-2026-10-26.json",
+    "library_passes": 1133,
+    "integration_passes": 286,
+    "test_size_checksums": 150,
+    "allocation_result": "VM read-helper per-added-call traffic is 21 requests / 1,241 bytes for all four binding/width controls; 2,048 unrelated bindings previously cost 2,105 requests / 680,788 bytes. JIT retains the recorded small difference.",
+    "regression_gate": "32 controls pass on the candidate; the same flat-read-setup gate rejects the baseline after all 32 runtime assertions pass.",
+    "cost_limits": "Module-write deltas are unchanged. Append traffic adds a constant 6 requests / 924 bytes at each tested size; its linear slope is unchanged. This is not elapsed speed or a global ranking.",
+    "remaining": [
+      "Captured-binding materialization for helpers outside the conservative proof",
+      "Mutable-module array ownership costs",
+      "Later checklist stages, full production, platform/release gates and clean-host acceptance"
+    ]
+  },
   "stages": [
     {
       "id": "baseline",
@@ -128,7 +145,9 @@
         "jit-code-identity-fix-2026-10-25.json",
         "nonleaf-callback-reuse-2026-10-25.json",
         "INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md",
-        "index-root-order-2026-10-26.json"
+        "index-root-order-2026-10-26.json",
+        "CAPTURE_INDEPENDENT_HELPERS_2026_10_26.md",
+        "capture-independent-helpers-2026-10-26.json"
       ]
     },
     {
