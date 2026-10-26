@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Refresh captured ordinary and async task globals from each submission while
+  retaining captured local state. Preserve separate module and caller namespaces,
+  callback writes and caught errors without publishing task-global changes back
+  to the parent or later task invocations.
+
 - Merge only written captured bindings when ordinary interpreter task callbacks
   complete, preserving unrelated writes from task aliases. Keep recursive calls,
   callbacks and independent collection snapshots intact.

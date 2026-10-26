@@ -40,9 +40,16 @@ impl<'a> Callback<'a> {
             }
         }
         if let Some(vm) = self.vm.as_mut() {
-            return vm
+            let checkpoint = interp.capture_globals_checkpoint();
+            let captures = interp.publish_active_captures_for_bridge();
+            vm.set_task_capture_globals(interp.task_capture_globals.clone());
+            let result = vm
                 .call_reused_sync_callback(self.function.clone(), args, &mut interp.module_loader)
                 .unwrap_or_else(Value::Error);
+            interp.refresh_active_captures_after_bridge(captures);
+            vm.set_task_capture_globals(None);
+            interp.restore_capture_globals_checkpoint(checkpoint);
+            return result;
         }
         match self.function {
             Value::NativeFunction(name) => super::call_native_function(interp, name, args),

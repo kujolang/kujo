@@ -369,7 +369,18 @@ impl SpawnCapturedValue {
 /// Main interpreter that executes Kujo programs
 // Captured calls replace globals; ordinary helpers and generators only suspend
 // locals. Keeping both transitions makes recursive capture ownership explicit.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum CapturedGlobals {
+    TaskCapture,
+    Snapshot,
+    TaskCaller,
+    TaskBridge,
+}
+
+pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Environment)>>>;
+
 struct EnvironmentActivation {
+    globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
     caller: Environment,
 }
@@ -409,6 +420,7 @@ pub struct Interpreter {
     /// Each worker compiler separately specializes for its cancellation token.
     pub(crate) vm_jit_requested: bool,
     pub(crate) task_cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+    pub(crate) task_capture_globals: Option<TaskCaptureGlobals>,
 }
 
 impl Interpreter {
@@ -492,6 +504,7 @@ impl Interpreter {
             vm_globals: None,
             vm_jit_requested: false,
             task_cancellation: None,
+            task_capture_globals: None,
         }
     }
 
@@ -2215,11 +2228,12 @@ impl Interpreter {
     // remain in the first suspended caller; its globals live up to the next captured
     // transition (or in the current environment if there is no such transition).
     fn capture_global_owner_index(&self, index: usize) -> Option<usize> {
-        self.environment_activations
-            .iter()
-            .enumerate()
-            .skip(index + 1)
-            .find_map(|(index, frame)| frame.capture.is_some().then_some(index))
+        self.environment_activations.iter().enumerate().skip(index + 1).find_map(
+            |(index, frame)| {
+                (frame.capture.is_some() && frame.globals != CapturedGlobals::TaskCaller)
+                    .then_some(index)
+            },
+        )
     }
 
     fn active_capture_snapshot(&self, index: usize) -> Environment {
@@ -2265,6 +2279,101 @@ impl Interpreter {
         }
     }
 
+    fn capture_globals_checkpoint(&self) -> (Option<TaskCaptureGlobals>, usize) {
+        let previous = self.task_capture_globals.clone();
+        let count = previous.as_ref().map_or(0, |globals| {
+            globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).len()
+        });
+        (previous, count)
+    }
+
+    fn restore_capture_globals_checkpoint(
+        &mut self,
+        checkpoint: (Option<TaskCaptureGlobals>, usize),
+    ) {
+        let (previous, count) = checkpoint;
+        if let Some(globals) = &previous {
+            globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).truncate(count);
+        }
+        self.task_capture_globals = previous;
+    }
+
+    // Inspect/copy the saved namespace without cloning a temporary Environment.
+    // Callers perform only internal reads/copies: never invoke language code here.
+    fn with_task_capture_globals<R>(
+        &self,
+        owner: &Arc<Mutex<Environment>>,
+        read: impl FnOnce(&Environment) -> R,
+    ) -> Option<R> {
+        self.task_capture_globals.as_ref().and_then(|globals| {
+            globals
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .iter()
+                .find(|(capture, _)| Arc::ptr_eq(capture, owner))
+                .map(|(_, environment)| read(environment))
+        })
+    }
+
+    fn remember_task_capture_globals(
+        &mut self,
+        owner: &Arc<Mutex<Environment>>,
+        snapshot: &Environment,
+    ) {
+        let globals =
+            self.task_capture_globals.get_or_insert_with(|| Arc::new(Mutex::new(Vec::new())));
+        let mut globals = globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some((_, environment)) =
+            globals.iter_mut().find(|(capture, _)| Arc::ptr_eq(capture, owner))
+        {
+            environment.copy_global_scope_from(snapshot);
+        } else {
+            globals.push((owner.clone(), snapshot.global_snapshot()));
+        }
+    }
+
+    fn copy_task_bridge_globals(&self, environment: &mut Environment, refresh: bool) -> bool {
+        if self.task_cancellation.is_none() {
+            return false;
+        }
+        let Some(globals) = &self.vm_globals else { return false };
+        let globals = globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if !environment.shares_global_source(&globals) {
+            return false;
+        }
+        if refresh {
+            environment.copy_global_scope_from(&globals);
+        }
+        true
+    }
+
+    fn publish_task_bridge_globals(&self, owners: &[Arc<Mutex<Environment>>]) {
+        if self.task_cancellation.is_none() {
+            return;
+        }
+        let Some(globals) = &self.vm_globals else { return };
+        let mut globals = globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if self.env.shares_global_source(&globals) {
+            globals.copy_global_scope_from(&self.env);
+            return;
+        }
+        // A module call can suspend the caller namespace. Select the newest
+        // active capture of that namespace, never the module's same-named bindings.
+        for owner in owners {
+            let copied = self.with_task_capture_globals(owner, |snapshot| {
+                if snapshot.shares_global_source(&globals) {
+                    globals.copy_global_scope_from(snapshot);
+                    true
+                } else {
+                    false
+                }
+            });
+            if copied == Some(true) {
+                break;
+            }
+        }
+    }
+
     // A bytecode callback can enter another Interpreter instance. Publish only the
     // newest activation of each shared capture before crossing that boundary, then
     // refresh it afterward, including on an error return. Caller-only scopes remain
@@ -2279,19 +2388,44 @@ impl Interpreter {
             if owners.iter().any(|existing| Arc::ptr_eq(existing, owner)) {
                 continue;
             }
+            let owner = owner.clone();
             let snapshot = self.active_capture_snapshot(index);
-            *owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = snapshot;
-            owners.push(owner.clone());
+            if self.task_cancellation.is_some() {
+                self.remember_task_capture_globals(&owner, &snapshot);
+                owner
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner())
+                    .merge_task_capture_writes(&snapshot);
+            } else {
+                *owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = snapshot;
+            }
+            owners.push(owner);
         }
+        self.publish_task_bridge_globals(&owners);
         owners
     }
 
     fn refresh_active_captures_after_bridge(&mut self, owners: Vec<Arc<Mutex<Environment>>>) {
         for owner in owners {
             if let Some(index) = self.active_capture_index(&owner) {
-                let completed =
+                let mut completed =
                     owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+                if !self.copy_task_bridge_globals(&mut completed, true) {
+                    self.with_task_capture_globals(&owner, |globals| {
+                        completed.copy_global_scope_from(globals);
+                    });
+                }
                 self.restore_active_capture(index, &completed);
+            }
+        }
+        // Global-only task functions have no captured activation to refresh.
+        // Callback writes, including writes before a caught error, remain task-local.
+        if self.task_cancellation.is_some() {
+            if let Some(globals) = &self.vm_globals {
+                let globals = globals.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+                if self.env.shares_global_source(&globals) {
+                    self.env.copy_global_scope_from(&globals);
+                }
             }
         }
     }
@@ -2302,6 +2436,29 @@ impl Interpreter {
             Some(index) => self.active_capture_snapshot(index),
             None => captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone(),
         };
+        let globals = if self.task_cancellation.is_none() {
+            CapturedGlobals::Snapshot
+        } else if environment.shares_global_source(&self.env) {
+            // Keep the task's live global map moving through captured calls.
+            // Copying it on every invocation scales with unrelated global names.
+            environment.swap_global_scope(&mut self.env);
+            CapturedGlobals::TaskCaller
+        } else if self.copy_task_bridge_globals(&mut environment, active.is_none()) {
+            // Reentry already has the live activation's globals. A new activation
+            // observes the callback VM's newer writes before a saved override.
+            CapturedGlobals::TaskBridge
+        } else if self
+            .with_task_capture_globals(captured, |globals| {
+                if active.is_none() {
+                    environment.copy_global_scope_from(globals);
+                }
+            })
+            .is_some()
+        {
+            CapturedGlobals::TaskCapture
+        } else {
+            CapturedGlobals::Snapshot
+        };
         environment.observe_capture_writes(active.is_some());
         // Task aliases may finish independently. Publish only this invocation's
         // writes, never its stale snapshot of another task's captured bindings.
@@ -2310,23 +2467,49 @@ impl Interpreter {
         }
         let count = environment.scopes.len();
         let caller = std::mem::replace(&mut self.env, environment);
-        self.environment_activations
-            .push(EnvironmentActivation { capture: Some((captured.clone(), count)), caller });
+        self.environment_activations.push(EnvironmentActivation {
+            capture: Some((captured.clone(), count)),
+            caller,
+            globals,
+        });
     }
 
     fn leave_captured_environment(&mut self, publish: bool) {
         let frame = self.environment_activations.pop().expect("captured activation exists");
         let (captured, _) = frame.capture.expect("captured activation has an owner");
-        let completed = std::mem::replace(&mut self.env, frame.caller);
-        if !publish || completed.capture_is_unchanged() {
-            return;
+        let mut completed = std::mem::replace(&mut self.env, frame.caller);
+        let changed = !completed.capture_is_unchanged();
+        if publish && changed {
+            if let Some(index) = self.active_capture_index(&captured) {
+                self.restore_active_capture(index, &completed);
+            }
         }
-        if let Some(index) = self.active_capture_index(&captured) {
-            self.restore_active_capture(index, &completed);
+        match frame.globals {
+            CapturedGlobals::TaskCaller => {
+                completed.swap_global_scope(&mut self.env);
+                if changed {
+                    self.env.invalidate_capture_observation();
+                }
+            }
+            CapturedGlobals::TaskCapture if changed => {
+                self.remember_task_capture_globals(&captured, &completed);
+            }
+            CapturedGlobals::TaskBridge if changed => {
+                if let Some(bridge) = &self.vm_globals {
+                    bridge
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner())
+                        .copy_global_scope_from(&completed);
+                }
+            }
+            _ => {}
+        }
+        if !publish || !changed {
+            return;
         }
         let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         if self.task_cancellation.is_some() {
-            owner.merge_capture_writes(&completed);
+            owner.merge_task_capture_writes(&completed);
         } else {
             *owner = completed;
         }
@@ -2339,7 +2522,11 @@ impl Interpreter {
         if self.environment_activations.is_empty() {
             SuspendedEnvironment::Untracked(caller)
         } else {
-            self.environment_activations.push(EnvironmentActivation { capture: None, caller });
+            self.environment_activations.push(EnvironmentActivation {
+                capture: None,
+                caller,
+                globals: CapturedGlobals::Snapshot,
+            });
             SuspendedEnvironment::Tracked
         }
     }
@@ -2395,6 +2582,7 @@ impl Interpreter {
     ) -> Value {
         match func {
             Value::BytecodeFunction { .. } => {
+                let capture_globals_checkpoint = self.capture_globals_checkpoint();
                 let active_captures = self.publish_active_captures_for_bridge();
                 let globals = self
                     .vm_globals
@@ -2407,11 +2595,13 @@ impl Interpreter {
                     self.capability_policy.clone(),
                     self.output.clone(),
                     self.task_cancellation.clone(),
+                    self.task_capture_globals.clone(),
                     self.vm_jit_requested,
                     &mut self.module_loader,
                 )
                 .unwrap_or_else(Value::Error);
                 self.refresh_active_captures_after_bridge(active_captures);
+                self.restore_capture_globals_checkpoint(capture_globals_checkpoint);
                 result
             }
             Value::GeneratorDef(params, body, captured) => {
@@ -8035,6 +8225,75 @@ impl Interpreter {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod task_capture_global_lifetime_tests {
+    use super::*;
+
+    #[test]
+    fn bridge_global_reads_borrow_values_and_copies_remain_snapshots() {
+        let mut interpreter = Interpreter::new();
+        let owner = Arc::new(Mutex::new(Environment::new()));
+        let missing = Arc::new(Mutex::new(Environment::new()));
+        let values = Arc::new(vec![Value::Int(1)]);
+        let mut snapshot = Environment::new();
+        snapshot.define("items".into(), Value::Array(values.clone()));
+        interpreter.remember_task_capture_globals(&owner, &snapshot);
+        let owners = Arc::strong_count(&values);
+        let mut destination = Environment::new();
+        assert_eq!(
+            interpreter.with_task_capture_globals(&owner, |globals| {
+                assert_eq!(Arc::strong_count(&values), owners);
+                assert!(globals.shares_global_source(&snapshot));
+                destination.copy_global_scope_from(globals);
+                true
+            }),
+            Some(true)
+        );
+        let mut called = false;
+        assert_eq!(
+            interpreter.with_task_capture_globals(&missing, |_| {
+                called = true;
+            }),
+            None
+        );
+        assert!(!called);
+        let Some(Value::Array(mut changed)) = destination.get("items") else {
+            panic!("array snapshot expected");
+        };
+        Arc::make_mut(&mut changed)[0] = Value::Int(9);
+        destination.assign_checked("items".into(), Value::Array(changed)).unwrap();
+        assert!(matches!(
+            interpreter.with_task_capture_globals(&owner, |globals| globals.get("items")),
+            Some(Some(Value::Array(items))) if matches!(items[0], Value::Int(1))
+        ));
+    }
+
+    #[test]
+    fn bridge_checkpoints_release_owners_and_keep_nested_updates() {
+        let mut interpreter = Interpreter::new();
+        let owner = Arc::new(Mutex::new(Environment::new()));
+        let other = Arc::new(Mutex::new(Environment::new()));
+        let mut snapshot = Environment::new();
+        snapshot.define("value".into(), Value::Int(1));
+        let outer = interpreter.capture_globals_checkpoint();
+        interpreter.remember_task_capture_globals(&owner, &snapshot);
+        assert_eq!(Arc::strong_count(&owner), 2);
+        let inner = interpreter.capture_globals_checkpoint();
+        interpreter.remember_task_capture_globals(&other, &snapshot);
+        snapshot.assign_checked("value".into(), Value::Int(9)).unwrap();
+        interpreter.remember_task_capture_globals(&owner, &snapshot);
+        interpreter.restore_capture_globals_checkpoint(inner);
+        assert_eq!(Arc::strong_count(&other), 1);
+        assert!(matches!(
+            interpreter.with_task_capture_globals(&owner, |globals| globals.get("value")),
+            Some(Some(Value::Int(9)))
+        ));
+        interpreter.restore_capture_globals_checkpoint(outer);
+        assert!(interpreter.task_capture_globals.is_none());
+        assert_eq!(Arc::strong_count(&owner), 1);
     }
 }
 

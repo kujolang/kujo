@@ -6447,11 +6447,13 @@ impl VM {
         policy: RuntimeCapabilityPolicy,
         output: Option<Arc<Mutex<Vec<u8>>>>,
         cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+        task_capture_globals: Option<crate::interpreter::TaskCaptureGlobals>,
         jit_requested: bool,
         module_loader: &mut crate::module::ModuleLoader,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         let mut vm = VM::with_task_policy(jit_requested, cancellation);
+        vm.interpreter.task_capture_globals = task_capture_globals;
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
         vm.set_callback_globals(globals);
@@ -6473,6 +6475,13 @@ impl VM {
         // Restore even when the callback returns a language/runtime error.
         std::mem::swap(&mut vm.interpreter.module_loader, module_loader);
         result
+    }
+
+    pub(crate) fn set_task_capture_globals(
+        &mut self,
+        globals: Option<crate::interpreter::TaskCaptureGlobals>,
+    ) {
+        self.interpreter.task_capture_globals = globals;
     }
 
     /// Reuse one VM for a fixed synchronous callback. Invocation boundaries
@@ -6786,6 +6795,7 @@ impl VM {
                     Value::BytecodeFunction { chunk, captured, captured_binding_kinds },
                     call_args,
                     environment,
+                    None,
                     self.interpreter.capability_policy().clone(),
                     self.interpreter.output_buffer(),
                     self.interpreter.vm_jit_requested,

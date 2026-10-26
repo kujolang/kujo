@@ -53,6 +53,7 @@ pub(crate) fn submit(
     function: Value,
     args: Vec<Value>,
     environment: Environment,
+    callback_globals: Option<Environment>,
     policy: RuntimeCapabilityPolicy,
     output: Option<Arc<Mutex<Vec<u8>>>>,
     jit_requested: bool,
@@ -117,7 +118,9 @@ pub(crate) fn submit(
                 let mut interpreter = Interpreter::with_environment(policy, environment);
                 // Imported AST functions retain module lexical bindings, while
                 // bytecode callbacks still resolve the submitting VM's globals.
-                interpreter.vm_globals = Some(Arc::new(Mutex::new(interpreter.env.clone())));
+                interpreter.vm_globals = Some(Arc::new(Mutex::new(
+                    callback_globals.unwrap_or_else(|| interpreter.env.clone()),
+                )));
                 interpreter.output = output;
                 interpreter.task_cancellation = Some(worker_state.cancelled.clone());
                 interpreter.vm_jit_requested = jit_requested;
@@ -152,16 +155,26 @@ impl Interpreter {
         function: Value,
         args: Vec<Value>,
     ) -> Result<Arc<TaskState>, String> {
-        let environment = match &self.vm_globals {
+        // An AST body can be running with module globals while bytecode callbacks
+        // still belong to the caller VM. Snapshot those namespaces independently.
+        let (environment, callback_globals) = match &self.vm_globals {
             Some(globals) => {
-                globals.lock().map_err(|_| "Task globals lock poisoned")?.global_snapshot()
+                let globals = globals.lock().map_err(|_| "Task globals lock poisoned")?;
+                if self.function_depth > 0 && !matches!(function, Value::BytecodeFunction { .. }) {
+                    let callbacks = (!self.env.shares_global_source(&globals))
+                        .then(|| globals.global_snapshot());
+                    (self.env.global_snapshot(), callbacks)
+                } else {
+                    (globals.global_snapshot(), None)
+                }
             }
-            None => self.env.global_snapshot(),
+            None => (self.env.global_snapshot(), None),
         };
         submit(
             function,
             args,
             environment,
+            callback_globals,
             self.capability_policy.clone(),
             self.output.clone(),
             self.vm_jit_requested,
@@ -173,10 +186,7 @@ impl Interpreter {
             return self.call_user_function(function, args);
         };
         if let Some(captured) = captured {
-            self.env = captured.lock().unwrap_or_else(|p| p.into_inner()).clone();
-        }
-        if captured.is_some() {
-            self.env.track_capture_writes();
+            self.enter_captured_environment(captured);
         }
         self.env.push_scope();
         if let Some(name) = &body.lexical_name {
@@ -197,8 +207,8 @@ impl Interpreter {
             },
         };
         self.env.pop_scope();
-        if let Some(captured) = captured {
-            captured.lock().unwrap_or_else(|p| p.into_inner()).merge_capture_writes(&self.env);
+        if captured.is_some() {
+            self.leave_captured_environment(true);
         }
         value
     }
@@ -255,6 +265,7 @@ impl Interpreter {
             function,
             Vec::new(),
             environment,
+            None,
             self.capability_policy.clone(),
             self.output.clone(),
             self.vm_jit_requested,
@@ -306,6 +317,14 @@ pub(crate) fn submit_detached_vm(
         }
     }
     let function = Value::BytecodeFunction { chunk, captured: transferred, captured_binding_kinds };
-    observe_detached(submit(function, Vec::new(), environment, policy, output, jit_requested)?);
+    observe_detached(submit(
+        function,
+        Vec::new(),
+        environment,
+        None,
+        policy,
+        output,
+        jit_requested,
+    )?);
     Ok(())
 }

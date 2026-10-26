@@ -131,6 +131,8 @@ pub struct Environment {
     // duplicate name storage for native preloads and ordinary mutable bindings.
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
+    // Lexical provenance survives task snapshots; execution ownership does not.
+    global_source: std::sync::Arc<()>,
     capture_writes: Option<(usize, CaptureWrites)>,
     // Allocation-free conservative proof for read-only synchronous activations.
     // Local parameters are outside the captured prefix; unknown transitions
@@ -161,6 +163,7 @@ impl Environment {
             binding_kinds: self.binding_kinds[..count].to_vec(),
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
             capture_writes: self.capture_writes.clone(),
             capture_observation: self.capture_observation,
         }
@@ -168,6 +171,7 @@ impl Environment {
 
     pub(crate) fn copy_global_scope_from(&mut self, source: &Self) {
         self.invalidate_capture_observation();
+        self.global_source.clone_from(&source.global_source);
         self.scopes[0].clone_from(&source.scopes[0]);
         self.binding_kinds[0].clone_from(&source.binding_kinds[0]);
         self.native_defaults.clone_from(&source.native_defaults);
@@ -239,11 +243,16 @@ impl Environment {
         self.capture_writes = Some((self.scopes.len(), CaptureWrites::default()));
     }
 
+    #[cfg(test)]
     pub(crate) fn merge_capture_writes(&mut self, after: &Self) {
+        self.merge_capture_writes_from(after, 0);
+    }
+
+    fn merge_capture_writes_from(&mut self, after: &Self, first_scope: usize) {
         let Some((_, writes)) = &after.capture_writes else {
             return;
         };
-        for (index, name) in writes.iter() {
+        for (index, name) in writes.iter().filter(|(index, _)| *index >= first_scope) {
             if let (Some(target), Some(value)) = (
                 self.scopes.get_mut(*index),
                 after.scopes.get(*index).and_then(|scope| scope.get(name)),
@@ -282,6 +291,7 @@ impl Environment {
             binding_kinds: vec![HashMap::new()],
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
+            global_source: std::sync::Arc::new(()),
             capture_writes: None,
             capture_observation: None,
         }
@@ -416,6 +426,7 @@ impl Environment {
             native_defaults: (!selected_defaults.is_empty())
                 .then(|| std::sync::Arc::new(selected_defaults)),
             global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
             capture_writes: None,
             capture_observation: None,
         }
@@ -467,12 +478,22 @@ impl Environment {
         visible
     }
 
+    pub(crate) fn shares_global_source(&self, other: &Self) -> bool {
+        std::sync::Arc::ptr_eq(&self.global_source, &other.global_source)
+    }
+
+    /// Publish captured locals, keeping task globals isolated from future invocations.
+    pub(crate) fn merge_task_capture_writes(&mut self, after: &Self) {
+        self.merge_capture_writes_from(after, 1);
+    }
+
     pub(crate) fn global_snapshot(&self) -> Self {
         Self {
             scopes: vec![self.scopes[0].clone()],
             binding_kinds: vec![self.binding_kinds[0].clone()],
             native_defaults: self.native_defaults.clone(),
             global_owner: std::sync::Arc::new(()),
+            global_source: self.global_source.clone(),
             capture_writes: None,
             capture_observation: None,
         }
@@ -501,6 +522,7 @@ impl Environment {
             binding_kinds: self.binding_kinds.split_off(1),
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
             capture_writes: self
                 .capture_writes
                 .as_ref()
@@ -536,6 +558,7 @@ impl Environment {
             binding_kinds: self.binding_kinds.split_off(1),
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
             capture_writes: None,
             capture_observation: None,
         };
@@ -550,6 +573,7 @@ impl Environment {
             binding_kinds: Vec::new(),
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
+            global_source: std::sync::Arc::new(()),
             capture_writes: None,
             capture_observation: None,
         }
@@ -566,6 +590,7 @@ impl Environment {
             binding_kinds: vec![HashMap::new()],
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
             capture_writes: None,
             capture_observation: None,
         };
@@ -578,6 +603,7 @@ impl Environment {
 
     /// Move the live globals into/out of a continuation without cloning them.
     pub(crate) fn swap_global_scope(&mut self, other: &mut Self) {
+        std::mem::swap(&mut self.global_source, &mut other.global_source);
         std::mem::swap(&mut self.native_defaults, &mut other.native_defaults);
         std::mem::swap(&mut self.scopes[0], &mut other.scopes[0]);
         std::mem::swap(&mut self.binding_kinds[0], &mut other.binding_kinds[0]);
@@ -957,6 +983,49 @@ mod module_native_default_tests {
             after_names.sort();
             assert_eq!(before_names, after_names, "{source}");
         }
+    }
+
+    #[test]
+    fn namespace_transfers_do_not_transfer_generator_execution_ownership() {
+        let original = Environment::new();
+        let mut task = original.global_snapshot();
+        let task_owner = task.global_owner();
+        let mut foreign = Environment::new();
+        let foreign_owner = foreign.global_owner();
+        foreign.copy_global_scope_from(&task);
+        assert!(foreign.shares_global_source(&original));
+        assert!(std::sync::Arc::ptr_eq(&foreign.global_owner(), &foreign_owner));
+        assert!(!std::sync::Arc::ptr_eq(&foreign.global_owner(), &task_owner));
+        foreign.swap_global_scope(&mut task);
+        assert!(std::sync::Arc::ptr_eq(&task.global_owner(), &task_owner));
+        assert!(std::sync::Arc::ptr_eq(&foreign.global_owner(), &foreign_owner));
+        let empty = Environment::empty_scopes();
+        assert!(!empty.shares_global_source(&original));
+        assert!(!std::sync::Arc::ptr_eq(&empty.global_owner(), &original.global_owner()));
+    }
+
+    #[test]
+    fn task_snapshots_keep_lexical_provenance_but_isolate_global_writes() {
+        let mut owner = Environment::new();
+        owner.define("global".into(), Value::Int(1));
+        owner.push_scope();
+        owner.define("local".into(), Value::Int(2));
+        let snapshot = owner.global_snapshot();
+        assert!(owner.shares_global_source(&snapshot));
+        assert!(!std::sync::Arc::ptr_eq(&owner.global_owner(), &snapshot.global_owner()));
+        assert!(!owner.shares_global_source(&Environment::new()));
+        assert_eq!(snapshot.scopes.len(), 1);
+        let mut task = owner.clone();
+        task.track_capture_writes();
+        task.assign_checked("global".into(), Value::Int(9)).unwrap();
+        task.assign_checked("local".into(), Value::Int(3)).unwrap();
+        owner.merge_task_capture_writes(&task);
+        assert!(matches!(owner.get("global"), Some(Value::Int(1))));
+        assert!(matches!(owner.get("local"), Some(Value::Int(3))));
+        let mut other = Environment::new();
+        other.swap_global_scope(&mut task);
+        assert!(other.shares_global_source(&owner));
+        assert!(!task.shares_global_source(&owner));
     }
 
     #[test]
