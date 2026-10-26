@@ -289,5 +289,70 @@
       }
     ],
     "scope": "Correctness only; no timing or native JIT claim. Each control must preserve distinct-binding writes, including after nested or throwing helpers."
+  },
+  "task_global_submission_snapshot": {
+    "source": "mut global_value := 0\nfunc factory() {\n mut local_value := 0\n async func work(write) {\n  if write { global_value = 9 local_value += 1 }\n  return [global_value, local_value]\n }\n return work\n}\nlet work := factory()\nprint(await work(true))\nglobal_value = 42\nprint(await work(false))\nprint(global_value)\n",
+    "rows": [
+      {
+        "binary": "before-kujo",
+        "binary_sha256": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "binary_sha256": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[9, 1]\n[9, 1]\n42\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "binary_sha256": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      },
+      {
+        "binary": "candidate-kujo",
+        "binary_sha256": "2a008edbc513672c01994bc6cb6fb691ac928c35dcfb2956b867ce95718f9399",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "binary_sha256": "2a008edbc513672c01994bc6cb6fb691ac928c35dcfb2956b867ce95718f9399",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[9, 1]\n[9, 1]\n42\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "binary_sha256": "2a008edbc513672c01994bc6cb6fb691ac928c35dcfb2956b867ce95718f9399",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      }
+    ],
+    "baseline_runtime_commit": "3a9cbe4",
+    "candidate_status": "uncommitted V4 capture reentry candidate, before acceptance",
+    "candidate_source_hashes": {
+      "src/interpreter/mod.rs": "3ad4c76ded88b6593c841a123dc4e4e354e30c03c87a8e08fb8e4de158e35cac",
+      "src/interpreter/environment.rs": "120717aa680565102b4ebdfd879988e05fa93a6cbc6b3e5dd405c4bd1b824195",
+      "src/interpreter/generator.rs": "63ce36e333c9949100c2818fa454010d6e54157a5099b84b5b1f4cf2cb0924a3",
+      "tests/captured_reentry_contracts.rs": "4eeeda0a5d9ca3956ca2e7e3115ce53b929ba4ce361ea462aca81cf89350b851",
+      "tests/captured_bridge_contracts.rs": "24c5bec70966cdbe93d83656108970ef77b3eca5fcdb3c624d19a3a020300a67",
+      "tests/captured_index_reentry_contracts.rs": "5945ee449ad25249e669128d22de153c7848f0e2a9256a2af58e862e62b07db9"
+    },
+    "expected_stdout": "[9, 1]\n[42, 1]\n42\n",
+    "contract": "docs/LANGUAGE_SPEC.md section5.7: Task globals are submission snapshots; aliases of one captured closure retain its mutable state."
   }
 }

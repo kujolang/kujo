@@ -100,7 +100,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).
 - [ ] Fix interpreter captured-state reentry: a recursive call writes its shared capture, but the outer activation restores/publishes stale state. A fresh-read control reproduces VM/JIT versus interpreter divergence on the baseline and current candidate; see [capture reentry evidence](CAPTURE_REENTRY_PARITY_2026_10_26.md). Preserve separate-closure snapshots and verify every synchronous call route.
-- [ ] Preserve different-binding captured writes across overlapping ordinary task callbacks, and prevent helper-local parameters from entering an async captured-write journal. Both baseline and reentry candidate reproduce these gaps; see [task-write evidence](CAPTURE_TASK_WRITE_PARITY_2026_10_26.md).
+- [ ] Preserve different-binding captured writes across overlapping ordinary task callbacks, prevent helper-local parameters from entering an async captured-write journal, and refresh task globals from each submission while retaining captured locals. Both baseline and reentry candidate reproduce these gaps; see [task-write evidence](CAPTURE_TASK_WRITE_PARITY_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for user-defined binding materialization and captured-state reentry; the native preload-copying component is fixed. Follow-up evidence:

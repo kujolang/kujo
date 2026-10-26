@@ -59,3 +59,23 @@ and no timeouts. Their nine observations, sources and baseline binary hash are
 stored under `async_helper_scope_controls` in the JSON evidence. The eventual
 fix must restore journal scope after both normal and exceptional helper returns;
 excluding helper parameters alone must not discard subsequent captured writes.
+
+## Captured async calls retain stale task globals
+
+A separate sequential control removes concurrency and helper calls. A factory
+returns an async closure with one captured local counter. Its first call writes
+a global to `9` and increments the local counter. The submitting parent then
+sets its global to `42` before the second call. Section 5.7 of the language spec
+requires task globals to be submission snapshots while retaining the closure's
+local state: expected results are `[9, 1]`, `[42, 1]`, then parent global `42`.
+VM/JIT-enabled match. The interpreter instead returns `[9, 1]` on the second
+call, retaining the previous task's global. Parent global and captured local
+controls both pass. All six baseline/V4 candidate executions exit successfully.
+
+`execute_task_body` replaces the worker's submission environment with the whole
+captured environment, including its old globals. Its journal also merges global
+writes back into that capture. Correcting task-local publication must distinguish
+submission globals from persistent captured locals; fixing only name/scope
+journal pollution cannot satisfy this control. Exact source, binary and candidate
+source hashes are recorded under `task_global_submission_snapshot`. This is a
+pre-existing mismatch, not a regression introduced by the V4 reentry candidate.
