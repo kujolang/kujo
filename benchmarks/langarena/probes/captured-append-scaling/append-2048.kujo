@@ -1,0 +1,4 @@
+from capture_cost_module import factory
+let append_all := factory()
+assert_equal(append_all(2048), 2048)
+print("PASS")

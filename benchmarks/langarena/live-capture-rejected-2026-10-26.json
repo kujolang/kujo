@@ -1,0 +1,334 @@
+{
+  "status": "prototype_rejected_and_runtime_sources_restored",
+  "reason": "Visibility fixed in 27 targeted cases, but mirrored collection ownership creates quadratic requested-byte traffic. This is not an elapsed-time conclusion.",
+  "baseline_runtime": "2e020ee",
+  "artifacts": {
+    "source-manifest": {
+      "sha256": "2e869821687e614610698e0d3ac625fbfe4d43d99614d48fdfd0cd15ff8eb19d",
+      "data": {
+        "src/interpreter/environment.rs": "9ccde6502eb08055d5fe4e8af1f56d2428edc570cd4a6f8c1a0a59f2be7ccf31",
+        "src/interpreter/mod.rs": "2347026d283bfc797645ad141b5f3740d8488c1c917cbd04775553dbe8a108bf",
+        "tests/ordered_task_capture_contracts.rs": "f2a221813dc5ef9602118c1ec0ce4f370ad4982b4690dc77f8f615205bb9fa0a"
+      }
+    },
+    "screen-state": {
+      "sha256": "d156846acf811a1bfc954d5feee247dfa705b970bb0caad9c970e7b3aca71be3",
+      "data": {
+        "pid": 52303,
+        "status": "completed",
+        "binary_sha256": "11573497a23409338d9ada065dd1f6b3e65faf1f1b58d04746467ae23f5eb3bb",
+        "library_sha256": "6d9e4c2ce2a981ab79f21d86611bab10c2dce60ae41441942c9859e0111d3d44",
+        "ordered_exit": 0,
+        "stage": "ordered_complete"
+      }
+    },
+    "allocation-state": {
+      "sha256": "ecb8fd9d4880fd23603fd8edb2a0965be386f0a81b6d3fb9647e4b2054db881d",
+      "data": {
+        "pid": 56074,
+        "status": "completed",
+        "stage": "complete"
+      }
+    },
+    "baseline-scaling": {
+      "sha256": "5a2a9058694600c1d75c89b43bb943b8069551e83664e5f02244677fb07c3d51",
+      "data": {
+        "probe_sha256": "8ab4ea1eb1fad7c5593275203eff0b8a44d0b8412b17c3bcdf85f965d68e7848",
+        "rows": [
+          {
+            "size": 512,
+            "requests": 6819,
+            "bytes": 1184497,
+            "stdout": "PASS\n",
+            "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7"
+          },
+          {
+            "size": 1024,
+            "requests": 8868,
+            "bytes": 1467633,
+            "stdout": "PASS\n",
+            "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9"
+          },
+          {
+            "size": 2048,
+            "requests": 12965,
+            "bytes": 2033905,
+            "stdout": "PASS\n",
+            "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be"
+          },
+          {
+            "size": 4096,
+            "requests": 21158,
+            "bytes": 3166449,
+            "stdout": "PASS\n",
+            "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8"
+          }
+        ]
+      }
+    },
+    "candidate-scaling": {
+      "sha256": "764cd33c3b9d887e7b2560a410d48ba86371d6db21d48111484232101d35df8b",
+      "data": {
+        "probe_sha256": "8caa4d27979be40cef455165a47883106a640971752c8b51fdea05927fc3c76b",
+        "rows": [
+          {
+            "size": 512,
+            "requests": 8351,
+            "bytes": 54441034,
+            "stdout": "PASS\n",
+            "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7"
+          },
+          {
+            "size": 1024,
+            "requests": 11935,
+            "bytes": 214933066,
+            "stdout": "PASS\n",
+            "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9"
+          },
+          {
+            "size": 2048,
+            "requests": 19103,
+            "bytes": 856781386,
+            "stdout": "PASS\n",
+            "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be"
+          },
+          {
+            "size": 4096,
+            "requests": 33439,
+            "bytes": 3423935050,
+            "stdout": "PASS\n",
+            "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8"
+          }
+        ]
+      }
+    },
+    "baseline-snapshot-helper": {
+      "sha256": "9a8626705c82ba730a6385af12fff73a718a59e6af2f5dc44c28e6c29cd3e509",
+      "data": [
+        {
+          "mode": "vm",
+          "exit": 0,
+          "stdout": "9\n11\n11\n1\n",
+          "stderr": "",
+          "expected": "9\n11\n11\n1\n"
+        },
+        {
+          "mode": "interpreter",
+          "exit": 0,
+          "stdout": "1\n1\n1\n1\n",
+          "stderr": "",
+          "expected": "9\n11\n11\n1\n"
+        },
+        {
+          "mode": "jit",
+          "exit": 0,
+          "stdout": "9\n11\n11\n1\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "expected": "9\n11\n11\n1\n"
+        }
+      ]
+    },
+    "candidate-snapshot-helper": {
+      "sha256": "2cd17c42abe9b85b54c7c0bd1e6e27907e165e0b2b4bf9d608bf8d7ef9717960",
+      "data": [
+        {
+          "mode": "vm",
+          "exit": 0,
+          "stdout": "9\n11\n11\n1\n",
+          "stderr": "",
+          "expected": "9\n11\n11\n1\n"
+        },
+        {
+          "mode": "interpreter",
+          "exit": 0,
+          "stdout": "9\n11\n11\n1\n",
+          "stderr": "",
+          "expected": "9\n11\n11\n1\n"
+        },
+        {
+          "mode": "jit",
+          "exit": 0,
+          "stdout": "9\n11\n11\n1\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "expected": "9\n11\n11\n1\n"
+        }
+      ]
+    },
+    "allocation-build-argv": {
+      "sha256": "e550baa8979064a865c75f61cade0e78d4fd828c86dafa7176cfa969907f7409",
+      "data": [
+        "rustc",
+        "--edition=2021",
+        "-O",
+        "-C",
+        "lto=thin",
+        "-L",
+        "dependency=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps",
+        "--extern",
+        "aes_gcm=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libaes_gcm-2ab2706586152c9e.rlib",
+        "--extern",
+        "ahash=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libahash-b75245b976539b39.rlib",
+        "--extern",
+        "apple_native_keyring_store=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libapple_native_keyring_store-e5351213c490d95d.rlib",
+        "--extern",
+        "base64=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbase64-8e87c92b0946842b.rlib",
+        "--extern",
+        "bcrypt=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbcrypt-1111a51efa76349d.rlib",
+        "--extern",
+        "cap_fs_ext=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_fs_ext-6fc57b184c6845e1.rlib",
+        "--extern",
+        "cap_std=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_std-f97677e4e6a5f89c.rlib",
+        "--extern",
+        "chrono=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono-bd5ccb9626420b81.rlib",
+        "--extern",
+        "chrono_tz=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono_tz-ac9dffcb2e488341.rlib",
+        "--extern",
+        "clap=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libclap-7f9d751eac796737.rlib",
+        "--extern",
+        "colored=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcolored-c92ebfcbe099e541.rlib",
+        "--extern",
+        "cranelift=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift-5756ee1eed26f847.rlib",
+        "--extern",
+        "cranelift_jit=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_jit-4724975a77cf9efc.rlib",
+        "--extern",
+        "cranelift_module=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_module-60bad6d23a074cae.rlib",
+        "--extern",
+        "cranelift_native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_native-67f9c27102087ccd.rlib",
+        "--extern",
+        "csv=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcsv-25ecc0488748f56d.rlib",
+        "--extern",
+        "encoding_rs=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libencoding_rs-0103a4daeaee0077.rlib",
+        "--extern",
+        "flate2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libflate2-e48e592b108c4411.rlib",
+        "--extern",
+        "fs2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfs2-9771b11ce1a1e220.rlib",
+        "--extern",
+        "futures=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfutures-0d71f0b47c062bf8.rlib",
+        "--extern",
+        "hickory_resolver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhickory_resolver-25fa97cb1a314266.rlib",
+        "--extern",
+        "hmac=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhmac-d5dd8b8b85cd36f5.rlib",
+        "--extern",
+        "html5ever=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhtml5ever-80fde4336fa94362.rlib",
+        "--extern",
+        "image=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libimage-721c8778debd4960.rlib",
+        "--extern",
+        "infer=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libinfer-1849901695e59a6e.rlib",
+        "--extern",
+        "jsonwebtoken=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libjsonwebtoken-465689346ef8322b.rlib",
+        "--extern",
+        "keyring_core=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libkeyring_core-d3004045a19788e1.rlib",
+        "--extern",
+        "kujo=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libkujo-0204a58eed7d01d2.rlib",
+        "--extern",
+        "libc=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblibc-415b7ce05b7e3ac7.rlib",
+        "--extern",
+        "lopdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblopdf-c5cff0a01179d6c5.rlib",
+        "--extern",
+        "md5=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmd5-2b4196c48871519a.rlib",
+        "--extern",
+        "mime_guess=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmime_guess-7a1568df10637618.rlib",
+        "--extern",
+        "mysql_async=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmysql_async-359dbfabce40fa5c.rlib",
+        "--extern",
+        "nohash_hasher=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libnohash_hasher-bf387be57d227e83.rlib",
+        "--extern",
+        "once_cell=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libonce_cell-8a52b48ae836a14e.rlib",
+        "--extern",
+        "openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libopenssl-e8c6b1622dc1cee2.rlib",
+        "--extern",
+        "postgres=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres-fe2a6c60c0e4fefd.rlib",
+        "--extern",
+        "postgres_openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres_openssl-1c715c9f27412bdb.rlib",
+        "--extern",
+        "printpdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libprintpdf-b8173921e07e6296.rlib",
+        "--extern",
+        "quick_xml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libquick_xml-ddb5d78e20a9a80a.rlib",
+        "--extern",
+        "rand=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librand-ea3601f6f1a75437.rlib",
+        "--extern",
+        "rayon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librayon-e17fec4b663fc259.rlib",
+        "--extern",
+        "regex=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libregex-f9d54fccf949bd42.rlib",
+        "--extern",
+        "reqwest=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libreqwest-3ddca67589400784.rlib",
+        "--extern",
+        "rpassword=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librpassword-d7d98d242374475f.rlib",
+        "--extern",
+        "rusqlite=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librusqlite-4926f7c74f2d562b.rlib",
+        "--extern",
+        "rustyline=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librustyline-1b0ef2e76591f5f0.rlib",
+        "--extern",
+        "same_file=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsame_file-ee560b9f08aa9e43.rlib",
+        "--extern",
+        "semver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsemver-ed908d032fe42e98.rlib",
+        "--extern",
+        "serde=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde-fb1f3b1f20f2aaad.rlib",
+        "--extern",
+        "serde_json=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde_json-4da7eb7415a056dd.rlib",
+        "--extern",
+        "sha2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsha2-b18d88aa1b17b980.rlib",
+        "--extern",
+        "socket2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsocket2-6ddac4ddc5f7f8f2.rlib",
+        "--extern",
+        "stacker=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libstacker-92848d2b910e9a3b.rlib",
+        "--extern",
+        "tar=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtar-3ba6bc29b862712a.rlib",
+        "--extern",
+        "target_lexicon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtarget_lexicon-28aaef7589df97f7.rlib",
+        "--extern",
+        "tempfile=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtempfile-ca5bfd3a5e81fcb3.rlib",
+        "--extern",
+        "tiny_http=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtiny_http-efd852aaee20dfe5.rlib",
+        "--extern",
+        "tokio=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio-f415931db4c038a6.rlib",
+        "--extern",
+        "tokio_stream=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_stream-7bb23fd72f9130f1.rlib",
+        "--extern",
+        "tokio_util=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_util-58857219264f427a.rlib",
+        "--extern",
+        "toml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtoml-167196d6b2e93042.rlib",
+        "--extern",
+        "url=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburl-3cac95566145e72f.rlib",
+        "--extern",
+        "urlencoding=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburlencoding-9c319db2231f81df.rlib",
+        "--extern",
+        "uuid=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libuuid-0f6bc019fb4b8393.rlib",
+        "--extern",
+        "serde_yaml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libyaml_serde-a7a42f667bdff968.rlib",
+        "--extern",
+        "zip=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libzip-a3f66da6d5a1b9de.rlib",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/ring-5e132bc13ea204bb/out",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/aws-lc-sys-f076ac421db8c715/out",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/openssl-sys-391d27b958f9be75/out/openssl-build/install/lib",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/libsqlite3-sys-a083a4fe69a406e9/out",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/psm-5b3f39ba70b73d3e/out",
+        "-L",
+        "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/zstd-sys-ded86d63bfaa5dc4/out",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/live-capture-v1-2026-10-26/task-allocation-probe.rs",
+        "-o",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/live-capture-v1-2026-10-26/task-allocation-probe"
+      ]
+    },
+    "candidate.patch": {
+      "sha256": "53834ea97f2720a8be678e20fd5ac0f352aa2c49fa2b95405958363fa5f19201",
+      "content": "diff --git a/src/interpreter/environment.rs b/src/interpreter/environment.rs\nindex b8b61d0..0d5fcb6 100644\n--- a/src/interpreter/environment.rs\n+++ b/src/interpreter/environment.rs\n@@ -5,6 +5,9 @@\n \n use super::value::Value;\n use std::collections::{HashMap, HashSet};\n+use std::sync::{Arc, Mutex};\n+\n+type CaptureCells = Arc<Mutex<Vec<HashMap<String, Value>>>>;\n \n #[derive(Clone, Copy, Debug, PartialEq, Eq)]\n pub enum BindingKind {\n@@ -133,6 +136,7 @@ pub struct Environment {\n     global_owner: std::sync::Arc<()>,\n     // Lexical provenance survives task snapshots; execution ownership does not.\n     global_source: std::sync::Arc<()>,\n+    capture_cells: Option<CaptureCells>,\n     capture_writes: Option<(usize, CaptureWrites)>,\n     // Allocation-free conservative proof for read-only synchronous activations.\n     // Local parameters are outside the captured prefix; unknown transitions\n@@ -141,6 +145,79 @@ pub struct Environment {\n }\n \n impl Environment {\n+    /// Aliases of an existing closure share live local bindings. Globals remain\n+    /// submission snapshots; newly created closures materialize independent values.\n+    pub(crate) fn share_capture_locals(&mut self) {\n+        if self.capture_cells.is_none() && self.scopes.len() > 1 {\n+            let mut scopes = vec![HashMap::new()];\n+            scopes.extend(self.scopes.iter().skip(1).cloned());\n+            self.capture_cells = Some(Arc::new(Mutex::new(scopes)));\n+        }\n+    }\n+\n+    fn capture_value(cells: &Option<CaptureCells>, index: usize, name: &str) -> Option<Value> {\n+        if index == 0 {\n+            return None;\n+        }\n+        cells.as_ref().and_then(|cells| {\n+            cells\n+                .lock()\n+                .unwrap_or_else(|p| p.into_inner())\n+                .get(index)\n+                .and_then(|scope| scope.get(name))\n+                .cloned()\n+        })\n+    }\n+\n+    fn publish_capture_value(\n+        cells: &Option<CaptureCells>,\n+        index: usize,\n+        name: &str,\n+        value: &Value,\n+    ) {\n+        if index == 0 {\n+            return;\n+        }\n+        if let Some(cells) = cells {\n+            if let Some(slot) = cells\n+                .lock()\n+                .unwrap_or_else(|p| p.into_inner())\n+                .get_mut(index)\n+                .and_then(|scope| scope.get_mut(name))\n+            {\n+                *slot = value.clone();\n+            }\n+        }\n+    }\n+\n+    fn materialized_scopes(&self) -> Vec<HashMap<String, Value>> {\n+        self.materialized_prefix(self.scopes.len())\n+    }\n+\n+    fn materialized_prefix(&self, count: usize) -> Vec<HashMap<String, Value>> {\n+        let mut scopes = self.scopes[..count].to_vec();\n+        if let Some(cells) = &self.capture_cells {\n+            let cells = cells.lock().unwrap_or_else(|p| p.into_inner());\n+            for (index, scope) in scopes.iter_mut().enumerate().skip(1) {\n+                if let Some(shared) = cells.get(index) {\n+                    for (name, value) in scope.iter_mut() {\n+                        if let Some(current) = shared.get(name) {\n+                            *value = current.clone();\n+                        }\n+                    }\n+                }\n+            }\n+        }\n+        scopes\n+    }\n+\n+    fn detached_snapshot(&self) -> Self {\n+        let mut snapshot = self.clone();\n+        snapshot.scopes = self.materialized_scopes();\n+        snapshot.capture_cells = None;\n+        snapshot\n+    }\n+\n     pub(crate) fn observe_capture_writes(&mut self, inherit: bool) {\n         let changed = inherit && self.capture_observation.map_or(true, |(_, changed)| changed);\n         self.capture_observation = Some((self.scopes.len(), changed));\n@@ -159,11 +236,12 @@ impl Environment {\n     /// Preserve capture scope/kind layout without copying recursive parameters.\n     pub(crate) fn capture_prefix_snapshot(&self, count: usize) -> Self {\n         Self {\n-            scopes: self.scopes[..count].to_vec(),\n+            scopes: self.materialized_prefix(count),\n             binding_kinds: self.binding_kinds[..count].to_vec(),\n             native_defaults: self.native_defaults.clone(),\n             global_owner: self.global_owner.clone(),\n             global_source: self.global_source.clone(),\n+            capture_cells: self.capture_cells.clone(),\n             capture_writes: self.capture_writes.clone(),\n             capture_observation: self.capture_observation,\n         }\n@@ -184,7 +262,7 @@ impl Environment {\n \n     pub(crate) fn restore_capture_locals(&mut self, completed: &Self, count: usize) {\n         self.invalidate_capture_observation();\n-        self.scopes[1..count].clone_from_slice(&completed.scopes[1..count]);\n+        self.scopes[1..count].clone_from_slice(&completed.materialized_prefix(count)[1..count]);\n         self.binding_kinds[1..count].clone_from_slice(&completed.binding_kinds[1..count]);\n         if let (Some((_, target)), Some((_, writes))) =\n             (&mut self.capture_writes, &completed.capture_writes)\n@@ -292,6 +370,7 @@ impl Environment {\n             native_defaults: None,\n             global_owner: std::sync::Arc::new(()),\n             global_source: std::sync::Arc::new(()),\n+            capture_cells: None,\n             capture_writes: None,\n             capture_observation: None,\n         }\n@@ -306,6 +385,9 @@ impl Environment {\n         body: &[crate::ast::Stmt],\n         lexical_self: Option<&str>,\n     ) -> Self {\n+        if self.capture_cells.is_some() {\n+            return self.detached_snapshot().capture_for_callable(params, body, lexical_self);\n+        }\n         let names = self\n             .scopes\n             .iter()\n@@ -427,6 +509,7 @@ impl Environment {\n                 .then(|| std::sync::Arc::new(selected_defaults)),\n             global_owner: self.global_owner.clone(),\n             global_source: self.global_source.clone(),\n+            capture_cells: None,\n             capture_writes: None,\n             capture_observation: None,\n         }\n@@ -453,6 +536,9 @@ impl Environment {\n     }\n \n     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {\n+        if self.capture_cells.is_some() {\n+            return self.detached_snapshot().visible_bindings();\n+        }\n         let mut visible = self\n             .native_defaults\n             .iter()\n@@ -494,6 +580,7 @@ impl Environment {\n             native_defaults: self.native_defaults.clone(),\n             global_owner: std::sync::Arc::new(()),\n             global_source: self.global_source.clone(),\n+            capture_cells: None,\n             capture_writes: None,\n             capture_observation: None,\n         }\n@@ -523,6 +610,7 @@ impl Environment {\n             native_defaults: self.native_defaults.clone(),\n             global_owner: self.global_owner.clone(),\n             global_source: self.global_source.clone(),\n+            capture_cells: self.capture_cells.take(),\n             capture_writes: self\n                 .capture_writes\n                 .as_ref()\n@@ -539,6 +627,7 @@ impl Environment {\n     }\n \n     pub(crate) fn leave_global_function(&mut self, caller: Environment) {\n+        self.capture_cells = caller.capture_cells;\n         self.scopes.truncate(1);\n         self.binding_kinds.truncate(1);\n         self.scopes.extend(caller.scopes);\n@@ -559,9 +648,11 @@ impl Environment {\n             native_defaults: self.native_defaults.clone(),\n             global_owner: self.global_owner.clone(),\n             global_source: self.global_source.clone(),\n+            capture_cells: self.capture_cells.take(),\n             capture_writes: None,\n             capture_observation: None,\n         };\n+        self.capture_cells = owner.capture_cells.take();\n         self.scopes.append(&mut owner.scopes);\n         self.binding_kinds.append(&mut owner.binding_kinds);\n         previous\n@@ -574,6 +665,7 @@ impl Environment {\n             native_defaults: None,\n             global_owner: std::sync::Arc::new(()),\n             global_source: std::sync::Arc::new(()),\n+            capture_cells: None,\n             capture_writes: None,\n             capture_observation: None,\n         }\n@@ -591,11 +683,12 @@ impl Environment {\n             native_defaults: self.native_defaults.clone(),\n             global_owner: self.global_owner.clone(),\n             global_source: self.global_source.clone(),\n+            capture_cells: None,\n             capture_writes: None,\n             capture_observation: None,\n         };\n         if capture_locals {\n-            result.scopes.extend(self.scopes.iter().skip(1).cloned());\n+            result.scopes.extend(self.materialized_scopes().into_iter().skip(1));\n             result.binding_kinds.extend(self.binding_kinds.iter().skip(1).cloned());\n         }\n         result\n@@ -613,9 +706,10 @@ impl Environment {\n     /// Returns a cloned value if found\n     pub fn get(&self, name: &str) -> Option<Value> {\n         // Search from innermost to outermost scope\n-        for scope in self.scopes.iter().rev() {\n+        for (index, scope) in self.scopes.iter().enumerate().rev() {\n             if let Some(value) = scope.get(name) {\n-                return Some(value.clone());\n+                return Self::capture_value(&self.capture_cells, index, name)\n+                    .or_else(|| Some(value.clone()));\n             }\n         }\n         self.native_default(name)\n@@ -633,6 +727,12 @@ impl Environment {\n             self.scopes.len().saturating_sub(1),\n             &name,\n         );\n+        Self::publish_capture_value(\n+            &self.capture_cells,\n+            self.scopes.len().saturating_sub(1),\n+            &name,\n+            &value,\n+        );\n         if let Some(scope) = self.scopes.last_mut() {\n             scope.insert(name.clone(), value);\n         }\n@@ -689,6 +789,7 @@ impl Environment {\n                     index,\n                     &name,\n                 );\n+                Self::publish_capture_value(&self.capture_cells, index, &name, &value);\n                 scope.insert(name, value);\n                 return;\n             }\n@@ -717,6 +818,7 @@ impl Environment {\n                     scope_index,\n                     &name,\n                 );\n+                Self::publish_capture_value(&self.capture_cells, scope_index, &name, &value);\n                 scope.insert(name, value);\n                 return Ok(());\n             }\n@@ -749,7 +851,11 @@ impl Environment {\n                     index,\n                     name,\n                 );\n+                if let Some(current) = Self::capture_value(&self.capture_cells, index, name) {\n+                    *value = current;\n+                }\n                 f(value);\n+                Self::publish_capture_value(&self.capture_cells, index, name, value);\n                 return true;\n             }\n         }\n@@ -781,7 +887,11 @@ impl Environment {\n                     scope_index,\n                     name,\n                 );\n+                if let Some(current) = Self::capture_value(&self.capture_cells, scope_index, name) {\n+                    *value = current;\n+                }\n                 f(value);\n+                Self::publish_capture_value(&self.capture_cells, scope_index, name, value);\n                 return Ok(());\n             }\n         }\n@@ -811,8 +921,12 @@ impl Environment {\n                 if !kind.allows_mutation() {\n                     return Err(kind.mutation_error(name));\n                 }\n+                if let Some(current) = Self::capture_value(&self.capture_cells, scope_index, name) {\n+                    *value = current;\n+                }\n                 let changed = f(value)?;\n                 if changed {\n+                    Self::publish_capture_value(&self.capture_cells, scope_index, name, value);\n                     Self::record_capture_write(\n                         &mut self.capture_writes,\n                         &mut self.capture_observation,\ndiff --git a/src/interpreter/mod.rs b/src/interpreter/mod.rs\nindex ea1fad5..746422e 100644\n--- a/src/interpreter/mod.rs\n+++ b/src/interpreter/mod.rs\n@@ -2449,7 +2449,11 @@ impl Interpreter {\n         let active = self.active_capture_index(captured);\n         let mut environment = match active {\n             Some(index) => self.active_capture_snapshot(index),\n-            None => captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone(),\n+            None => {\n+                let mut owner = captured.lock().unwrap_or_else(|p| p.into_inner());\n+                owner.share_capture_locals();\n+                owner.clone()\n+            }\n         };\n         let globals = if self.task_cancellation.is_none() {\n             CapturedGlobals::Snapshot\n"
+    },
+    "expanded-results.log": {
+      "sha256": "34afc145f23e24bdd726388b45ebbea8f0ddbb53eddcf50b9a2c04a92bbe61b8",
+      "content": "\nrunning 3 tests\ntest vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest interpreter_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s\n\n"
+    },
+    "baseline-expanded-results.log": {
+      "sha256": "f5d491cd51bc38538f8f5f99237e95ec35c64bd9542e0d6ae95799c8e1b14666",
+      "content": "\nrunning 3 tests\n\nthread 'interpreter_channel_ordered_capture_visibility_preserves_snapshots' (3574637) panicked at tests/ordered_task_capture_contracts.rs:64:5:\ninterpreter/scalar_true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/scalar_false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/array_true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/array_false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/dictionary_true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/dictionary_false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/nested_row_true: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/nested_row_false: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n9\\n1\\n\", stderr=\"\"\ninterpreter/snapshot_helper: Some(ExitStatus(unix_wait_status(0))), stdout=\"1\\n1\\n1\\n1\\n\", stderr=\"\"\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest interpreter_channel_ordered_capture_visibility_preserves_snapshots ... FAILED\ntest jit_channel_ordered_capture_visibility_preserves_snapshots ... ok\ntest vm_channel_ordered_capture_visibility_preserves_snapshots ... ok\n\nfailures:\n\nfailures:\n    interpreter_channel_ordered_capture_visibility_preserves_snapshots\n\ntest result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s\n\n"
+    }
+  },
+  "probe_source_sha256": "5bf90dbadce803e97f2b297503826238f70f974b4a97d38cf84eb0daa0e36614",
+  "module_source_sha256": "329333e56805537bd6d7d15c3440d3fe7b6c75e865b155f1d8d0a4ee4d0f78e1",
+  "regression_source_sha256": "bddb39bfc82f96e459b72ffd7367b76ebcc109fce9b98106b0a83a0a41da116a"
+}

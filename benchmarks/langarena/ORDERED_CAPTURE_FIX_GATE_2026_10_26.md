@@ -1,5 +1,7 @@
 # Active captured-local visibility: fix gate
 
+Follow-up: [27-case gate and rejected prototype](LIVE_CAPTURE_REJECTED_2026_10_26.md). The 24-case results below are the original checkpoint.
+
 Status: reproduced on runtime `2e020ee`; implementation pending. This does not
 reopen the separate task-global isolation fix. No elapsed-time claim is involved.
 

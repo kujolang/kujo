@@ -1,0 +1,9 @@
+export func factory() {
+ mut items := []
+ func append_all(n) {
+  mut i := 0
+  while i < n { items = push(items, i) i += 1 }
+  return len(items)
+ }
+ return append_all
+}
