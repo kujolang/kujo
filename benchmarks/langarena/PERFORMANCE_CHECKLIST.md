@@ -117,7 +117,7 @@ Section 3 remains open for fixed imported environment/setup cost. Follow-up evid
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
-- [ ] Resolve existing direct-global reentrant-index evaluation-order divergence before changing its behavior; this round preserves each runtime's baseline result.
+- [ ] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT; the semantic choice is resolved, implementation and performance/parity gates remain pending. See [decision and red reproductions](INDEX_ROOT_ORDER_DECISION_2026_10_25.md).
 
 Gate: changed global paths have better allocation scaling with ownership, errors,
 bounds and depth checks intact. This does not close all collection representations

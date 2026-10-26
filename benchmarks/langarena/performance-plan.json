@@ -4677,5 +4677,19 @@
     "runtime_state_checks": 12,
     "result": "Map storage accounts for about94% of global-map requested bytes in the base fixture; cloned names dominate request count. Array-width slope absent; binding-count slope present.",
     "next_gate": "Environment storage sharing must preserve public scopes API, native mutable-map view exclusivity, reentrant snapshots, async journals and first-write costs."
+  },
+  "index_root_order_decision_2026_10_25": {
+    "authority": "Explicit user answer: Update the replacement array (recommended)",
+    "status": "decision_approved_implementation_pending",
+    "rule": "Evaluate RHS then index expressions once; read and update the resulting replacement root. Preserve snapshots and leave index side effects intact on write errors.",
+    "evidence": "index-root-order-decision-2026-10-25.json",
+    "baseline_runtime": "0d0f365",
+    "baseline_results": {
+      "interpreter_passed": 5,
+      "vm_expected_runtime_failures": 5,
+      "jit_enabled_expected_runtime_failures": 5,
+      "hot_native_entries": 314
+    },
+    "scope_limit": "Native-default candidate remains frozen for its separate validation; this decision does not claim an implemented parity fix."
   }
 }

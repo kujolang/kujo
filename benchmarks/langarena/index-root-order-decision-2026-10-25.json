@@ -1,0 +1,135 @@
+{
+  "runtime": "0d0f365",
+  "binary_sha256": "0555105d0ed82ab4282b279539f640673ab82a177f3272889c0065c8277af591",
+  "decision": "User explicitly selected Update the replacement array (recommended) in response to the async semantic-choice question during this continuation.",
+  "scope": "Red reproductions of the newly approved root-after-index contract, not a regression in the native-default candidate",
+  "cases": [
+    {
+      "name": "replacement",
+      "source": "mut data := [1,2,3]\nlet saved := data\nfunc replace_index() { data = [9,9,9] return 0 }\ndata[replace_index()] = 42\nassert_equal(data,[42,9,9])\nassert_equal(saved,[1,2,3])\nprint(\"ROOT ORDER PASS\")\n",
+      "runtimes": [
+        {
+          "mode": "vm",
+          "status": 4,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Array[3], got Array[3]\n  --> 0:0\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "status": 0,
+          "stdout": "ROOT ORDER PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "status": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Array[3], got Array[3]\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "replacement_grows",
+      "source": "mut data := [1]\nfunc replace_index() { data = [9,9,9] return 2 }\ndata[replace_index()] = 42\nassert_equal(data,[9,9,42])\nprint(\"ROOT ORDER PASS\")\n",
+      "runtimes": [
+        {
+          "mode": "vm",
+          "status": 4,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Index out of bounds: 2\n  --> 0:0\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "status": 0,
+          "stdout": "ROOT ORDER PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "status": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Index out of bounds: 2\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "replacement_shrinks",
+      "source": "mut data := [1,2,3]\nfunc replace_index() { data = [9] return 2 }\nmut caught := false\ntry { data[replace_index()] = 42 } except error { caught = true }\nassert(caught)\nassert_equal(data,[9])\nprint(\"ROOT ORDER PASS\")\n",
+      "runtimes": [
+        {
+          "mode": "vm",
+          "status": 4,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Assertion failed\n  --> 0:0\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "status": 0,
+          "stdout": "ROOT ORDER PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "status": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "rhs_then_index",
+      "source": "mut data := [1,2,3]\nmut trace := []\nfunc rhs() { trace = push(trace,1) return 42 }\nfunc replace_index() { trace = push(trace,2) data = [9,9,9] return -1 }\ndata[replace_index()] = rhs()\nassert_equal(trace,[1,2])\nassert_equal(data,[9,9,42])\nprint(\"ROOT ORDER PASS\")\n",
+      "runtimes": [
+        {
+          "mode": "vm",
+          "status": 4,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Array[3], got Array[3]\n  --> 0:0\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "status": 0,
+          "stdout": "ROOT ORDER PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "status": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Array[3], got Array[3]\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "dictionary_replacement",
+      "source": "mut data := {\"a\":1,\"b\":2}\nlet saved := data\nfunc replace_index() { data = {\"a\":9,\"c\":9} return \"a\" }\ndata[replace_index()] = 42\nassert_equal(data,{\"a\":42,\"c\":9})\nassert_equal(saved,{\"a\":1,\"b\":2})\nprint(\"ROOT ORDER PASS\")\n",
+      "runtimes": [
+        {
+          "mode": "vm",
+          "status": 4,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Assertion failed: expected FixedDict{2 keys}, got FixedDict{2 keys}\n  --> 0:0\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "status": 0,
+          "stdout": "ROOT ORDER PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "status": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected FixedDict{2 keys}, got FixedDict{2 keys}\n  --> 0:0\n\n"
+        }
+      ]
+    }
+  ],
+  "driver_source": "require 'json';require 'open3';require 'digest'\nr=File.expand_path(__dir__);bin=File.expand_path('../import-native-defaults-2026-10-25/before-kujo',r)\ncases={\n 'replacement'=>\"mut data := [1,2,3]\\nlet saved := data\\nfunc replace_index() { data = [9,9,9] return 0 }\\ndata[replace_index()] = 42\\nassert_equal(data,[42,9,9])\\nassert_equal(saved,[1,2,3])\\n\",\n 'replacement_grows'=>\"mut data := [1]\\nfunc replace_index() { data = [9,9,9] return 2 }\\ndata[replace_index()] = 42\\nassert_equal(data,[9,9,42])\\n\",\n 'replacement_shrinks'=>\"mut data := [1,2,3]\\nfunc replace_index() { data = [9] return 2 }\\nmut caught := false\\ntry { data[replace_index()] = 42 } except error { caught = true }\\nassert(caught)\\nassert_equal(data,[9])\\n\",\n 'rhs_then_index'=>\"mut data := [1,2,3]\\nmut trace := []\\nfunc rhs() { trace = push(trace,1) return 42 }\\nfunc replace_index() { trace = push(trace,2) data = [9,9,9] return -1 }\\ndata[replace_index()] = rhs()\\nassert_equal(trace,[1,2])\\nassert_equal(data,[9,9,42])\\n\",\n 'dictionary_replacement'=>\"mut data := {\\\"a\\\":1,\\\"b\\\":2}\\nlet saved := data\\nfunc replace_index() { data = {\\\"a\\\":9,\\\"c\\\":9} return \\\"a\\\" }\\ndata[replace_index()] = 42\\nassert_equal(data,{\\\"a\\\":42,\\\"c\\\":9})\\nassert_equal(saved,{\\\"a\\\":1,\\\"b\\\":2})\\n\"\n}\nreport={runtime:'0d0f365',binary_sha256:Digest::SHA256.file(bin).hexdigest,decision:'User explicitly selected Update the replacement array (recommended) in response to the async semantic-choice question during this continuation.',scope:'Red reproductions of the newly approved root-after-index contract, not a regression in the native-default candidate',cases:[]}\ncases.each do |name,source|\n source+=\"print(\\\"ROOT ORDER PASS\\\")\\n\";path=r+'/'+name+'.kujo';File.write(path,source)\n row={name:name,source:source,runtimes:[]}\n %w[vm interpreter jit].each do |mode|\n argv=[bin,'run','--untrusted'];argv<<'--'+mode unless mode=='vm';argv<<path;o,e,s=Open3.capture3(*argv);row[:runtimes]<<{mode:mode,status:s.exitstatus,stdout:o,stderr:e}\n abort \"Unexpected baseline #{name} #{mode}: #{e}\" unless mode=='interpreter' ? s.success? && o.include?('ROOT ORDER PASS') : !s.success?\n end\n report[:cases]<<row\nend\nFile.write(r+'/baseline.json',JSON.pretty_generate(report)+\"\\n\");puts 'Five approved-order cases: interpreter passes all; VM/JIT reproduce all five gaps'\n",
+  "native_hot_control": {
+    "source": "mut data := [1,2,3]\nfunc replace_index() { data = [9,9,9] return 0 }\nfunc write() { data[replace_index()] = 42 }\nmut i := 0\nenv_set(\"KUJO_ALLOCATION_PHASE\", \"4\")\nwhile i < 256 { write() i += 1 }\nenv_set(\"KUJO_ALLOCATION_PHASE\", \"5\")\nprint(data)\n",
+    "stdout": "[42, 2, 3]\n",
+    "stderr": "COUNTERS {\"counters\":{\"bytecode_compile_wall_ns\":0,\"detached_tasks_observed\":0,\"jit_cache_lookup_hits\":0,\"jit_cache_lookup_misses\":0,\"jit_call_dispatches\":513,\"jit_compile_entries\":2,\"jit_compile_inclusive_wall_ns\":18999086,\"jit_native_boundary_entries\":314,\"jit_native_function_entries\":314,\"jit_owned_argument_dispatches\":0,\"jit_type_guard_failures\":0,\"jit_type_guard_passes\":0,\"promise_pending_polls\":0,\"promise_polls\":0,\"promise_ready_polls\":0,\"scheduler_rounds\":0,\"source_parse_wall_ns\":0,\"task_bodies_exited\":0,\"task_cancellations_published\":0,\"task_completions_published\":0,\"task_queue_wall_ns\":0,\"tasks_admission_rejected\":0,\"tasks_admitted\":0,\"tasks_started\":0,\"vm_call_opcodes\":359,\"vm_capture_cells_created\":0,\"vm_capture_value_shallow_bytes\":0,\"vm_closures_created\":2,\"vm_entries\":1,\"vm_generator_resume_attempts\":0,\"vm_generator_state_drops\":0,\"vm_generator_state_shallow_bytes\":0,\"vm_generator_states_created\":0,\"vm_inclusive_wall_ns\":42879617,\"vm_native_call_opcodes\":0,\"vm_return_opcodes\":199,\"vm_setup_wall_ns\":0},\"cpu_seconds\":0.016392999999999998,\"outcome\":\"success\",\"process_peak_rss_bytes\":7933952,\"runtime\":\"vm\",\"runtime_version\":\"1.9.0\",\"schema\":\"kujo.runtime-measurements/v1\",\"scope\":\"process\",\"snapshot_consistency\":\"independent_counters\",\"unsupported\":[\"total_heap_bytes\",\"total_value_allocations\",\"total_value_drops\",\"retained_capture_graph_bytes\",\"provider_usage\",\"provider_cost\"],\"waited_for_detached\":false,\"wall_ns\":45523765}\nPHASE 0 requests=35 bytes=29227\nPHASE 1 requests=0 bytes=0\nPHASE 2 requests=0 bytes=0\nPHASE 3 requests=0 bytes=0\nPHASE 4 requests=8116 bytes=1328467\nPHASE 5 requests=28 bytes=4168\nALLOCATION_AUDIT mode=jit case=.audit-evidence/index-root-order-2026-10-25/hot-global.kujo enabled=true requests=8179 requested_bytes=1361862\n",
+    "probe_sha256": "6c031640477706a1ba0c62d6e06f8614ec48da5d3ed6fc3ffd8917d636aca04c"
+  }
+}
