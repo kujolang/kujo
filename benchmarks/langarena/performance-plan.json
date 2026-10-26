@@ -102,7 +102,9 @@
         "preloaded-callback-wrapper-2026-10-25.json",
         "leaf-callback-reuse-2026-10-25.json",
         "jit-code-identity-fix-2026-10-25.json",
-        "nonleaf-callback-reuse-2026-10-25.json"
+        "nonleaf-callback-reuse-2026-10-25.json",
+        "INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md",
+        "index-root-order-2026-10-26.json"
       ]
     },
     {
@@ -4791,13 +4793,108 @@
     ],
     "remaining": [
       "Unused user-defined module bindings still cost one copied name per binding per call",
-      "Interpreter captured-state reentry and approved root-after-index implementation",
+      "Captured-state reentry, including imported VM/AST bridges (root-after-index implemented separately at 3a9cbe4)",
       "Clean-host, production-size, platform, native CPU attribution and competitive acceptance"
     ],
     "not_claimed": [
       "All sections3/4 complete",
       "Native execution of imported helper diagnostics",
       "Whole-language or competitive speedup"
+    ]
+  },
+  "index_root_order_verification_2026_10_26": {
+    "status": "implemented_and_verified_locally",
+    "runtime_commit": "3a9cbe4",
+    "baseline_runtime_commit": "8b4111b",
+    "evidence": [
+      "INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md",
+      "index-root-order-2026-10-26.json"
+    ],
+    "targeted_cases": 30,
+    "library": {
+      "passed": 1114,
+      "failed": 0,
+      "ignored": 8
+    },
+    "integration": {
+      "passed": 206,
+      "failed": 0,
+      "ignored": 1
+    },
+    "test_size_checksums": {
+      "vm": 50,
+      "interpreter": 50,
+      "jit": 50
+    },
+    "native_write_entries": 157,
+    "allocation_pairs": 24,
+    "timing_pairs": 42,
+    "resource_observations": 8,
+    "timing_summary": [
+      {
+        "shape": "array",
+        "runtime": "vm",
+        "median_ratio": 1.0217248791399083,
+        "range": [
+          1.0049268492426973,
+          1.0522628786583732
+        ],
+        "needs_slowdown_review": false
+      },
+      {
+        "shape": "array",
+        "runtime": "interpreter",
+        "median_ratio": 0.9794873628952553,
+        "range": [
+          0.9752617655280272,
+          1.002802969511095
+        ],
+        "needs_slowdown_review": false
+      },
+      {
+        "shape": "array",
+        "runtime": "jit",
+        "median_ratio": 0.9592906788675658,
+        "range": [
+          0.7254273364557237,
+          1.2698883182745515
+        ],
+        "needs_slowdown_review": false
+      },
+      {
+        "shape": "dictionary",
+        "runtime": "vm",
+        "median_ratio": 1.0051041426009564,
+        "range": [
+          0.9788165845879918,
+          1.0104946831804493
+        ],
+        "needs_slowdown_review": false
+      },
+      {
+        "shape": "dictionary",
+        "runtime": "interpreter",
+        "median_ratio": 0.9998868684413691,
+        "range": [
+          0.9568632262244224,
+          1.0191825054714427
+        ],
+        "needs_slowdown_review": false
+      },
+      {
+        "shape": "dictionary",
+        "runtime": "jit",
+        "median_ratio": 0.9248537944427601,
+        "range": [
+          0.907968897353426,
+          0.9549223293384055
+        ],
+        "needs_slowdown_review": false
+      }
+    ],
+    "remaining": [
+      "Captured-state reentry and user-defined binding materialization",
+      "Production-size, clean-host, platform and competitive acceptance"
     ]
   }
 }

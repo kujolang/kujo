@@ -119,11 +119,11 @@ Section 3 remains open for user-defined binding materialization and captured-sta
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
-- [ ] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT; the semantic choice is resolved, implementation and performance/parity gates remain pending. See [decision and red reproductions](INDEX_ROOT_ORDER_DECISION_2026_10_25.md).
+- [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Captured-state reentry remains a separate open item in section 3.
 
 Gate: changed global paths have better allocation scaling with ownership, errors,
 bounds and depth checks intact. This does not close all collection representations
-or the separate semantic decision.
+or the separate captured-state reentry bug.
 
 ## 5. Compiled execution (not started in this round)
 
