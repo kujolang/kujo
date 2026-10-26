@@ -1,0 +1,68 @@
+{
+  "source": "shared_set(\"started\", 0)\nlet gate := channel()\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { b = 1 }\n        if key < 2 { shared_add_int(\"started\", 1) gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := func() { return apply_change(0) }\nlet right := func() { return apply_change(1) }\nlet a := spawn_task(left)\nlet b := spawn_task(right)\nwhile shared_get(\"started\") < 2 {}\ngate.send(1)\ngate.send(1)\nawait await_task(a)\nawait await_task(b)\nprint(apply_change(2))\n",
+  "rows": [
+    {
+      "binary": "before-kujo",
+      "mode": "vm",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "binary": "before-kujo",
+      "mode": "interpreter",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "binary": "before-kujo",
+      "mode": "jit",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "2\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+    },
+    {
+      "binary": "candidate-kujo",
+      "mode": "vm",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "binary": "candidate-kujo",
+      "mode": "interpreter",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "binary": "candidate-kujo",
+      "mode": "jit",
+      "exit": 0,
+      "timed_out": false,
+      "stdout": "2\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+    }
+  ],
+  "baseline_runtime_commit": "3a9cbe4",
+  "candidate_status": "uncommitted reentry candidate; same pre-existing failure",
+  "binary_hashes": {
+    "before-kujo": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+    "candidate-kujo": "e3d545b2aa19ad6fbc1316b993bf4291a66f054c66637bf39a197c0b45d7f9fb"
+  },
+  "candidate_source_hashes": {
+    "src/interpreter/mod.rs": "3b08615026a315edab894038fc1e090007328754caba92cecafaf48c6063d1ae",
+    "src/interpreter/environment.rs": "64cd6b5fedf7b4de0827afc604574985c84c08ae767ef76caea0ab54f60ad775",
+    "src/interpreter/generator.rs": "63ce36e333c9949100c2818fa454010d6e54157a5099b84b5b1f4cf2cb0924a3",
+    "tests/captured_reentry_contracts.rs": "501c9ad2ad88e346f52ae2a349324d9ed1af8b13697e516bcfa6a105783b69b8",
+    "tests/captured_bridge_contracts.rs": "24c5bec70966cdbe93d83656108970ef77b3eca5fcdb3c624d19a3a020300a67"
+  },
+  "expected_stdout": "2\n",
+  "scope": "Synchronous captured callbacks submitted as two overlapping language tasks; correctness only"
+}
