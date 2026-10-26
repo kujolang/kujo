@@ -1,0 +1,31 @@
+let ready := channel()
+let proceed := channel()
+func helper(data) { return data + 1 }
+func factory() {
+ mut data := [1]
+ let saved := data
+ func step(n) {
+  if n == 0 {
+   data[0] = 9
+   ready.send(1)
+   proceed.receive()
+   data[0] = 11
+   return 0
+  }
+  if n == 2 { return data[0] }
+  if n == 3 { return saved[0] }
+  let handle := spawn_task(func() { return step(0) })
+  ready.receive()
+  func snapshot() { return data[0] }
+  assert_equal(helper(8), 9)
+  proceed.send(1)
+  await await_task(handle)
+  print(snapshot())
+  return data[0]
+ }
+ return step
+}
+let step := factory()
+print(step(1))
+print(step(2))
+print(step(3))

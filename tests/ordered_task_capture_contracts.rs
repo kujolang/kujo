@@ -46,53 +46,69 @@ print(step(2))
 print(step(3))
 "#
             );
-            let directory = std::env::temp_dir().join(format!(
-                "kujo_ordered_capture_{}_{}_{}_{}",
-                std::process::id(),
-                runtime,
-                kind,
-                worker_writes
-            ));
-            fs::create_dir_all(&directory).unwrap();
-            let script = directory.join("fixture.kujo");
-            let stdout = directory.join("stdout");
-            let stderr = directory.join("stderr");
-            fs::write(&script, source).unwrap();
-            let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
-            command.arg("run").arg(&script);
-            if runtime != "vm" {
-                command.arg(format!("--{runtime}"));
+            if let Some(failure) =
+                run_case(runtime, &format!("{kind}_{worker_writes}"), &source, "9\n9\n1\n")
+            {
+                failures.push(failure);
             }
-            let mut child = command
-                .stdout(Stdio::from(File::create(&stdout).unwrap()))
-                .stderr(Stdio::from(File::create(&stderr).unwrap()))
-                .spawn()
-                .unwrap();
-            // This is a deadlock bound, not a performance assertion. Channel
-            // handshakes, rather than sleep durations, establish the ordering.
-            let deadline = Instant::now() + Duration::from_secs(120);
-            let status = loop {
-                if let Some(status) = child.try_wait().unwrap() {
-                    break Some(status);
-                }
-                if Instant::now() >= deadline {
-                    child.kill().unwrap();
-                    child.wait().unwrap();
-                    break None;
-                }
-                std::thread::sleep(Duration::from_millis(10));
-            };
-            let output = fs::read_to_string(&stdout).unwrap();
-            let error = fs::read_to_string(&stderr).unwrap();
-            if !status.is_some_and(|status| status.success()) || output != "9\n9\n1\n" {
-                failures.push(format!(
-                    "{runtime}/{kind}/worker_writes={worker_writes}: {status:?}, stdout={output:?}, stderr={error:?}"
-                ));
-            }
-            fs::remove_dir_all(directory).unwrap();
         }
     }
+    if let Some(failure) = run_case(
+        runtime,
+        "snapshot_helper",
+        include_str!("fixtures/ordered_capture_snapshot_helper.kujo"),
+        "9\n11\n11\n1\n",
+    ) {
+        failures.push(failure);
+    }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+fn run_case(runtime: &str, label: &str, source: &str, expected: &str) -> Option<String> {
+    let directory = std::env::temp_dir().join(format!(
+        "kujo_ordered_capture_{}_{}_{}",
+        std::process::id(),
+        runtime,
+        label
+    ));
+    fs::create_dir_all(&directory).unwrap();
+    let script = directory.join("fixture.kujo");
+    let stdout = directory.join("stdout");
+    let stderr = directory.join("stderr");
+    fs::write(&script, source).unwrap();
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+    command.arg("run").arg(&script);
+    if runtime != "vm" {
+        command.arg(format!("--{runtime}"));
+    }
+    let mut child = command
+        .stdout(Stdio::from(File::create(&stdout).unwrap()))
+        .stderr(Stdio::from(File::create(&stderr).unwrap()))
+        .spawn()
+        .unwrap();
+    // This is a deadlock bound, not a performance assertion. Channel
+    // handshakes, rather than sleep durations, establish the ordering.
+    let deadline = Instant::now() + Duration::from_secs(120);
+    let status = loop {
+        if let Some(status) = child.try_wait().unwrap() {
+            break Some(status);
+        }
+        if Instant::now() >= deadline {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            break None;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    let output = fs::read_to_string(&stdout).unwrap();
+    let error = fs::read_to_string(&stderr).unwrap();
+    let failure = if !status.is_some_and(|status| status.success()) || output != expected {
+        Some(format!("{runtime}/{label}: {status:?}, stdout={output:?}, stderr={error:?}"))
+    } else {
+        None
+    };
+    fs::remove_dir_all(directory).unwrap();
+    failure
 }
 
 #[test]
