@@ -474,5 +474,146 @@
         "exit": 0
       }
     ]
+  },
+  "module_global_isolation_controls": {
+    "scope": "Module lexical globals must remain distinct from task caller globals",
+    "baseline_runtime": "15a225d",
+    "module_source": "let global_value := 7\nfunc helper() { return global_value }\nexport func make_work() {\n mut local_value := 0\n func work() { local_value += 1 return [helper(),local_value] }\n return work\n}\nexport func make_async_work() {\n mut local_value := 0\n async func work() { local_value += 1 return [helper(),local_value] }\n return work\n}\n",
+    "sources": {
+      "ordinary": "from module_state import make_work\nmut global_value := 42\nlet work := make_work()\nprint(await await_task(spawn_task(work)))\nglobal_value = 99\nprint(await await_task(spawn_task(work)))\nprint(global_value)\n",
+      "async": "from module_state import make_async_work\nmut global_value := 42\nlet work := make_async_work()\nprint(await work())\nglobal_value = 99\nprint(await work())\nprint(global_value)\n"
+    },
+    "expected_stdout": "[7, 1]\n[7, 2]\n99\n",
+    "binary_hashes": {
+      "before-kujo": "d05a034b03c13d9d1ea87689b427d7c2d0a97f7f5a399ab2f95fd29f4af7be11",
+      "candidate-kujo": "4bb82536cb42d211e1057ee322bfd369a08cef7d2e991e5e4b6d750055b9ecdc"
+    },
+    "rows": [
+      {
+        "binary": "before-kujo",
+        "fixture": "ordinary",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "before-kujo",
+        "fixture": "ordinary",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "before-kujo",
+        "fixture": "ordinary",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "passed": true
+      },
+      {
+        "binary": "before-kujo",
+        "fixture": "async",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "before-kujo",
+        "fixture": "async",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "before-kujo",
+        "fixture": "async",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "ordinary",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "ordinary",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "ordinary",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "async",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "async",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "binary": "candidate-kujo",
+        "fixture": "async",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[7, 1]\n[7, 2]\n99\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "passed": true
+      }
+    ],
+    "regression_tests": {
+      "source": "tests/imported_task_globals_contracts.rs",
+      "source_sha256": "38abcba5daedeaf30ab802978f52e189116006a7571ce64e0c9de35fc9293b9e",
+      "rows": [
+        {
+          "binary": "before-kujo",
+          "sha256": "d05a034b03c13d9d1ea87689b427d7c2d0a97f7f5a399ab2f95fd29f4af7be11",
+          "passed": true
+        },
+        {
+          "binary": "candidate-kujo",
+          "sha256": "4bb82536cb42d211e1057ee322bfd369a08cef7d2e991e5e4b6d750055b9ecdc",
+          "passed": true
+        }
+      ]
+    },
+    "candidate_status": "Uncommitted ordinary task write-merge candidate; broader validation pending"
   }
 }

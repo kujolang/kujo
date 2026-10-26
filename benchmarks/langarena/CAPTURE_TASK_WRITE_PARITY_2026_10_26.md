@@ -116,3 +116,18 @@ the existing task-global defect to ordinary callbacks; it is not a new timing
 claim. Refreshing globals only in the async task entry path would leave this
 case unfixed. Imported module lexical globals must remain distinct from caller
 globals when correcting both paths.
+
+## Module-global isolation guards
+
+`tests/imported_task_globals_contracts.rs` covers ordinary and async imported
+closures whose module declares `global_value = 7`, while the caller changes its
+same-named global from 42 to 99. Tasks must keep returning module value 7 while
+retaining their captured local counter; the parent must remain 99. All six cases
+pass on baseline `15a225d` and on the ordinary-write-merge candidate in VM,
+interpreter and JIT-enabled modes. This is correctness coverage, not a performance
+claim or acceptance of the candidate's remaining validation gates.
+
+The `module_global_isolation_controls` evidence includes exact module/main
+sources, binary and regression-source hashes, and all twelve observations.
+Refreshing task globals must preserve these lexical boundaries while fixing the
+same-environment stale-global cases above.
