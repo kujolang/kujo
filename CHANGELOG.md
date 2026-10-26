@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Share immutable native-default metadata in imported module environments instead
+  of copying unchanged native bindings for every helper call. User overrides,
+  aliases, immutable declarations and snapshots remain independent; native JIT
+  loops retain the correct global owner when replacing a shared default.
+
 - Cache ordinary VM parameter slots and legacy named aliases per immutable code
   object; bytecode edits invalidate the cache and callable snapshots stay isolated.
 

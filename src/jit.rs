@@ -2349,7 +2349,7 @@ pub unsafe extern "C" fn jit_assign_variable(
         // Use that environment directly rather than acquiring its lock again.
         if global_only != 0
             || ctx.locals_ptr == ctx.globals_ptr
-            || environment.scopes.iter().any(|scope| scope.contains_key(&name))
+            || environment.contains_binding(&name)
         {
             return match environment.assign_checked(name, value) {
                 Ok(()) => 0,

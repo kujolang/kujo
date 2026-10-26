@@ -60,7 +60,12 @@ impl BindingKind {
 /// ```
 #[derive(Clone, Debug)]
 pub struct Environment {
+    /// Explicit writable bindings. Module-native defaults may be stored separately;
+    /// use `get` for lexical lookup, including those unchanged preloads.
     pub scopes: Vec<HashMap<String, Value>>,
+    // Module snapshots share only immutable native name metadata. Mutable globals
+    // remain ordinary owned maps, including every override of a default.
+    native_defaults: Option<std::sync::Arc<HashMap<String, String>>>,
     // Missing entries mean Mutable. Store only immutable exceptions, avoiding
     // duplicate name storage for native preloads and ordinary mutable bindings.
     binding_kinds: Vec<HashMap<String, BindingKind>>,
@@ -69,6 +74,46 @@ pub struct Environment {
 }
 
 impl Environment {
+    /// Compact only unchanged, mutable, canonical builtin preloads in a module
+    /// capture. Aliases, user overrides and immutable declarations remain stored.
+    /// No shared Value or mutable map can reach a native globals pointer here.
+    pub(crate) fn share_module_native_defaults(&mut self) {
+        if self.scopes.len() != 1 || self.native_defaults.is_some() {
+            return;
+        }
+        let mut defaults = HashMap::new();
+        self.scopes[0].retain(|name, value| {
+            let eligible = matches!(value, Value::NativeFunction(native) if native == name)
+                && super::Interpreter::is_builtin_name(name)
+                && !self.binding_kinds[0].contains_key(name);
+            if eligible {
+                let Value::NativeFunction(native) = value else { unreachable!() };
+                defaults.insert(name.clone(), native.clone());
+            }
+            !eligible
+        });
+        if !defaults.is_empty() {
+            self.scopes[0].shrink_to_fit();
+            self.native_defaults = Some(std::sync::Arc::new(defaults));
+        }
+    }
+
+    fn native_default(&self, name: &str) -> Option<Value> {
+        self.native_defaults.as_ref()?.get(name).cloned().map(Value::NativeFunction)
+    }
+
+    /// Test lexical membership without cloning a value. Shared module defaults
+    /// are bindings too, including when native loops choose an assignment owner.
+    pub(crate) fn contains_binding(&self, name: &str) -> bool {
+        self.scopes.iter().any(|scope| scope.contains_key(name))
+            || self.native_defaults.as_ref().is_some_and(|defaults| defaults.contains_key(name))
+    }
+
+    fn set_native_override(&mut self, name: &str, value: Value) {
+        Self::record_capture_write(&mut self.capture_writes, 0, name);
+        self.scopes[0].insert(name.to_owned(), value);
+    }
+
     /// Track writes only for an async captured invocation. Ordinary environments
     /// allocate no journal. Same-binding read-modify-write remains non-atomic.
     pub(crate) fn track_capture_writes(&mut self) {
@@ -106,6 +151,7 @@ impl Environment {
         Environment {
             scopes: vec![HashMap::new()],
             binding_kinds: vec![HashMap::new()],
+            native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
         }
@@ -124,6 +170,7 @@ impl Environment {
             .scopes
             .iter()
             .flat_map(|scope| scope.keys())
+            .chain(self.native_defaults.iter().flat_map(|map| map.keys()))
             .cloned()
             .collect::<HashSet<_>>()
             .into_iter()
@@ -134,6 +181,7 @@ impl Environment {
             return self.clone();
         };
         let mut selected = vec![HashSet::new(); self.scopes.len()];
+        let mut selected_defaults = HashMap::new();
         let mut visited_containers = HashSet::new();
         let mut pending = Vec::new();
         for name in free {
@@ -141,6 +189,10 @@ impl Environment {
                 if selected[index].insert(name.clone()) {
                     pending.push(self.scopes[index][&name].clone());
                 }
+            } else if let Some(native) =
+                self.native_defaults.as_ref().and_then(|map| map.get(&name))
+            {
+                selected_defaults.insert(name, native.clone());
             }
         }
         while let Some(value) = pending.pop() {
@@ -148,8 +200,11 @@ impl Environment {
                 Value::Function(params, body, None)
                 | Value::AsyncFunction(params, body, None)
                 | Value::GeneratorDef(params, body, None) => {
-                    let names =
-                        self.scopes[0].keys().filter(|name| !params.contains(name)).cloned();
+                    let names = self.scopes[0]
+                        .keys()
+                        .chain(self.native_defaults.iter().flat_map(|map| map.keys()))
+                        .filter(|name| !params.contains(name))
+                        .cloned();
                     let Ok(free) =
                         crate::compiler::Compiler::spawn_free_bindings(&body.get(), names)
                     else {
@@ -160,6 +215,10 @@ impl Environment {
                             if selected[0].insert(name) {
                                 pending.push(value.clone());
                             }
+                        } else if let Some(native) =
+                            self.native_defaults.as_ref().and_then(|map| map.get(&name))
+                        {
+                            selected_defaults.insert(name, native.clone());
                         }
                     }
                 }
@@ -224,6 +283,8 @@ impl Environment {
                         .collect()
                 })
                 .collect(),
+            native_defaults: (!selected_defaults.is_empty())
+                .then(|| std::sync::Arc::new(selected_defaults)),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
         }
@@ -250,7 +311,14 @@ impl Environment {
     }
 
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
-        let mut visible = HashMap::new();
+        let mut visible = self
+            .native_defaults
+            .iter()
+            .flat_map(|map| map.iter())
+            .map(|(name, native)| {
+                (name.clone(), (Value::NativeFunction(native.clone()), BindingKind::Mutable))
+            })
+            .collect::<HashMap<_, _>>();
         for (index, scope) in self.scopes.iter().enumerate() {
             for (name, value) in scope {
                 visible.insert(
@@ -272,6 +340,7 @@ impl Environment {
         Self {
             scopes: vec![self.scopes[0].clone()],
             binding_kinds: vec![self.binding_kinds[0].clone()],
+            native_defaults: self.native_defaults.clone(),
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
         }
@@ -298,6 +367,7 @@ impl Environment {
         let caller = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
+            native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
         };
@@ -318,6 +388,7 @@ impl Environment {
         let previous = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
+            native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
         };
@@ -330,6 +401,7 @@ impl Environment {
         Environment {
             scopes: Vec::new(),
             binding_kinds: Vec::new(),
+            native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
         }
@@ -344,6 +416,7 @@ impl Environment {
         let mut result = Self {
             scopes: vec![HashMap::new()],
             binding_kinds: vec![HashMap::new()],
+            native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
         };
@@ -356,6 +429,7 @@ impl Environment {
 
     /// Move the live globals into/out of a continuation without cloning them.
     pub(crate) fn swap_global_scope(&mut self, other: &mut Self) {
+        std::mem::swap(&mut self.native_defaults, &mut other.native_defaults);
         std::mem::swap(&mut self.scopes[0], &mut other.scopes[0]);
         std::mem::swap(&mut self.binding_kinds[0], &mut other.binding_kinds[0]);
     }
@@ -369,7 +443,7 @@ impl Environment {
                 return Some(value.clone());
             }
         }
-        None
+        self.native_default(name)
     }
 
     /// Define a new variable in the current (innermost) scope
@@ -438,6 +512,10 @@ impl Environment {
                 return;
             }
         }
+        if self.native_defaults.as_ref().is_some_and(|map| map.contains_key(&name)) {
+            self.set_native_override(&name, value);
+            return;
+        }
         // If not found, create in current scope
         self.define(name, value);
     }
@@ -458,6 +536,10 @@ impl Environment {
             }
         }
 
+        if self.native_defaults.as_ref().is_some_and(|map| map.contains_key(&name)) {
+            self.set_native_override(&name, value);
+            return Ok(());
+        }
         // Preserve existing Kujo behavior: assignment can create a new mutable binding.
         self.define(name, value);
         Ok(())
@@ -479,6 +561,11 @@ impl Environment {
                 f(value);
                 return true;
             }
+        }
+        if let Some(mut value) = self.native_default(name) {
+            f(&mut value);
+            self.set_native_override(name, value);
+            return true;
         }
         false
     }
@@ -503,6 +590,11 @@ impl Environment {
             }
         }
 
+        if let Some(mut value) = self.native_default(name) {
+            f(&mut value);
+            self.set_native_override(name, value);
+            return Ok(());
+        }
         Err(format!("Undefined variable: {}", name))
     }
 
@@ -530,6 +622,13 @@ impl Environment {
                 return Ok(changed);
             }
         }
+        if let Some(mut value) = self.native_default(name) {
+            let changed = f(&mut value)?;
+            if changed {
+                self.set_native_override(name, value);
+            }
+            return Ok(changed);
+        }
         Err(format!("Undefined variable: {}", name))
     }
 
@@ -547,6 +646,9 @@ impl Environment {
             }
         }
 
+        if self.native_defaults.as_ref().is_some_and(|map| map.contains_key(name)) {
+            return Ok(());
+        }
         Err(format!("Undefined variable: {}", name))
     }
 }
@@ -601,5 +703,110 @@ mod permission_snapshot_tests {
         snapshot.pop_scope();
         assert!(child.ensure_mutable_for_mutation("local").is_err());
         assert!(snapshot.get("local").is_none());
+    }
+}
+
+#[cfg(test)]
+mod module_native_default_tests {
+    use super::*;
+
+    fn compact() -> Environment {
+        let mut env = super::super::Interpreter::new().env;
+        env.share_module_native_defaults();
+        env
+    }
+
+    #[test]
+    fn native_defaults_are_shared_but_overrides_and_permissions_are_snapshots() {
+        let mut original = compact();
+        let mut snapshot = original.clone();
+        assert!(std::sync::Arc::ptr_eq(
+            original.native_defaults.as_ref().unwrap(),
+            snapshot.native_defaults.as_ref().unwrap()
+        ));
+        assert!(original.scopes[0].len() < 32);
+        assert!(matches!(original.get("abs"), Some(Value::NativeFunction(name)) if name == "abs"));
+        snapshot.push_scope();
+        snapshot.assign_checked("abs".into(), Value::Int(7)).unwrap();
+        snapshot.pop_scope();
+        assert!(matches!(snapshot.get("abs"), Some(Value::Int(7))));
+        assert!(matches!(original.get("abs"), Some(Value::NativeFunction(_))));
+        original.define_with_kind("abs".into(), Value::Int(9), BindingKind::Const);
+        assert!(original.assign_checked("abs".into(), Value::Null).is_err());
+        assert!(original.ensure_mutable_for_mutation("abs").is_err());
+        assert!(matches!(snapshot.get("abs"), Some(Value::Int(7))));
+        assert!(matches!(snapshot.visible_bindings()["abs"].0, Value::Int(7)));
+        assert!(matches!(snapshot.visible_bindings()["sqrt"].0, Value::NativeFunction(_)));
+    }
+
+    #[test]
+    fn default_override_writes_merge_and_rejected_mutations_do_not_publish() {
+        let mut env = compact();
+        let mut invocation = env.clone();
+        invocation.track_capture_writes();
+        invocation.try_mutate_checked("abs", |_| Ok(false)).unwrap();
+        assert!(invocation.try_mutate_checked("sqrt", |_| Err("reject".into())).is_err());
+        assert!(invocation.capture_writes.as_ref().unwrap().1.is_empty());
+        assert!(!invocation.scopes[0].contains_key("abs"));
+        invocation.mutate_checked("abs", |value| *value = Value::Int(11)).unwrap();
+        invocation
+            .try_mutate_checked("sqrt", |value| {
+                *value = Value::Int(12);
+                Ok(true)
+            })
+            .unwrap();
+        env.merge_capture_writes(&invocation);
+        assert!(matches!(env.get("abs"), Some(Value::Int(11))));
+        assert!(matches!(env.get("sqrt"), Some(Value::Int(12))));
+        let mut another = compact();
+        another.push_scope();
+        another.set("abs".into(), Value::Int(13));
+        assert!(another.mutate("sqrt", |value| *value = Value::Int(14)));
+        another.pop_scope();
+        assert!(matches!(another.get("abs"), Some(Value::Int(13))));
+        assert!(matches!(another.get("sqrt"), Some(Value::Int(14))));
+    }
+
+    #[test]
+    fn compact_captures_keep_exactly_the_same_visible_names() {
+        let plain = super::super::Interpreter::new().env;
+        let mut compact = plain.clone();
+        compact.share_module_native_defaults();
+        for source in ["return abs(-1)", "return sqrt(abs(-4))", "return 7"] {
+            let body = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap()).parse();
+            let before = plain.capture_for_callable(&[], &body, None).visible_bindings();
+            let after = compact.capture_for_callable(&[], &body, None).visible_bindings();
+            let mut before_names = before.keys().cloned().collect::<Vec<_>>();
+            let mut after_names = after.keys().cloned().collect::<Vec<_>>();
+            before_names.sort();
+            after_names.sort();
+            assert_eq!(before_names, after_names, "{source}");
+        }
+    }
+
+    #[test]
+    fn native_defaults_follow_global_swaps_and_preserve_aliases() {
+        let mut env = compact();
+        assert!(matches!(env.get("println"), Some(Value::NativeFunction(name)) if name == "print"));
+        let mut empty = Environment::new();
+        env.swap_global_scope(&mut empty);
+        assert!(env.get("abs").is_none());
+        assert!(matches!(empty.get("abs"), Some(Value::NativeFunction(_))));
+        let snapshot = empty.global_snapshot();
+        assert!(matches!(snapshot.get("abs"), Some(Value::NativeFunction(_))));
+        let mut overridden = super::super::Interpreter::new().env;
+        overridden.define("abs".into(), Value::NativeFunction("sqrt".into()));
+        overridden.define_with_kind(
+            "floor".into(),
+            Value::NativeFunction("floor".into()),
+            BindingKind::Const,
+        );
+        overridden.share_module_native_defaults();
+        assert!(
+            matches!(overridden.get("abs"), Some(Value::NativeFunction(name)) if name == "sqrt")
+        );
+        assert!(overridden.assign_checked("floor".into(), Value::Null).is_err());
+        assert!(overridden.scopes[0].contains_key("abs"));
+        assert!(overridden.scopes[0].contains_key("floor"));
     }
 }

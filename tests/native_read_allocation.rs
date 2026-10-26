@@ -353,3 +353,33 @@ fn byte_materialization_does_not_grow_the_output_buffer_repeatedly() {
     }
     assert!(counts.iter().all(|count| *count == counts[0]), "buffer growth: {counts:?}");
 }
+
+#[test]
+fn imported_environment_snapshots_do_not_copy_native_preload_tables() {
+    let directory = tempfile::tempdir().unwrap();
+    std::fs::write(
+        directory.path().join("preloads.kujo"),
+        "export func read(items) { return items[0] }",
+    )
+    .unwrap();
+    let mut loader = kujo::module::ModuleLoader::new();
+    loader.add_search_path(directory.path());
+    let module = loader.load_module("preloads").unwrap();
+    let Value::Function(_, _, Some(captured)) = &module.exports["read"] else {
+        panic!("captured function")
+    };
+    let env = captured.lock().unwrap();
+    std::hint::black_box(env.clone());
+    ALLOCATIONS.with(|v| v.set(0));
+    REQUESTED_BYTES.with(|v| v.set(0));
+    TRACK.with(|v| v.set(true));
+    for _ in 0..64 {
+        std::hint::black_box(env.clone());
+    }
+    TRACK.with(|v| v.set(false));
+    assert!(ALLOCATIONS.with(Cell::get) < 2_048, "native preload names were copied per snapshot");
+    assert!(
+        REQUESTED_BYTES.with(Cell::get) < 524_288,
+        "native preload map was copied per snapshot"
+    );
+}

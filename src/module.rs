@@ -479,7 +479,9 @@ impl ModuleLoader {
                 }
             }
 
-            let module_env = Arc::new(Mutex::new(interpreter.env.clone()));
+            let mut captured_environment = interpreter.env.clone();
+            captured_environment.share_module_native_defaults();
+            let module_env = Arc::new(Mutex::new(captured_environment));
 
             let mut exports = HashMap::new();
             for export_name in export_names {
