@@ -79,4 +79,3 @@ The four attribution controls and all **12 state/snapshot executions** (four
 fixtures × VM/interpreter/JIT) passed. Rust formatting, runner syntax and diff
 checks passed. No runtime source changed, so no new full-suite pass is claimed;
 the prior final-runtime 150-checksum result remains historical evidence.
-
