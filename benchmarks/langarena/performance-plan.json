@@ -32,7 +32,10 @@
     "component_controls": 4,
     "call_allocation_controls": 32,
     "semantic_controls": 60,
-    "remaining": ["Unrelated user-binding copies per imported helper call", "Module-global array copy-on-write per mutating call"],
+    "remaining": [
+      "Unrelated user-binding copies per imported helper call",
+      "Module-global array copy-on-write per mutating call"
+    ],
     "limits": "No runtime change or speed claim; VM/JIT allocation differences are retained. Task globals, public maps and native pointer lifetimes must remain correct."
   },
   "capture_independent_helpers_verification_2026_10_26": {
@@ -147,7 +150,11 @@
         "INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md",
         "index-root-order-2026-10-26.json",
         "CAPTURE_INDEPENDENT_HELPERS_2026_10_26.md",
-        "capture-independent-helpers-2026-10-26.json"
+        "capture-independent-helpers-2026-10-26.json",
+        "MODULE_OWNER_ISOLATION_2026_10_26.md",
+        "module-owner-isolation-2026-10-26.json",
+        "CAPTURE_FRAME_POOL_2026_10_26.md",
+        "capture-frame-pool-2026-10-26.json"
       ]
     },
     {
@@ -4955,5 +4962,31 @@
     ],
     "control": "Renaming only the helper parameter preserves both writes in all three modes",
     "fix_applied": false
+  },
+  "capture_frame_pool_verification_2026_10_26": {
+    "runtime_commit": "6228389e18087d571943a27edac13dd5aed83c43",
+    "status": "verified",
+    "report": "CAPTURE_FRAME_POOL_2026_10_26.md",
+    "evidence": "capture-frame-pool-2026-10-26.json",
+    "library_passes": 1138,
+    "library_ignored": 8,
+    "integration_passes": 289,
+    "integration_ignored": 1,
+    "test_size_checksums": 150,
+    "imported_allocation_controls": 32,
+    "imported_semantic_controls": 48,
+    "captured_read_allocation_controls": 32,
+    "captured_read_semantic_controls": 48,
+    "module_owner_allocation_controls": 128,
+    "module_owner_semantic_controls": 192,
+    "allocation_result": "VM write-helper traffic at width128 is28requests/18578bytes per added call across0/128/2048 extra bindings; captured reads are24requests/1160bytes across mutable/immutable bindings and tested widths. JIT differences remain recorded.",
+    "regression_gates": "Both tracked allocation gates reject the accepted baseline for the expected setup-growth reason and pass on the candidate after all semantic controls pass.",
+    "limits": "Append traffic has a fixed-3requests/+1520bytes per run; slope stays linear. Collection-width detachment is unchanged. Bounded pooling does not eliminate map traversal, active-prefix snapshots or oversized-owner fallback. Allocation traffic is not speed or peak memory.",
+    "remaining": [
+      "Module collection-width copying with public-owner publication preserved",
+      "Capture traversal and materialization outside the covered reuse paths",
+      "Remaining authorized sections3/4 work and subsequent review cutoff",
+      "Later compiled-execution, full-production, platform/release and clean-host acceptance"
+    ]
   }
 }

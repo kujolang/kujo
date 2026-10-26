@@ -1,6 +1,6 @@
 # Kujo performance implementation checklist
 
-Reviewed scope: 2026-10-25. This is the human-readable tracker for
+Reviewed scope: 2026-10-26. This is the human-readable tracker for
 `performance-plan.json`. Check a box only when its stated gate has evidence.
 Historical passes do not certify a later runtime revision. A timeout is incomplete,
 and a stopped case is cancelled, not failed. Sections 1 and 2 have completed their available local diagnosis. The user has
@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `b34a0b8`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`live-capture-owner-2026-10-26.json`).
-- [x] Latest relevant gate: 1,128 library passes, eight ignored; 283 distinct
-  integration passes, one unrelated ignored (`live-capture-owner-2026-10-26.json`).
+- [x] Latest verified runtime `6228389`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`capture-frame-pool-2026-10-26.json`).
+- [x] Latest relevant gate: 1,138 library passes, eight ignored; 289 distinct
+  integration passes, one manual profiling test ignored (`capture-frame-pool-2026-10-26.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -96,6 +96,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Remove redundant mutable permission entries from imported environment snapshots: 64 calls fall from 92,129 requests / 13,840,564 bytes to 61,977 / 11,334,789.
 - [x] Share immutable canonical native-default metadata in module environments; preserve overrides, snapshots and native-loop ownership. Runtime `8b4111b` passes 1,114 library tests, 204 integrations and 150 checksums. Seven-pair local priority medians are within 5%; see [native-default report](IMPORTED_NATIVE_DEFAULTS_2026_10_25.md).
 - [x] Avoid captured-environment setup for proven parameter/local synchronous helpers (`2c342ef`). Per-added-call read traffic is flat across 0/128/2,048 unrelated bindings and 128/2,048-element arrays; the allocation regression gate fails on the baseline and passes on the candidate. 1,133 library tests, 286 integration tests and 150 test-size checksums pass; ignored profiling tests are listed in the report. General captured-binding and mutable-module write costs remain open. See [measured results and limits](CAPTURE_INDEPENDENT_HELPERS_2026_10_26.md).
+- [x] Reuse bounded private capture-frame map/name storage (`6228389`), preserving public owners, callback publication and snapshots. Both allocation gates reproduce the baseline cost and pass on the candidate; write setup is flat across 0/128/2,048 unrelated bindings, and captured reads also cover immutable bindings. 1,138 library tests, 289 integrations, 150 test-size checksums and module-owner controls pass. Width copying and map traversal remain open. See [verification and tradeoffs](CAPTURE_FRAME_POOL_2026_10_26.md).
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
@@ -108,7 +109,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Preserve channel-ordered capture visibility across active task/caller reentry with public owner maps and independent snapshots intact. All 33 scenarios, 1,128 library tests, 283 distinct integration tests, linear append allocation controls and 150 test-size checksums pass. Interpreter regressions are enabled by default. See [owner-backed verification](LIVE_CAPTURE_OWNER_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for user-defined binding materialization; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
+Section 3 remains open for capture-map traversal, active-prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 
@@ -224,7 +225,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations after these optimizations (`b34a0b8`; live-capture-owner-2026-10-26.json). Repeat for later runtime changes.
+- [x] Recheck all 150 test-size combinations after these optimizations (`6228389`; capture-frame-pool-2026-10-26.json). Repeat for later runtime changes.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
