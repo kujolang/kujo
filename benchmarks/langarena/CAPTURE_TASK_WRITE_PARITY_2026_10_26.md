@@ -1,5 +1,9 @@
 # Captured task-write publication gaps
 
+Status update: ordinary global-helper journal scope is fixed in `15a225d`; see
+[accepted verification](TASK_HELPER_JOURNAL_VERIFICATION_2026_10_26.md).
+The other task ownership gaps below remain open. Original reproductions are retained.
+
 Two language tasks invoke aliases of one ordinary captured function. One writes
 `a = 1`, the other writes `b = 1`. A shared counter and channel hold both calls
 until both have written; then the caller joins both tasks and reads `a + b`.
