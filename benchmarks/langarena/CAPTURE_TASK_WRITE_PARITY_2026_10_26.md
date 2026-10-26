@@ -2,7 +2,9 @@
 
 Status update: ordinary global-helper journal scope is fixed in `15a225d`; see
 [accepted verification](TASK_HELPER_JOURNAL_VERIFICATION_2026_10_26.md).
-The other task ownership gaps below remain open. Original reproductions are retained.
+Ordinary task lost-write publication is now fixed in `0b87ccb`; see
+[accepted verification](ORDINARY_TASK_WRITE_VERIFICATION_2026_10_26.md).
+Task globals and ordered task/caller visibility remain open. Original reproductions are retained.
 
 Two language tasks invoke aliases of one ordinary captured function. One writes
 `a = 1`, the other writes `b = 1`. A shared counter and channel hold both calls
@@ -131,3 +133,13 @@ The `module_global_isolation_controls` evidence includes exact module/main
 sources, binary and regression-source hashes, and all twelve observations.
 Refreshing task globals must preserve these lexical boundaries while fixing the
 same-environment stale-global cases above.
+
+## Remaining gaps rechecked on `0b87ccb`
+
+All twelve bounded observations completed successfully without timeouts. Ordinary
+and async task globals still read 9 rather than the new submission value 42 in
+the interpreter. Both ordered task/caller visibility fixtures still print 1 then
+9 instead of 9 then 9. VM/JIT satisfy all four controls. Exact sources, binary
+hash and outputs are under `remaining_gaps` in
+[the current verification evidence](ordinary-task-write-verification-2026-10-26.json).
+These remaining defects are not closed by the lost-write publication fix.
