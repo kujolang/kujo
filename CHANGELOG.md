@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve current captured state during recursive calls, callbacks, global-helper
+  and generator suspension, including reentry through a separate VM bridge.
+  Separately created closures and saved collection snapshots remain independent.
+
 - Align VM/JIT direct indexed writes with the interpreter: evaluate the index
   before reading the target binding, so an index expression that replaces the
   container updates that replacement. Preserve snapshots, expression side effects

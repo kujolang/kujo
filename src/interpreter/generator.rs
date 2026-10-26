@@ -101,8 +101,7 @@ impl Interpreter {
             state.running = true;
             (continuation, state.policy.intersection(&self.capability_policy))
         };
-        let mut caller_env = std::mem::replace(&mut self.env, continuation.env);
-        self.env.swap_global_scope(&mut caller_env);
+        let caller_env = self.enter_shared_environment(continuation.env);
         let caller_return = self.return_value.take();
         let caller_control = std::mem::replace(&mut self.control_flow, super::ControlFlow::None);
         let caller_policy = std::mem::replace(&mut self.capability_policy, policy);
@@ -113,8 +112,7 @@ impl Interpreter {
             })
             .unwrap_or_else(Err);
         self.generator_resume_depth -= 1;
-        self.env.swap_global_scope(&mut caller_env);
-        continuation.env = std::mem::replace(&mut self.env, caller_env);
+        continuation.env = self.leave_shared_environment(caller_env);
         self.return_value = caller_return;
         self.control_flow = caller_control;
         self.capability_policy = caller_policy;

@@ -367,7 +367,26 @@ impl SpawnCapturedValue {
 }
 
 /// Main interpreter that executes Kujo programs
+// Captured calls replace globals; ordinary helpers and generators only suspend
+// locals. Keeping both transitions makes recursive capture ownership explicit.
+struct EnvironmentActivation {
+    capture: Option<(Arc<Mutex<Environment>>, usize)>,
+    caller: Environment,
+}
+
+enum SuspendedEnvironment {
+    Untracked(Environment),
+    Tracked,
+}
+
+enum GlobalCallEnvironment {
+    Untracked(Environment),
+    Tracked,
+}
+
 pub struct Interpreter {
+    environment_activations: Vec<EnvironmentActivation>,
+
     pub env: Environment,
     pub return_value: Option<Value>,
     control_flow: ControlFlow,
@@ -452,6 +471,7 @@ impl Interpreter {
         let mut module_loader = ModuleLoader::new();
         module_loader.set_capability_policy(capability_policy.clone());
         Interpreter {
+            environment_activations: Vec::new(),
             env,
             return_value: None,
             control_flow: ControlFlow::None,
@@ -2185,11 +2205,166 @@ impl Interpreter {
         self.output = Some(output);
     }
 
-    /// Preserve the caller by moving it, not deeply cloning its bytecode globals.
-    /// The captured environment is still cloned to retain snapshot semantics.
-    fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) -> Environment {
-        let environment = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
-        std::mem::replace(&mut self.env, environment)
+    fn active_capture_index(&self, captured: &Arc<Mutex<Environment>>) -> Option<usize> {
+        self.environment_activations.iter().rposition(|frame| {
+            frame.capture.as_ref().is_some_and(|(owner, _)| Arc::ptr_eq(owner, captured))
+        })
+    }
+
+    // A shared-global transition moves only the global scope. The captured locals
+    // remain in the first suspended caller; its globals live up to the next captured
+    // transition (or in the current environment if there is no such transition).
+    fn capture_global_owner_index(&self, index: usize) -> Option<usize> {
+        self.environment_activations
+            .iter()
+            .enumerate()
+            .skip(index + 1)
+            .find_map(|(index, frame)| frame.capture.is_some().then_some(index))
+    }
+
+    fn active_capture_snapshot(&self, index: usize) -> Environment {
+        let count = self.environment_activations[index].capture.as_ref().unwrap().1;
+        let locals = self
+            .environment_activations
+            .get(index + 1)
+            .map(|frame| &frame.caller)
+            .unwrap_or(&self.env);
+        let globals = self
+            .capture_global_owner_index(index)
+            .map(|owner| &self.environment_activations[owner].caller)
+            .unwrap_or(&self.env);
+        let mut snapshot = locals.capture_prefix_snapshot(count);
+        if !std::ptr::eq(locals, globals) {
+            snapshot.copy_global_scope_from(globals);
+        }
+        snapshot
+    }
+
+    fn restore_active_capture(&mut self, index: usize, completed: &Environment) {
+        let count = self.environment_activations[index].capture.as_ref().unwrap().1;
+        let globals = self.capture_global_owner_index(index);
+        let locals = self
+            .environment_activations
+            .get_mut(index + 1)
+            .map(|frame| &mut frame.caller)
+            .unwrap_or(&mut self.env);
+        locals.restore_capture_locals(completed, count);
+        let globals = match globals {
+            Some(owner) => &mut self.environment_activations[owner].caller,
+            None => &mut self.env,
+        };
+        globals.copy_global_scope_from(completed);
+    }
+
+    // Shared-global helpers, generators and foreign VM callbacks can change a
+    // suspended capture. Keep the full synchronization path for these boundaries.
+    fn invalidate_capture_observations(&mut self) {
+        self.env.invalidate_capture_observation();
+        for frame in &mut self.environment_activations {
+            frame.caller.invalidate_capture_observation();
+        }
+    }
+
+    // A bytecode callback can enter another Interpreter instance. Publish only the
+    // newest activation of each shared capture before crossing that boundary, then
+    // refresh it afterward, including on an error return. Caller-only scopes remain
+    // in their owning activation and separately created captures retain identity.
+    fn publish_active_captures_for_bridge(&mut self) -> Vec<Arc<Mutex<Environment>>> {
+        self.invalidate_capture_observations();
+        let mut owners: Vec<Arc<Mutex<Environment>>> = Vec::new();
+        for index in (0..self.environment_activations.len()).rev() {
+            let Some((owner, _)) = &self.environment_activations[index].capture else {
+                continue;
+            };
+            if owners.iter().any(|existing| Arc::ptr_eq(existing, owner)) {
+                continue;
+            }
+            let snapshot = self.active_capture_snapshot(index);
+            *owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = snapshot;
+            owners.push(owner.clone());
+        }
+        owners
+    }
+
+    fn refresh_active_captures_after_bridge(&mut self, owners: Vec<Arc<Mutex<Environment>>>) {
+        for owner in owners {
+            if let Some(index) = self.active_capture_index(&owner) {
+                let completed =
+                    owner.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+                self.restore_active_capture(index, &completed);
+            }
+        }
+    }
+
+    fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) {
+        let active = self.active_capture_index(captured);
+        let mut environment = match active {
+            Some(index) => self.active_capture_snapshot(index),
+            None => captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone(),
+        };
+        environment.observe_capture_writes(active.is_some());
+        let count = environment.scopes.len();
+        let caller = std::mem::replace(&mut self.env, environment);
+        self.environment_activations
+            .push(EnvironmentActivation { capture: Some((captured.clone(), count)), caller });
+    }
+
+    fn leave_captured_environment(&mut self, publish: bool) {
+        let frame = self.environment_activations.pop().expect("captured activation exists");
+        let (captured, _) = frame.capture.expect("captured activation has an owner");
+        let completed = std::mem::replace(&mut self.env, frame.caller);
+        if !publish || completed.capture_is_unchanged() {
+            return;
+        }
+        if let Some(index) = self.active_capture_index(&captured) {
+            self.restore_active_capture(index, &completed);
+        }
+        *captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = completed;
+    }
+
+    fn enter_shared_environment(&mut self, environment: Environment) -> SuspendedEnvironment {
+        self.invalidate_capture_observations();
+        let mut caller = std::mem::replace(&mut self.env, environment);
+        self.env.swap_global_scope(&mut caller);
+        if self.environment_activations.is_empty() {
+            SuspendedEnvironment::Untracked(caller)
+        } else {
+            self.environment_activations.push(EnvironmentActivation { capture: None, caller });
+            SuspendedEnvironment::Tracked
+        }
+    }
+
+    fn leave_shared_environment(&mut self, suspended: SuspendedEnvironment) -> Environment {
+        let mut caller = match suspended {
+            SuspendedEnvironment::Untracked(caller) => caller,
+            SuspendedEnvironment::Tracked => {
+                let frame = self.environment_activations.pop().expect("shared activation exists");
+                assert!(frame.capture.is_none());
+                frame.caller
+            }
+        };
+        self.env.swap_global_scope(&mut caller);
+        std::mem::replace(&mut self.env, caller)
+    }
+
+    fn enter_global_call_environment(&mut self) -> GlobalCallEnvironment {
+        if self.environment_activations.is_empty() {
+            return GlobalCallEnvironment::Untracked(self.env.enter_global_function());
+        }
+        let environment = self.env.generator_environment(false);
+        let suspended = self.enter_shared_environment(environment);
+        assert!(matches!(suspended, SuspendedEnvironment::Tracked));
+        self.env.push_scope();
+        GlobalCallEnvironment::Tracked
+    }
+
+    fn leave_global_call_environment(&mut self, caller: GlobalCallEnvironment) {
+        match caller {
+            GlobalCallEnvironment::Untracked(caller) => self.env.leave_global_function(caller),
+            GlobalCallEnvironment::Tracked => {
+                self.leave_shared_environment(SuspendedEnvironment::Tracked);
+            }
+        }
     }
 
     /// Helper function to call a user-defined function with given arguments
@@ -2210,11 +2385,12 @@ impl Interpreter {
     ) -> Value {
         match func {
             Value::BytecodeFunction { .. } => {
+                let active_captures = self.publish_active_captures_for_bridge();
                 let globals = self
                     .vm_globals
                     .clone()
                     .unwrap_or_else(|| Arc::new(Mutex::new(self.env.clone())));
-                crate::vm::VM::call_interpreter_callback(
+                let result = crate::vm::VM::call_interpreter_callback(
                     func.clone(),
                     args,
                     globals,
@@ -2224,7 +2400,9 @@ impl Interpreter {
                     self.vm_jit_requested,
                     &mut self.module_loader,
                 )
-                .unwrap_or_else(Value::Error)
+                .unwrap_or_else(Value::Error);
+                self.refresh_active_captures_after_bridge(active_captures);
+                result
             }
             Value::GeneratorDef(params, body, captured) => {
                 let arity = Self::function_arity("<anonymous generator>", params);
@@ -2253,7 +2431,7 @@ impl Interpreter {
                 // If this is a closure with captured environment, use it
                 // Otherwise just create a new scope on top of current
                 if let Some(closure_env_ref) = captured_env {
-                    let saved_env = self.enter_captured_environment(closure_env_ref);
+                    self.enter_captured_environment(closure_env_ref);
                     self.env.push_scope();
                     if let Some(name) = &body.lexical_name {
                         self.env.define(
@@ -2278,7 +2456,7 @@ impl Interpreter {
                         })
                     {
                         self.env.pop_scope();
-                        self.env = saved_env;
+                        self.leave_captured_environment(false);
                         self.call_stack.pop();
                         return error;
                     }
@@ -2303,8 +2481,7 @@ impl Interpreter {
                     self.env.pop_scope();
 
                     // Update the captured environment with the modified state
-                    *closure_env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                        std::mem::replace(&mut self.env, saved_env);
+                    self.leave_captured_environment(true);
 
                     // Pop from call stack
                     self.call_stack.pop();
@@ -2312,7 +2489,7 @@ impl Interpreter {
                     result
                 } else {
                     // Top-level function: hide unrelated caller-local scopes
-                    let caller_scopes = self.env.enter_global_function();
+                    let caller_scopes = self.enter_global_call_environment();
 
                     // Bind parameters to arguments
                     for (param, arg) in params.iter().zip(args.drain(..)) {
@@ -2325,7 +2502,7 @@ impl Interpreter {
                             interp.eval_stmts(&body.get())
                         })
                     {
-                        self.env.leave_global_function(caller_scopes);
+                        self.leave_global_call_environment(caller_scopes);
                         self.call_stack.pop();
                         return error;
                     }
@@ -2347,7 +2524,7 @@ impl Interpreter {
                     };
 
                     // Restore parent environment
-                    self.env.leave_global_function(caller_scopes);
+                    self.leave_global_call_environment(caller_scopes);
 
                     // Pop from call stack
                     self.call_stack.pop();
@@ -5846,7 +6023,7 @@ impl Interpreter {
 
                         // Handle closure with captured environment
                         if let Some(closure_env_ref) = captured_env {
-                            let saved_env = self.enter_captured_environment(&closure_env_ref);
+                            self.enter_captured_environment(&closure_env_ref);
                             self.env.push_scope();
                             if let Some(name) = &body.lexical_name {
                                 self.env.define(
@@ -5869,7 +6046,7 @@ impl Interpreter {
                                 })
                             {
                                 self.env.pop_scope();
-                                self.env = saved_env;
+                                self.leave_captured_environment(false);
                                 self.call_stack.pop();
                                 return error;
                             }
@@ -5891,16 +6068,13 @@ impl Interpreter {
 
                             self.env.pop_scope();
                             // Update the captured environment
-                            *closure_env_ref
-                                .lock()
-                                .unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                std::mem::replace(&mut self.env, saved_env);
+                            self.leave_captured_environment(true);
                             self.call_stack.pop();
 
                             result
                         } else {
                             // Top-level function: hide unrelated caller-local scopes
-                            let caller_scopes = self.env.enter_global_function();
+                            let caller_scopes = self.enter_global_call_environment();
 
                             for (param, arg) in params.iter().zip(evaluated_args) {
                                 self.env.define(param.clone(), arg);
@@ -5911,7 +6085,7 @@ impl Interpreter {
                                     interp.eval_stmts(&body.get())
                                 })
                             {
-                                self.env.leave_global_function(caller_scopes);
+                                self.leave_global_call_environment(caller_scopes);
                                 self.call_stack.pop();
                                 return error;
                             }
@@ -5931,7 +6105,7 @@ impl Interpreter {
                                 Value::Null
                             };
 
-                            self.env.leave_global_function(caller_scopes);
+                            self.leave_global_call_environment(caller_scopes);
                             self.call_stack.pop();
 
                             result
@@ -6016,7 +6190,7 @@ impl Interpreter {
 
                             // Handle closure with captured environment
                             if let Some(closure_env_ref) = captured_env {
-                                let saved_env = self.enter_captured_environment(&closure_env_ref);
+                                self.enter_captured_environment(&closure_env_ref);
                                 self.env.push_scope();
                                 if let Some(name) = &body.lexical_name {
                                     self.env.define(
@@ -6033,7 +6207,7 @@ impl Interpreter {
                                     if let Some(arg) = evaluated_args.get(i) {
                                         if Self::is_error_value(arg) {
                                             self.env.pop_scope();
-                                            self.env = saved_env;
+                                            self.leave_captured_environment(false);
                                             self.call_stack.pop();
                                             return arg.clone();
                                         }
@@ -6047,7 +6221,7 @@ impl Interpreter {
                                     })
                                 {
                                     self.env.pop_scope();
-                                    self.env = saved_env;
+                                    self.leave_captured_environment(false);
                                     self.call_stack.pop();
                                     return error;
                                 }
@@ -6070,21 +6244,18 @@ impl Interpreter {
 
                                 self.env.pop_scope();
                                 // Update the captured environment
-                                *closure_env_ref
-                                    .lock()
-                                    .unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                    std::mem::replace(&mut self.env, saved_env);
+                                self.leave_captured_environment(true);
                                 self.call_stack.pop();
 
                                 return result;
                             } else {
                                 // Top-level function: hide unrelated caller-local scopes
-                                let caller_scopes = self.env.enter_global_function();
+                                let caller_scopes = self.enter_global_call_environment();
 
                                 for (i, param) in params.iter().enumerate() {
                                     if let Some(arg) = evaluated_args.get(i) {
                                         if Self::is_error_value(arg) {
-                                            self.env.leave_global_function(caller_scopes);
+                                            self.leave_global_call_environment(caller_scopes);
                                             self.call_stack.pop();
                                             return arg.clone();
                                         }
@@ -6097,7 +6268,7 @@ impl Interpreter {
                                         interp.eval_stmts(&body.get())
                                     })
                                 {
-                                    self.env.leave_global_function(caller_scopes);
+                                    self.leave_global_call_environment(caller_scopes);
                                     self.call_stack.pop();
                                     return error;
                                 }
@@ -6118,7 +6289,7 @@ impl Interpreter {
                                     Value::Null
                                 };
 
-                                self.env.leave_global_function(caller_scopes);
+                                self.leave_global_call_environment(caller_scopes);
                                 self.call_stack.pop();
 
                                 return result;

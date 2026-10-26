@@ -71,9 +71,62 @@ pub struct Environment {
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
     capture_writes: Option<(usize, HashSet<(usize, String)>)>,
+    // Allocation-free conservative proof for read-only synchronous activations.
+    // Local parameters are outside the captured prefix; unknown transitions
+    // invalidate the proof rather than assuming they cannot change captures.
+    capture_observation: Option<(usize, bool)>,
 }
 
 impl Environment {
+    pub(crate) fn observe_capture_writes(&mut self, inherit: bool) {
+        let changed = inherit && self.capture_observation.map_or(true, |(_, changed)| changed);
+        self.capture_observation = Some((self.scopes.len(), changed));
+    }
+
+    pub(crate) fn capture_is_unchanged(&self) -> bool {
+        matches!(self.capture_observation, Some((_, false)))
+    }
+
+    pub(crate) fn invalidate_capture_observation(&mut self) {
+        if let Some((_, changed)) = &mut self.capture_observation {
+            *changed = true;
+        }
+    }
+
+    /// Preserve capture scope/kind layout without copying recursive parameters.
+    pub(crate) fn capture_prefix_snapshot(&self, count: usize) -> Self {
+        Self {
+            scopes: self.scopes[..count].to_vec(),
+            binding_kinds: self.binding_kinds[..count].to_vec(),
+            native_defaults: self.native_defaults.clone(),
+            global_owner: self.global_owner.clone(),
+            capture_writes: self.capture_writes.clone(),
+            capture_observation: self.capture_observation,
+        }
+    }
+
+    pub(crate) fn copy_global_scope_from(&mut self, source: &Self) {
+        self.invalidate_capture_observation();
+        self.scopes[0].clone_from(&source.scopes[0]);
+        self.binding_kinds[0].clone_from(&source.binding_kinds[0]);
+        self.native_defaults.clone_from(&source.native_defaults);
+        if let (Some((_, target)), Some((_, writes))) =
+            (&mut self.capture_writes, &source.capture_writes)
+        {
+            target.extend(writes.iter().filter(|(index, _)| *index == 0).cloned());
+        }
+    }
+
+    pub(crate) fn restore_capture_locals(&mut self, completed: &Self, count: usize) {
+        self.invalidate_capture_observation();
+        self.scopes[1..count].clone_from_slice(&completed.scopes[1..count]);
+        self.binding_kinds[1..count].clone_from_slice(&completed.binding_kinds[1..count]);
+        if let (Some((_, target)), Some((_, writes))) =
+            (&mut self.capture_writes, &completed.capture_writes)
+        {
+            target.extend(writes.iter().filter(|(index, _)| *index > 0 && *index < count).cloned());
+        }
+    }
     /// Compact only unchanged, mutable, canonical builtin preloads in a module
     /// capture. Aliases, user overrides and immutable declarations remain stored.
     /// No shared Value or mutable map can reach a native globals pointer here.
@@ -110,7 +163,12 @@ impl Environment {
     }
 
     fn set_native_override(&mut self, name: &str, value: Value) {
-        Self::record_capture_write(&mut self.capture_writes, 0, name);
+        Self::record_capture_write(
+            &mut self.capture_writes,
+            &mut self.capture_observation,
+            0,
+            name,
+        );
         self.scopes[0].insert(name.to_owned(), value);
     }
 
@@ -136,9 +194,15 @@ impl Environment {
 
     fn record_capture_write(
         journal: &mut Option<(usize, HashSet<(usize, String)>)>,
+        observation: &mut Option<(usize, bool)>,
         index: usize,
         name: &str,
     ) {
+        if let Some((limit, changed)) = observation {
+            if index < *limit {
+                *changed = true;
+            }
+        }
         if let Some((limit, writes)) = journal {
             if index < *limit {
                 writes.insert((index, name.to_owned()));
@@ -154,6 +218,7 @@ impl Environment {
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
+            capture_observation: None,
         }
     }
 
@@ -287,6 +352,7 @@ impl Environment {
                 .then(|| std::sync::Arc::new(selected_defaults)),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
+            capture_observation: None,
         }
     }
 
@@ -343,6 +409,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
+            capture_observation: None,
         }
     }
 
@@ -370,6 +437,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
+            capture_observation: None,
         };
         self.push_scope();
         caller
@@ -391,6 +459,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
+            capture_observation: None,
         };
         self.scopes.append(&mut owner.scopes);
         self.binding_kinds.append(&mut owner.binding_kinds);
@@ -404,6 +473,7 @@ impl Environment {
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             capture_writes: None,
+            capture_observation: None,
         }
     }
 
@@ -419,6 +489,7 @@ impl Environment {
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             capture_writes: None,
+            capture_observation: None,
         };
         if capture_locals {
             result.scopes.extend(self.scopes.iter().skip(1).cloned());
@@ -454,6 +525,7 @@ impl Environment {
     pub fn define_with_kind(&mut self, name: String, value: Value, kind: BindingKind) {
         Self::record_capture_write(
             &mut self.capture_writes,
+            &mut self.capture_observation,
             self.scopes.len().saturating_sub(1),
             &name,
         );
@@ -507,7 +579,12 @@ impl Environment {
         // Try to find and update existing variable
         for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if scope.contains_key(&name) {
-                Self::record_capture_write(&mut self.capture_writes, index, &name);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    index,
+                    &name,
+                );
                 scope.insert(name, value);
                 return;
             }
@@ -530,7 +607,12 @@ impl Environment {
                 if !kind.allows_mutation() {
                     return Err(kind.reassignment_error(&name));
                 }
-                Self::record_capture_write(&mut self.capture_writes, scope_index, &name);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    scope_index,
+                    &name,
+                );
                 scope.insert(name, value);
                 return Ok(());
             }
@@ -557,7 +639,12 @@ impl Environment {
         // Find the scope containing this variable
         for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if let Some(value) = scope.get_mut(name) {
-                Self::record_capture_write(&mut self.capture_writes, index, name);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    index,
+                    name,
+                );
                 f(value);
                 return true;
             }
@@ -584,7 +671,12 @@ impl Environment {
                     return Err(kind.mutation_error(name));
                 }
 
-                Self::record_capture_write(&mut self.capture_writes, scope_index, name);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    scope_index,
+                    name,
+                );
                 f(value);
                 return Ok(());
             }
@@ -617,7 +709,12 @@ impl Environment {
                 }
                 let changed = f(value)?;
                 if changed {
-                    Self::record_capture_write(&mut self.capture_writes, scope_index, name);
+                    Self::record_capture_write(
+                        &mut self.capture_writes,
+                        &mut self.capture_observation,
+                        scope_index,
+                        name,
+                    );
                 }
                 return Ok(changed);
             }
