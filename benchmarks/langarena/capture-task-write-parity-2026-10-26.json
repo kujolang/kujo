@@ -64,5 +64,119 @@
     "tests/captured_bridge_contracts.rs": "24c5bec70966cdbe93d83656108970ef77b3eca5fcdb3c624d19a3a020300a67"
   },
   "expected_stdout": "2\n",
-  "scope": "Synchronous captured callbacks submitted as two overlapping language tasks; correctness only"
+  "scope": "Synchronous captured callbacks submitted as two overlapping language tasks; correctness only",
+  "async_helper_shadow": {
+    "source": "shared_set(\"started\", 0)\nlet left_gate := channel()\nlet right_gate := channel()\nfunc shadow(a) { return a }\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    async func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { b = 1 shadow(0) }\n        if key < 2 { shared_add_int(\"started\", 1) }\n        if key == 0 { left_gate.receive() }\n        if key == 1 { right_gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := apply_change(0)\nlet right := apply_change(1)\nwhile shared_get(\"started\") < 2 {}\nleft_gate.send(1)\nawait left\nright_gate.send(1)\nawait right\nprint(await apply_change(2))\n",
+    "binary_hashes": {
+      "before-kujo": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+      "candidate-kujo": "e3d545b2aa19ad6fbc1316b993bf4291a66f054c66637bf39a197c0b45d7f9fb"
+    },
+    "rows": [
+      {
+        "binary": "before-kujo",
+        "mode": "vm",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "mode": "interpreter",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "1\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "mode": "jit",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "vm",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "interpreter",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "1\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "jit",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      }
+    ]
+  },
+  "async_helper_renamed_control": {
+    "source": "shared_set(\"started\", 0)\nlet left_gate := channel()\nlet right_gate := channel()\nfunc shadow(unrelated) { return unrelated }\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    async func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { b = 1 shadow(0) }\n        if key < 2 { shared_add_int(\"started\", 1) }\n        if key == 0 { left_gate.receive() }\n        if key == 1 { right_gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := apply_change(0)\nlet right := apply_change(1)\nwhile shared_get(\"started\") < 2 {}\nleft_gate.send(1)\nawait left\nright_gate.send(1)\nawait right\nprint(await apply_change(2))\n",
+    "binary_hashes": {
+      "before-kujo": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+      "candidate-kujo": "e3d545b2aa19ad6fbc1316b993bf4291a66f054c66637bf39a197c0b45d7f9fb"
+    },
+    "rows": [
+      {
+        "binary": "before-kujo",
+        "mode": "vm",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "mode": "interpreter",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "before-kujo",
+        "mode": "jit",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "vm",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "interpreter",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "binary": "candidate-kujo",
+        "mode": "jit",
+        "exit": 0,
+        "timed_out": false,
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+      }
+    ]
+  }
 }

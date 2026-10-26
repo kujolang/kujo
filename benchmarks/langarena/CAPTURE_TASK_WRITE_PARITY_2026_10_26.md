@@ -1,4 +1,4 @@
-# Overlapping synchronous task callbacks lose distinct captured writes
+# Captured task-write publication gaps
 
 Two language tasks invoke aliases of one ordinary captured function. One writes
 `a = 1`, the other writes `b = 1`. A shared counter and channel hold both calls
@@ -27,3 +27,26 @@ extending write-set handling to ordinary task callbacks.
 
 This is related to the recursive capture-state bug, but remains independently
 reproducible after the current reentry candidate. No fix is claimed here.
+
+## Async helper parameters can masquerade as captured writes
+
+A second fixture uses the existing async write journal. Task zero writes captured
+`a = 1`; task one writes captured `b = 1` and calls a global helper
+`func shadow(a) { return a }`. Separate channel gates force task zero to commit
+before task one. Expected final sum is `2`; interpreter execution prints `1` on
+both baseline and candidate. VM/JIT-enabled print `2`. Renaming only the helper
+parameter to `unrelated` makes all six baseline/candidate runs print `2`.
+These twelve additional bounded observations are in the same JSON evidence file.
+
+`Environment::enter_global_function` suspends caller locals but retains the
+capture journal and its original scope limit. The helper parameter now occupies
+scope index 1, which previously held captured locals. Defining helper parameter
+`a` records `(1, a)` as a capture write. After caller scopes are restored, merging
+that journal publishes the old captured `a` value over the other task's update.
+The name-only control and explicit commit ordering distinguish this from a
+same-binding atomicity race.
+
+Task-write handling therefore needs both ordinary-callback coverage and journals
+that follow their actual binding scopes through helper/generator suspension.
+Simply enabling the current journal on more call sites is insufficient. The
+current reentry candidate leaves this existing async helper case unresolved.

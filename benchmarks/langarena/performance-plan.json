@@ -4896,5 +4896,21 @@
       "Captured-state reentry and user-defined binding materialization",
       "Production-size, clean-host, platform and competitive acceptance"
     ]
+  },
+  "capture_task_write_review_2026_10_26": {
+    "status": "open",
+    "baseline_runtime": "3a9cbe4",
+    "candidate": "uncommitted synchronous reentry candidate",
+    "evidence": [
+      "CAPTURE_TASK_WRITE_PARITY_2026_10_26.md",
+      "capture-task-write-parity-2026-10-26.json"
+    ],
+    "observations": 18,
+    "findings": [
+      "Ordinary captured task callbacks publish whole environments and lose distinct writes in interpreter",
+      "Async journals can mistake global-helper parameters for captured writes after caller scopes are suspended"
+    ],
+    "control": "Renaming only the helper parameter preserves both writes in all three modes",
+    "fix_applied": false
   }
 }
