@@ -16,13 +16,13 @@ export func await_callback(callback, value) { let result := await callback(value
     )
     .unwrap();
     fs::write(dir.join("main.kujo"), source).unwrap();
-    let outputs = [false, true]
+    let outputs = ["vm", "interpreter", "jit"]
         .into_iter()
-        .map(|interpreter| {
+        .map(|runtime| {
             let mut cmd = Command::new(env!("CARGO_BIN_EXE_kujo"));
             cmd.current_dir(&dir).args(["run", "main.kujo"]);
-            if interpreter {
-                cmd.arg("--interpreter");
+            if runtime != "vm" {
+                cmd.arg(format!("--{runtime}"));
             }
             if restricted {
                 cmd.arg("--untrusted");
@@ -132,7 +132,7 @@ print(await_callback(callback, 2))
 }
 
 #[test]
-fn byte_length_is_exact_in_both_restricted_runtimes() {
+fn byte_length_is_exact_in_all_restricted_runtimes() {
     for output in run_case(
         "byte_length",
         r#"
