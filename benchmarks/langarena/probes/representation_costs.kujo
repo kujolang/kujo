@@ -1,0 +1,41 @@
+// Diagnostic inputs only. Generate separate copies for each operation/width.
+func exercise() {
+    let width := 128
+    let operation := "bytes"
+    let rounds := 64
+    mut items := []
+    mut i := 0
+    while i < width { items = push(items, 65) i += 1 }
+    let encoded := bytes(items)
+    let text := repeat("é", width)
+    mut total := 0
+    i = 0
+    env_set("KUJO_ALLOCATION_PHASE", "4")
+    if operation == "bytes" {
+        while i < rounds {
+            let converted := bytes(items)
+            total += byte_length(converted)
+            i += 1
+        }
+    } else if operation == "utf8" {
+        while i < rounds {
+            let converted := utf8_encode(text)
+            let decoded := utf8_decode(converted)
+            total += len(decoded)
+            i += 1
+        }
+    } else if operation == "byte_index" {
+        while i < rounds { total += encoded[width - 1] i += 1 }
+    } else if operation == "iterator_snapshot" {
+        for item in items { total += item items[0] = 9 }
+    } else { throw("Unknown diagnostic operation") }
+    env_set("KUJO_ALLOCATION_PHASE", "5")
+    if operation == "byte_index" { assert_equal(total, rounds * 65) }
+    else if operation == "iterator_snapshot" {
+        assert_equal(total, width * 65)
+        assert_equal(items[0], 9)
+        assert_equal(encoded[0], 65)
+    } else { assert_equal(total, rounds * width) }
+    print("REPRESENTATION PASS")
+}
+exercise()

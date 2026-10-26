@@ -153,3 +153,24 @@ allocation probe for phase traffic and the standard CLI for wall/RSS observation
 
 See [the fix report](../ALLOCATION_COLLECTION_FIXES_2026_10_25.md) for exact
 allocation observations, ownership restrictions and remaining gates.
+
+## Imported setup, parameter slots and representation controls
+
+`call-slots-generate.rb OUTPUT` creates zero-, one-, eight-, 32- and 128-argument
+kernels and refuses to overwrite files. Small arities run 200,000 calls; wider
+arities run 20,000. Each verifies an exact sum of distinct arguments. This measures
+frame metadata scaling, not an Arena algorithm. Run frozen before/after binaries
+sequentially, alternate order for seven pairs, and retain all samples.
+
+`representation_costs.kujo` checks `bytes`, `utf8`, `byte_index` or
+`iterator_snapshot`; generate separate copies with widths 128 and 2,048. Phase 4
+excludes initial collection construction. Preserve source hashes and ordered
+validation. Timing controls use 4,096 byte conversions; allocation controls use
+64 operations. Interpreter checks semantics/timing; the allocation probe measures
+VM/JIT main-thread requested traffic. RSS is collected separately.
+
+The [follow-up report](../IMPORTED_SETUP_AND_BYTES_2026_10_25.md) preserves all
+356 observations plus targeted repeats of initially slower cases. Exact drivers,
+commands and sources are embedded in its JSON evidence. Compilation must finish
+before timing; test-size and diagnostic results do not establish clean-host or
+competitive acceptance.

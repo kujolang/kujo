@@ -92,14 +92,17 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Remove demonstrated avoidable hot-call allocations (10,000-call allocation control).
 - [x] Reduce argument conversion/copying/temporary vectors (ordinary arguments move; legacy compatibility retained).
 - [x] Reuse bounded frame storage with recursion/reentrancy isolation (32 buffers, at most 256 slots each; values cleared).
-- [ ] Eliminate remaining repeated immutable metadata scans where measured; successful arity-check copies are removed, but parameter-slot/name scans remain.
-- [ ] Reduce fixed environment materialization for imported helpers: 64 calls still request 92,129 allocations / 13,840,564 bytes. Width-dependent normalization did not reproduce.
+- [x] Cache ordinary parameter-slot/name metadata per immutable code object; public code edits invalidate the cache. Legacy receiver-field lookup remains unchanged.
+- [x] Remove redundant mutable permission entries from imported environment snapshots: 64 calls fall from 92,129 requests / 13,840,564 bytes to 61,977 / 11,334,789.
+- [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for fixed imported environment/setup cost.
+Section 3 remains open for fixed imported environment/setup cost. Follow-up evidence:
+[imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
+`imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 
 ## 4. Collection and access fixes (verified global-write fix; broader review open)
 
@@ -109,8 +112,9 @@ Section 3 remains open for fixed imported environment/setup cost.
 - [x] Reuse valid depth evidence without repeated full-container scans in the changed path.
 - [x] Verify changed-path invalidation for external growth, root replacement, deep-value rejection/repair and aliases; existing nested-path suites pass.
 - [x] Check sustained dictionary deletion, stack and queue costs (256/1,024/4,096 diagnostic operations; linear scaling).
-- [ ] Remove unnecessary iterator owners only where independently demonstrated safe; no iterator change this round.
-- [ ] Complete broader byte/string conversion and indexing cost review; byte semantics regressions passed, no new representation optimization claimed.
+- [x] Review observable iterator snapshot costs with source mutation; first detachment is required in the tested case, so no owner was removed.
+- [x] Measure representative byte conversion, UTF-8, indexing and iterator scaling; reserve bytes(array) output once, preserve ordered validation and snapshots.
+- [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
 - [ ] Resolve existing direct-global reentrant-index evaluation-order divergence before changing its behavior; this round preserves each runtime's baseline result.

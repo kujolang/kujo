@@ -4635,5 +4635,37 @@
       "Goose/Rust competitive acceptance",
       "150 production passes"
     ]
+  },
+  "imported_setup_bytes_review_2026_10_25": {
+    "status": "verified_targeted_fixes_with_remaining_items",
+    "runtime_commits": [
+      "c00515c",
+      "133d4c2",
+      "0d0f365"
+    ],
+    "report": "IMPORTED_SETUP_AND_BYTES_2026_10_25.md",
+    "evidence": "imported-setup-and-bytes-2026-10-25.json",
+    "verification": {
+      "final_checksums": 150,
+      "final_integration_passed": 201,
+      "final_integration_ignored": 1,
+      "first_fix_library_passed": 1109,
+      "first_fix_library_ignored": 8,
+      "library_revision_limit": "Full library run applies to c00515c; final integration includes exact-final bytecode units and final normal release library/CLI",
+      "imported_observations": 56,
+      "final_observations": 356,
+      "targeted_recheck_observations": 66
+    },
+    "remaining": [
+      "Captured value-environment clone cost: 61,977 requests / 11,334,789 bytes per 64 imported calls",
+      "Legacy receiver field metadata and profile-led specialized representation review",
+      "Existing direct-global reentrant-index semantic decision",
+      "Clean-host/competitive, native CPU attribution, production and platform acceptance"
+    ],
+    "not_claimed": [
+      "All section 3/4 items closed",
+      "Universal call/JIT speedup",
+      "Production-size or Goose/Rust acceptance"
+    ]
   }
 }
