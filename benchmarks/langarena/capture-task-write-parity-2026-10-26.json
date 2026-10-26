@@ -354,5 +354,99 @@
     },
     "expected_stdout": "[9, 1]\n[42, 1]\n42\n",
     "contract": "docs/LANGUAGE_SPEC.md section5.7: Task globals are submission snapshots; aliases of one captured closure retain its mutable state."
+  },
+  "task_caller_reentry_visibility": {
+    "baseline_runtime": "45360b9",
+    "binary_sha256": "2a008edbc513672c01994bc6cb6fb691ac928c35dcfb2956b867ce95718f9399",
+    "scope": "Coordinated task/caller capture visibility; no concurrent read-modify-write or timing claim",
+    "expected_stdout": "9\n9\n",
+    "sources": {
+      "outer-write": "func factory() {\n    mut data := 1\n    func step(n) {\n        if n == 0 { return data }\n        data = 9\n        let handle := spawn_task(func() { return step(0) })\n        return await await_task(handle)\n    }\n    return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(0))\n",
+      "worker-write": "func factory() {\n    mut data := 1\n    func step(n) {\n        if n == 0 { data = 9 return 0 }\n        if n == 2 { return data }\n        let handle := spawn_task(func() { return step(0) })\n        await await_task(handle)\n        return data\n    }\n    return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(2))\n"
+    },
+    "rows": [
+      {
+        "case": "outer-write",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/outer-write.kujo"
+        ],
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false
+      },
+      {
+        "case": "outer-write",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "--interpreter",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/outer-write.kujo"
+        ],
+        "stdout": "1\n9\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false
+      },
+      {
+        "case": "outer-write",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "--jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/outer-write.kujo"
+        ],
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0,
+        "timed_out": false
+      },
+      {
+        "case": "worker-write",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/worker-write.kujo"
+        ],
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false
+      },
+      {
+        "case": "worker-write",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "--interpreter",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/worker-write.kujo"
+        ],
+        "stdout": "1\n9\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false
+      },
+      {
+        "case": "worker-write",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-helper-journal-2026-10-26/before-kujo",
+          "run",
+          "--jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/task-capture-reentry-2026-10-26/worker-write.kujo"
+        ],
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0,
+        "timed_out": false
+      }
+    ]
   }
 }

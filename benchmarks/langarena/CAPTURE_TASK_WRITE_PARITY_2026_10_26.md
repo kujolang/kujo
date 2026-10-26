@@ -79,3 +79,21 @@ submission globals from persistent captured locals; fixing only name/scope
 journal pollution cannot satisfy this control. Exact source, binary and candidate
 source hashes are recorded under `task_global_submission_snapshot`. This is a
 pre-existing mismatch, not a regression introduced by the V4 reentry candidate.
+
+## Task/caller reentry still reads stale active captures
+
+Two coordinated controls on accepted synchronous-reentry runtime `45360b9`
+expose a remaining task boundary. In the first, an active captured function
+writes `data = 9`, spawns an alias that reads the same capture, and awaits it.
+In the second, the task writes `data = 9` and its awaiting caller then reads the
+capture. Both should print `9`, followed by `9` from a later call. VM/JIT-enabled
+do so; the interpreter prints `1`, then `9` in both controls. All six processes
+exit successfully without timeouts. Exact sources and the binary hash are under
+`task_caller_reentry_visibility` in the evidence JSON.
+
+These are ordered visibility checks, not concurrent read-modify-write tests.
+The synchronous activation stack and VM-bridge publication do not synchronize
+an active caller with a separate task worker. Merging different-binding writes
+at return alone cannot correct the stale read before the active call returns.
+Task ownership work must cover both publication and visibility at task/await
+boundaries. The helper-parameter journal patch under verification is separate.
