@@ -448,5 +448,31 @@
         "timed_out": false
       }
     ]
+  },
+  "ordinary_task_global_submission_snapshot": {
+    "baseline_runtime": "15a225d",
+    "binary_sha256": "d05a034b03c13d9d1ea87689b427d7c2d0a97f7f5a399ab2f95fd29f4af7be11",
+    "source": "mut global_value := 0\nfunc factory() {\n mut local_value := 0\n func work(write) {\n  if write { global_value = 9 local_value += 1 }\n  return [global_value, local_value]\n }\n return work\n}\nlet work := factory()\nprint(await await_task(spawn_task(func() { return work(true) })))\nglobal_value = 42\nprint(await await_task(spawn_task(func() { return work(false) })))\nprint(global_value)\n",
+    "expected_stdout": "[9, 1]\n[42, 1]\n42\n",
+    "rows": [
+      {
+        "mode": "vm",
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "mode": "interpreter",
+        "stdout": "[9, 1]\n[9, 1]\n42\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "mode": "jit",
+        "stdout": "[9, 1]\n[42, 1]\n42\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0
+      }
+    ]
   }
 }

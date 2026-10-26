@@ -101,3 +101,18 @@ an active caller with a separate task worker. Merging different-binding writes
 at return alone cannot correct the stale read before the active call returns.
 Task ownership work must cover both publication and visibility at task/await
 boundaries. The helper-parameter journal patch under verification is separate.
+
+## Ordinary task submission globals also remain stale
+
+The stale-global case also reproduces through `spawn_task` of an ordinary
+captured function on accepted runtime `15a225d`. The first task writes global 9
+and captured local 1. The parent changes its global to 42 before submitting the
+second task. VM/JIT return `[42, 1]`; the interpreter returns `[9, 1]`. The parent
+still reads 42 in every mode. All three runs exit successfully without a timeout.
+
+Exact source, binary hash and outputs are recorded under
+`ordinary_task_global_submission_snapshot` in the accompanying JSON. This extends
+the existing task-global defect to ordinary callbacks; it is not a new timing
+claim. Refreshing globals only in the async task entry path would leave this
+case unfixed. Imported module lexical globals must remain distinct from caller
+globals when correcting both paths.
