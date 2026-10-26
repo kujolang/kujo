@@ -102,7 +102,9 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Fix synchronous captured-state reentry, including callbacks, helper/generator suspension and VM bridges, while preserving independent snapshots. Runtime `45360b9` passes 48 focused cases, 259 integrations plus nine callback tests, 1,114 library tests, all 150 checksums, and helper/priority timing gates. See [verification and measured limits](CAPTURE_REENTRY_VERIFICATION_2026_10_26.md). Task ownership defects remain below.
 - [x] Exclude ordinary global-helper parameters from async captured-write journals while retaining actual global and subsequent captured writes. Runtime `15a225d` passes all three runtimes; see [helper-journal verification](TASK_HELPER_JOURNAL_VERIFICATION_2026_10_26.md).
 - [x] Preserve different-binding captured writes across overlapping ordinary task callbacks. Runtime `0b87ccb` passes all correctness gates and 15 local timing groups; see [verification and measured costs](ORDINARY_TASK_WRITE_VERIFICATION_2026_10_26.md).
-- [ ] Refresh task globals from each submission while retaining captured locals, and preserve ordered capture visibility across task/caller reentry. Both defects reproduce on `0b87ccb`; see [task-write evidence](CAPTURE_TASK_WRITE_PARITY_2026_10_26.md).
+- [x] Refresh task globals from each submission while retaining captured locals and separate module/callback namespaces (`2b13158`). See [current verification](TASK_GLOBALS_CALLBACK_LOADER_2026_10_26.md).
+- [x] Avoid discarded callback module-loader discovery (`2e020ee`), retaining cache, capability and error behavior.
+- [ ] Preserve channel-ordered capture visibility across active task/caller reentry; scalar and collection cases still fail in the interpreter. Submission/await synchronization alone is insufficient.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for user-defined binding materialization and task capture ownership; native preload copying and synchronous captured-state reentry are fixed. Follow-up evidence:
@@ -244,6 +246,12 @@ Gate: all 150 production checksums verified; no reduced-input substitutions.
 - [ ] Obtain separate authorization for upstream submission or publication.
 
 ## Execution policy
+
+User clarification, 2026-10-26: local background load changes continuously.
+Treat local elapsed-time comparisons as diagnostics, not strict percentage gates
+or competitive rankings. Keep correctness, checksums, ownership and allocation
+checks active. Full speed comparisons remain pending on a clean server.
+
 
 Profile and reproduce the slow cases before another broad production sweep.
 Use targeted production checks after meaningful fixes, and full sweeps at
