@@ -1,4 +1,4 @@
-# Captured recursive writes — unresolved interpreter parity gap
+# Captured recursive writes — unresolved AST activation state loss
 
 A returned closure updates its captured array from a recursive call, then reads
 that same binding after the recursive call returns. VM and JIT-enabled execution
@@ -53,6 +53,27 @@ routes. They establish that both entering and leaving a recursive activation
 need correct shared-state visibility. The passing factory/alias control is an
 invariant for the fix, not evidence that recursive capture state is correct.
 
+## Expanded controls and imported runtime bridge
+
+A further 36 correctness observations are pinned to runtime commit `8b4111b` in
+`capture-reentry-bridge-controls-2026-10-26.json`, including complete source,
+binary identity, output and exit status. The eleven ordinary controls pass in VM
+and JIT-enabled execution. Interpreter execution fails nine state-reentry cases
+and passes the distinct-factory/alias and immutable-binding controls. The added
+failing routes include a global helper, generator, mixed global/captured helpers,
+and an array whose earlier snapshot must remain unchanged.
+
+A separate imported factory accepts a caller-defined relay and returns an AST
+closure. The closure calls the relay, which reenters the same closure. The inner
+call writes `9`; both outer calls incorrectly return `1` in **all three modes**.
+In VM/JIT-enabled mode, the caller-defined relay crosses a bytecode callback
+bridge. This establishes that an interpreter-instance-only activation stack is
+not sufficient coverage for the fix. The test does not claim native JIT execution.
+
+These are existing failures on the committed baseline, not regressions introduced
+by the pending indexed-assignment change. All processes exit zero; output
+comparisons detect the failures. No timings were collected from these controls.
+
 ## Required follow-up
 
 
@@ -61,12 +82,13 @@ invariant for the fix, not evidence that recursive capture state is correct.
 - Keep separately created closures, factory instances and user collection copies
   isolated. Preserve immutable binding checks and caller-local scope boundaries.
 - Cover all synchronous interpreter call routes, errors/unwinding, mutual or
-  indirect reentry, and interaction with existing asynchronous write journals.
+  indirect reentry, reentry through separate VM callback bridges, and interaction
+  with existing asynchronous write journals.
 - Add regression tests on VM, interpreter and JIT; verify actual native execution
   where it is claimed. Measure environment/call costs before and after.
 - Recheck captured-root indexed assignment after correcting capture reentry; do
   not infer the correct root from a stale interpreter activation.
 
 No fix for this issue has been applied. It remains open in checklist section 3.
-The native-default candidate is undergoing its separate verification; its existing
-checksum results do not close this gap.
+Native-default sharing is verified and committed separately; its checksum passes
+do not close this gap.

@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "scope": "Unresolved captured-state reentry correctness; no performance or native-execution claim",
+  "expanded_controls": {
+    "baseline_commit": "8b4111b",
+    "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+    "cases": {
+      "direct_inner_write": [
+        "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } step(0) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "outer_write_visible_to_inner": [
+        "func factory() {\n mut data := 1\n func step(n) { if n == 0 { return data } data = 9 let seen := step(0) return [seen,data] }\n return step\n}\nlet step := factory()\nprint(step(1))\n",
+        "[9, 9]\n"
+      ],
+      "callback_inner_write": [
+        "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } let ignored := map([0],step) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "computed_callee_inner_write": [
+        "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } let aliases := [step] aliases[0](0) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "caught_inner_error": [
+        "func factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 throw(\"inner\") } try { step(0) } except err {} return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "distinct_factory_and_alias_control": [
+        "func factory() { mut data := 1 func step() { data += 1 return data } return step }\nlet first := factory()\nlet alias := first\nlet second := factory()\nprint(first())\nprint(alias())\nprint(second())\nprint(first())\n",
+        "2\n3\n2\n4\n"
+      ],
+      "global_helper_reentry": [
+        "func relay(fn) { return fn(0) }\nfunc factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } relay(step) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "generator_reentry": [
+        "func* relay(fn) { yield fn(0) }\nfunc factory() {\n mut data := 1\n func step(n) {\n  if n == 0 { data = 9 return 0 }\n  let generator := relay(step)\n  for value in generator { assert_equal(value,0) }\n  return data\n }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "mixed_global_captured_reentry": [
+        "func relay(fn) { return fn(0) }\nfunc make_dispatch() { let marker := 5 func dispatch(fn) { return marker + relay(fn) } return dispatch }\nlet dispatch := make_dispatch()\nfunc bridge(fn) { return dispatch(fn) }\nfunc factory() {\n mut data := 1\n func step(n) { if n == 0 { data = 9 return 0 } assert_equal(bridge(step),5) return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "9\n9\n"
+      ],
+      "shared_array_snapshot": [
+        "func factory() {\n mut data := [1,2]\n func step(n) { if n == 0 { data[0] = 9 return 0 } if n < 0 { return data } step(0) return data }\n return step\n}\nlet step := factory()\nlet saved := step(-1)\nprint(step(1))\nprint(saved)\n",
+        "[9, 2]\n[1, 2]\n"
+      ],
+      "immutable_capture_reentry": [
+        "func factory() {\n let data := 7\n func step(n) { if n == 0 { data = 9 } try { step(0) } except error {} return data }\n return step\n}\nlet step := factory()\nprint(step(1))\nprint(step(1))\n",
+        "7\n7\n"
+      ]
+    },
+    "rows": [
+      {
+        "case": "direct_inner_write",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "direct_inner_write",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "direct_inner_write",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "outer_write_visible_to_inner",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[9, 9]\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "outer_write_visible_to_inner",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[1, 9]\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "outer_write_visible_to_inner",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[9, 9]\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "callback_inner_write",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "callback_inner_write",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "callback_inner_write",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "computed_callee_inner_write",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "computed_callee_inner_write",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "computed_callee_inner_write",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "caught_inner_error",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "caught_inner_error",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "caught_inner_error",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "distinct_factory_and_alias_control",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "2\n3\n2\n4\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "distinct_factory_and_alias_control",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "2\n3\n2\n4\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "distinct_factory_and_alias_control",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "2\n3\n2\n4\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "global_helper_reentry",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "global_helper_reentry",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "global_helper_reentry",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "generator_reentry",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "generator_reentry",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "generator_reentry",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "mixed_global_captured_reentry",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "mixed_global_captured_reentry",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "mixed_global_captured_reentry",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "9\n9\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "shared_array_snapshot",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "[9, 2]\n[1, 2]\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "shared_array_snapshot",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "[1, 2]\n[1, 2]\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "case": "shared_array_snapshot",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "[9, 2]\n[1, 2]\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      },
+      {
+        "case": "immutable_capture_reentry",
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "7\n7\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "immutable_capture_reentry",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "7\n7\n",
+        "stderr": "",
+        "passed": true
+      },
+      {
+        "case": "immutable_capture_reentry",
+        "mode": "jit",
+        "exit": 0,
+        "stdout": "7\n7\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": true
+      }
+    ]
+  },
+  "mixed_runtime_bridge": {
+    "baseline_commit": "8b4111b",
+    "binary_sha256": "2743e58da6470ccff6bf5947ed875df6a9ea0252021af578557e840b7e3532df",
+    "sources": {
+      "bridge_factory": "export func factory(relay) {\n    mut data := 1\n    func step(n) {\n        if n == 0 { data = 9 return 0 }\n        relay(step)\n        return data\n    }\n    return step\n}\n",
+      "bridge_main": "from bridge_factory import factory\nfunc relay(fn) { return fn(0) }\nlet step := factory(relay)\nprint(step(1))\nprint(step(1))\n"
+    },
+    "rows": [
+      {
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-final-2026-10-26/before-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/v2/bridge_main.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-final-2026-10-26/before-kujo",
+          "run",
+          "--interpreter",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/v2/bridge_main.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "",
+        "passed": false
+      },
+      {
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/index-root-order-final-2026-10-26/before-kujo",
+          "run",
+          "--jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/capture-reentry-2026-10-26/v2/bridge_main.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n1\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "passed": false
+      }
+    ]
+  }
+}
