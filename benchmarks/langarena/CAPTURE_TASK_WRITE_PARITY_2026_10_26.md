@@ -50,3 +50,12 @@ Task-write handling therefore needs both ordinary-callback coverage and journals
 that follow their actual binding scopes through helper/generator suspension.
 Simply enabling the current journal on more call sites is insufficient. The
 current reentry candidate leaves this existing async helper case unresolved.
+
+Three additional baseline controls cover a captured write after the helper
+returns, a nested global helper whose parameter shadows the captured binding,
+and a caught helper exception followed by a captured write. Each prints `2` in
+VM/JIT-enabled mode and `1` in the interpreter, with successful process exits
+and no timeouts. Their nine observations, sources and baseline binary hash are
+stored under `async_helper_scope_controls` in the JSON evidence. The eventual
+fix must restore journal scope after both normal and exceptional helper returns;
+excluding helper parameters alone must not discard subsequent captured writes.

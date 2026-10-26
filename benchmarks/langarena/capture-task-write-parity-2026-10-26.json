@@ -178,5 +178,116 @@
         "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
       }
     ]
+  },
+  "async_helper_scope_controls": {
+    "baseline_runtime_commit": "3a9cbe4",
+    "binary_sha256": "a1558587a9bd59497c73fc21d105b22011b61f8ca8cb2ecb48258c5c094dafbc",
+    "cases": {
+      "write_after_helper": [
+        "shared_set(\"started\", 0)\nlet left_gate := channel()\nlet right_gate := channel()\nfunc shadow(a) { return a }\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    async func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { shadow(0) b = 1 }\n        if key < 2 { shared_add_int(\"started\", 1) }\n        if key == 0 { left_gate.receive() }\n        if key == 1 { right_gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := apply_change(0)\nlet right := apply_change(1)\nwhile shared_get(\"started\") < 2 {}\nleft_gate.send(1)\nawait left\nright_gate.send(1)\nawait right\nprint(await apply_change(2))\n",
+        "2\n"
+      ],
+      "nested_helper": [
+        "shared_set(\"started\", 0)\nlet left_gate := channel()\nlet right_gate := channel()\nfunc inner(a) { return a } func shadow(value) { return inner(value) }\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    async func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { shadow(0) b = 1 }\n        if key < 2 { shared_add_int(\"started\", 1) }\n        if key == 0 { left_gate.receive() }\n        if key == 1 { right_gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := apply_change(0)\nlet right := apply_change(1)\nwhile shared_get(\"started\") < 2 {}\nleft_gate.send(1)\nawait left\nright_gate.send(1)\nawait right\nprint(await apply_change(2))\n",
+        "2\n"
+      ],
+      "caught_helper_error": [
+        "shared_set(\"started\", 0)\nlet left_gate := channel()\nlet right_gate := channel()\nfunc shadow(a) { throw(\"helper\") }\nfunc factory() {\n    mut a := 0\n    mut b := 0\n    async func apply_change(key) {\n        if key == 0 { a = 1 }\n        if key == 1 { try { shadow(0) } except err {} b = 1 }\n        if key < 2 { shared_add_int(\"started\", 1) }\n        if key == 0 { left_gate.receive() }\n        if key == 1 { right_gate.receive() }\n        return a + b\n    }\n    return apply_change\n}\nlet apply_change := factory()\nlet left := apply_change(0)\nlet right := apply_change(1)\nwhile shared_get(\"started\") < 2 {}\nleft_gate.send(1)\nawait left\nright_gate.send(1)\nawait right\nprint(await apply_change(2))\n",
+        "2\n"
+      ]
+    },
+    "rows": [
+      {
+        "case": "write_after_helper",
+        "mode": "vm",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      },
+      {
+        "case": "write_after_helper",
+        "mode": "interpreter",
+        "expected": "2\n",
+        "stdout": "1\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": false
+      },
+      {
+        "case": "write_after_helper",
+        "mode": "jit",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      },
+      {
+        "case": "nested_helper",
+        "mode": "vm",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      },
+      {
+        "case": "nested_helper",
+        "mode": "interpreter",
+        "expected": "2\n",
+        "stdout": "1\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": false
+      },
+      {
+        "case": "nested_helper",
+        "mode": "jit",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      },
+      {
+        "case": "caught_helper_error",
+        "mode": "vm",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      },
+      {
+        "case": "caught_helper_error",
+        "mode": "interpreter",
+        "expected": "2\n",
+        "stdout": "1\n",
+        "stderr": "",
+        "exit": 0,
+        "timed_out": false,
+        "passed": false
+      },
+      {
+        "case": "caught_helper_error",
+        "mode": "jit",
+        "expected": "2\n",
+        "stdout": "2\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "exit": 0,
+        "timed_out": false,
+        "passed": true
+      }
+    ],
+    "scope": "Correctness only; no timing or native JIT claim. Each control must preserve distinct-binding writes, including after nested or throwing helpers."
   }
 }
