@@ -94,6 +94,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Reuse bounded frame storage with recursion/reentrancy isolation (32 buffers, at most 256 slots each; values cleared).
 - [x] Cache ordinary parameter-slot/name metadata per immutable code object; public code edits invalidate the cache. Legacy receiver-field lookup remains unchanged.
 - [x] Remove redundant mutable permission entries from imported environment snapshots: 64 calls fall from 92,129 requests / 13,840,564 bytes to 61,977 / 11,334,789.
+- [x] Share immutable canonical native-default metadata in module environments; preserve overrides, snapshots and native-loop ownership. Runtime `8b4111b` passes 1,114 library tests, 204 integrations and 150 checksums. Seven-pair local priority medians are within 5%; see [native-default report](IMPORTED_NATIVE_DEFAULTS_2026_10_25.md).
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four controls and 12 runtime snapshot/state checks passed; optimization remains open.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
@@ -101,7 +102,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [ ] Fix interpreter captured-state reentry: a recursive call writes its shared capture, but the outer activation restores/publishes stale state. A fresh-read control reproduces VM/JIT versus interpreter divergence on the baseline and current candidate; see [capture reentry evidence](CAPTURE_REENTRY_PARITY_2026_10_26.md). Preserve separate-closure snapshots and verify every synchronous call route.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for fixed imported environment/setup cost. Follow-up evidence:
+Section 3 remains open for user-defined binding materialization and captured-state reentry; the native preload-copying component is fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 

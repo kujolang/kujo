@@ -4697,7 +4697,8 @@
     "scope": "Interpreter recursive captured-state visibility and persistence, checklist section3",
     "evidence": [
       "CAPTURE_REENTRY_PARITY_2026_10_26.md",
-      "capture-reentry-parity-2026-10-26.json"
+      "capture-reentry-parity-2026-10-26.json",
+      "capture-reentry-routes-2026-10-26.json"
     ],
     "baseline_runtime": "0d0f365",
     "reproduced_on_corrected_native_defaults_candidate": true,
@@ -4708,5 +4709,95 @@
       "Measure call/environment costs and recheck captured-root assignment after correction"
     ],
     "fix_applied": false
+  },
+  "native_default_sharing_2026_10_26": {
+    "status": "locally_verified_remaining_environment_costs_open",
+    "runtime_commit": "8b4111b1dd45a0b0c637c8c006a87bc915cbbe51",
+    "evidence": "imported-native-defaults-2026-10-26.json",
+    "report": "IMPORTED_NATIVE_DEFAULTS_2026_10_25.md",
+    "checks": {
+      "library_passed": 1114,
+      "library_ignored": 8,
+      "integration_passed": 204,
+      "integration_ignored": 1,
+      "test_size_checksums": 150,
+      "native_loop_executions": 2,
+      "read_observations": 56,
+      "write_observations": 52,
+      "priority_observations": 84,
+      "resource_observations": 4
+    },
+    "helper_allocations_64_calls": {
+      "before_requests": 61977,
+      "after_requests": 3353,
+      "before_bytes": 11334789,
+      "after_bytes": 291973
+    },
+    "priority_median_ratios": [
+      {
+        "benchmark": "Sort::Quick",
+        "runtime": "vm",
+        "median_ratio": 0.9973619266167402,
+        "range": [
+          0.9796793338681841,
+          1.069812500400486
+        ]
+      },
+      {
+        "benchmark": "Sort::Quick",
+        "runtime": "jit",
+        "median_ratio": 1.0103952507978369,
+        "range": [
+          0.9312090791615247,
+          1.0360054143998378
+        ]
+      },
+      {
+        "benchmark": "Sort::Merge",
+        "runtime": "vm",
+        "median_ratio": 1.00483199652935,
+        "range": [
+          0.9618808069567066,
+          1.0453556349343582
+        ]
+      },
+      {
+        "benchmark": "Sort::Merge",
+        "runtime": "jit",
+        "median_ratio": 1.0134673762275328,
+        "range": [
+          0.9613033448672212,
+          1.0578062010668077
+        ]
+      },
+      {
+        "benchmark": "Etc::NeuralNet",
+        "runtime": "vm",
+        "median_ratio": 1.0004750933468662,
+        "range": [
+          0.9534461553544513,
+          1.0792913347929316
+        ]
+      },
+      {
+        "benchmark": "Etc::NeuralNet",
+        "runtime": "jit",
+        "median_ratio": 0.9952246851402414,
+        "range": [
+          0.9583931502327634,
+          1.1606724310504664
+        ]
+      }
+    ],
+    "remaining": [
+      "Unused user-defined module bindings still cost one copied name per binding per call",
+      "Interpreter captured-state reentry and approved root-after-index implementation",
+      "Clean-host, production-size, platform, native CPU attribution and competitive acceptance"
+    ],
+    "not_claimed": [
+      "All sections3/4 complete",
+      "Native execution of imported helper diagnostics",
+      "Whole-language or competitive speedup"
+    ]
   }
 }
