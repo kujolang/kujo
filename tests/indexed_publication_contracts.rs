@@ -181,6 +181,89 @@ assert_equal(result[0][0], 20)
 "#,
 );
 
+const DICTIONARY_BOUNDARIES: (&str, &str) = (
+    r#"
+mut data := {"k": 0, "other": 2, "1": 4}
+mut array := [0, 1]
+export func warm() { data["k"] += 1 }
+export func batch(n) {
+    mut i := 0
+    while i < n { data["k"] += 1 i += 1 }
+    return data["k"]
+}
+export func mixed() {
+    data["k"] = 40
+    array[0] = 8
+    data["other"] = 3
+    return [data["k"], array[0], data["other"]]
+}
+export func identifier_key() { data["k"] = 41 let key := "k" return data[key] }
+export func integer_key() { data[1] = 77 return data[1] }
+export func missing_read() { data["k"] = 50 return data["missing"] }
+export func invalid_write() { data["k"] = 51 data[1.5] = 9 }
+func replace_index() { data = {"k": 100, "other": 2, "1": 4} return "k" }
+export func read_replaced() { data["k"] = 60 return data[replace_index()] }
+export func assign_replaced() { data["k"] = 70 data[replace_index()] = 110 return data["k"] }
+export func nonscalar() { data["k"] = 80 data["k"] = [1, 2] return data["k"][1] }
+export func snapshot() { return data }
+"#,
+    r#"
+from state import warm, batch, mixed, identifier_key, integer_key, missing_read, invalid_write, read_replaced, assign_replaced, nonscalar, snapshot
+warm()
+let original := snapshot()
+assert_equal(batch(8), 9)
+assert_equal(batch(8), 17)
+assert_equal(original["k"], 1)
+assert_equal(mixed(), [40, 8, 3])
+assert_equal(identifier_key(), 41)
+assert_equal(integer_key(), 77)
+mut caught := 0
+try { missing_read() } except e { caught += 1 }
+assert_equal(snapshot()["k"], 50)
+try { invalid_write() } except e { caught += 1 }
+assert_equal(snapshot()["k"], 51)
+assert_equal(caught, 2)
+assert_equal(read_replaced(), 60)
+assert_equal(snapshot()["k"], 100)
+assert_equal(assign_replaced(), 110)
+assert_equal(nonscalar(), 2)
+assert_equal(assign_replaced(), 110)
+let saved := snapshot()
+assert_equal(nonscalar(), 2)
+assert_equal(saved["k"], 110)
+assert_equal(original["other"], 2)
+"#,
+);
+
+const DICTIONARY_INTEGER_KEYS: (&str, &str) = (
+    r#"
+mut data := {"-9223372036854775808": 0, "9223372036854775807": 0, "-1": 0, "0": 0, "1": 0, "01": 99, "+1": 88}
+export func edit(key) { data[key] += 1 data[key] += 1 return data[key] }
+export func alternate(a, b) { data[a] += 1 data[b] += 1 return [data[a], data[b]] }
+export func insert(key) { data[key] = 7 return data[key] }
+export func snapshot() { return data }
+"#,
+    r#"
+from state import edit, alternate, insert, snapshot
+let original := snapshot()
+let minimum := parse_int("-9223372036854775808")
+for key in [minimum, 9223372036854775807, -1, 0, 1] {
+    assert_equal(edit(key), 2)
+    assert_equal(edit(key), 4)
+    let saved := snapshot()
+    assert_equal(edit(key), 6)
+    assert_equal(saved[key], 4)
+    assert_equal(original[key], 0)
+}
+assert_equal(alternate(0, 1), [7, 7])
+assert_equal(alternate(0, 1), [8, 8])
+assert_equal(insert(2), 7)
+assert_equal(edit(2), 9)
+assert_equal(snapshot()["01"], 99)
+assert_equal(snapshot()["+1"], 88)
+"#,
+);
+
 fn verify(mode: &str, case: (&str, &str)) {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(directory.path().join("state.kujo"), case.0).unwrap();
@@ -213,6 +296,13 @@ macro_rules! contracts {
     };
 }
 contracts!(vm_scalars, interpreter_scalars, jit_scalars, SCALARS);
+contracts!(vm_dictionary, interpreter_dictionary, jit_dictionary, DICTIONARY_BOUNDARIES);
+contracts!(
+    vm_dictionary_keys,
+    interpreter_dictionary_keys,
+    jit_dictionary_keys,
+    DICTIONARY_INTEGER_KEYS
+);
 contracts!(vm_index_effects, interpreter_index_effects, jit_index_effects, INDEX_EFFECTS);
 contracts!(vm_partial_errors, interpreter_partial_errors, jit_partial_errors, ERRORS);
 contracts!(

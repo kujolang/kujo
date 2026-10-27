@@ -53,6 +53,7 @@ enum CaptureWrites {
     One((usize, String)),
     Many(HashSet<(usize, String)>),
     Indexed(super::indexed_publication::IndexedPublication),
+    Dictionary(super::dictionary_publication::DictionaryPublication),
 }
 
 #[cfg(test)]
@@ -94,13 +95,15 @@ impl CaptureWrites {
             Self::Many(writes) => {
                 writes.insert(write);
             }
-            Self::Indexed(_) => unreachable!("private publication is not a task write journal"),
+            Self::Indexed(_) | Self::Dictionary(_) => {
+                unreachable!("private publication is not a task write journal")
+            }
         }
     }
 
     fn iter(&self) -> impl Iterator<Item = &(usize, String)> {
         let (first, rest) = match self {
-            Self::Empty | Self::Indexed(_) => (None, None),
+            Self::Empty | Self::Indexed(_) | Self::Dictionary(_) => (None, None),
             Self::One(write) => (Some(write), None),
             Self::Many(writes) => (None, Some(writes)),
         };
@@ -110,6 +113,38 @@ impl CaptureWrites {
     fn extend(&mut self, writes: impl IntoIterator<Item = (usize, String)>) {
         for write in writes {
             self.insert(write);
+        }
+    }
+
+    fn publication_name(&self) -> Option<&str> {
+        match self {
+            Self::Indexed(pending) => Some(pending.name()),
+            Self::Dictionary(pending) => Some(pending.name()),
+            _ => None,
+        }
+    }
+
+    fn publication_snapshot(&self) -> Option<Value> {
+        match self {
+            Self::Indexed(pending) => Some(pending.snapshot_value()),
+            Self::Dictionary(pending) => Some(pending.snapshot_value()),
+            _ => None,
+        }
+    }
+
+    fn publish(self, owner: Option<&mut Value>) -> Option<(String, Value)> {
+        match self {
+            Self::Indexed(pending) => Some(pending.publish(owner)),
+            Self::Dictionary(pending) => Some(pending.publish(owner)),
+            _ => None,
+        }
+    }
+
+    fn discard(self) -> Option<(String, Value)> {
+        match self {
+            Self::Indexed(pending) => Some(pending.discard()),
+            Self::Dictionary(pending) => Some(pending.discard()),
+            _ => None,
         }
     }
 
@@ -158,9 +193,10 @@ impl CaptureStoragePool {
     }
 
     pub(crate) fn recycle(&mut self, mut environment: Environment) {
-        if let Some((0, CaptureWrites::Indexed(pending))) = environment.capture_writes.take() {
-            let (name, value) = pending.discard();
-            environment.scopes[0].insert(name, value);
+        if let Some((0, pending)) = environment.capture_writes.take() {
+            if let Some((name, value)) = pending.discard() {
+                environment.scopes[0].insert(name, value);
+            }
         }
         if environment.scopes.capacity() > Self::MAX_SCOPES
             || environment.binding_kinds.capacity() > Self::MAX_SCOPES
@@ -283,8 +319,7 @@ pub struct Environment {
 impl Clone for Environment {
     fn clone(&self) -> Self {
         let mut scopes = self.scopes.clone();
-        if let Some(pending) = self.pending_indexed() {
-            let (name, value) = pending.clone().materialize();
+        if let Some((name, value)) = self.pending_snapshot_entry() {
             scopes[0].insert(name, value);
         }
         Self {
@@ -316,8 +351,27 @@ impl Environment {
         }
     }
 
+    fn pending_name(&self) -> Option<&str> {
+        match &self.capture_writes {
+            Some((0, pending)) => pending.publication_name(),
+            _ => None,
+        }
+    }
+
+    fn pending_snapshot_entry(&self) -> Option<(String, Value)> {
+        let Some((0, pending)) = &self.capture_writes else { return None };
+        Some((pending.publication_name()?.to_owned(), pending.publication_snapshot()?))
+    }
+
+    fn pending_dictionary(&self) -> Option<&super::dictionary_publication::DictionaryPublication> {
+        match &self.capture_writes {
+            Some((0, CaptureWrites::Dictionary(pending))) => Some(pending),
+            _ => None,
+        }
+    }
+
     pub(crate) fn pending_visible(&self, name: &str) -> bool {
-        self.pending_indexed().is_some_and(|pending| pending.name() == name)
+        self.pending_name() == Some(name)
             && !self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
     }
 
@@ -325,9 +379,10 @@ impl Environment {
         if !matches!(self.capture_writes, Some((0, _))) {
             return;
         }
-        if let Some((0, CaptureWrites::Indexed(pending))) = self.capture_writes.take() {
-            let (name, value) = pending.materialize();
-            self.scopes[0].insert(name, value);
+        if let Some((0, pending)) = self.capture_writes.take() {
+            if let Some((name, value)) = pending.publish(None) {
+                self.scopes[0].insert(name, value);
+            }
         }
     }
 
@@ -341,10 +396,11 @@ impl Environment {
         if !matches!(self.capture_writes, Some((0, _))) {
             return;
         }
-        if let Some((0, CaptureWrites::Indexed(pending))) = self.capture_writes.take() {
-            let slot = owner.scopes[0].get_mut(pending.name());
-            let (name, value) = pending.publish(slot);
-            self.scopes[0].insert(name, value);
+        if let Some((0, pending)) = self.capture_writes.take() {
+            let slot = pending.publication_name().and_then(|name| owner.scopes[0].get_mut(name));
+            if let Some((name, value)) = pending.publish(slot) {
+                self.scopes[0].insert(name, value);
+            }
         }
     }
 
@@ -352,7 +408,13 @@ impl Environment {
         if !self.pending_visible(name) {
             return None;
         }
-        let pending = self.pending_indexed().unwrap();
+        if let Some(pending) = self.pending_dictionary() {
+            return Some(
+                super::dictionary_publication::with_integer_key(index, |key| pending.get(key))
+                    .unwrap_or_else(|| Value::Error(format!("Missing map key: {index}"))),
+            );
+        }
+        let pending = self.pending_indexed()?;
         let resolved = if index < 0 { pending.len() as i64 + index } else { index };
         Some(if resolved < 0 {
             Value::Error(format!("Index out of bounds: {index}"))
@@ -373,8 +435,14 @@ impl Environment {
             || !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
             || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
             || self.binding_kinds[0].contains_key(name)
+            || self.pending_name().is_some_and(|pending| pending != name)
         {
             return false;
+        }
+        if self.pending_dictionary().is_some()
+            || matches!(self.scopes[0].get(name), Some(Value::Dict(_)))
+        {
+            return self.try_defer_dictionary_write(name, index, value);
         }
         let Value::Int(index) = index else { return false };
         let length = if let Some(pending) = self.pending_indexed() {
@@ -408,6 +476,64 @@ impl Environment {
                 Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Indexed(pending))),
                 Err((key, base)) => {
                     self.scopes[0].insert(key, Value::Array(base));
+                    return false;
+                }
+            }
+        }
+        self.invalidate_capture_observation();
+        true
+    }
+
+    pub(crate) fn dictionary_publication_read(&self, name: &str, key: &str) -> Option<Value> {
+        if !self.pending_visible(name) {
+            return None;
+        }
+        Some(
+            self.pending_dictionary()?
+                .get(key)
+                .unwrap_or_else(|| Value::Error(format!("Missing map key: {key:?}"))),
+        )
+    }
+
+    fn try_defer_dictionary_write(&mut self, name: &str, index: &Value, value: &Value) -> bool {
+        let Value::Int(value) = value else { return false };
+        if self.pending_dictionary().is_none()
+            && (!matches!(self.capture_writes, Some((0, CaptureWrites::Empty)))
+                || !matches!(self.scopes[0].get(name), Some(Value::Dict(base)) if Arc::strong_count(base) == 2))
+        {
+            return false;
+        }
+        match index {
+            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, *value),
+            Value::Int(index) => super::dictionary_publication::with_integer_key(*index, |key| {
+                self.try_defer_dictionary_key_write(name, key, *value)
+            }),
+            _ => false,
+        }
+    }
+
+    fn try_defer_dictionary_key_write(&mut self, name: &str, key: &str, value: i64) -> bool {
+        if let Some((0, CaptureWrites::Dictionary(pending))) = &mut self.capture_writes {
+            if !pending.try_record(key, value) {
+                return false;
+            }
+        } else {
+            if !matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
+                return false;
+            }
+            let Some(Value::Dict(base)) = self.scopes[0].get(name) else { return false };
+            if Arc::strong_count(base) != 2 || !base.contains_key(key) {
+                return false;
+            }
+            let (name, Value::Dict(base)) = self.scopes[0].remove_entry(name).unwrap() else {
+                unreachable!()
+            };
+            match super::dictionary_publication::DictionaryPublication::prepare(
+                name, base, key, value,
+            ) {
+                Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Dictionary(pending))),
+                Err((name, base)) => {
+                    self.scopes[0].insert(name, Value::Dict(base));
                     return false;
                 }
             }
@@ -507,8 +633,7 @@ impl Environment {
 
     fn materialized_scopes(&self) -> Vec<HashMap<String, Value>> {
         let mut scopes = self.scopes.clone();
-        if let Some(pending) = self.pending_indexed() {
-            let (name, value) = pending.clone().materialize();
+        if let Some((name, value)) = self.pending_snapshot_entry() {
             scopes[0].insert(name, value);
         }
         if let Some(link) = &self.live_capture {
@@ -625,7 +750,7 @@ impl Environment {
         count: usize,
         pool: &mut CaptureStoragePool,
     ) -> Self {
-        if self.pending_indexed().is_some() {
+        if self.pending_name().is_some() {
             return self.clone().capture_prefix_snapshot(count, pool);
         }
         let mut storage = pool.take();
@@ -651,7 +776,7 @@ impl Environment {
 
     pub(crate) fn copy_global_scope_from(&mut self, source: &Self) {
         self.flush_indexed_publication();
-        if source.pending_indexed().is_some() {
+        if source.pending_name().is_some() {
             return self.copy_global_scope_from(&source.clone());
         }
         self.invalidate_capture_observation();
@@ -818,7 +943,7 @@ impl Environment {
         body: &[crate::ast::Stmt],
         lexical_self: Option<&str>,
     ) -> Self {
-        if self.live_capture.is_some() || self.pending_indexed().is_some() {
+        if self.live_capture.is_some() || self.pending_name().is_some() {
             return self.detached_snapshot().capture_for_callable(params, body, lexical_self);
         }
         let names = self
@@ -969,7 +1094,7 @@ impl Environment {
     }
 
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
-        if self.live_capture.is_some() || self.pending_indexed().is_some() {
+        if self.live_capture.is_some() || self.pending_name().is_some() {
             return self.detached_snapshot().visible_bindings();
         }
         let mut visible = self
@@ -1007,7 +1132,7 @@ impl Environment {
     }
 
     pub(crate) fn global_snapshot(&self) -> Self {
-        if self.pending_indexed().is_some() {
+        if self.pending_name().is_some() {
             return self.clone().global_snapshot();
         }
         Self {
@@ -1136,7 +1261,7 @@ impl Environment {
     /// Metadata for a direct global-only recursive activation. Its globals are
     /// transferred separately; inherited writes still determine publication.
     pub(crate) fn recursive_global_environment(&self, pool: &mut CaptureStoragePool) -> Self {
-        if self.pending_indexed().is_some() {
+        if self.pending_name().is_some() {
             return self.clone().recursive_global_environment(pool);
         }
         let mut storage = pool.take();
@@ -1170,7 +1295,10 @@ impl Environment {
     /// Returns a cloned value if found
     pub fn get(&self, name: &str) -> Option<Value> {
         if self.pending_visible(name) {
-            return Some(self.pending_indexed().unwrap().snapshot_value());
+            return self
+                .capture_writes
+                .as_ref()
+                .and_then(|(_, pending)| pending.publication_snapshot());
         }
         // Search from innermost to outermost scope
         for (index, scope) in self.scopes.iter().enumerate().rev() {
@@ -1595,6 +1723,56 @@ mod indexed_publication_environment_tests {
         assert!(active.pending_indexed().is_none());
         assert_eq!(element(&active, 0), 20);
         assert!(matches!(active.capture_writes, Some((2, CaptureWrites::Empty))));
+    }
+
+    #[test]
+    fn dictionary_publication_and_array_writes_cannot_replace_each_others_journal() {
+        for dictionary_first in [false, true] {
+            let mut owner = Environment::new();
+            owner.define(
+                "map".into(),
+                Value::Dict(Arc::new([(Arc::from("key"), Value::Int(1))].into_iter().collect())),
+            );
+            owner.define("array".into(), Value::Array(Arc::new(vec![Value::Int(2)])));
+            let owner = Arc::new(Mutex::new(owner));
+            let mut active = Environment::capture_activation(&owner);
+            active.enable_indexed_publication();
+            active.push_scope();
+            let key = Value::Str(Arc::new("key".into()));
+            let writes = if dictionary_first {
+                [("map", key), ("array", Value::Int(0))]
+            } else {
+                [("array", Value::Int(0)), ("map", key)]
+            };
+            assert!(active.try_defer_index_write(writes[0].0, &writes[0].1, &Value::Int(9)));
+            assert!(!active.try_defer_index_write(writes[1].0, &writes[1].1, &Value::Int(9)));
+            active
+                .mutate_checked_runtime(writes[1].0, |root| {
+                    super::super::assignment::update_in_place(
+                        root,
+                        &[super::super::assignment::Access::Index(writes[1].1.clone())],
+                        Value::Int(9),
+                    )
+                    .unwrap();
+                })
+                .unwrap();
+            assert_eq!(active.pending_name(), Some(writes[0].0));
+            let snapshot = active.clone();
+            assert!(matches!(
+                snapshot.get("map").unwrap().dictionary_get("key"),
+                Some(Value::Int(9))
+            ));
+            assert!(
+                matches!(snapshot.get("array"), Some(Value::Array(a)) if matches!(a[0], Value::Int(9)))
+            );
+            active.pop_scope();
+            owner.lock().unwrap().publish_global_scope_from(&mut active);
+            let owner = owner.lock().unwrap();
+            assert!(matches!(owner.get("map").unwrap().dictionary_get("key"), Some(Value::Int(9))));
+            assert!(
+                matches!(owner.get("array"), Some(Value::Array(a)) if matches!(a[0], Value::Int(9)))
+            );
+        }
     }
 }
 

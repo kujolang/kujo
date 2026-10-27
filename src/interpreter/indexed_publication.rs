@@ -104,6 +104,7 @@ impl IndexedPublication {
         }
     }
 
+    #[cfg(test)]
     pub(super) fn materialize(self) -> (String, Value) {
         self.publish(None)
     }

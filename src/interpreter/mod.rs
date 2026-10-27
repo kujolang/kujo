@@ -24,6 +24,7 @@ mod capture_independence;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
+mod dictionary_publication;
 mod environment;
 pub mod generator;
 mod generator_lowering;
@@ -6866,11 +6867,17 @@ impl Interpreter {
                 // Only a literal or identifier index may bypass the ordinary
                 // object snapshot: neither can replace the object while read.
                 if let Expr::Identifier(name) = object.as_ref() {
-                    let scalar = if self.env.pending_visible(name) {
+                    let pending = if self.env.pending_visible(name) {
                         match index.as_ref() {
-                            Expr::Int(index) => Some(*index),
+                            Expr::Int(index) => self.env.indexed_publication_read(name, *index),
+                            Expr::String(key) => self.env.dictionary_publication_read(name, key),
                             Expr::Identifier(index) => match self.env.get(index) {
-                                Some(Value::Int(index)) => Some(index),
+                                Some(Value::Int(index)) => {
+                                    self.env.indexed_publication_read(name, index)
+                                }
+                                Some(Value::Str(key)) => {
+                                    self.env.dictionary_publication_read(name, &key)
+                                }
                                 _ => None,
                             },
                             _ => None,
@@ -6878,10 +6885,8 @@ impl Interpreter {
                     } else {
                         None
                     };
-                    if let Some(index) = scalar {
-                        if let Some(value) = self.env.indexed_publication_read(name, index) {
-                            return value;
-                        }
+                    if let Some(value) = pending {
+                        return value;
                     }
                 }
                 let obj_val = self.eval_expr(object);

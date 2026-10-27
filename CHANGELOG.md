@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Defer repeated integer writes to an existing captured-global dictionary key
+  until publication in eligible synchronous helpers. Preserve public pre-return
+  values, snapshots, recursion, callbacks and error ordering. Numeric-key admission
+  uses canonical decimal formatting without an extra heap allocation on fallback.
+
 - Defer bounded sparse scalar writes to captured global arrays until publication,
   avoiding repeated full-array copies in eligible synchronous helpers. Preserve
   public pre-return values, snapshots, binding permissions and error ordering;
