@@ -1378,14 +1378,28 @@ impl Environment {
     /// Metadata for a direct global-only recursive activation. Its globals are
     /// transferred separately; inherited writes still determine publication.
     pub(crate) fn recursive_global_environment(&self, pool: &mut CaptureStoragePool) -> Self {
+        self.recursive_prefix_environment(1, pool)
+    }
+
+    /// Empty private storage for a synchronous recursive transfer. Parameters
+    /// remain in the suspended caller, outside the transferred capture prefix.
+    pub(crate) fn recursive_prefix_environment(
+        &self,
+        count: usize,
+        pool: &mut CaptureStoragePool,
+    ) -> Self {
         if self.pending_name().is_some() {
-            return self.clone().recursive_global_environment(pool);
+            return self.clone().recursive_prefix_environment(count, pool);
         }
         let mut storage = pool.take();
-        storage.scopes.resize_with(1, HashMap::new);
-        storage.binding_kinds.resize_with(1, HashMap::new);
-        storage.scopes[0].clear();
-        storage.binding_kinds[0].clear();
+        storage.scopes.resize_with(count, HashMap::new);
+        storage.binding_kinds.resize_with(count, HashMap::new);
+        for scope in &mut storage.scopes {
+            scope.clear();
+        }
+        for kinds in &mut storage.binding_kinds {
+            kinds.clear();
+        }
         Self {
             scopes: storage.scopes,
             binding_kinds: storage.binding_kinds,
@@ -1406,6 +1420,14 @@ impl Environment {
         std::mem::swap(&mut self.native_defaults, &mut other.native_defaults);
         std::mem::swap(&mut self.scopes[0], &mut other.scopes[0]);
         std::mem::swap(&mut self.binding_kinds[0], &mut other.binding_kinds[0]);
+    }
+
+    pub(crate) fn swap_capture_prefix(&mut self, other: &mut Self, count: usize) {
+        self.swap_global_scope(other);
+        for index in 1..count {
+            std::mem::swap(&mut self.scopes[index], &mut other.scopes[index]);
+            std::mem::swap(&mut self.binding_kinds[index], &mut other.binding_kinds[index]);
+        }
     }
 
     /// Get a variable from the environment, searching from inner to outer scopes
@@ -2592,6 +2614,46 @@ mod capture_storage_pool_tests {
 #[cfg(test)]
 mod recursive_capture_storage_tests {
     use super::*;
+
+    #[test]
+    fn direct_live_prefix_transfer_preserves_parameters_owners_and_snapshots() {
+        let mut initial = Environment::new();
+        initial.define("global".into(), Value::Int(7));
+        initial.push_scope();
+        initial.define("items".into(), Value::array(vec![Value::Int(1)]));
+        initial.define_with_kind("fixed".into(), Value::Int(8), BindingKind::Const);
+        let owner = Arc::new(Mutex::new(initial));
+        let mut caller = Environment::capture_activation(&owner);
+        let snapshot = caller.detached_snapshot();
+        let key_pointer = caller.scopes[1].get_key_value("items").unwrap().0.as_ptr();
+        caller.push_scope();
+        caller.define("parameter".into(), Value::Int(99));
+        let mut pool = CaptureStoragePool::default();
+        let mut recursive = caller.recursive_prefix_environment(2, &mut pool);
+        recursive.swap_capture_prefix(&mut caller, 2);
+        assert!(caller.scopes[1].is_empty());
+        assert_eq!(recursive.scopes[1].get_key_value("items").unwrap().0.as_ptr(), key_pointer);
+        assert!(matches!(caller.get("parameter"), Some(Value::Int(99))));
+        assert!(recursive.get("parameter").is_none());
+        assert!(recursive.assign_checked("fixed".into(), Value::Int(0)).is_err());
+        recursive
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(2));
+            })
+            .unwrap();
+        assert!(
+            matches!(owner.lock().unwrap().get("items"), Some(Value::Array(items)) if items.len() == 2)
+        );
+        assert!(matches!(snapshot.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        recursive.swap_capture_prefix(&mut caller, 2);
+        assert_eq!(caller.scopes[1].get_key_value("items").unwrap().0.as_ptr(), key_pointer);
+        assert!(matches!(caller.get("items"), Some(Value::Array(items)) if items.len() == 2));
+        assert!(matches!(caller.get("parameter"), Some(Value::Int(99))));
+        assert!(caller.assign_checked("fixed".into(), Value::Int(0)).is_err());
+        assert!(recursive.scopes[1].is_empty());
+        pool.recycle(recursive);
+    }
 
     #[test]
     fn restoring_live_prefix_refreshes_names_kinds_and_keeps_snapshots() {

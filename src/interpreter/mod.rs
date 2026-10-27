@@ -2496,22 +2496,24 @@ impl Interpreter {
 
     fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) {
         let active = self.active_capture_index(captured);
-        // Direct synchronous reentry has no suspended local capture prefix.
-        // Move its private globals through the recursive call, just as ordinary
-        // helpers do. Public owner values remain untouched until publication.
+        // Direct synchronous reentry can transfer its private capture prefix.
+        // Live captured values stay in their public owner; only private maps
+        // move. Caller parameters remain outside the transferred prefix.
         if self.task_cancellation.is_none()
             && active.is_some_and(|index| {
                 index + 1 == self.environment_activations.len()
-                    && self.environment_activations[index].capture.as_ref().unwrap().1 == 1
+                    && (self.environment_activations[index].capture.as_ref().unwrap().1 == 1
+                        || self.env.has_live_capture())
             })
         {
+            let count = self.environment_activations[active.unwrap()].capture.as_ref().unwrap().1;
             let mut environment =
-                self.env.recursive_global_environment(&mut self.capture_storage_pool);
-            environment.swap_global_scope(&mut self.env);
+                self.env.recursive_prefix_environment(count, &mut self.capture_storage_pool);
+            environment.swap_capture_prefix(&mut self.env, count);
             environment.observe_capture_writes(true);
             let caller = std::mem::replace(&mut self.env, environment);
             self.environment_activations.push(EnvironmentActivation {
-                capture: Some((captured.clone(), 1)),
+                capture: Some((captured.clone(), count)),
                 caller,
                 globals: CapturedGlobals::RecursiveCaller,
             });
@@ -2590,7 +2592,7 @@ impl Interpreter {
 
     fn leave_captured_environment(&mut self, publish: bool) {
         let frame = self.environment_activations.pop().expect("captured activation exists");
-        let (captured, _) = frame.capture.expect("captured activation has an owner");
+        let (captured, count) = frame.capture.expect("captured activation has an owner");
         let mut completed = std::mem::replace(&mut self.env, frame.caller);
         let changed = !completed.capture_is_unchanged();
         if frame.globals == CapturedGlobals::RecursiveOwner {
@@ -2610,7 +2612,7 @@ impl Interpreter {
             return;
         }
         if frame.globals == CapturedGlobals::RecursiveCaller {
-            completed.swap_global_scope(&mut self.env);
+            completed.swap_capture_prefix(&mut self.env, count);
             if changed {
                 self.env.invalidate_capture_observation();
             }

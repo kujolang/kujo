@@ -43,6 +43,9 @@ assert_equal(step(2, false), [3, 3, 8128, 7])
 assert_equal(alias(2, true), [6, 6, 8128, 7])
 assert_equal(separate(1, false), [2, 2, 8128, 7])
 assert_equal(step(0, false), [7, 7, 8128, 7])
+assert_equal(step(16, false), [24, 24, 8128, 7])
+assert_equal(alias(16, true), [41, 41, 8128, 7])
+assert_equal(separate(0, false), [3, 3, 8128, 7])
 print("RECURSIVE LOCAL RESTORATION PASS")
 "#;
     std::fs::write(directory.path().join("owner.kujo"), module).unwrap();
