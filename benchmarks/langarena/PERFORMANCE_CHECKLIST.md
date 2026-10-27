@@ -132,20 +132,23 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   pairs, including exact baseline equality for fresh snapshots. All 1,162 library
   tests, 322 release integrations, 24 focused contracts and 150 test-size checksums
   pass; cold/append controls also pass. No elapsed-speed claim follows.
-- [ ] Reduce remaining module-width copying for nested state, broader dictionary
+- [x] Defer eligible repeated scalar writes to one array element in captured
+  struct/dictionary state (`ad68680`). [Runtime verification](NESTED_PUBLICATION_RUNTIME_2026_10_27.md)
+  proves flat added-call allocation across 128/2,048-element rows with one/eight
+  writes per helper. For 32 extra one-write calls at width 2,048, struct bytes
+  fall from 9,241,184 to 303,680 and dictionary bytes from 9,243,072 to 305,824.
+  All 128 module pairs and 72 additional controls avoid request/byte regressions,
+  including competing direct-array/dictionary writes. All 1,177 library tests,
+  339 release integrations and 150 test-size checksums pass. Real snapshots and
+  fallback paths retain value semantics; this is not an elapsed-speed claim.
+- [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
-  array and existing-key integer dictionary paths above do not close these costs.
-  The [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md) and its
-  rejected growing journal remain historical design evidence, not broader coverage.
-  [Nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) on `868dfd8`
-  isolates 32 full-row-sized allocations per 32 added helper calls, for both one
-  and eight writes per call. All 128 instrumented runs match the existing total
-  allocations; row buffers explain the measured width growth. The ownership fix
-  remains open, including fresh-snapshot and publication controls.
-  A [test-only storage candidate](NESTED_PUBLICATION_CANDIDATE_2026_10_27.md)
-  reuses the evaluated assignment path and passes 1,172 library tests, including
-  nine ownership/layout cases. Runtime integration and allocation proof are still
-  pending; this does not close nested-row copying.
+  publication paths above do not close these costs. The
+  [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md),
+  [nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) and
+  [test-only storage candidate](NESTED_PUBLICATION_CANDIDATE_2026_10_27.md) remain
+  historical design evidence. The accepted runtime report retains its rejected
+  first integration and the subsequent ownership/interference corrections.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global reentry and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. Follow-up evidence:
