@@ -4,6 +4,10 @@ require 'json'
 require 'digest'
 require 'fileutils'
 require 'open3'
+# The shared-helper route characterizes indirect reentry; it does not assert the
+# direct-recursion flatness contract. Both routes retain identical semantic gates.
+route = ENV.fetch('KUJO_RECURSIVE_CAPTURE_ROUTE', 'direct')
+abort 'Expected direct, shared or callback route' unless %w[direct shared callback].include?(route)
 abort 'Expected MATCHING_PROBE MATCHING_BINARY NEW_OUTPUT_DIR [BASELINE_PROBE]' unless [3, 4].include?(ARGV.size)
 probe, binary, root = ARGV.first(3).map { |path| File.expand_path(path) }
 baseline = ARGV[3] && File.expand_path(ARGV[3])
@@ -14,7 +18,7 @@ output = root + '/report.json'
 report = {runner_sha256: Digest::SHA256.file(__FILE__).hexdigest,
           probe_sha256: Digest::SHA256.file(probe).hexdigest,
           binary_sha256: Digest::SHA256.file(binary).hexdigest,
-          status: 'running', fixtures: [], rows: [], semantics: []}
+          status: 'running', route: route, fixtures: [], rows: [], semantics: []}
 if baseline
   report[:baseline_probe_sha256] = Digest::SHA256.file(baseline).hexdigest
   report[:baseline_rows] = []
@@ -41,6 +45,20 @@ begin
       }
       export func read_counter() { return counter }
     KUJO
+    if route == 'shared'
+      module_source.sub!('let nested := descend(n - 1)', 'let nested := read_bridge(n - 1)')
+      module_source.sub!('let nested := step(n - 1)', 'let nested := write_bridge(n - 1)')
+      module_source += "func read_bridge(n) { return descend(n) }\n"
+      module_source += "func write_bridge(n) { return step(n) }\n"
+    end
+    bridge_source = nil
+    if route == 'callback'
+      bridge_source = "export func invoke(f, n) { return f(n) }\n"
+      File.write(directory + '/bridge.kujo', bridge_source)
+      module_source = "from bridge import invoke\n" + module_source
+      module_source.sub!('let nested := descend(n - 1)', 'let nested := invoke(descend, n - 1)')
+      module_source.sub!('let nested := step(n - 1)', 'let nested := invoke(step, n - 1)')
+    end
     module_path = directory + '/recursive_state.kujo'
     File.write(module_path, module_source)
     [0, 1, 4].each do |depth|
@@ -65,7 +83,8 @@ begin
           meta = {bindings: bindings, depth: depth, operation: operation, calls: calls,
                   source_sha256: Digest::SHA256.file(path).hexdigest,
                   module_sha256: Digest::SHA256.file(module_path).hexdigest}
-          report[:fixtures] << meta.merge(source: source, module_source: module_source)
+          report[:fixtures] << meta.merge(source: source, module_source: module_source,
+                                         bridge_source: bridge_source)
           %w[vm jit].each do |mode|
             out, err, status = Open3.capture3(probe, mode, path)
             raise out + err unless status.success? && out == "RECURSIVE CAPTURE PASS\n"
@@ -107,13 +126,13 @@ report[:flat_depth_one_setup] = %w[vm jit].product(%w[read write]).all? do |mode
   rows.map { |r| r[:bindings] }.sort == [0, 128, 2048] &&
     rows.map { |r| [r[:requests_per_outer_call], r[:bytes_per_outer_call]] }.uniq.size == 1
 end
-raise 'Recursive capture setup still scales with unrelated bindings at depth one' unless report[:flat_depth_one_setup]
+raise 'Recursive capture setup still scales with unrelated bindings at depth one' if route == 'direct' && !report[:flat_depth_one_setup]
 report[:flat_depth_four_setup] = %w[vm jit].product(%w[read write]).all? do |mode, operation|
   rows = report[:deltas].select { |r| r[:mode] == mode && r[:operation] == operation && r[:depth] == 4 }
   rows.map { |r| r[:bindings] }.sort == [0, 128, 2048] &&
     rows.map { |r| [r[:requests_per_outer_call], r[:bytes_per_outer_call]] }.uniq.size == 1
 end
-raise 'Recursive capture setup still scales with unrelated bindings at depth four' unless report[:flat_depth_four_setup]
+raise 'Recursive capture setup still scales with unrelated bindings at depth four' if route == 'direct' && !report[:flat_depth_four_setup]
 if baseline
   raise 'Incomplete paired baseline' unless report[:baseline_rows].size == 72
   report[:paired_comparisons] = report[:deltas].map do |row|

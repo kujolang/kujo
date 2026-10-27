@@ -114,7 +114,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Transfer private globals through direct synchronous global-only reentry with bounded scope reuse (`2b83f1e`). Depth-four setup is flat across 0/128/2,048 unrelated bindings; all 36 paired comparisons avoid request/byte growth. A stricter gate rejects the earlier shallow-call regression. All 1,146 library tests, 295 integrations and 150 test-size checksums pass. Indirect/local captures, publication traversal and module-width copying remain open. See [results and limits](RECURSIVE_GLOBAL_TRANSFER_2026_10_26.md).
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-Section 3 remains open for capture-map traversal, deeper active-prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
+Section 3 remains open for capture-map traversal, deeper active-prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) narrows the next target: ordinary same-module bridges are flat, but foreign-module callbacks at depth four scale with unrelated bindings. All 216 allocation and 324 semantic controls pass; this is characterization, not a fix. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
 

@@ -5040,5 +5040,13 @@
     "allocation_result": "At depth4/2048bindings VM read traffic6397requests/2050876bytes becomes148/12783; scalar writes6458/2051344 becomes209/13251. All36 paired per-call comparisons avoid growth. Depth1 saves14requests/133bytes; identical-path append controls are unchanged.",
     "rejected_draft": "Fresh scope vectors caused+347bytes at depth1; stricter paired gate rejects12of36 cases before bounded storage reuse fixes the cost.",
     "remaining": "Indirect/local capture materialization, publication map traversal, module collection-width copying and later full-plan/clean-host gates remain open."
+  },
+  "indirect_recursion_isolation_2026_10_27": {
+    "status": "characterized_not_fixed",
+    "evidence": "indirect-recursion-isolation-2026-10-27.json",
+    "allocation_controls": 216,
+    "semantic_controls": 324,
+    "next_target": "Foreign-module callback reentry at depth four; ordinary same-module bridges already flat across unrelated bindings.",
+    "runtime_changed": false
   }
 }
