@@ -195,6 +195,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   call at width 2,048; two-element struct-row writes request 284,436 bytes.
   Fresh-snapshot controls remain separate. A four-entry row model fits within
   the current Value-sized payload, but runtime integration is not yet accepted.
+  [Scalar dictionary isolation](DICTIONARY_SCALAR_ISOLATION_2026_10_27.md)
+  adds 120 allocation measurements and 180 semantic checks: float, Boolean,
+  null and mixed-type writes still scale with dictionary width, while the
+  eligible integer control stays flat. These are baseline measurements only.
   The
   [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md),
   [nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) and
