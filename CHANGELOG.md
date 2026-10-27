@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reserve fresh private captured-local maps from their actual key count, avoiding
+  repeated table growth for oversized captures. Preserve live values, independent
+  snapshots, immutable bindings and bounded idle storage.
+
 - Reuse suspended private globals during synchronous global-only reentry through
   foreign module callbacks. Preserve public-owner publication, independent
   snapshots and completed writes before errors without enlarging call frames.

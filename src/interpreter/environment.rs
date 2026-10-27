@@ -277,6 +277,11 @@ impl Environment {
                 refill_capture_map(target, source);
             } else {
                 target.retain(|name, _| source.contains_key(name));
+                // Size fresh local views from their keys, not the owner's spare
+                // buckets, so oversized captures need only one table allocation.
+                if target.capacity() == 0 {
+                    target.reserve(source.len());
+                }
                 for name in source.keys() {
                     if !target.contains_key(name) {
                         target.insert(name.clone(), Value::Null);
@@ -1716,6 +1721,36 @@ mod capture_storage_pool_tests {
         assert!(weak_defaults.upgrade().is_none());
         assert_eq!(pool.frames.len(), 1);
         assert!(matches!(pool.frames[0].scopes[0]["items"], Value::Null));
+    }
+
+    #[test]
+    fn oversized_capture_views_preserve_live_values_snapshots_and_pool_bounds() {
+        let mut initial = Environment::new();
+        initial.push_scope();
+        initial.scopes[1].reserve(32_768);
+        for index in 0..8192 {
+            initial.define(format!("extra_{index}"), Value::Int(index));
+        }
+        let items = Arc::new(vec![Value::Int(1)]);
+        initial.define_with_kind("fixed".into(), Value::Array(items.clone()), BindingKind::Const);
+        let owner = Arc::new(Mutex::new(initial));
+        let mut pool = CaptureStoragePool::default();
+        let mut active = Environment::capture_activation_with_pool(&owner, &mut pool);
+
+        assert!(active.scopes[1].values().all(|value| matches!(value, Value::Null)));
+        assert_eq!(Arc::strong_count(&items), 2, "private view retained the public collection");
+        assert!(active.scopes[1].capacity() < owner.lock().unwrap().scopes[1].capacity());
+        let snapshot = active.detached_snapshot();
+        owner.lock().unwrap().assign_checked("extra_8191".into(), Value::Int(9001)).unwrap();
+        assert!(matches!(active.get("extra_8191"), Some(Value::Int(9001))));
+        assert!(matches!(snapshot.get("extra_8191"), Some(Value::Int(8191))));
+        active.assign_checked("extra_0".into(), Value::Int(99)).unwrap();
+        assert!(matches!(owner.lock().unwrap().get("extra_0"), Some(Value::Int(99))));
+        assert!(active.assign_checked("fixed".into(), Value::Null).is_err());
+        assert!(matches!(owner.lock().unwrap().get("fixed"), Some(Value::Array(_))));
+
+        pool.recycle(active);
+        assert!(pool.frames.is_empty(), "oversized private storage survived in the idle pool");
     }
 
     #[test]
