@@ -945,6 +945,26 @@ impl Environment {
         result
     }
 
+    /// Metadata for a direct global-only recursive activation. Its globals are
+    /// transferred separately; inherited writes still determine publication.
+    pub(crate) fn recursive_global_environment(&self, pool: &mut CaptureStoragePool) -> Self {
+        let mut storage = pool.take();
+        storage.scopes.resize_with(1, HashMap::new);
+        storage.binding_kinds.resize_with(1, HashMap::new);
+        storage.scopes[0].clear();
+        storage.binding_kinds[0].clear();
+        Self {
+            scopes: storage.scopes,
+            binding_kinds: storage.binding_kinds,
+            native_defaults: self.native_defaults.clone(),
+            global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
+            live_capture: self.live_capture.clone(),
+            capture_writes: self.capture_writes.clone(),
+            capture_observation: self.capture_observation,
+        }
+    }
+
     /// Move the live globals into/out of a continuation without cloning them.
     pub(crate) fn swap_global_scope(&mut self, other: &mut Self) {
         std::mem::swap(&mut self.global_source, &mut other.global_source);

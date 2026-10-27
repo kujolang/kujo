@@ -4,16 +4,21 @@ require 'json'
 require 'digest'
 require 'fileutils'
 require 'open3'
-abort 'Expected MATCHING_PROBE MATCHING_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 3
-probe, binary, root = ARGV.map { |path| File.expand_path(path) }
+abort 'Expected MATCHING_PROBE MATCHING_BINARY NEW_OUTPUT_DIR [BASELINE_PROBE]' unless [3, 4].include?(ARGV.size)
+probe, binary, root = ARGV.first(3).map { |path| File.expand_path(path) }
+baseline = ARGV[3] && File.expand_path(ARGV[3])
 raise 'Output directory exists' if File.exist?(root)
-[probe, binary].each { |path| raise 'Expected executable probe and runtime' unless File.file?(path) && File.executable?(path) }
+[probe, binary, baseline].compact.each { |path| raise 'Expected executable probe and runtime' unless File.file?(path) && File.executable?(path) }
 FileUtils.mkdir_p(root)
 output = root + '/report.json'
 report = {runner_sha256: Digest::SHA256.file(__FILE__).hexdigest,
           probe_sha256: Digest::SHA256.file(probe).hexdigest,
           binary_sha256: Digest::SHA256.file(binary).hexdigest,
           status: 'running', fixtures: [], rows: [], semantics: []}
+if baseline
+  report[:baseline_probe_sha256] = Digest::SHA256.file(baseline).hexdigest
+  report[:baseline_rows] = []
+end
 save = -> { File.write(output, JSON.pretty_generate(report) + "\n") }
 save.call
 begin
@@ -67,6 +72,13 @@ begin
             counts = err.match(/ALLOCATION_AUDIT requests=(\d+) requested_bytes=(\d+)/)
             raise err unless counts
             report[:rows] << meta.merge(mode: mode, requests: counts[1].to_i, bytes: counts[2].to_i)
+            if baseline
+              before_out, before_err, before_status = Open3.capture3(baseline, mode, path)
+              raise before_out + before_err unless before_status.success? && before_out == "RECURSIVE CAPTURE PASS\n"
+              before_counts = before_err.match(/ALLOCATION_AUDIT requests=(\d+) requested_bytes=(\d+)/)
+              raise before_err unless before_counts
+              report[:baseline_rows] << meta.merge(mode: mode, requests: before_counts[1].to_i, bytes: before_counts[2].to_i)
+            end
             save.call
           end
           %w[vm interpreter jit].each do |mode|
@@ -88,14 +100,31 @@ begin
      requests_per_outer_call: (b[:requests] - a[:requests]) / 16.0,
      bytes_per_outer_call: (b[:bytes] - a[:bytes]) / 16.0}
   end
-# Two simultaneously active global maps fit the existing pool budget for
-# these owners. Deeper recursion may exceed it; do not assert universal flatness.
+# Direct global-only recursion must not materialize unrelated bindings at each
+# depth. Keep both shallow and beyond-pool-depth controls.
 report[:flat_depth_one_setup] = %w[vm jit].product(%w[read write]).all? do |mode, operation|
   rows = report[:deltas].select { |r| r[:mode] == mode && r[:operation] == operation && r[:depth] == 1 }
   rows.map { |r| r[:bindings] }.sort == [0, 128, 2048] &&
     rows.map { |r| [r[:requests_per_outer_call], r[:bytes_per_outer_call]] }.uniq.size == 1
 end
 raise 'Recursive capture setup still scales with unrelated bindings at depth one' unless report[:flat_depth_one_setup]
+report[:flat_depth_four_setup] = %w[vm jit].product(%w[read write]).all? do |mode, operation|
+  rows = report[:deltas].select { |r| r[:mode] == mode && r[:operation] == operation && r[:depth] == 4 }
+  rows.map { |r| r[:bindings] }.sort == [0, 128, 2048] &&
+    rows.map { |r| [r[:requests_per_outer_call], r[:bytes_per_outer_call]] }.uniq.size == 1
+end
+raise 'Recursive capture setup still scales with unrelated bindings at depth four' unless report[:flat_depth_four_setup]
+if baseline
+  raise 'Incomplete paired baseline' unless report[:baseline_rows].size == 72
+  report[:paired_comparisons] = report[:deltas].map do |row|
+    before = report[:baseline_rows].select { |r| %i[mode operation bindings depth].all? { |key| r[key] == row[key] } }.sort_by { |r| r[:calls] }
+    raise 'Invalid baseline call pair' unless before.map { |r| r[:calls] } == [16, 32]
+    row.merge(requests_delta: row[:requests_per_outer_call] - (before[1][:requests] - before[0][:requests]) / 16.0,
+              bytes_delta: row[:bytes_per_outer_call] - (before[1][:bytes] - before[0][:bytes]) / 16.0)
+  end
+  report[:no_per_call_allocation_regression] = report[:paired_comparisons].all? { |r| r[:requests_delta] <= 0 && r[:bytes_delta] <= 0 }
+  raise 'Recursive per-call allocation regression' unless report[:no_per_call_allocation_regression]
+end
   report[:status] = 'passed'
   save.call
   puts '72 allocation and108 semantic recursive-capture controls passed'

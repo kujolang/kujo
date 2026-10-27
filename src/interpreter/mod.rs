@@ -376,6 +376,7 @@ enum CapturedGlobals {
     Snapshot,
     TaskCaller,
     TaskBridge,
+    RecursiveCaller,
 }
 
 pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Environment)>>>;
@@ -2248,8 +2249,12 @@ impl Interpreter {
     fn capture_global_owner_index(&self, index: usize) -> Option<usize> {
         self.environment_activations.iter().enumerate().skip(index + 1).find_map(
             |(index, frame)| {
-                (frame.capture.is_some() && frame.globals != CapturedGlobals::TaskCaller)
-                    .then_some(index)
+                (frame.capture.is_some()
+                    && !matches!(
+                        frame.globals,
+                        CapturedGlobals::TaskCaller | CapturedGlobals::RecursiveCaller
+                    ))
+                .then_some(index)
             },
         )
     }
@@ -2487,6 +2492,27 @@ impl Interpreter {
 
     fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) {
         let active = self.active_capture_index(captured);
+        // Direct synchronous reentry has no suspended local capture prefix.
+        // Move its private globals through the recursive call, just as ordinary
+        // helpers do. Public owner values remain untouched until publication.
+        if self.task_cancellation.is_none()
+            && active.is_some_and(|index| {
+                index + 1 == self.environment_activations.len()
+                    && self.environment_activations[index].capture.as_ref().unwrap().1 == 1
+            })
+        {
+            let mut environment =
+                self.env.recursive_global_environment(&mut self.capture_storage_pool);
+            environment.swap_global_scope(&mut self.env);
+            environment.observe_capture_writes(true);
+            let caller = std::mem::replace(&mut self.env, environment);
+            self.environment_activations.push(EnvironmentActivation {
+                capture: Some((captured.clone(), 1)),
+                caller,
+                globals: CapturedGlobals::RecursiveCaller,
+            });
+            return;
+        }
         let mut environment = match active {
             Some(index) => self.active_capture_snapshot(index),
             None => {
@@ -2536,6 +2562,20 @@ impl Interpreter {
         let (captured, _) = frame.capture.expect("captured activation has an owner");
         let mut completed = std::mem::replace(&mut self.env, frame.caller);
         let changed = !completed.capture_is_unchanged();
+        if frame.globals == CapturedGlobals::RecursiveCaller {
+            completed.swap_global_scope(&mut self.env);
+            if changed {
+                self.env.invalidate_capture_observation();
+            }
+            if publish && changed {
+                captured
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .copy_global_scope_from(&self.env);
+            }
+            self.capture_storage_pool.recycle(completed);
+            return;
+        }
         if publish && changed {
             if let Some(index) = self.active_capture_index(&captured) {
                 self.restore_active_capture(index, &completed);

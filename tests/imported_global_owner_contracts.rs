@@ -10,11 +10,29 @@ use kujo::{
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-fn verify(runtime: &str) {
+fn verify(runtime: &str, recursive: bool) {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
         directory.path().join("owner_state.kujo"),
-        r#"
+        if recursive {
+            r#"
+        mut state := [0]
+        let entered := channel()
+        let resume := channel()
+        export func edit(n) {
+            if n == 0 { return state[0] }
+            let old := state
+            state[0] = 9
+            assert_equal(edit(0), 9)
+            entered.send(1)
+            resume.receive()
+            state[0] = 10
+            assert_equal(old[0], 0)
+            return state[0]
+        }
+        "#
+        } else {
+            r#"
         mut state := [0]
         let entered := channel()
         let resume := channel()
@@ -24,7 +42,8 @@ fn verify(runtime: &str) {
             resume.receive()
             return state[0]
         }
-        "#,
+        "#
+        },
     )
     .unwrap();
     let mut loader = ModuleLoader::new();
@@ -85,8 +104,12 @@ fn verify(runtime: &str) {
         }
         observed
     });
-    let program =
-        Parser::new(tokenize("let result := edit() assert_equal(result, 9)").unwrap()).parse();
+    let source = if recursive {
+        "let result := edit(1) assert_equal(result, 10)"
+    } else {
+        "let result := edit() assert_equal(result, 9)"
+    };
+    let program = Parser::new(tokenize(source).unwrap()).parse();
     let execution = if runtime == "interpreter" {
         let mut interpreter = Interpreter::new();
         interpreter.env.define("edit".into(), callable);
@@ -109,26 +132,45 @@ fn verify(runtime: &str) {
             .and_then(|_| vm.run_scheduler_until_complete_with_timeout(Duration::from_secs(60)))
     };
     let observed = observer.join().unwrap();
-    assert_eq!(observed, Ok(0), "{runtime}: pre-return public owner changed");
+    assert_eq!(
+        observed,
+        Ok(if recursive { 9 } else { 0 }),
+        "{runtime}: public owner publication boundary changed"
+    );
     execution.unwrap();
     let environment = owner.lock().unwrap();
     assert!(matches!(
         environment.scopes[0].get("state"),
-        Some(Value::Array(values)) if matches!(values.first(), Some(Value::Int(9)))
+        Some(Value::Array(values)) if matches!(values.first(), Some(Value::Int(value)) if *value == if recursive { 10 } else { 9 })
     ));
 }
 
 #[test]
 fn vm_module_owner_remains_readable_during_callback() {
-    verify("vm");
+    verify("vm", false);
 }
 
 #[test]
 fn interpreter_module_owner_remains_readable_during_callback() {
-    verify("interpreter");
+    verify("interpreter", false);
 }
 
 #[test]
 fn jit_module_owner_remains_readable_during_callback() {
-    verify("jit");
+    verify("jit", false);
+}
+
+#[test]
+fn vm_recursive_return_publishes_inherited_writes_and_keeps_snapshots() {
+    verify("vm", true);
+}
+
+#[test]
+fn interpreter_recursive_return_publishes_inherited_writes_and_keeps_snapshots() {
+    verify("interpreter", true);
+}
+
+#[test]
+fn jit_recursive_return_publishes_inherited_writes_and_keeps_snapshots() {
+    verify("jit", true);
 }
