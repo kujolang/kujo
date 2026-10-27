@@ -8527,8 +8527,7 @@ impl Interpreter {
         #[cfg(feature = "runtime-db")]
         {
             // Get all variables from the environment
-            let var_names: Vec<String> =
-                self.env.scopes.iter().flat_map(|scope| scope.keys().cloned()).collect();
+            let var_names = self.env.explicit_binding_names();
 
             for var_name in var_names {
                 if let Some(Value::Database { connection, db_type, in_transaction, .. }) =

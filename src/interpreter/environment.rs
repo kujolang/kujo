@@ -322,8 +322,10 @@ pub struct Environment {
     // Module snapshots share only immutable native name metadata. Mutable globals
     // remain ordinary owned maps, including every override of a default.
     native_defaults: Option<std::sync::Arc<HashMap<String, String>>>,
-    // Missing entries mean Mutable. Store only immutable exceptions, avoiding
-    // duplicate name storage for native preloads and ordinary mutable bindings.
+    // Missing entries mean Mutable. Ordinary scopes store only immutable
+    // exceptions. Oversized private live-capture locals instead store complete
+    // membership here, avoiding Value-sized placeholder buckets; materialized
+    // snapshots normalize these back to immutable exceptions.
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
     // Lexical provenance survives task snapshots; execution ownership does not.
@@ -391,8 +393,7 @@ impl Environment {
     }
 
     pub(crate) fn pending_visible(&self, name: &str) -> bool {
-        self.pending_name() == Some(name)
-            && !self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+        self.pending_name() == Some(name) && !self.has_local_binding(name)
     }
 
     pub(crate) fn pending_nested_visible(&self, name: &str) -> bool {
@@ -423,7 +424,7 @@ impl Environment {
             self.capture_writes,
             Some((0, CaptureWrites::Empty | CaptureWrites::Nested(_)))
         ) || self.live_capture.is_some()
-            || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+            || self.has_local_binding(name)
             || self.binding_kinds[0].contains_key(name)
             || self.pending_name().is_some_and(|pending| pending != name)
         {
@@ -534,7 +535,7 @@ impl Environment {
         }
         if !matches!(self.capture_writes, Some((0, _)))
             || !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
-            || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+            || self.has_local_binding(name)
             || self.binding_kinds[0].contains_key(name)
             || self.pending_name().is_some_and(|pending| pending != name)
         {
@@ -663,6 +664,10 @@ impl Environment {
         {
             if index == 0 {
                 refill_capture_map(target, source);
+            } else if source.len() >= CaptureStoragePool::MAX_CAPACITY {
+                // This many names cannot fit the bounded idle pool. Keep only
+                // key/kind metadata; actual values remain in the public owner.
+                *target = HashMap::new();
             } else {
                 target.retain(|name, _| source.contains_key(name));
                 // Size fresh local views from their keys, not the owner's spare
@@ -677,8 +682,30 @@ impl Environment {
                 }
             }
         }
-        for (target, source) in storage.binding_kinds.iter_mut().zip(&captured.binding_kinds) {
-            refill_capture_map(target, source);
+        for (index, (target, source)) in
+            storage.binding_kinds.iter_mut().zip(&captured.binding_kinds).enumerate()
+        {
+            let names = &captured.scopes[index];
+            if index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY {
+                target.retain(|name, _| names.contains_key(name));
+                target.reserve(names.len().saturating_sub(target.len()));
+                for name in names.keys() {
+                    let kind = source.get(name).copied().unwrap_or(BindingKind::Mutable);
+                    if let Some(slot) = target.get_mut(name) {
+                        *slot = kind;
+                    } else {
+                        target.insert(name.clone(), kind);
+                    }
+                }
+            } else {
+                refill_capture_map(target, source);
+                if index > 0 {
+                    // Hosts may remove public scope entries without editing the
+                    // private kind map. Only names present at admission belong
+                    // to this invocation; later owner removals retain membership.
+                    target.retain(|name, _| names.contains_key(name));
+                }
+            }
         }
         let limit = captured.scopes.len();
         Self {
@@ -691,6 +718,46 @@ impl Environment {
             capture_writes: captured.capture_writes.clone(),
             capture_observation: captured.capture_observation,
         }
+    }
+
+    // Private live views may keep membership in their existing kind maps rather
+    // than allocating Value-sized null buckets. Public owners never use this form.
+    fn capture_metadata_contains(
+        link: &Option<LiveCapture>,
+        kinds: &[HashMap<String, BindingKind>],
+        index: usize,
+        name: &str,
+    ) -> bool {
+        link.as_ref().is_some_and(|link| index > 0 && index < link.limit)
+            && kinds[index].contains_key(name)
+    }
+
+    fn has_local_binding(&self, name: &str) -> bool {
+        self.scopes.iter().enumerate().skip(1).any(|(index, scope)| {
+            scope.contains_key(name)
+                || Self::capture_metadata_contains(
+                    &self.live_capture,
+                    &self.binding_kinds,
+                    index,
+                    name,
+                )
+        })
+    }
+
+    pub(crate) fn explicit_binding_names(&self) -> Vec<String> {
+        let mut names: Vec<String> =
+            self.scopes.iter().flat_map(|scope| scope.keys().cloned()).collect();
+        if let Some(link) = &self.live_capture {
+            for index in 1..link.limit {
+                names.extend(
+                    self.binding_kinds[index]
+                        .keys()
+                        .filter(|name| !self.scopes[index].contains_key(*name))
+                        .cloned(),
+                );
+            }
+        }
+        names
     }
 
     fn capture_owner(link: &Option<LiveCapture>, index: usize) -> Option<Arc<Mutex<Self>>> {
@@ -738,6 +805,16 @@ impl Environment {
             scopes[0].insert(name, value);
         }
         if let Some(link) = &self.live_capture {
+            // Snapshot membership before reading owner values, including when the
+            // owner has expired or a Rust host removed a formerly visible name.
+            for (index, scope) in scopes.iter_mut().enumerate().take(link.limit).skip(1) {
+                scope.reserve(self.binding_kinds[index].len().saturating_sub(scope.len()));
+                for name in self.binding_kinds[index].keys() {
+                    if !scope.contains_key(name) {
+                        scope.insert(name.clone(), Value::Null);
+                    }
+                }
+            }
             if let Some(owner) = link.owner.upgrade() {
                 let owner = owner.lock().unwrap_or_else(|p| p.into_inner());
                 for (index, scope) in scopes.iter_mut().enumerate().take(link.limit).skip(1) {
@@ -759,11 +836,34 @@ impl Environment {
         self.live_capture.is_some()
     }
 
+    fn snapshot_binding_kinds(&self, index: usize) -> HashMap<String, BindingKind> {
+        let kinds = &self.binding_kinds[index];
+        if self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit)
+            && kinds.values().any(|kind| *kind == BindingKind::Mutable)
+        {
+            // Complete private membership must not become duplicate mutable-name
+            // storage in a materialized/public snapshot.
+            let count = kinds.values().filter(|kind| **kind != BindingKind::Mutable).count();
+            let mut result = HashMap::with_capacity(count);
+            result.extend(
+                kinds
+                    .iter()
+                    .filter(|(_, kind)| **kind != BindingKind::Mutable)
+                    .map(|(name, kind)| (name.clone(), *kind)),
+            );
+            result
+        } else {
+            kinds.clone()
+        }
+    }
+
     pub(super) fn detached_snapshot(&self) -> Self {
         Self {
             scopes: self.materialized_scopes(),
             native_defaults: self.native_defaults.clone(),
-            binding_kinds: self.binding_kinds.clone(),
+            binding_kinds: (0..self.binding_kinds.len())
+                .map(|index| self.snapshot_binding_kinds(index))
+                .collect(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
             live_capture: None,
@@ -973,7 +1073,15 @@ impl Environment {
     /// are bindings too, including when native loops choose an assignment owner.
     pub(crate) fn contains_binding(&self, name: &str) -> bool {
         self.pending_visible(name)
-            || self.scopes.iter().any(|scope| scope.contains_key(name))
+            || self.scopes.iter().enumerate().any(|(index, scope)| {
+                scope.contains_key(name)
+                    || Self::capture_metadata_contains(
+                        &self.live_capture,
+                        &self.binding_kinds,
+                        index,
+                        name,
+                    )
+            })
             || self.native_defaults.as_ref().is_some_and(|defaults| defaults.contains_key(name))
     }
 
@@ -1370,7 +1478,9 @@ impl Environment {
         };
         if capture_locals {
             result.scopes.extend(self.materialized_scopes().into_iter().skip(1));
-            result.binding_kinds.extend(self.binding_kinds.iter().skip(1).cloned());
+            result.binding_kinds.extend(
+                (1..self.binding_kinds.len()).map(|index| self.snapshot_binding_kinds(index)),
+            );
         }
         result
     }
@@ -1462,6 +1572,10 @@ impl Environment {
                 }
                 return Some(value.clone());
             }
+            if Self::capture_metadata_contains(&self.live_capture, &self.binding_kinds, index, name)
+            {
+                return Self::capture_value(&self.live_capture, index, name);
+            }
         }
         self.native_default(name)
     }
@@ -1537,6 +1651,13 @@ impl Environment {
     fn current_scope_contains(&self, name: &str) -> bool {
         (self.scopes.len() == 1 && self.pending_visible(name))
             || self.scopes.last().map(|scope| scope.contains_key(name)).unwrap_or(false)
+            || (!self.scopes.is_empty()
+                && Self::capture_metadata_contains(
+                    &self.live_capture,
+                    &self.binding_kinds,
+                    self.scopes.len() - 1,
+                    name,
+                ))
     }
 
     /// Set an existing variable, searching from inner to outer scopes
@@ -1545,7 +1666,15 @@ impl Environment {
         self.flush_indexed_name(&name);
         // Try to find and update existing variable
         for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
-            if scope.contains_key(&name) {
+            let has_slot = scope.contains_key(&name);
+            if has_slot
+                || Self::capture_metadata_contains(
+                    &self.live_capture,
+                    &self.binding_kinds,
+                    index,
+                    &name,
+                )
+            {
                 Self::record_capture_write(
                     &mut self.capture_writes,
                     &mut self.capture_observation,
@@ -1553,7 +1682,9 @@ impl Environment {
                     &name,
                 );
                 let shared = Self::publish_capture_value(&self.live_capture, index, &name, &value);
-                scope.insert(name, if shared { Value::Null } else { value });
+                if has_slot || !shared {
+                    scope.insert(name, if shared { Value::Null } else { value });
+                }
                 return;
             }
         }
@@ -1568,7 +1699,15 @@ impl Environment {
     pub fn assign_checked(&mut self, name: String, value: Value) -> Result<(), String> {
         self.flush_indexed_name(&name);
         for (scope_index, scope) in self.scopes.iter_mut().enumerate().rev() {
-            if scope.contains_key(&name) {
+            let has_slot = scope.contains_key(&name);
+            if has_slot
+                || Self::capture_metadata_contains(
+                    &self.live_capture,
+                    &self.binding_kinds,
+                    scope_index,
+                    &name,
+                )
+            {
                 let kind = self.binding_kinds[scope_index]
                     .get(&name)
                     .copied()
@@ -1584,7 +1723,9 @@ impl Environment {
                 );
                 let shared =
                     Self::publish_capture_value(&self.live_capture, scope_index, &name, &value);
-                scope.insert(name, if shared { Value::Null } else { value });
+                if has_slot || !shared {
+                    scope.insert(name, if shared { Value::Null } else { value });
+                }
                 return Ok(());
             }
         }
@@ -1623,6 +1764,22 @@ impl Environment {
                 f(value);
                 if Self::publish_capture_value(&self.live_capture, index, name, value) {
                     *value = Value::Null;
+                }
+                return true;
+            }
+            if Self::capture_metadata_contains(&self.live_capture, &self.binding_kinds, index, name)
+            {
+                let current = Self::capture_value(&self.live_capture, index, name);
+                let mut value = current.unwrap_or(Value::Null);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    index,
+                    name,
+                );
+                f(&mut value);
+                if !Self::publish_capture_value(&self.live_capture, index, name, &value) {
+                    scope.insert(name.to_owned(), value);
                 }
                 return true;
             }
@@ -1665,6 +1822,30 @@ impl Environment {
                 }
                 return Ok(());
             }
+            if Self::capture_metadata_contains(
+                &self.live_capture,
+                &self.binding_kinds,
+                scope_index,
+                name,
+            ) {
+                let kind = self.binding_kinds[scope_index][name];
+                if !kind.allows_mutation() {
+                    return Err(kind.mutation_error(name));
+                }
+                let current = Self::capture_value(&self.live_capture, scope_index, name);
+                let mut value = current.unwrap_or(Value::Null);
+                Self::record_capture_write(
+                    &mut self.capture_writes,
+                    &mut self.capture_observation,
+                    scope_index,
+                    name,
+                );
+                f(&mut value);
+                if !Self::publish_capture_value(&self.live_capture, scope_index, name, &value) {
+                    scope.insert(name.to_owned(), value);
+                }
+                return Ok(());
+            }
         }
 
         if let Some(mut value) = self.native_default(name) {
@@ -1683,7 +1864,20 @@ impl Environment {
         name: &str,
         operation: impl FnOnce(&mut Value),
     ) -> Result<(), String> {
-        let index = self.scopes.iter().rposition(|scope| scope.contains_key(name));
+        let index = self
+            .scopes
+            .iter()
+            .enumerate()
+            .rfind(|(index, scope)| {
+                scope.contains_key(name)
+                    || Self::capture_metadata_contains(
+                        &self.live_capture,
+                        &self.binding_kinds,
+                        *index,
+                        name,
+                    )
+            })
+            .map(|(index, _)| index);
         if let Some(index) = index {
             if let Some(owner) = Self::capture_owner(&self.live_capture, index) {
                 let mut owner = owner.lock().unwrap_or_else(|p| p.into_inner());
@@ -1750,6 +1944,38 @@ impl Environment {
                 }
                 return Ok(changed);
             }
+            if Self::capture_metadata_contains(
+                &self.live_capture,
+                &self.binding_kinds,
+                scope_index,
+                name,
+            ) {
+                let kind = self.binding_kinds[scope_index][name];
+                if !kind.allows_mutation() {
+                    return Err(kind.mutation_error(name));
+                }
+                let current = Self::capture_value(&self.live_capture, scope_index, name);
+                let shared = current.is_some();
+                let mut value = current.unwrap_or(Value::Null);
+                let result = f(&mut value);
+                if shared {
+                    if matches!(result, Ok(true)) {
+                        Self::publish_capture_value(&self.live_capture, scope_index, name, &value);
+                    }
+                } else {
+                    scope.insert(name.to_owned(), value);
+                }
+                let changed = result?;
+                if changed {
+                    Self::record_capture_write(
+                        &mut self.capture_writes,
+                        &mut self.capture_observation,
+                        scope_index,
+                        name,
+                    );
+                }
+                return Ok(changed);
+            }
         }
         if let Some(mut value) = self.native_default(name) {
             let changed = f(&mut value)?;
@@ -1766,7 +1992,14 @@ impl Environment {
             return Ok(()); // Admission already checked this global's mutable kind.
         }
         for (scope_index, scope) in self.scopes.iter().enumerate().rev() {
-            if scope.contains_key(name) {
+            if scope.contains_key(name)
+                || Self::capture_metadata_contains(
+                    &self.live_capture,
+                    &self.binding_kinds,
+                    scope_index,
+                    name,
+                )
+            {
                 let kind = self.binding_kinds[scope_index]
                     .get(name)
                     .copied()
@@ -2894,5 +3127,173 @@ mod read_projection_tests {
         );
         assert!(owner.project_capture_reads(&names, &["index".into()], true, &mut pool).is_none());
         assert!(owner.project_capture_reads(&["missing".into()], &[], false, &mut pool).is_none());
+    }
+}
+
+#[cfg(test)]
+mod compact_capture_view_tests {
+    use super::*;
+
+    #[test]
+    fn host_removal_before_capture_preserves_global_fallback() {
+        for width in [0, 128, 8192] {
+            let mut env = Environment::new();
+            env.define("fixed".into(), Value::Int(11));
+            env.push_scope();
+            env.define_with_kind("fixed".into(), Value::Int(7), BindingKind::Const);
+            for n in 0..width {
+                env.define(format!("extra_{n}"), Value::Int(n));
+            }
+            env.scopes[1].remove("fixed");
+            let owner = Arc::new(Mutex::new(env));
+            let mut active = Environment::capture_activation(&owner);
+            assert!(matches!(active.get("fixed"), Some(Value::Int(11))));
+            assert!(!active.current_scope_contains("fixed"));
+            active.assign_checked("fixed".into(), Value::Int(12)).unwrap();
+            assert!(matches!(active.get("fixed"), Some(Value::Int(12))));
+            let snapshot = active.detached_snapshot();
+            assert!(matches!(snapshot.get("fixed"), Some(Value::Int(12))));
+            assert!(!snapshot.scopes[1].contains_key("fixed"));
+            assert!(!snapshot.binding_kinds[1].contains_key("fixed"));
+        }
+    }
+
+    #[test]
+    fn host_removal_after_capture_retains_local_membership() {
+        for width in [0, 128, 8192] {
+            let mut env = Environment::new();
+            env.define("fixed".into(), Value::Int(11));
+            env.push_scope();
+            env.define_with_kind("fixed".into(), Value::Int(7), BindingKind::Const);
+            for n in 0..width {
+                env.define(format!("extra_{n}"), Value::Int(n));
+            }
+            let owner = Arc::new(Mutex::new(env));
+            let mut active = Environment::capture_activation(&owner);
+            owner.lock().unwrap().scopes[1].remove("fixed");
+            assert!(active.get("fixed").is_none());
+            assert!(active.current_scope_contains("fixed"));
+            assert!(active.assign_checked("fixed".into(), Value::Int(12)).is_err());
+            assert!(matches!(active.detached_snapshot().get("fixed"), Some(Value::Null)));
+        }
+    }
+
+    fn owner() -> Arc<Mutex<Environment>> {
+        let mut env = Environment::new();
+        env.define("extra_0".into(), Value::Int(-1));
+        env.push_scope();
+        for n in 0..8192 {
+            env.define(format!("extra_{n}"), Value::Int(n));
+        }
+        env.define_with_kind("fixed".into(), Value::Int(7), BindingKind::Const);
+        Arc::new(Mutex::new(env))
+    }
+
+    #[test]
+    fn dense_writes_keep_compact_storage_and_public_values() {
+        let owner = owner();
+        let mut active = Environment::capture_activation(&owner);
+        for n in 0..8192 {
+            let name = format!("extra_{n}");
+            active.assign_checked(name.clone(), Value::Int(n + 1)).unwrap();
+            active
+                .mutate_checked_runtime(&name, |v| {
+                    let Value::Int(n) = v else { panic!() };
+                    *n += 1;
+                })
+                .unwrap();
+            active
+                .mutate_checked(&name, |v| {
+                    let Value::Int(n) = v else { panic!() };
+                    *n += 1;
+                })
+                .unwrap();
+            assert!(active
+                .try_mutate_checked(&name, |v| {
+                    let Value::Int(n) = v else { panic!() };
+                    *n += 1;
+                    Ok(true)
+                })
+                .unwrap());
+            assert!(active.mutate(&name, |v| {
+                let Value::Int(n) = v else { panic!() };
+                *n += 1;
+            }));
+            assert!(matches!(owner.lock().unwrap().get(&name), Some(Value::Int(v)) if v == n + 5));
+        }
+        assert_eq!(
+            active.scopes[1].capacity(),
+            0,
+            "dense writes rebuilt Value-sized lookup buckets"
+        );
+        assert_eq!(active.binding_kinds[1].len(), 8193);
+        assert!(active.assign_checked("fixed".into(), Value::Null).is_err());
+        assert!(active.ensure_mutable_for_mutation("fixed").is_err());
+        assert!(active
+            .define_with_kind_checked("extra_0".into(), Value::Null, BindingKind::Mutable)
+            .is_err());
+        let snapshot = active.detached_snapshot();
+        assert_eq!(
+            snapshot.binding_kinds[1].len(),
+            1,
+            "membership metadata leaked into snapshot kinds"
+        );
+        assert!(matches!(snapshot.get("extra_8191"), Some(Value::Int(8196))));
+        active.set("extra_0".into(), Value::Int(99));
+        assert!(matches!(snapshot.get("extra_0"), Some(Value::Int(5))));
+        assert!(matches!(active.get("extra_0"), Some(Value::Int(99))));
+        assert_eq!(
+            active.explicit_binding_names().iter().filter(|name| *name == "extra_0").count(),
+            2
+        );
+    }
+
+    #[test]
+    fn compact_membership_survives_owner_edits_and_expiration() {
+        let owner = owner();
+        let mut active = Environment::capture_activation(&owner);
+        {
+            let mut env = owner.lock().unwrap();
+            env.scopes[1].remove("extra_0");
+            env.define("later".into(), Value::Int(8));
+        }
+        assert!(active.get("later").is_none(), "owner addition changed invocation membership");
+        assert!(
+            active.get("extra_0").is_none(),
+            "removed local incorrectly fell through to global"
+        );
+        assert!(active.mutate("extra_0", |v| {
+            assert!(matches!(v, Value::Null));
+            *v = Value::Int(42);
+        }));
+        let snapshot = active.detached_snapshot();
+        assert!(matches!(snapshot.get("extra_0"), Some(Value::Int(42))));
+        assert!(snapshot.get("later").is_none());
+        let generator = active.generator_environment(true);
+        assert!(matches!(generator.get("extra_8191"), Some(Value::Int(8191))));
+        assert_eq!(generator.binding_kinds[1].len(), 1);
+        drop(owner);
+        assert!(active.get("extra_1").is_none());
+        assert!(matches!(active.detached_snapshot().get("extra_1"), Some(Value::Null)));
+    }
+
+    #[test]
+    fn compact_host_callback_releases_owner_lock_and_preserves_rejection() {
+        let owner = owner();
+        let mut active = Environment::capture_activation(&owner);
+        active.track_capture_writes();
+        active
+            .mutate_checked("extra_1", |v| {
+                let env = owner.lock().unwrap();
+                assert!(matches!(env.get("extra_1"), Some(Value::Int(1))));
+                *v = Value::Int(40);
+            })
+            .unwrap();
+        assert!(!active.try_mutate_checked("extra_2", |_| Ok(false)).unwrap());
+        assert!(active.try_mutate_checked("extra_3", |_| Err("rejected".into())).is_err());
+        assert!(matches!(owner.lock().unwrap().get("extra_2"), Some(Value::Int(2))));
+        assert!(!active.capture_writes.as_ref().unwrap().1.contains(&(1, "extra_2".into())));
+        assert!(!active.capture_writes.as_ref().unwrap().1.contains(&(1, "extra_3".into())));
+        assert_eq!(active.scopes[1].capacity(), 0);
     }
 }
