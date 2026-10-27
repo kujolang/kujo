@@ -5024,7 +5024,7 @@
     "library_passes": 1146,
     "integration_passes": 292,
     "test_size_checksums": 150,
-    "allocation_result": "Oversized captured read VM setup falls from8231requests/2720272bytes to16/1086 per added call; candidate flat across0/128/8192 unrelated bindings. Append has constant+56bytes and unchanged request counts. All36 cold comparisons reduce total requests/bytes.",
+    "allocation_result": "Oversized captured read VM setup falls from8231requests/2720272bytes to16/1086 per added call; candidate flat across0/128/8192 unrelated bindings. Identical-path paired append controls show zero request/byte change; original+56bytes came from longer fixture paths. All36 cold comparisons reduce total requests/bytes.",
     "remaining": "General and deeper captured materialization, module collection-width copying, later checklist stages and clean-server acceptance remain open."
   }
 }

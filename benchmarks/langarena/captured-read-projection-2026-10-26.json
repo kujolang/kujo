@@ -16479,6 +16479,110 @@
     "Allocation traffic, not speed or peak memory.",
     "Captured-local, task, reentry, callback and write-heavy cases remain on the general path.",
     "Module collection-width copying and broader plan remain open.",
-    "No production/platform or clean-server Goose/Rust acceptance claim."
-  ]
+    "No production/platform or clean-server Goose/Rust acceptance claim.",
+    "Original append source paths had different directory lengths; identical-path paired results show zero request/byte change. Prefer append_paired_comparison for runtime attribution."
+  ],
+  "append_paired_comparison": {
+    "scope": "c0e45b3 versus c79010d with identical source paths",
+    "baseline_probe_sha256": "0c4698988c1c09ed4d9fd9bc20ea829f377500f83d122e5587935419cbd0904e",
+    "candidate_probe_sha256": "710988d3834bb9f23cd3d35332275c0e7be4e3e618b3cd65c1cafb03619213a1",
+    "rows": [
+      {
+        "mode": "vm",
+        "size": 512,
+        "requests": 6819,
+        "bytes": 1185201,
+        "stdout": "PASS\n",
+        "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7",
+        "baseline_requests": 6819,
+        "baseline_bytes": 1185201,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "vm",
+        "size": 1024,
+        "requests": 8868,
+        "bytes": 1468337,
+        "stdout": "PASS\n",
+        "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9",
+        "baseline_requests": 8868,
+        "baseline_bytes": 1468337,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "vm",
+        "size": 2048,
+        "requests": 12965,
+        "bytes": 2034609,
+        "stdout": "PASS\n",
+        "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be",
+        "baseline_requests": 12965,
+        "baseline_bytes": 2034609,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "vm",
+        "size": 4096,
+        "requests": 21158,
+        "bytes": 3167153,
+        "stdout": "PASS\n",
+        "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8",
+        "baseline_requests": 21158,
+        "baseline_bytes": 3167153,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "jit",
+        "size": 512,
+        "requests": 6819,
+        "bytes": 1185201,
+        "stdout": "PASS\n",
+        "source_sha256": "90f74166b32ea3f614cc0a1431095b104d501c6f6377fee033d64885f4a8cba7",
+        "baseline_requests": 6819,
+        "baseline_bytes": 1185201,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "jit",
+        "size": 1024,
+        "requests": 8868,
+        "bytes": 1468337,
+        "stdout": "PASS\n",
+        "source_sha256": "34e109f67766d5cf9afd77f936d0ba95520c568ddd62d7d3dda1557ec730dbe9",
+        "baseline_requests": 8868,
+        "baseline_bytes": 1468337,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "jit",
+        "size": 2048,
+        "requests": 12965,
+        "bytes": 2034609,
+        "stdout": "PASS\n",
+        "source_sha256": "b8a10d6ebacfc813483a00ad4c922f0e670784cef16b643111f8d406dfc234be",
+        "baseline_requests": 12965,
+        "baseline_bytes": 2034609,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      },
+      {
+        "mode": "jit",
+        "size": 4096,
+        "requests": 21158,
+        "bytes": 3167153,
+        "stdout": "PASS\n",
+        "source_sha256": "856fc3c293ce440ddfdb5ba01c7bc8a997c6f0cb6a834bfb6e4ac1d311776ba8",
+        "baseline_requests": 21158,
+        "baseline_bytes": 3167153,
+        "requests_delta": 0,
+        "bytes_delta": 0
+      }
+    ]
+  }
 }

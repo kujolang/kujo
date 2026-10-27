@@ -27,8 +27,13 @@ counts and recursive depths: it must not be presented as a per-recursive-call
 improvement. Deeper recursive materialization remains open.
 
 Append controls at 512, 1,024, 2,048 and 4,096 elements retain identical request
-counts and linear growth in VM/JIT, with a fixed 56 additional requested bytes
-per run. Module collection-width copying is not eliminated by this change.
+counts and linear growth in VM/JIT. The original comparison showed 56 additional
+requested bytes because its fixture directories had different lengths. A paired
+check using identical source paths shows **zero change in requests or bytes**
+at every size in both modes; see `append_paired_comparison` in the evidence.
+Source-path storage belongs to process allocation traffic and must be controlled
+when comparing small constant differences. Module collection-width copying is
+not eliminated by this change.
 
 ## Semantics and rejected draft
 
