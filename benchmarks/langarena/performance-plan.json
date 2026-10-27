@@ -4988,5 +4988,20 @@
       "Remaining authorized sections3/4 work and subsequent review cutoff",
       "Later compiled-execution, full-production, platform/release and clean-host acceptance"
     ]
+  },
+  "recursive_capture_pool_verification_2026_10_26": {
+    "runtime_commit": "c0e45b39a474ea3f449f564a777e4cf54576c127",
+    "status": "verified",
+    "report": "RECURSIVE_CAPTURE_POOL_2026_10_26.md",
+    "evidence": "recursive-capture-pool-2026-10-26.json",
+    "library_passes": 1142,
+    "integration_passes": 289,
+    "test_size_checksums": 150,
+    "recursive_allocation_controls": 72,
+    "recursive_semantic_controls": 108,
+    "cold_paired_allocation_controls": 72,
+    "cold_semantic_controls": 54,
+    "allocation_result": "Depth-one read setup 82 requests/4399 bytes and scalar-write setup 98/4510 per added outer call, flat across0/128/2048 unrelated bindings inVM/JIT. All36 paired oversized/cold comparisons reduce requests and bytes versus6228389.",
+    "remaining": "Capture-map traversal, deeper/oversized materialization, module collection-width copying, later stages, production/platform and clean-server comparisons remain open."
   }
 }
