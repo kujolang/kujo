@@ -117,6 +117,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   tests, 342 release integrations and 150 test-size checksums pass, with prior
   collection/cold/append controls preserved. Indirect recursion and oversized
   outer activation remain open; pool limits and value semantics are unchanged.
+- [x] Transfer eligible suspended local prefixes through foreign callbacks (`65a58f2`).
+  [Verified evidence](FOREIGN_LOCAL_PREFIX_TRANSFER_2026_10_27.md) covers seven
+  widths through 16,384 locals, unchanged pool limits, six three-runtime
+  regression contracts and all 150 test-size checksums. Recursion overhead is
+  constant within each pool regime; the fixed boundary step remains. The original
+  exact-equality rejection and rejected pool-bypass regression are preserved.
+  Split-frame reentry and oversized outer activation remain open.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
   [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
   split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216
@@ -174,7 +181,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   first integration and the subsequent ownership/interference corrections.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
-[Indirect retained-local isolation](INDIRECT_LOCAL_ISOLATION_2026_10_27.md) reproduces remaining foreign-callback prefix copying with 144 allocation and 216 semantic cases on `ce923d1`; this is an open optimization target.
+[Indirect retained-local isolation](INDIRECT_LOCAL_ISOLATION_2026_10_27.md) reproduces remaining foreign-callback prefix copying with 144 allocation and 216 semantic cases on `ce923d1`; the eligible same-owner route is now addressed by [foreign prefix transfer](FOREIGN_LOCAL_PREFIX_TRANSFER_2026_10_27.md), while split-frame routes remain open.
 
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global reentry and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),

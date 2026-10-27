@@ -58,3 +58,19 @@ It uses the same direct-recursion fixture matrix as the restoration runner:
 regression and constant extra depth-two recursion overhead across all widths.
 It does not demand a new direct-path improvement when evaluating a foreign-path
 fix. Keep this control distinct from the strict foreign-prefix acceptance gate.
+
+## Explicit pool-boundary refinement (2026-10-27)
+
+The original exact-equality gate above failed on the unchanged pool-retention
+boundary. It remains unchanged as historical evidence. The accepted candidate
+has a bounded step, verified by additional widths rather than by suppressing
+allocation regressions. See [results and rejected experiments](../FOREIGN_LOCAL_PREFIX_TRANSFER_2026_10_27.md).
+
+Run `foreign-local-pool-boundary-allocations.rb` with the same arguments as the
+original measurement runner to cover 4,096/8,192/12,288/16,384 locals. Then run
+`foreign-local-pool-boundary-gate.rb ORIGINAL_REPORT EXTENDED_REPORT NEW_OUTPUT`.
+This verifies both complete matrices, matching artifact identities, repeated
+8,192-width agreement, no total/per-call increases, strict depth-four reductions,
+and constant extra recursion cost separately within the existing pool regimes.
+It explicitly records that original cross-boundary exact equality is unsatisfied.
+Independent direct and other ownership controls remain required.
