@@ -34,3 +34,11 @@ A fix cannot simply expose private markers in that map, publish mutations early,
 Reduce captured-frame map/name setup allocations separately from the collection-width cost. Any frame reuse must release retained values and identities, bound idle memory, and consult actual public owner keys and mutability metadata on each invocation. Then address collection copying while retaining snapshot, callback, reentry, task and public-owner contracts.
 
 The laptop is variably loaded. This report uses requested allocation traffic and semantic assertions, not elapsed-time rankings, peak resident memory, or a claimed Goose/Rust speed comparison. Full production-size and clean-server comparisons remain separate gates.
+
+## Follow-up model
+
+The [bounded indexed-publication experiment](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md)
+includes full flat publication and rejects a growing journal that regressed
+allocation. Its bounded array model passes 216 paired comparisons without
+allocation growth, but runtime, dictionary and nested-state integration remain
+unimplemented. This does not close the module-width cost above.
