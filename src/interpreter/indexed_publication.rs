@@ -108,6 +108,12 @@ impl IndexedPublication {
         self.publish(None)
     }
 
+    pub(super) fn snapshot_value(&self) -> Value {
+        let mut base = self.base.clone();
+        Self::apply(&mut base, self.entries, self.words);
+        Value::Array(base)
+    }
+
     /// The caller holds the public owner lock only for publication, never while
     /// executing user code. A replaced owner must not become the private base.
     pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {

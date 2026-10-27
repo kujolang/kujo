@@ -52,6 +52,7 @@ enum CaptureWrites {
     Empty,
     One((usize, String)),
     Many(HashSet<(usize, String)>),
+    Indexed(super::indexed_publication::IndexedPublication),
 }
 
 #[cfg(test)]
@@ -59,18 +60,17 @@ enum CaptureWrites {
 fn indexed_publication_candidate_fits_capture_storage_layout() {
     // Compare against the actual existing enum, including its discriminant and
     // enclosing Option. Payload-size comparison alone misses niche/layout costs.
-    // The candidate remains test-only until every semantic boundary is wired.
+    // Preserve the pre-integration enum layout, not just its largest payload.
     #[allow(dead_code)]
-    enum Candidate {
+    enum Previous {
         Empty,
         One((usize, String)),
         Many(HashSet<(usize, String)>),
-        Indexed(super::indexed_publication::IndexedPublication),
     }
-    assert_eq!(std::mem::size_of::<Candidate>(), std::mem::size_of::<CaptureWrites>());
-    assert_eq!(std::mem::align_of::<Candidate>(), std::mem::align_of::<CaptureWrites>());
+    assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<CaptureWrites>());
+    assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<CaptureWrites>());
     assert_eq!(
-        std::mem::size_of::<Option<(usize, Candidate)>>(),
+        std::mem::size_of::<Option<(usize, Previous)>>(),
         std::mem::size_of::<Option<(usize, CaptureWrites)>>()
     );
 }
@@ -94,12 +94,13 @@ impl CaptureWrites {
             Self::Many(writes) => {
                 writes.insert(write);
             }
+            Self::Indexed(_) => unreachable!("private publication is not a task write journal"),
         }
     }
 
     fn iter(&self) -> impl Iterator<Item = &(usize, String)> {
         let (first, rest) = match self {
-            Self::Empty => (None, None),
+            Self::Empty | Self::Indexed(_) => (None, None),
             Self::One(write) => (Some(write), None),
             Self::Many(writes) => (None, Some(writes)),
         };
@@ -157,6 +158,10 @@ impl CaptureStoragePool {
     }
 
     pub(crate) fn recycle(&mut self, mut environment: Environment) {
+        if let Some((0, CaptureWrites::Indexed(pending))) = environment.capture_writes.take() {
+            let (name, value) = pending.discard();
+            environment.scopes[0].insert(name, value);
+        }
         if environment.scopes.capacity() > Self::MAX_SCOPES
             || environment.binding_kinds.capacity() > Self::MAX_SCOPES
         {
@@ -252,7 +257,7 @@ fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMa
 /// env.pop_scope();                              // Exit function scope
 /// assert!(matches!(env.get("x"), Some(Value::Int(10))));  // Original x visible again
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Environment {
     /// Explicit writable bindings. Module-native defaults may be stored separately;
     /// Public captured owners retain actual values. Private active invocations use
@@ -275,7 +280,142 @@ pub struct Environment {
     capture_observation: Option<(usize, bool)>,
 }
 
+impl Clone for Environment {
+    fn clone(&self) -> Self {
+        let mut scopes = self.scopes.clone();
+        if let Some(pending) = self.pending_indexed() {
+            let (name, value) = pending.clone().materialize();
+            scopes[0].insert(name, value);
+        }
+        Self {
+            scopes,
+            native_defaults: self.native_defaults.clone(),
+            binding_kinds: self.binding_kinds.clone(),
+            global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
+            live_capture: self.live_capture.clone(),
+            capture_writes: self.capture_writes.clone().filter(|(limit, _)| *limit != 0),
+            capture_observation: self.capture_observation,
+        }
+    }
+}
+
 impl Environment {
+    /// Only synchronous, nonrecursive global captures enable this private state.
+    /// A zero limit distinguishes it from task journals (whose limit is >= 1).
+    pub(crate) fn enable_indexed_publication(&mut self) {
+        if self.capture_writes.is_none() && self.live_capture.is_none() && self.scopes.len() == 1 {
+            self.capture_writes = Some((0, CaptureWrites::Empty));
+        }
+    }
+
+    fn pending_indexed(&self) -> Option<&super::indexed_publication::IndexedPublication> {
+        match &self.capture_writes {
+            Some((0, CaptureWrites::Indexed(pending))) => Some(pending),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn pending_visible(&self, name: &str) -> bool {
+        self.pending_indexed().is_some_and(|pending| pending.name() == name)
+            && !self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+    }
+
+    pub(crate) fn flush_indexed_publication(&mut self) {
+        if !matches!(self.capture_writes, Some((0, _))) {
+            return;
+        }
+        if let Some((0, CaptureWrites::Indexed(pending))) = self.capture_writes.take() {
+            let (name, value) = pending.materialize();
+            self.scopes[0].insert(name, value);
+        }
+    }
+
+    pub(crate) fn flush_indexed_name(&mut self, name: &str) {
+        if self.pending_visible(name) {
+            self.flush_indexed_publication();
+        }
+    }
+
+    pub(crate) fn publish_indexed_to(&mut self, owner: &mut Self) {
+        if !matches!(self.capture_writes, Some((0, _))) {
+            return;
+        }
+        if let Some((0, CaptureWrites::Indexed(pending))) = self.capture_writes.take() {
+            let slot = owner.scopes[0].get_mut(pending.name());
+            let (name, value) = pending.publish(slot);
+            self.scopes[0].insert(name, value);
+        }
+    }
+
+    pub(crate) fn indexed_publication_read(&self, name: &str, index: i64) -> Option<Value> {
+        if !self.pending_visible(name) {
+            return None;
+        }
+        let pending = self.pending_indexed().unwrap();
+        let resolved = if index < 0 { pending.len() as i64 + index } else { index };
+        Some(if resolved < 0 {
+            Value::Error(format!("Index out of bounds: {index}"))
+        } else {
+            pending
+                .get(resolved as usize)
+                .unwrap_or_else(|| Value::Error(format!("Index out of bounds: {index}")))
+        })
+    }
+
+    pub(crate) fn try_defer_index_write(
+        &mut self,
+        name: &str,
+        index: &Value,
+        value: &Value,
+    ) -> bool {
+        if !matches!(self.capture_writes, Some((0, _)))
+            || !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+            || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+            || self.binding_kinds[0].contains_key(name)
+        {
+            return false;
+        }
+        let Value::Int(index) = index else { return false };
+        let length = if let Some(pending) = self.pending_indexed() {
+            if pending.name() != name {
+                return false;
+            }
+            pending.len()
+        } else if let Some(Value::Array(base)) = self.scopes[0].get(name) {
+            // The owner and this private view must be the only initial handles.
+            if Arc::strong_count(base) != 2 {
+                return false;
+            }
+            base.len()
+        } else {
+            return false;
+        };
+        let resolved = if *index < 0 { length as i64 + *index } else { *index };
+        if resolved < 0 || resolved as usize >= length {
+            return false;
+        }
+        let index = resolved as usize;
+        if let Some((0, CaptureWrites::Indexed(pending))) = &mut self.capture_writes {
+            if !pending.try_record(index, value) {
+                return false;
+            }
+        } else {
+            let (key, Value::Array(base)) = self.scopes[0].remove_entry(name).unwrap() else {
+                unreachable!()
+            };
+            match super::indexed_publication::IndexedPublication::prepare(key, base, index, value) {
+                Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Indexed(pending))),
+                Err((key, base)) => {
+                    self.scopes[0].insert(key, Value::Array(base));
+                    return false;
+                }
+            }
+        }
+        self.invalidate_capture_observation();
+        true
+    }
+
     /// Create a private invocation view without replacing publicly exposed owner
     /// values or retaining a second current collection value in the invocation.
     #[cfg(test)]
@@ -367,6 +507,10 @@ impl Environment {
 
     fn materialized_scopes(&self) -> Vec<HashMap<String, Value>> {
         let mut scopes = self.scopes.clone();
+        if let Some(pending) = self.pending_indexed() {
+            let (name, value) = pending.clone().materialize();
+            scopes[0].insert(name, value);
+        }
         if let Some(link) = &self.live_capture {
             if let Some(owner) = link.owner.upgrade() {
                 let owner = owner.lock().unwrap_or_else(|p| p.into_inner());
@@ -397,7 +541,7 @@ impl Environment {
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
             live_capture: None,
-            capture_writes: self.capture_writes.clone(),
+            capture_writes: self.capture_writes.clone().filter(|(limit, _)| *limit != 0),
             capture_observation: self.capture_observation,
         }
     }
@@ -481,6 +625,9 @@ impl Environment {
         count: usize,
         pool: &mut CaptureStoragePool,
     ) -> Self {
+        if self.pending_indexed().is_some() {
+            return self.clone().capture_prefix_snapshot(count, pool);
+        }
         let mut storage = pool.take();
         storage.scopes.resize_with(count, HashMap::new);
         storage.binding_kinds.resize_with(count, HashMap::new);
@@ -503,6 +650,10 @@ impl Environment {
     }
 
     pub(crate) fn copy_global_scope_from(&mut self, source: &Self) {
+        self.flush_indexed_publication();
+        if source.pending_indexed().is_some() {
+            return self.copy_global_scope_from(&source.clone());
+        }
         self.invalidate_capture_observation();
         self.global_source.clone_from(&source.global_source);
         refill_capture_map(&mut self.scopes[0], &source.scopes[0]);
@@ -518,6 +669,8 @@ impl Environment {
     /// Publish the completed globals at the same boundary as copy_global_scope_from,
     /// then let the caller recycle the retired map rather than reallocating its keys.
     pub(crate) fn publish_global_scope_from(&mut self, source: &mut Self) {
+        self.flush_indexed_publication();
+        source.publish_indexed_to(self);
         self.invalidate_capture_observation();
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &source.capture_writes)
@@ -549,6 +702,7 @@ impl Environment {
     /// capture. Aliases, user overrides and immutable declarations remain stored.
     /// No shared Value or mutable map can reach a native globals pointer here.
     pub(crate) fn share_module_native_defaults(&mut self) {
+        self.flush_indexed_publication();
         if self.scopes.len() != 1 || self.native_defaults.is_some() {
             return;
         }
@@ -576,7 +730,8 @@ impl Environment {
     /// Test lexical membership without cloning a value. Shared module defaults
     /// are bindings too, including when native loops choose an assignment owner.
     pub(crate) fn contains_binding(&self, name: &str) -> bool {
-        self.scopes.iter().any(|scope| scope.contains_key(name))
+        self.pending_visible(name)
+            || self.scopes.iter().any(|scope| scope.contains_key(name))
             || self.native_defaults.as_ref().is_some_and(|defaults| defaults.contains_key(name))
     }
 
@@ -593,6 +748,7 @@ impl Environment {
     /// Track writes for captured invocations inside language tasks. Ordinary environments
     /// allocate no journal. Same-binding read-modify-write remains non-atomic.
     pub(crate) fn track_capture_writes(&mut self) {
+        self.flush_indexed_publication();
         self.capture_writes = Some((self.scopes.len(), CaptureWrites::default()));
     }
 
@@ -662,7 +818,7 @@ impl Environment {
         body: &[crate::ast::Stmt],
         lexical_self: Option<&str>,
     ) -> Self {
-        if self.live_capture.is_some() {
+        if self.live_capture.is_some() || self.pending_indexed().is_some() {
             return self.detached_snapshot().capture_for_callable(params, body, lexical_self);
         }
         let names = self
@@ -813,7 +969,7 @@ impl Environment {
     }
 
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
-        if self.live_capture.is_some() {
+        if self.live_capture.is_some() || self.pending_indexed().is_some() {
             return self.detached_snapshot().visible_bindings();
         }
         let mut visible = self
@@ -851,6 +1007,9 @@ impl Environment {
     }
 
     pub(crate) fn global_snapshot(&self) -> Self {
+        if self.pending_indexed().is_some() {
+            return self.clone().global_snapshot();
+        }
         Self {
             scopes: vec![self.scopes[0].clone()],
             binding_kinds: vec![self.binding_kinds[0].clone()],
@@ -881,6 +1040,7 @@ impl Environment {
     /// Caller-local scopes are suspended, so assignment cannot mutate unrelated
     /// caller bindings. Captured closures use their own environment instead.
     pub(crate) fn enter_global_function(&mut self) -> Environment {
+        self.flush_indexed_publication();
         let caller = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
@@ -919,6 +1079,8 @@ impl Environment {
     /// Swap only non-global scopes when suspending an execution owner. Global
     /// bindings remain live; caller scopes never leak into a resumed generator.
     pub(crate) fn swap_local_scopes(&mut self, mut owner: Environment) -> Environment {
+        self.flush_indexed_publication();
+        owner.flush_indexed_publication();
         let previous = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
@@ -974,6 +1136,9 @@ impl Environment {
     /// Metadata for a direct global-only recursive activation. Its globals are
     /// transferred separately; inherited writes still determine publication.
     pub(crate) fn recursive_global_environment(&self, pool: &mut CaptureStoragePool) -> Self {
+        if self.pending_indexed().is_some() {
+            return self.clone().recursive_global_environment(pool);
+        }
         let mut storage = pool.take();
         storage.scopes.resize_with(1, HashMap::new);
         storage.binding_kinds.resize_with(1, HashMap::new);
@@ -993,6 +1158,8 @@ impl Environment {
 
     /// Move the live globals into/out of a continuation without cloning them.
     pub(crate) fn swap_global_scope(&mut self, other: &mut Self) {
+        self.flush_indexed_publication();
+        other.flush_indexed_publication();
         std::mem::swap(&mut self.global_source, &mut other.global_source);
         std::mem::swap(&mut self.native_defaults, &mut other.native_defaults);
         std::mem::swap(&mut self.scopes[0], &mut other.scopes[0]);
@@ -1002,6 +1169,9 @@ impl Environment {
     /// Get a variable from the environment, searching from inner to outer scopes
     /// Returns a cloned value if found
     pub fn get(&self, name: &str) -> Option<Value> {
+        if self.pending_visible(name) {
+            return Some(self.pending_indexed().unwrap().snapshot_value());
+        }
         // Search from innermost to outermost scope
         for (index, scope) in self.scopes.iter().enumerate().rev() {
             if let Some(value) = scope.get(name) {
@@ -1020,6 +1190,9 @@ impl Environment {
     }
 
     pub fn define_with_kind(&mut self, name: String, value: Value, kind: BindingKind) {
+        if self.scopes.len() == 1 {
+            self.flush_indexed_name(&name);
+        }
         Self::record_capture_write(
             &mut self.capture_writes,
             &mut self.capture_observation,
@@ -1080,12 +1253,14 @@ impl Environment {
     }
 
     fn current_scope_contains(&self, name: &str) -> bool {
-        self.scopes.last().map(|scope| scope.contains_key(name)).unwrap_or(false)
+        (self.scopes.len() == 1 && self.pending_visible(name))
+            || self.scopes.last().map(|scope| scope.contains_key(name)).unwrap_or(false)
     }
 
     /// Set an existing variable, searching from inner to outer scopes
     /// If not found, creates it in the current scope
     pub fn set(&mut self, name: String, value: Value) {
+        self.flush_indexed_name(&name);
         // Try to find and update existing variable
         for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if scope.contains_key(&name) {
@@ -1109,6 +1284,7 @@ impl Environment {
     }
 
     pub fn assign_checked(&mut self, name: String, value: Value) -> Result<(), String> {
+        self.flush_indexed_name(&name);
         for (scope_index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if scope.contains_key(&name) {
                 let kind = self.binding_kinds[scope_index]
@@ -1149,6 +1325,7 @@ impl Environment {
     where
         F: FnOnce(&mut Value),
     {
+        self.flush_indexed_name(name);
         // Find the scope containing this variable
         for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if let Some(value) = scope.get_mut(name) {
@@ -1180,6 +1357,7 @@ impl Environment {
     where
         F: FnOnce(&mut Value),
     {
+        self.flush_indexed_name(name);
         for (scope_index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if let Some(value) = scope.get_mut(name) {
                 let kind = self.binding_kinds[scope_index]
@@ -1257,6 +1435,7 @@ impl Environment {
         name: &str,
         f: impl FnOnce(&mut Value) -> Result<bool, String>,
     ) -> Result<bool, String> {
+        self.flush_indexed_name(name);
         for (scope_index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if let Some(value) = scope.get_mut(name) {
                 let kind = self.binding_kinds[scope_index]
@@ -1301,6 +1480,9 @@ impl Environment {
     }
 
     pub fn ensure_mutable_for_mutation(&self, name: &str) -> Result<(), String> {
+        if self.pending_visible(name) {
+            return Ok(()); // Admission already checked this global's mutable kind.
+        }
         for (scope_index, scope) in self.scopes.iter().enumerate().rev() {
             if scope.contains_key(name) {
                 let kind = self.binding_kinds[scope_index]
@@ -1324,6 +1506,95 @@ impl Environment {
 impl Default for Environment {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod indexed_publication_environment_tests {
+    use super::*;
+
+    fn activation() -> (Arc<Mutex<Environment>>, Environment) {
+        let mut owner = Environment::new();
+        owner.define("data".into(), Value::Array(Arc::new((0..128).map(Value::Int).collect())));
+        let owner = Arc::new(Mutex::new(owner));
+        let mut active = Environment::capture_activation(&owner);
+        active.observe_capture_writes(false);
+        active.enable_indexed_publication();
+        active.push_scope();
+        (owner, active)
+    }
+
+    fn element(environment: &Environment, index: usize) -> i64 {
+        let Value::Array(values) = environment.get("data").unwrap() else { panic!() };
+        let Value::Int(value) = values[index] else { panic!() };
+        value
+    }
+
+    #[test]
+    fn indexed_publication_defers_and_reuses_unique_owner() {
+        let (owner, mut active) = activation();
+        let pointer = match owner.lock().unwrap().scopes[0].get("data").unwrap() {
+            Value::Array(values) => Arc::as_ptr(values),
+            _ => unreachable!(),
+        };
+        assert!(active.try_defer_index_write("data", &Value::Int(-1), &Value::Int(900)));
+        assert!(!active.capture_is_unchanged());
+        assert!(active.contains_binding("data"));
+        assert!(matches!(active.indexed_publication_read("data", -1), Some(Value::Int(900))));
+        assert_eq!(element(&owner.lock().unwrap(), 127), 127);
+        active.publish_indexed_to(&mut owner.lock().unwrap());
+        assert_eq!(element(&active, 127), 900);
+        let guard = owner.lock().unwrap();
+        let Value::Array(values) = &guard.scopes[0]["data"] else { panic!() };
+        assert_eq!(Arc::as_ptr(values), pointer);
+        assert_eq!(element(&guard, 127), 900);
+    }
+
+    #[test]
+    fn indexed_publication_snapshots_and_shadowing_keep_value_semantics() {
+        let (owner, mut active) = activation();
+        assert!(active.try_defer_index_write("data", &Value::Int(0), &Value::Int(99)));
+        for snapshot in [active.clone(), active.detached_snapshot(), active.global_snapshot()] {
+            assert_eq!(element(&snapshot, 0), 99);
+            assert!(snapshot.pending_indexed().is_none());
+        }
+        assert!(matches!(active.visible_bindings()["data"].0, Value::Array(_)));
+        let observer = owner.lock().unwrap().get("data").unwrap();
+        active.define_with_kind("data".into(), Value::Int(8), BindingKind::Const);
+        assert!(!active.try_defer_index_write("data", &Value::Int(0), &Value::Int(7)));
+        assert!(active.ensure_mutable_for_mutation("data").is_err());
+        assert!(active.assign_checked("data".into(), Value::Int(9)).is_err());
+        assert!(active.pending_indexed().is_some());
+        active.pop_scope();
+        active.publish_indexed_to(&mut owner.lock().unwrap());
+        let Value::Array(observer) = observer else { panic!() };
+        assert!(matches!(observer[0], Value::Int(0)));
+        assert_eq!(element(&active, 0), 99);
+    }
+
+    #[test]
+    fn indexed_publication_fallback_and_task_transition_preserve_writes() {
+        let (owner, mut active) = activation();
+        assert!(active.try_defer_index_write("data", &Value::Int(0), &Value::Int(10)));
+        assert!(active.try_defer_index_write("data", &Value::Int(1), &Value::Int(11)));
+        assert!(!active.try_defer_index_write("data", &Value::Int(2), &Value::Int(12)));
+        active
+            .mutate_checked_runtime("data", |value| {
+                let Value::Array(values) = value else { panic!() };
+                Arc::make_mut(values)[2] = Value::Int(12);
+            })
+            .unwrap();
+        assert!(active.pending_indexed().is_none());
+        assert_eq!(element(&active, 0), 10);
+        assert_eq!(element(&active, 2), 12);
+        assert_eq!(element(&owner.lock().unwrap(), 0), 0);
+
+        let (_owner, mut active) = activation();
+        assert!(active.try_defer_index_write("data", &Value::Int(0), &Value::Int(20)));
+        active.track_capture_writes();
+        assert!(active.pending_indexed().is_none());
+        assert_eq!(element(&active, 0), 20);
+        assert!(matches!(active.capture_writes, Some((2, CaptureWrites::Empty))));
     }
 }
 

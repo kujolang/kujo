@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Defer bounded sparse scalar writes to captured global arrays until publication,
+  avoiding repeated full-array copies in eligible synchronous helpers. Preserve
+  public pre-return values, snapshots, binding permissions and error ordering;
+  materialize ordinary arrays at unsupported operations and observation boundaries.
+
 - Reserve fresh private captured-local maps from their actual key count, avoiding
   repeated table growth for oversized captures. Preserve live values, independent
   snapshots, immutable bindings and bounded idle storage.

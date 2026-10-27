@@ -27,7 +27,6 @@ pub mod database_handle;
 mod environment;
 pub mod generator;
 mod generator_lowering;
-#[cfg(test)]
 mod indexed_publication;
 pub(crate) mod native_functions;
 pub mod persistent_queue;
@@ -2575,6 +2574,8 @@ impl Interpreter {
         // writes, never its stale snapshot of another task's captured bindings.
         if self.task_cancellation.is_some() {
             environment.track_capture_writes();
+        } else if active.is_none() {
+            environment.enable_indexed_publication();
         }
         let count = environment.scopes.len();
         let caller = std::mem::replace(&mut self.env, environment);
@@ -2651,6 +2652,7 @@ impl Interpreter {
         }
         {
             let mut owner = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+            completed.publish_indexed_to(&mut owner);
             if self.task_cancellation.is_some() {
                 owner.merge_task_capture_writes(&completed);
             } else if completed.has_live_capture() {
@@ -2727,6 +2729,7 @@ impl Interpreter {
         mut args: Vec<Value>,
         name: Option<&str>,
     ) -> Value {
+        self.env.flush_indexed_publication();
         match func {
             Value::BytecodeFunction { .. } => {
                 let capture_globals_checkpoint = self.capture_globals_checkpoint();
@@ -3660,6 +3663,7 @@ impl Interpreter {
     /// This is used both by call_native_function (after evaluating Expr args)
     /// and by the VM (which already has Value args)
     pub fn call_native_function_impl(&mut self, name: &str, arg_values: &[Value]) -> Value {
+        self.env.flush_indexed_publication();
         // Delegate to the native_functions module dispatcher
         native_functions::call_native_function(self, name, arg_values)
     }
@@ -3827,6 +3831,10 @@ impl Interpreter {
             Expr::Identifier(name) => name.as_str(),
             _ => return Value::Error("Complex index assignment not yet supported".to_string()),
         };
+
+        if self.env.try_defer_index_write(container_name, &index_value, value) {
+            return Value::Null;
+        }
 
         let mut assignment_error: Option<String> = None;
         let index_clone = index_value.clone();
@@ -4994,6 +5002,22 @@ impl Interpreter {
 
     /// Evaluates a single statement
     fn eval_stmt(&mut self, stmt: &Stmt) {
+        if !matches!(
+            stmt,
+            Stmt::Assign { .. }
+                | Stmt::Let { .. }
+                | Stmt::Const { .. }
+                | Stmt::Return(_)
+                | Stmt::If { .. }
+                | Stmt::While { .. }
+                | Stmt::Loop { .. }
+                | Stmt::Block(_)
+                | Stmt::ExprStmt(_)
+                | Stmt::Break
+                | Stmt::Continue
+        ) {
+            self.env.flush_indexed_publication();
+        }
         if self.task_is_cancelled() {
             self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
             return;
@@ -5804,6 +5828,25 @@ impl Interpreter {
 
     /// Evaluates an expression to produce a value
     fn eval_expr(&mut self, expr: &Expr) -> Value {
+        // Unknown operations can expose values or enter user/native code. Keep
+        // the journal confined to ordinary scalar evaluation between boundaries.
+        if !matches!(
+            expr,
+            Expr::Identifier(_)
+                | Expr::Int(_)
+                | Expr::Float(_)
+                | Expr::String(_)
+                | Expr::Bool(_)
+                | Expr::None
+                | Expr::UnaryOp { .. }
+                | Expr::BinaryOp { .. }
+                | Expr::IndexAccess { .. }
+        ) {
+            self.env.flush_indexed_publication();
+        }
+        if let Expr::Identifier(name) = expr {
+            self.env.flush_indexed_name(name);
+        }
         let result = match expr {
             Expr::Int(n) => Value::Int(*n),
             Expr::Float(n) => Value::Float(*n),
@@ -6820,6 +6863,27 @@ impl Interpreter {
                 Value::Dict(Arc::new(map))
             }
             Expr::IndexAccess { object, index } => {
+                // Only a literal or identifier index may bypass the ordinary
+                // object snapshot: neither can replace the object while read.
+                if let Expr::Identifier(name) = object.as_ref() {
+                    let scalar = if self.env.pending_visible(name) {
+                        match index.as_ref() {
+                            Expr::Int(index) => Some(*index),
+                            Expr::Identifier(index) => match self.env.get(index) {
+                                Some(Value::Int(index)) => Some(index),
+                                _ => None,
+                            },
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    };
+                    if let Some(index) = scalar {
+                        if let Some(value) = self.env.indexed_publication_read(name, index) {
+                            return value;
+                        }
+                    }
+                }
                 let obj_val = self.eval_expr(object);
                 if Self::is_error_value(&obj_val) {
                     return obj_val;
