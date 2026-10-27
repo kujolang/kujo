@@ -5048,5 +5048,12 @@
     "semantic_controls": 324,
     "next_target": "Foreign-module callback reentry at depth four; ordinary same-module bridges already flat across unrelated bindings.",
     "runtime_changed": false
+  },
+  "local_capture_isolation_2026_10_27": {
+    "status": "characterized_not_fixed",
+    "evidence": "local-capture-isolation-2026-10-27.json",
+    "allocation_controls": 32,
+    "semantic_controls": 48,
+    "remaining": "Oversized genuinely retained local capture:8192bindings requests/bytes grow to8233/5357679 per read call;0/128/2048flat at25/1266. Preserve live alias cells and independent closure snapshots."
   }
 }
