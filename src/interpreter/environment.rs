@@ -1422,6 +1422,21 @@ impl Environment {
         std::mem::swap(&mut self.binding_kinds[0], &mut other.binding_kinds[0]);
     }
 
+    /// Move private live-local storage without moving its separately owned globals.
+    /// Preserve the same local write journal merge as snapshot restoration.
+    pub(crate) fn transfer_capture_locals_from(&mut self, source: &mut Self, count: usize) {
+        self.invalidate_capture_observation();
+        for index in 1..count {
+            std::mem::swap(&mut self.scopes[index], &mut source.scopes[index]);
+            std::mem::swap(&mut self.binding_kinds[index], &mut source.binding_kinds[index]);
+        }
+        if let (Some((_, target)), Some((_, writes))) =
+            (&mut self.capture_writes, &source.capture_writes)
+        {
+            target.extend(writes.iter().filter(|(index, _)| *index > 0 && *index < count).cloned());
+        }
+    }
+
     pub(crate) fn swap_capture_prefix(&mut self, other: &mut Self, count: usize) {
         self.swap_global_scope(other);
         for index in 1..count {
