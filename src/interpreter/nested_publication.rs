@@ -96,6 +96,11 @@ impl Selector {
 #[derive(Clone, Debug)]
 pub(crate) struct RowWrite {
     selector: Selector,
+    entries: [Option<RowEntry>; 4],
+}
+
+#[derive(Clone, Copy, Debug)]
+struct RowEntry {
     index: usize,
     value: Scalar,
 }
@@ -113,7 +118,10 @@ impl RowWrite {
             _ => unreachable!("validated nested publication root"),
         };
         let Some(Value::Array(row)) = leaf else { unreachable!("validated row") };
-        Arc::make_mut(row)[self.index] = self.value.value();
+        let row = Arc::make_mut(row);
+        for entry in self.entries.iter().flatten() {
+            row[entry.index] = entry.value.value();
+        }
     }
 }
 
@@ -166,7 +174,10 @@ impl NestedPublication {
             Access::Index(Value::Int(key)) => Selector::Integer(key),
             _ => unreachable!("admitted selector"),
         };
-        path[1] = Access::DeferredRow(RowWrite { selector, index, value });
+        path[1] = Access::DeferredRow(RowWrite {
+            selector,
+            entries: [Some(RowEntry { index, value }), None, None, None],
+        });
         Ok(Self { name, path })
     }
 
@@ -188,8 +199,12 @@ impl NestedPublication {
         }
         let row = write.selector.key().row(root).expect("validated row");
         Some(match Self::resolve(index, row.len()) {
-            Some(index) if index == write.index => write.value.value(),
-            Some(index) => row[index].clone(),
+            Some(index) => write
+                .entries
+                .iter()
+                .flatten()
+                .find(|entry| entry.index == index)
+                .map_or_else(|| row[index].clone(), |entry| entry.value.value()),
             None => Value::Error(format!("Index out of bounds: {index}")),
         })
     }
@@ -200,12 +215,20 @@ impl NestedPublication {
         let Some(value) = Scalar::from_value(value) else { return false };
         let (root, write) = self.parts();
         let row = write.selector.key().row(root).expect("validated row");
-        if !write.selector.key().same(key) || Self::resolve(*index, row.len()) != Some(write.index)
-        {
+        if !write.selector.key().same(key) {
             return false;
         }
+        let Some(index) = Self::resolve(*index, row.len()) else { return false };
+        // Coalesce aliases before looking for an unused slot. A full journal
+        // must still accept repeated writes; rejection leaves it untouched.
+        let slot = write
+            .entries
+            .iter()
+            .position(|entry| entry.is_some_and(|entry| entry.index == index))
+            .or_else(|| write.entries.iter().position(Option::is_none));
+        let Some(slot) = slot else { return false };
         let Access::DeferredRow(write) = &mut self.path[1] else { unreachable!() };
-        write.value = value;
+        write.entries[slot] = Some(RowEntry { index, value });
         true
     }
 
@@ -247,6 +270,56 @@ impl NestedPublication {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bounded_row_entries_do_not_grow_assignment_storage() {
+        #[allow(dead_code)]
+        enum LegacyAccess {
+            Index(Value),
+            Field(String),
+            DeferredRow(LegacyRow),
+        }
+        #[allow(dead_code)]
+        struct LegacyRow {
+            selector: Selector,
+            index: usize,
+            value: Scalar,
+        }
+        assert_eq!(std::mem::size_of::<Access>(), std::mem::size_of::<LegacyAccess>());
+        assert_eq!(std::mem::align_of::<Access>(), std::mem::align_of::<LegacyAccess>());
+    }
+
+    #[test]
+    fn bounded_row_entries_coalesce_and_reject_overflow_atomically() {
+        for dictionary in [false, true] {
+            let mut owner = root(dictionary);
+            let mut pending = NestedPublication::prepare(
+                "state".into(),
+                owner.clone(),
+                path(dictionary, 0),
+                &Value::Int(10),
+            )
+            .unwrap();
+            for index in 1..4 {
+                assert!(pending.try_record(&path(dictionary, index), &Value::Int(index + 10)));
+            }
+            let private = pending.snapshot_value();
+            assert!(!pending.try_record(&path(dictionary, 4), &Value::Int(99)));
+            assert!(!pending.try_record(&path(dictionary, 2048), &Value::Int(99)));
+            assert!(pending.try_record(&path(dictionary, -2048), &Value::Int(20)));
+            for index in 0..4 {
+                assert!(matches!(pending.read(key(dictionary), index), Some(Value::Int(v))
+                    if v == if index == 0 { 20 } else { index + 10 }));
+                assert_eq!(element(&owner, dictionary, index as usize), 0);
+                assert_eq!(element(&private, dictionary, index as usize), index + 10);
+            }
+            let (_, current) = pending.publish(Some(&mut owner));
+            assert_eq!(element(&current, dictionary, 0), 20);
+            assert_eq!(element(&owner, dictionary, 3), 13);
+            assert_eq!(element(&owner, dictionary, 4), 0);
+            assert_eq!(element(&private, dictionary, 0), 10);
+        }
+    }
 
     fn root(dictionary: bool) -> Value {
         let row = Value::array(vec![Value::Int(0); 2048]);
@@ -297,12 +370,13 @@ mod tests {
             assert_eq!(element(&owner, dictionary, 2047), 0);
             assert!(matches!(pending.read(key(dictionary), -1), Some(Value::Int(7))));
             assert!(pending.try_record(&path_for_last(dictionary), &Value::Int(9)));
-            assert!(!pending.try_record(&path(dictionary, 0), &Value::Int(88)));
+            assert!(pending.try_record(&path(dictionary, 0), &Value::Int(88)));
             assert!(!pending.try_record(&path_for_last(dictionary), &Value::array(vec![])));
             let (_, current) = pending.publish(Some(&mut owner));
             assert_eq!(Arc::as_ptr(key(dictionary).row(&owner).unwrap()), before);
             assert_eq!(element(&current, dictionary, 2047), 9);
             assert_eq!(element(&owner, dictionary, 2047), 9);
+            assert_eq!(element(&owner, dictionary, 0), 88);
         }
     }
 

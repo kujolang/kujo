@@ -8,7 +8,62 @@ struct State { row: array, other: array }
 mut state := State { row: range(0, 128), other: [0] }
 mut data := {"1": range(0, 128), "01": [41]}
 mut side := range(0, 2048)
+export func multiple(n) {
+    mut i := 0
+    while i < n {
+        state.row[i] = i + 100
+        data[1][i] = i + 200
+        i += 1
+    }
+    state.row[-128] += 1
+    data["1"][-128] += 1
+    let saved := state
+    state.row[1] = true
+    state.row[2] = null
+    state.row[3] = 1.5
+    assert_equal(saved.row[1], 101)
+    assert_equal(state.row[1], true)
+    assert_equal(state.row[2], null)
+    assert_equal(state.row[3], 1.5)
+    return [saved.row[0], saved.row[n - 1], data[1][0], data[1][n - 1]]
+}
 export func snapshot() { return state }
+func replace_for_negative_read() {
+    state := State { row: range(20, 148), other: [0] }
+    return 128
+}
+export func negative_reads() {
+    state := State { row: range(0, 128), other: [0] }
+    state.row[0] = 71
+    state.row[1] = 72
+    let size := 128
+    assert_equal(state.row[-128], 71)
+    assert_equal(state.row[-size], 71)
+    let minimum := -9223372036854775807 - 1
+    mut caught := false
+    try { let bad := state.row[-minimum] } except e { caught = true }
+    assert(caught)
+    assert_equal(state.row[0], 71)
+    caught = false
+    try { let bad := state.row[-129] } except e { caught = true }
+    assert(caught)
+    state.row[0] = 73
+    // Calls still evaluate after the row snapshot and may replace its owner.
+    let old := state.row[-replace_for_negative_read()]
+    return [old, state.row[0], state.row[1]]
+}
+export func invalid_self_index() {
+    state.row[0] += 1
+    return state.row[-state]
+}
+export func invalid_self_leaf() {
+    state.row[0] += 1
+    return state.row[state]
+}
+export func invalid_self_selector() {
+    state.row[0] += 1
+    return state[state][-1]
+}
 export func dictionary() { return data }
 export func side_snapshot() { return side }
 export func row_before_write() {
@@ -92,7 +147,7 @@ export func scalar_values() {
 }
 "#;
     let source = r#"
-from state import snapshot, dictionary, side_snapshot, row_before_write, mixed_writes, mixed_dictionary_writes, edit, edit_dict, escape_then_write, fallback, fail_after_write, replace_during_index, read_before_index_replacement, shadow, callbacks, scalar_values
+from state import multiple, snapshot, dictionary, side_snapshot, row_before_write, mixed_writes, mixed_dictionary_writes, edit, edit_dict, escape_then_write, fallback, fail_after_write, replace_during_index, read_before_index_replacement, shadow, callbacks, scalar_values
 let original := snapshot()
 assert_equal(edit(8), 8)
 assert_equal(edit(8), 16)
@@ -138,6 +193,36 @@ assert_equal(before_side[0], 0)
 assert_equal(before_mixed.row[0], 51)
 assert_equal(before_dictionary[1][0], 14)
 assert_equal(frozen.row[0], 1.5)
+for count in [2, 3, 4, 5, 32] {
+    let before := snapshot()
+    let before_data := dictionary()
+    let old := before.row[0]
+    let old_data := before_data[1][0]
+    assert_equal(multiple(count), [101, count + 99, 201, count + 199])
+    assert_equal(before.row[0], old)
+    assert_equal(before_data[1][0], old_data)
+    assert_equal(multiple(count), [101, count + 99, 201, count + 199])
+}
+from state import negative_reads, invalid_self_index, invalid_self_leaf, invalid_self_selector
+assert_equal(negative_reads(), [73, 20, 21])
+for expected in [21, 22] {
+    caught = false
+    try { invalid_self_index() } except e { caught = true }
+    assert(caught)
+    assert_equal(snapshot().row[0], expected)
+}
+let before_invalid := snapshot()
+for expected in [23, 25] {
+    caught = false
+    try { invalid_self_leaf() } except e { caught = true }
+    assert(caught)
+    assert_equal(snapshot().row[0], expected)
+    caught = false
+    try { invalid_self_selector() } except e { caught = true }
+    assert(caught)
+    assert_equal(snapshot().row[0], expected + 1)
+}
+assert_equal(before_invalid.row[0], 22)
 print("NESTED PUBLICATION PASS")
 "#;
     std::fs::write(directory.path().join("state.kujo"), module).unwrap();

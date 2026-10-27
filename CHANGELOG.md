@@ -11,6 +11,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain up to four distinct scalar writes to one captured struct/dictionary
+  array row without copying the row on each helper call. Preserve snapshots,
+  publication ordering and fallback for larger batches. Checked negative-index
+  reads reuse pending values; invalid root-as-index expressions avoid speculative
+  copies while retaining ordinary error behavior.
+
 - Avoid copying dictionary keys while validating and traversing nested assignment
   paths. Existing-key writes reuse stored keys; insertion, snapshots, canonical
   integer keys and assignment error ordering remain unchanged.

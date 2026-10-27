@@ -4138,14 +4138,33 @@ impl Interpreter {
         if !self.env.pending_nested_visible(name) {
             return None;
         }
-        // Only lookup/literal indices can bypass the ordinary root snapshot.
+        // Only lookup/literal indices (including checked integer negation)
+        // can bypass the ordinary root snapshot.
         // Calls and other expressions retain their original evaluation order.
         let index = match index {
             Expr::Int(index) => *index,
+            Expr::Identifier(index) if index == name => return None,
             Expr::Identifier(index) => match self.env.get(index) {
                 Some(Value::Int(index)) => index,
                 _ => return None,
             },
+            Expr::UnaryOp { op, operand } if op == "-" => {
+                let value = match operand.as_ref() {
+                    Expr::Int(value) => *value,
+                    // The pending root is a collection, never an integer.
+                    // Looking it up here would materialize an extra snapshot
+                    // before the ordinary unary evaluator handles that value.
+                    Expr::Identifier(index_name) if index_name == name => return None,
+                    Expr::Identifier(index_name) => match self.env.get(index_name) {
+                        Some(Value::Int(value)) => value,
+                        _ => return None,
+                    },
+                    _ => return None,
+                };
+                // Overflow and non-integer/operator cases must retain the
+                // ordinary evaluator's diagnostics and evaluation order.
+                value.checked_neg()?
+            }
             _ => return None,
         };
         match object {
@@ -4159,6 +4178,9 @@ impl Interpreter {
                 Expr::Int(key) => {
                     self.env.nested_publication_read(name, RowKey::Integer(*key), index)
                 }
+                // A pending collection cannot be a scalar row selector.
+                // Leave its materialization to the ordinary evaluator.
+                Expr::Identifier(key) if key == name => None,
                 Expr::Identifier(key) => match self.env.get(key) {
                     Some(Value::Str(key)) => {
                         self.env.nested_publication_read(name, RowKey::String(&key), index)
