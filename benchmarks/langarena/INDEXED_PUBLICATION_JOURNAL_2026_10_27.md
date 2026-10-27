@@ -2,9 +2,10 @@
 
 A bounded, inline write journal reduces complete update-and-publication allocation
 in this standalone array model while preserving real pre-return public values.
-It is a candidate for runtime integration, **not an implemented Kujo optimization
-or a measured speedup**. General captured-local and module collection costs remain
-open.
+This report records the standalone model, **not a measured language speedup**.
+The subsequent [sparse runtime integration](INDEXED_PUBLICATION_RUNTIME_2026_10_27.md)
+has its own allocation and correctness evidence. General captured-local and
+broader module collection costs remain open.
 
 The [source](probes/indexed_publication_journal.rs) uses the actual 136-byte Kujo
 `Value` from the accepted `aee15a2` runtime, archived at evidence commit `0d54b47`.
@@ -88,7 +89,7 @@ before integration; passing them does not prove the optimization is active.
 
 ### Compact storage candidate
 
-The test-only [storage candidate](../../src/interpreter/indexed_publication.rs)
+At commit `b2b8448`, the test-only [storage candidate](../../src/interpreter/indexed_publication.rs)
 narrows the four-slot model to two numeric/Boolean/null slots. Its 48-byte payload
 fits the existing capture-write journal's largest payload on the local x64 build.
 A test against the actual `CaptureWrites` type checks the candidate enum and its
@@ -112,9 +113,9 @@ also check atomic rejection, rollback, cloned pending state and pointer reuse.
 [Storage evidence](indexed-publication-storage-2026-10-27.json) records the seven
 passing tests, command and source hashes.
 
-The module is compiled only under `cfg(test)`. No execution path uses this
-candidate yet. These storage checks do not close the integration gates below,
-prove a runtime allocation reduction, or replace the three-runtime boundary tests.
+At that checkpoint the module compiled only under `cfg(test)`. The subsequent
+runtime report is authoritative for integration status. These historical storage
+checks alone do not prove runtime allocation reduction or replace runtime tests.
 
 - [ ] Keep the journal private. Preserve public `Value::Array` owner values before
   return, and ordinary values at every host, native, output and snapshot boundary.
@@ -133,5 +134,6 @@ prove a runtime allocation reduction, or replace the three-runtime boundary test
 - [ ] Re-run cold/append/module ownership gates, all 50 test-size checksums per
   runtime, formatting and relevant platform/feature checks for the integration.
 
-The growing-journal and bounded-journal experiments are complete. Runtime
-integration, production-size acceptance and clean-server comparisons remain open.
+The growing-journal and bounded-journal experiments are complete. Sparse runtime
+integration is verified separately; broader collection integration, production-size
+acceptance and clean-server comparisons remain open.
