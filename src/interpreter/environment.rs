@@ -912,12 +912,28 @@ impl Environment {
             for (target, source) in
                 self.scopes[1..count].iter_mut().zip(&completed.scopes[1..count])
             {
-                *target = source.keys().map(|name| (name.clone(), Value::Null)).collect();
+                // The suspended caller already owns its private key storage.
+                // Refresh membership without retaining any completed values or
+                // reallocating unchanged names on every recursive return.
+                target.retain(|name, value| {
+                    *value = Value::Null;
+                    source.contains_key(name)
+                });
+                target.reserve(source.len().saturating_sub(target.len()));
+                for name in source.keys() {
+                    if !target.contains_key(name) {
+                        target.insert(name.clone(), Value::Null);
+                    }
+                }
             }
         } else {
             self.scopes[1..count].clone_from_slice(&completed.scopes[1..count]);
         }
-        self.binding_kinds[1..count].clone_from_slice(&completed.binding_kinds[1..count]);
+        for (target, source) in
+            self.binding_kinds[1..count].iter_mut().zip(&completed.binding_kinds[1..count])
+        {
+            refill_capture_map(target, source);
+        }
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &completed.capture_writes)
         {
@@ -2576,6 +2592,54 @@ mod capture_storage_pool_tests {
 #[cfg(test)]
 mod recursive_capture_storage_tests {
     use super::*;
+
+    #[test]
+    fn restoring_live_prefix_refreshes_names_kinds_and_keeps_snapshots() {
+        let mut original = Environment::new();
+        original.define("global".into(), Value::Int(1));
+        original.push_scope();
+        original.define("removed".into(), Value::Int(2));
+        original.define("changed".into(), Value::Int(3));
+        original.define("items".into(), Value::array(vec![Value::Int(4)]));
+        let owner = Arc::new(Mutex::new(original));
+        let mut active = Environment::capture_activation(&owner);
+        let snapshot = active.detached_snapshot();
+        active.push_scope();
+        active.define("parameter".into(), Value::Int(99));
+        let mut pool = CaptureStoragePool::default();
+        let mut completed = active.capture_prefix_snapshot(2, &mut pool);
+        completed.scopes[0].insert("global".into(), Value::Int(20));
+        completed.scopes[1].remove("removed");
+        owner.lock().unwrap().scopes[1].remove("removed");
+        completed.define_with_kind("changed".into(), Value::Int(30), BindingKind::Const);
+        completed.define_with_kind("added".into(), Value::Int(40), BindingKind::LetImmutable);
+        completed
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(5));
+            })
+            .unwrap();
+        // A private slot must not retain a stale temporary value after restore.
+        let temporary = Arc::new(vec![Value::Int(88)]);
+        let weak = Arc::downgrade(&temporary);
+        active.scopes[1].insert("items".into(), Value::Array(temporary));
+        active.observe_capture_writes(false);
+        active.restore_capture_locals(&completed, 2);
+        assert!(!active.capture_is_unchanged());
+        assert!(weak.upgrade().is_none());
+        assert!(active.scopes[1].values().all(|value| matches!(value, Value::Null)));
+        assert!(active.get("removed").is_none());
+        assert!(matches!(active.get("added"), Some(Value::Int(40))));
+        assert!(matches!(active.get("changed"), Some(Value::Int(30))));
+        assert!(matches!(active.get("global"), Some(Value::Int(1))));
+        assert!(matches!(active.get("parameter"), Some(Value::Int(99))));
+        assert!(active.assign_checked("changed".into(), Value::Int(0)).is_err());
+        assert!(active.assign_checked("added".into(), Value::Int(0)).is_err());
+        assert!(matches!(active.get("items"), Some(Value::Array(items)) if items.len() == 2));
+        assert!(matches!(snapshot.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        assert!(matches!(snapshot.get("changed"), Some(Value::Int(3))));
+        assert!(matches!(snapshot.get("removed"), Some(Value::Int(2))));
+    }
 
     #[test]
     fn prefix_reuse_excludes_parameters_and_keeps_value_snapshots() {
