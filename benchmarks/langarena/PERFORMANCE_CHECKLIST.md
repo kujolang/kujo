@@ -137,6 +137,11 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   array and existing-key integer dictionary paths above do not close these costs.
   The [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md) and its
   rejected growing journal remain historical design evidence, not broader coverage.
+  [Nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) on `868dfd8`
+  isolates 32 full-row-sized allocations per 32 added helper calls, for both one
+  and eight writes per call. All 128 instrumented runs match the existing total
+  allocations; row buffers explain the measured width growth. The ownership fix
+  remains open, including fresh-snapshot and publication controls.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global reentry and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. Follow-up evidence:
