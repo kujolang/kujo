@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Fresh local capture-map reserve (`aee15a2`).**
+  [Measured results](LOCAL_MAP_RESERVE_2026_10_27.md) show 2,637,372 fewer
+  allocated bytes per added call with 8,192 retained locals, in both VM and JIT.
+  All 1,147 library tests, 301 integration tests and 150 test-size checksums pass.
+  Smaller captures, cold controls and append controls do not regress. This
+  removes repeated table growth; retained-name copying, general materialization
+  and module-width copying remain open. No elapsed-speed claim.
+
 - **Leaf callback release (`5532fe0`) passes all 150 test-size checksums.**
   [Frozen release audit](leaf-callback-release-2026-10-25.json) verifies all 50
   unchanged configurations in VM, interpreter and JIT, including exact output,

@@ -30,10 +30,14 @@ The fixtures also check the documented identity rules: separately created siblin
 closures retain independent snapshots, while aliases of one closure share its
 cells. No language semantic change is proposed.
 
-Reproduce with `ruby probes/local-capture-allocations.rb MATCHING_PROBE
-MATCHING_BINARY NEW_OUTPUT_DIR` from this directory. The runner deliberately
-reports `characterized`, not a passing performance gate. A future optimization
-must add a scaling acceptance gate and paired before/after controls, preserve
-bounded idle storage and live alias behavior, and retain the existing host-owner,
-task ordering, snapshot and error contracts. Increasing the pool budget alone
-would move the boundary and is not a general fix. This item remains open.
+Reproduce characterization with `ruby probes/local-capture-allocations.rb
+MATCHING_PROBE MATCHING_BINARY NEW_OUTPUT_DIR` from this directory. The current
+runner additionally includes one-call controls and accepts an optional
+`BASELINE_PROBE` argument for paired allocation regression checks at identical
+fixture paths. Without that argument it reports `characterized`.
+
+The [fresh-map reserve follow-up](LOCAL_MAP_RESERVE_2026_10_27.md) isolates repeated
+table growth from retained-name copying. General oversized materialization
+remains open. Further changes must preserve bounded idle storage, live aliases,
+host-owner visibility, task ordering, snapshots and error behavior. Increasing
+the pool budget alone would move the boundary and is not a general fix.
