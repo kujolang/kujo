@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid copying dictionary keys while validating and traversing nested assignment
+  paths. Existing-key writes reuse stored keys; insertion, snapshots, canonical
+  integer keys and assignment error ordering remain unchanged.
+
 - Avoid copying dictionary keys or formatting unused missing-key diagnostics on
   successful interpreter lookups, including imported helpers used by VM/JIT.
   Preserve canonical numeric keys, present null values and error spelling.

@@ -35,6 +35,19 @@ pub(crate) enum Access {
     Field(String),
 }
 
+// Borrow string keys and format integer keys on the stack. Only insertion of a
+// previously absent key needs owned storage; traversing an assignment does not.
+fn with_dictionary_key<T>(
+    index: &Value,
+    access: impl FnOnce(&str) -> Result<T, String>,
+) -> Result<T, String> {
+    match index {
+        Value::Str(key) => access(key.as_str()),
+        Value::Int(key) => super::dictionary_publication::with_integer_key(*key, access),
+        _ => Err("Invalid index assignment".into()),
+    }
+}
+
 /// Work on an owned snapshot: callers publish the root only after success.
 /// Copy-on-write containers retain alias isolation, including on failed writes.
 pub(crate) fn update(mut root: Value, path: &[Access], value: Value) -> Result<Value, String> {
@@ -66,22 +79,17 @@ pub(crate) fn validate(root: &Value, path: &[Access], value: &Value) -> Result<(
                 )
             }
         }
-        (Value::Dict(map), Access::Index(index)) => {
-            let key = match index {
-                Value::Str(key) => key.as_ref().clone(),
-                Value::Int(key) => key.to_string(),
-                _ => return Err("Invalid index assignment".into()),
-            };
+        (Value::Dict(map), Access::Index(index)) => with_dictionary_key(index, |key| {
             if rest.is_empty() {
                 Ok(())
             } else {
                 validate(
-                    map.get(key.as_str()).ok_or_else(|| format!("Missing map key: {key}"))?,
+                    map.get(key).ok_or_else(|| format!("Missing map key: {key}"))?,
                     rest,
                     value,
                 )
             }
-        }
+        }),
         (Value::FixedDict { .. }, _) => {
             let entries = Value::map_entries(root).expect("fixed dictionary");
             validate(
@@ -143,22 +151,20 @@ fn write(root: &mut Value, path: &[Access], value: Value) -> Result<(), String> 
                 write(child, rest, value)
             }
         }
-        (Value::Dict(map), Access::Index(index)) => {
-            let key = match index {
-                Value::Str(key) => key.as_ref().clone(),
-                Value::Int(key) => key.to_string(),
-                _ => return Err("Invalid index assignment".to_string()),
-            };
+        (Value::Dict(map), Access::Index(index)) => with_dictionary_key(index, |key| {
             let map = Arc::make_mut(map);
             if rest.is_empty() {
-                map.insert(key.into(), value);
+                if let Some(destination) = map.get_mut(key) {
+                    *destination = value;
+                } else {
+                    map.insert(key.into(), value);
+                }
                 Ok(())
             } else {
-                let child =
-                    map.get_mut(key.as_str()).ok_or_else(|| format!("Missing map key: {key}"))?;
+                let child = map.get_mut(key).ok_or_else(|| format!("Missing map key: {key}"))?;
                 write(child, rest, value)
             }
-        }
+        }),
         (_, Access::Field(_)) => Err("Cannot set field on non-struct value".to_string()),
         _ => Err("Invalid index assignment".to_string()),
     }
