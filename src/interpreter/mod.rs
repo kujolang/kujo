@@ -2254,7 +2254,7 @@ impl Interpreter {
         )
     }
 
-    fn active_capture_snapshot(&self, index: usize) -> Environment {
+    fn active_capture_snapshot(&mut self, index: usize) -> Environment {
         let count = self.environment_activations[index].capture.as_ref().unwrap().1;
         let locals = self
             .environment_activations
@@ -2265,7 +2265,7 @@ impl Interpreter {
             .capture_global_owner_index(index)
             .map(|owner| &self.environment_activations[owner].caller)
             .unwrap_or(&self.env);
-        let mut snapshot = locals.capture_prefix_snapshot(count);
+        let mut snapshot = locals.capture_prefix_snapshot(count, &mut self.capture_storage_pool);
         if !std::ptr::eq(locals, globals) {
             snapshot.copy_global_scope_from(globals);
         }

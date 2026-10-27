@@ -192,7 +192,15 @@ impl CaptureStoragePool {
 // while consulting the actual source keys/kinds on every invocation. Rust hosts
 // may edit the public owner map; no cached shape/version assumption is valid.
 fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMap<String, T>) {
+    // Fresh dense maps can use the normal bulk clone instead of repeatedly
+    // growing and rehashing. Do not copy a sparse source's unused buckets or
+    // discard an already allocated destination table just to take this path.
+    if target.capacity() == 0 && source.capacity() <= source.len().saturating_mul(2) {
+        target.clone_from(source);
+        return;
+    }
     target.retain(|name, _| source.contains_key(name));
+    target.reserve(source.len().saturating_sub(target.len()));
     for (name, value) in source {
         if let Some(slot) = target.get_mut(name) {
             slot.clone_from(value);
@@ -384,10 +392,23 @@ impl Environment {
     }
 
     /// Preserve capture scope/kind layout without copying recursive parameters.
-    pub(crate) fn capture_prefix_snapshot(&self, count: usize) -> Self {
+    pub(crate) fn capture_prefix_snapshot(
+        &self,
+        count: usize,
+        pool: &mut CaptureStoragePool,
+    ) -> Self {
+        let mut storage = pool.take();
+        storage.scopes.resize_with(count, HashMap::new);
+        storage.binding_kinds.resize_with(count, HashMap::new);
+        for (target, source) in storage.scopes.iter_mut().zip(&self.scopes[..count]) {
+            refill_capture_map(target, source);
+        }
+        for (target, source) in storage.binding_kinds.iter_mut().zip(&self.binding_kinds[..count]) {
+            refill_capture_map(target, source);
+        }
         Self {
-            scopes: self.scopes[..count].to_vec(),
-            binding_kinds: self.binding_kinds[..count].to_vec(),
+            scopes: storage.scopes,
+            binding_kinds: storage.binding_kinds,
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
@@ -400,8 +421,8 @@ impl Environment {
     pub(crate) fn copy_global_scope_from(&mut self, source: &Self) {
         self.invalidate_capture_observation();
         self.global_source.clone_from(&source.global_source);
-        self.scopes[0].clone_from(&source.scopes[0]);
-        self.binding_kinds[0].clone_from(&source.binding_kinds[0]);
+        refill_capture_map(&mut self.scopes[0], &source.scopes[0]);
+        refill_capture_map(&mut self.binding_kinds[0], &source.binding_kinds[0]);
         self.native_defaults.clone_from(&source.native_defaults);
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &source.capture_writes)
@@ -1725,5 +1746,135 @@ mod capture_storage_pool_tests {
             expected.capture_writes.as_ref().unwrap().1.iter().collect::<HashSet<_>>()
         );
         assert!(Arc::ptr_eq(&owner.global_source, &expected.global_source));
+    }
+}
+
+#[cfg(test)]
+mod recursive_capture_storage_tests {
+    use super::*;
+
+    #[test]
+    fn prefix_reuse_excludes_parameters_and_keeps_value_snapshots() {
+        let mut source = Environment::new();
+        source.define("global".into(), Value::Int(1));
+        source.push_scope();
+        source.define("items".into(), Value::Array(Arc::new(vec![Value::Int(7)])));
+        source.push_scope();
+        source.define("parameter".into(), Value::Int(99));
+        let mut pool = CaptureStoragePool::default();
+        let first = source.capture_prefix_snapshot(2, &mut pool);
+        let key = first.scopes[0].keys().find(|k| k.as_str() == "global").unwrap().as_ptr();
+        pool.recycle(first);
+        source.scopes[0].insert("global".into(), Value::Int(2));
+        let mut next = source.capture_prefix_snapshot(2, &mut pool);
+        assert_eq!(next.scopes.len(), 2);
+        assert!(next.get("parameter").is_none());
+        assert!(matches!(next.get("global"), Some(Value::Int(2))));
+        assert_eq!(next.scopes[0].keys().find(|k| k.as_str() == "global").unwrap().as_ptr(), key);
+        next.assign_checked("global".into(), Value::Int(3)).unwrap();
+        next.mutate_checked_runtime("items", |value| {
+            let Value::Array(items) = value else { panic!("expected array") };
+            Arc::make_mut(items).push(Value::Int(8));
+        })
+        .unwrap();
+        assert!(matches!(source.get("global"), Some(Value::Int(2))));
+        assert!(matches!(source.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        assert!(matches!(next.get("items"), Some(Value::Array(items)) if items.len() == 2));
+    }
+
+    #[test]
+    fn recursive_prefix_keeps_live_locals_and_separate_globals() {
+        let mut source = Environment::new();
+        source.define("global".into(), Value::Int(1));
+        source.push_scope();
+        source.define("items".into(), Value::Array(Arc::new(vec![Value::Int(7)])));
+        source.define_with_kind("fixed".into(), Value::Int(8), BindingKind::Const);
+        let owner = Arc::new(Mutex::new(source));
+        let activation = Environment::capture_activation(&owner);
+        let mut pool = CaptureStoragePool::default();
+        let mut recursive = activation.capture_prefix_snapshot(2, &mut pool);
+        recursive.assign_checked("global".into(), Value::Int(2)).unwrap();
+        assert!(recursive.assign_checked("fixed".into(), Value::Int(9)).is_err());
+        recursive
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                assert_eq!(Arc::strong_count(items), 1);
+                Arc::make_mut(items).push(Value::Int(8));
+            })
+            .unwrap();
+        assert!(matches!(recursive.scopes[1]["items"], Value::Null));
+        assert!(matches!(activation.get("items"), Some(Value::Array(items)) if items.len() == 2));
+        assert!(matches!(owner.lock().unwrap().get("global"), Some(Value::Int(1))));
+        pool.recycle(recursive);
+        assert_eq!(Arc::strong_count(&owner), 1);
+        assert!(matches!(owner.lock().unwrap().scopes[1]["items"], Value::Array(_)));
+    }
+
+    #[test]
+    fn global_refill_refreshes_shape_and_permissions_without_replacing_owner() {
+        let mut target = Environment::new();
+        target.define("items".into(), Value::Array(Arc::new(vec![Value::Int(0)])));
+        target.define("removed".into(), Value::Int(3));
+        target.define("fixed".into(), Value::Int(4));
+        target.native_defaults = Some(Arc::new(HashMap::from([("stale".into(), "print".into())])));
+        target.push_scope();
+        target.define("local".into(), Value::Int(5));
+        target.track_capture_writes();
+        target.assign_checked("local".into(), Value::Int(6)).unwrap();
+        let owner_identity = target.global_owner.clone();
+        let key = target.scopes[0].keys().find(|k| k.as_str() == "items").unwrap().as_ptr();
+        let mut source = Environment::new();
+        source.define("items".into(), Value::Array(Arc::new(vec![Value::Int(7)])));
+        source.define_with_kind("fixed".into(), Value::Int(8), BindingKind::Const);
+        source.track_capture_writes();
+        source.assign_checked("items".into(), Value::Array(Arc::new(vec![Value::Int(9)]))).unwrap();
+        target.copy_global_scope_from(&source);
+        assert!(Arc::ptr_eq(&target.global_owner, &owner_identity));
+        assert!(Arc::ptr_eq(&target.global_source, &source.global_source));
+        assert_eq!(target.scopes[0].keys().find(|k| k.as_str() == "items").unwrap().as_ptr(), key);
+        assert!(target.get("removed").is_none());
+        assert!(target.native_defaults.is_none());
+        assert!(matches!(target.get("local"), Some(Value::Int(6))));
+        assert!(target.assign_checked("fixed".into(), Value::Int(10)).is_err());
+        let writes = &target.capture_writes.as_ref().unwrap().1;
+        assert!(writes.contains(&(0, "items".into())));
+        assert!(writes.contains(&(1, "local".into())));
+        target
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(10));
+            })
+            .unwrap();
+        assert!(matches!(source.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        assert!(matches!(target.get("items"), Some(Value::Array(items)) if items.len() == 2));
+    }
+}
+
+#[cfg(test)]
+mod sparse_capture_storage_tests {
+    use super::*;
+
+    #[test]
+    fn cold_sparse_prefix_preserves_values_and_kinds_without_empty_bucket_growth() {
+        let mut source = Environment::new();
+        source.scopes[0].reserve(8192);
+        source.binding_kinds[0].reserve(8192);
+        source.define("items".into(), Value::Array(Arc::new(vec![Value::Int(7)])));
+        source.define_with_kind("fixed".into(), Value::Int(8), BindingKind::Const);
+        let mut pool = CaptureStoragePool::default();
+        let mut snapshot = source.capture_prefix_snapshot(1, &mut pool);
+        assert!(snapshot.scopes[0].capacity() < source.scopes[0].capacity() / 4);
+        assert!(snapshot.binding_kinds[0].capacity() < source.binding_kinds[0].capacity() / 4);
+        assert!(snapshot.assign_checked("fixed".into(), Value::Int(9)).is_err());
+        snapshot
+            .mutate_checked_runtime("items", |value| {
+                let Value::Array(items) = value else { panic!("expected array") };
+                Arc::make_mut(items).push(Value::Int(9));
+            })
+            .unwrap();
+        assert!(matches!(source.get("items"), Some(Value::Array(items)) if items.len() == 1));
+        assert!(matches!(snapshot.get("items"), Some(Value::Array(items)) if items.len() == 2));
+        pool.recycle(snapshot);
+        assert_eq!(pool.frames.len(), 1, "small snapshots of sparse owners remain cacheable");
     }
 }
