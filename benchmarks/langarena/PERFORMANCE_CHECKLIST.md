@@ -153,6 +153,17 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
 - [x] Check sustained dictionary deletion, stack and queue costs (256/1,024/4,096 diagnostic operations; linear scaling).
 - [x] Review observable iterator snapshot costs with source mutation; first detachment is required in the tested case, so no owner was removed.
 - [x] Measure representative byte conversion, UTF-8, indexing and iterator scaling; reserve bytes(array) output once, preserve ordered validation and snapshots.
+- [x] Borrow successful dictionary lookup keys and defer missing-key diagnostics
+  (`bb0bd0e`). [Verification](DICTIONARY_READ_RUNTIME_2026_10_27.md) removes
+  key-length allocation growth: 128 extra lookup-loop iterations now request
+  768 bytes for both 8/1,024-byte keys, versus 4,864/526,464 before. The 16-pair
+  targeted gate, 128-pair module controls, 12-pair numeric-key controls, 1,163
+  library tests, 328 integrations and 150 test-size checksums pass. Cold/append
+  controls also pass; no elapsed-speed claim follows.
+- [ ] Remove the two remaining nested-assignment key copies in validation and
+  mutation. After the read fix, 128 extra writes request 45,184/305,280 bytes for
+  8/1,024-byte keys; the difference isolates two key-length copies per update.
+  Preserve canonical integer keys, insertion, snapshots and error atomicity.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.

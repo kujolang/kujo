@@ -1,9 +1,9 @@
 # Paired allocation/scaling gate; elapsed time is deliberately not an acceptance metric.
 require 'json';require 'digest';require 'fileutils';require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [array|dict]' unless [4,5].include?(ARGV.size)
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [array|dict|control]' unless [4,5].include?(ARGV.size)
 baseline_probe,candidate_probe,binary,d=ARGV.first(4).map{|p|File.expand_path(p)}
 target_shape=ARGV[4] || 'array'
-raise 'Unsupported scaling target' unless %w[array dict].include?(target_shape)
+raise 'Unsupported scaling target' unless %w[array dict control].include?(target_shape)
 raise 'Output directory already exists' if File.exist?(d)
 [baseline_probe,candidate_probe,binary].each{|p|raise 'Missing executable '+p unless File.executable?(p)}
 FileUtils.mkdir_p(d)
@@ -39,6 +39,9 @@ begin
  report[:regressions]=report[:rows].select{|r|r['candidate'][:bytes]>r['baseline'][:bytes] || r['candidate'][:requests]>r['baseline'][:requests]}
  report[:status]='measured';save.call
  raise 'Allocation regressions require review' unless report[:regressions].empty?
+ # Control mode retains the complete no-regression/semantic matrix when the
+ # targeted improvement has a separate gate (for example dictionary key reads).
+ if target_shape != 'control'
  raise 'No actual runtime allocation reduction' unless report[:reductions]>0
 report[:scaling]=%w[vm jit].product([1,8]).map do |mode,updates|
  slopes=[128,2048].map do |width|
@@ -52,6 +55,7 @@ end
 save.call
 raise 'Baseline width-copy cost not reproduced' unless report[:scaling].all?{|r|r[:slopes][1][:baseline_bytes]>r[:slopes][0][:baseline_bytes]}
 raise 'Candidate per-call width-copy cost remains' unless report[:scaling].all?{|r|r[:slopes][1][:candidate_bytes]==r[:slopes][0][:candidate_bytes] && r[:slopes][1][:candidate_requests]==r[:slopes][0][:candidate_requests]}
+end
 report[:status]='passed';save.call
 
 rescue=>e;report[:status]='failed';report[:error]=e.message;save.call;raise
