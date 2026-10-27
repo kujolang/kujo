@@ -189,6 +189,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
+  [current accepted-runtime isolation](COLLECTION_GAP_ISOLATION_2026_10_27.md)
+  verifies 240 allocation measurements and 360 semantic cases on `82bdef6`.
+  Two-key and floating-point dictionary writes request 631,177 bytes per added
+  call at width 2,048; two-element struct-row writes request 284,436 bytes.
+  Fresh-snapshot controls remain separate. A four-entry row model fits within
+  the current Value-sized payload, but runtime integration is not yet accepted.
+  The
   [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md),
   [nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) and
   [test-only storage candidate](NESTED_PUBLICATION_CANDIDATE_2026_10_27.md) remain
