@@ -391,6 +391,64 @@ impl Environment {
         }
     }
 
+    /// Project only proven read dependencies. No callbacks, writes, tasks or active
+    /// reentry may use this path; each selected value comes from the actual owner.
+    /// Captured locals remain owner-backed and must not become snapshots.
+    pub(crate) fn project_capture_reads(
+        &self,
+        names: &[String],
+        params: &[String],
+        primitive: bool,
+        pool: &mut CaptureStoragePool,
+    ) -> Option<Self> {
+        if self.scopes.len() != 1 || self.has_live_capture() {
+            return None;
+        }
+        for name in names.iter().filter(|name| !params.contains(name)) {
+            let value = self.get(name)?;
+            if primitive && !super::value::is_capture_primitive(&value) {
+                return None;
+            }
+        }
+        let mut storage = pool.take();
+        storage.scopes.resize_with(1, HashMap::new);
+        storage.binding_kinds.resize_with(1, HashMap::new);
+        let wanted = |name: &String| names.contains(name) && !params.contains(name);
+        storage.scopes[0].retain(|name, _| wanted(name));
+        storage.binding_kinds[0].retain(|name, _| wanted(name));
+        for name in names.iter().filter(|name| wanted(name)) {
+            let value = self.get(name)?;
+            if let Some(slot) = storage.scopes[0].get_mut(name) {
+                *slot = value;
+            } else {
+                storage.scopes[0].insert(name.clone(), value);
+            }
+            let kind = self
+                .scopes
+                .iter()
+                .enumerate()
+                .rev()
+                .find(|(_, scope)| scope.contains_key(name))
+                .and_then(|(index, _)| self.binding_kinds[index].get(name))
+                .copied();
+            if let Some(kind) = kind {
+                storage.binding_kinds[0].insert(name.clone(), kind);
+            } else {
+                storage.binding_kinds[0].remove(name);
+            }
+        }
+        Some(Self {
+            scopes: storage.scopes,
+            binding_kinds: storage.binding_kinds,
+            native_defaults: None,
+            global_owner: self.global_owner.clone(),
+            global_source: self.global_source.clone(),
+            live_capture: None,
+            capture_writes: None,
+            capture_observation: None,
+        })
+    }
+
     /// Preserve capture scope/kind layout without copying recursive parameters.
     pub(crate) fn capture_prefix_snapshot(
         &self,
@@ -1876,5 +1934,58 @@ mod sparse_capture_storage_tests {
         assert!(matches!(snapshot.get("items"), Some(Value::Array(items)) if items.len() == 2));
         pool.recycle(snapshot);
         assert_eq!(pool.frames.len(), 1, "small snapshots of sparse owners remain cacheable");
+    }
+}
+
+#[cfg(test)]
+mod read_projection_tests {
+    use super::*;
+    #[test]
+    fn captured_locals_keep_live_owner_reads_instead_of_projection_snapshots() {
+        let mut environment = Environment::new();
+        environment.push_scope();
+        environment.define("state".into(), Value::Int(7));
+        let owner = Arc::new(Mutex::new(environment));
+        let ordinary = Environment::capture_activation(&owner);
+        let mut pool = CaptureStoragePool::default();
+        let projected =
+            owner.lock().unwrap().project_capture_reads(&["state".into()], &[], false, &mut pool);
+        owner.lock().unwrap().assign_checked("state".into(), Value::Int(8)).unwrap();
+        assert!(matches!(ordinary.get("state"), Some(Value::Int(8))));
+        if let Some(snapshot) = &projected {
+            assert!(matches!(snapshot.get("state"), Some(Value::Int(7))));
+        }
+        assert!(projected.is_none(), "projection would hide live captured-local writes");
+    }
+
+    #[test]
+    fn projected_reads_refresh_actual_values_and_keep_snapshots() {
+        let mut owner = Environment::new();
+        owner.define("unused".into(), Value::Int(99));
+        owner.define_with_kind(
+            "state".into(),
+            Value::Array(Arc::new(vec![Value::Int(7)])),
+            BindingKind::Const,
+        );
+        let mut pool = CaptureStoragePool::default();
+        let names = vec!["state".into(), "index".into()];
+        let first =
+            owner.project_capture_reads(&names, &["index".into()], false, &mut pool).unwrap();
+        assert!(first.get("unused").is_none());
+        assert!(first.get("index").is_none());
+        assert!(matches!(first.binding_kinds[0].get("state"), Some(BindingKind::Const)));
+        let snapshot = first.get("state").unwrap();
+        pool.recycle(first);
+        owner.scopes[0].insert("state".into(), Value::Array(Arc::new(vec![Value::Int(8)])));
+        owner.binding_kinds[0].remove("state");
+        let next =
+            owner.project_capture_reads(&names, &["index".into()], false, &mut pool).unwrap();
+        assert!(next.binding_kinds[0].get("state").is_none());
+        assert!(matches!(snapshot, Value::Array(v) if matches!(v[0], Value::Int(7))));
+        assert!(
+            matches!(next.get("state"), Some(Value::Array(v)) if matches!(v[0], Value::Int(8)))
+        );
+        assert!(owner.project_capture_reads(&names, &["index".into()], true, &mut pool).is_none());
+        assert!(owner.project_capture_reads(&["missing".into()], &[], false, &mut pool).is_none());
     }
 }

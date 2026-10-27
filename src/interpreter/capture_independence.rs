@@ -10,12 +10,14 @@ use std::collections::{BTreeSet, HashSet};
 pub(super) struct Proof {
     pub required_parameters: Vec<String>,
     pub primitive_arguments: bool,
+    pub read_only: bool,
 }
 
 struct Analyzer<'a> {
     scopes: Vec<HashSet<&'a str>>,
     required: BTreeSet<&'a str>,
     primitive_arguments: bool,
+    read_only: bool,
 }
 
 pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
@@ -23,10 +25,12 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
         scopes: vec![HashSet::new()],
         required: BTreeSet::new(),
         primitive_arguments: false,
+        read_only: true,
     };
     analyzer.statements(body, 0).then(|| Proof {
         required_parameters: analyzer.required.into_iter().map(str::to_owned).collect(),
         primitive_arguments: analyzer.primitive_arguments,
+        read_only: analyzer.read_only,
     })
 }
 
@@ -138,6 +142,7 @@ impl<'a> Analyzer<'a> {
                 true
             }
             Stmt::Assign { target, value } => {
+                self.read_only = false;
                 self.expression(target, depth + 1) && self.expression(value, depth + 1)
             }
             Stmt::ExprStmt(value) | Stmt::Return(Some(value)) => self.expression(value, depth + 1),
@@ -261,5 +266,34 @@ mod tests {
             &["items"],
             &[Value::Array(Arc::new(vec![Value::Int(1)]))]
         ));
+    }
+}
+
+#[cfg(test)]
+mod read_projection_tests {
+    use super::*;
+    fn proof(source: &str) -> Option<Proof> {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        analyze(&parsed.stmts)
+    }
+    #[test]
+    fn read_projection_rejects_all_assignments_and_callback_paths() {
+        for source in ["state[0] = 1 return state", "mut x := 0 x += 1 return x"] {
+            assert!(!proof(source).unwrap().read_only);
+        }
+        for source in ["return helper()", "return state.method()", "return func() { return state }"]
+        {
+            assert!(proof(source).is_none());
+        }
+    }
+    #[test]
+    fn read_dependencies_keep_outer_reads_and_exclude_local_names() {
+        let p = proof("let copied := state return copied[index]").unwrap();
+        assert!(p.read_only);
+        assert_eq!(p.required_parameters, vec!["index", "state"]);
+        assert!(!p.primitive_arguments);
+        assert!(proof("return state + index").unwrap().primitive_arguments);
     }
 }

@@ -206,7 +206,35 @@ pub struct FunctionBodyRef {
     storage: Arc<FunctionBodyStorage>,
 }
 
+pub(super) fn is_capture_primitive(value: &Value) -> bool {
+    matches!(
+        value,
+        Value::Int(_)
+            | Value::Float(_)
+            | Value::Bool(_)
+            | Value::Str(_)
+            | Value::Bytes(_)
+            | Value::Null
+    )
+}
+
 impl FunctionBodyRef {
+    pub(super) fn read_capture_proof(
+        &self,
+        args: &[Value],
+    ) -> Option<&super::capture_independence::Proof> {
+        let proof = self
+            .storage
+            .capture_independence
+            .get_or_init(|| super::capture_independence::analyze(&self.storage.body))
+            .as_ref()?;
+        if !proof.read_only || (proof.primitive_arguments && !args.iter().all(is_capture_primitive))
+        {
+            return None;
+        }
+        Some(proof)
+    }
+
     /// Cache syntax analysis with the immutable body, not an environment or
     /// callable's publicly constructible parameter list. Recheck actual parameter
     /// names and dynamic operand kinds on every invocation.

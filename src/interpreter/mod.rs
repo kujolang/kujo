@@ -2453,6 +2453,38 @@ impl Interpreter {
         }
     }
 
+    fn enter_captured_function_environment(
+        &mut self,
+        captured: &Arc<Mutex<Environment>>,
+        body: &value::FunctionBodyRef,
+        params: &[String],
+        args: &[Value],
+    ) {
+        if self.task_cancellation.is_none() && self.active_capture_index(captured).is_none() {
+            if let Some(proof) = body.read_capture_proof(args) {
+                let projected =
+                    captured.lock().unwrap_or_else(|p| p.into_inner()).project_capture_reads(
+                        &proof.required_parameters,
+                        params,
+                        proof.primitive_arguments,
+                        &mut self.capture_storage_pool,
+                    );
+                if let Some(mut environment) = projected {
+                    environment.observe_capture_writes(false);
+                    let count = environment.scopes.len();
+                    let caller = std::mem::replace(&mut self.env, environment);
+                    self.environment_activations.push(EnvironmentActivation {
+                        capture: Some((captured.clone(), count)),
+                        caller,
+                        globals: CapturedGlobals::Snapshot,
+                    });
+                    return;
+                }
+            }
+        }
+        self.enter_captured_environment(captured);
+    }
+
     fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) {
         let active = self.active_capture_index(captured);
         let mut environment = match active {
@@ -2666,7 +2698,12 @@ impl Interpreter {
                     .as_ref()
                     .filter(|_| !body_ref.can_skip_capture_setup(params, &args))
                 {
-                    self.enter_captured_environment(closure_env_ref);
+                    self.enter_captured_function_environment(
+                        closure_env_ref,
+                        &body_ref,
+                        params,
+                        &args,
+                    );
                     self.env.push_scope();
                     if let Some(name) = &body.lexical_name {
                         self.env.define(
@@ -6265,7 +6302,12 @@ impl Interpreter {
                             .as_ref()
                             .filter(|_| !body_ref.can_skip_capture_setup(&params, &evaluated_args))
                         {
-                            self.enter_captured_environment(closure_env_ref);
+                            self.enter_captured_function_environment(
+                                closure_env_ref,
+                                &body_ref,
+                                &params,
+                                &evaluated_args,
+                            );
                             self.env.push_scope();
                             if let Some(name) = &body.lexical_name {
                                 self.env.define(
@@ -6435,7 +6477,12 @@ impl Interpreter {
                             if let Some(closure_env_ref) = captured_env.as_ref().filter(|_| {
                                 !body_ref.can_skip_capture_setup(&params, &evaluated_args)
                             }) {
-                                self.enter_captured_environment(closure_env_ref);
+                                self.enter_captured_function_environment(
+                                    closure_env_ref,
+                                    &body_ref,
+                                    &params,
+                                    &evaluated_args,
+                                );
                                 self.env.push_scope();
                                 if let Some(name) = &body.lexical_name {
                                     self.env.define(
