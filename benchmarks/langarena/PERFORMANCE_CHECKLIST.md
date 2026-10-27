@@ -160,10 +160,14 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   targeted gate, 128-pair module controls, 12-pair numeric-key controls, 1,163
   library tests, 328 integrations and 150 test-size checksums pass. Cold/append
   controls also pass; no elapsed-speed claim follows.
-- [ ] Remove the two remaining nested-assignment key copies in validation and
-  mutation. After the read fix, 128 extra writes request 45,184/305,280 bytes for
-  8/1,024-byte keys; the difference isolates two key-length copies per update.
-  Preserve canonical integer keys, insertion, snapshots and error atomicity.
+- [x] Remove the two nested-assignment key copies in validation and mutation
+  (`868dfd8`). [Verification](ASSIGNMENT_KEY_RUNTIME_2026_10_27.md) shows 128 extra
+  writes request 43,136 bytes for both 8/1,024-byte keys, versus 45,184/305,280
+  before; VM/JIT agree. All 336 release integrations, 18 direct nested-assignment
+  runs and 150 test-size checksums pass. The 128-pair module matrix has 32 byte
+  reductions, 96 matches and no regressions; numeric/cold/append controls pass.
+  Canonical integer keys, insertion, snapshots and error atomicity are preserved.
+  Nested-row publication and broader collection costs remain open; no speed claim.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.

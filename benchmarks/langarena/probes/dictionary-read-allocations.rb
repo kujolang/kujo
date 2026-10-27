@@ -1,14 +1,16 @@
-# Diagnose successful lookup costs independently of collection-width copying.
+# Diagnose lookup or assignment key costs independently of collection-width copying.
 require 'json'
 require 'digest'
 require 'fileutils'
 require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 4
-baseline, candidate, binary, dir = ARGV.map { |p| File.expand_path(p) }
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [read|write]' unless [4, 5].include?(ARGV.size)
+target = ARGV[4] || 'read'
+abort 'Expected read or write target' unless %w[read write].include?(target)
+baseline, candidate, binary, dir = ARGV.first(4).map { |p| File.expand_path(p) }
 raise 'Output directory already exists' if File.exist?(dir)
 [baseline, candidate, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }
 FileUtils.mkdir_p(dir)
-report = {status: 'running', rows: [], semantics: [],
+report = {status: 'running', target: target, rows: [], semantics: [],
           baseline_sha256: Digest::SHA256.file(baseline).hexdigest,
           candidate_sha256: Digest::SHA256.file(candidate).hexdigest,
           binary_sha256: Digest::SHA256.file(binary).hexdigest,
@@ -74,7 +76,7 @@ begin
   report[:regressions] = report[:rows].select { |r| r[:candidate][:requests] > r[:baseline][:requests] || r[:candidate][:bytes] > r[:baseline][:bytes] }
   raise 'Allocation regression' unless report[:regressions].empty?
   report[:slopes] = %w[vm jit].product([8, 1024]).map do |mode, length|
-    first, last = report[:rows].select { |r| r[:operation] == 'read' && r[:mode] == mode && r[:length] == length }.sort_by { |r| r[:updates] }
+    first, last = report[:rows].select { |r| r[:operation] == target && r[:mode] == mode && r[:length] == length }.sort_by { |r| r[:updates] }
     {mode: mode, length: length, baseline_bytes: last[:baseline][:bytes] - first[:baseline][:bytes],
      candidate_bytes: last[:candidate][:bytes] - first[:candidate][:bytes],
      candidate_requests: last[:candidate][:requests] - first[:candidate][:requests]}
