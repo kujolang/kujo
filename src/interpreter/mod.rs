@@ -2520,27 +2520,33 @@ impl Interpreter {
             return;
         }
         // A foreign capture can suspend this namespace between reentries. Move
-        // only that private global scope; the foreign caller and captured locals
-        // stay in their original frames. The return destination is recoverable
+        // its private prefix when globals and live locals share one suspended
+        // frame. Split namespaces retain the synchronization path below. The
+        // foreign caller stays in place, and the return destination is recoverable
         // from the remaining stack, so ordinary frames need no extra index field.
         // Public owners still retain their published values.
         if self.task_cancellation.is_none() {
-            if let Some(index) = active.filter(|index| {
-                self.environment_activations[*index].capture.as_ref().unwrap().1 == 1
-            }) {
+            if let Some(index) = active {
+                let count = self.environment_activations[index].capture.as_ref().unwrap().1;
                 if let Some(owner) = self.capture_global_owner_index(index) {
                     let source = &mut self.environment_activations[owner].caller;
-                    let mut environment =
-                        source.recursive_global_environment(&mut self.capture_storage_pool);
-                    environment.swap_global_scope(source);
-                    environment.observe_capture_writes(true);
-                    let caller = std::mem::replace(&mut self.env, environment);
-                    self.environment_activations.push(EnvironmentActivation {
-                        capture: Some((captured.clone(), 1)),
-                        caller,
-                        globals: CapturedGlobals::RecursiveOwner,
-                    });
-                    return;
+                    if count == 1 || (owner == index + 1 && source.has_live_capture()) {
+                        let mut environment = if count == 1 {
+                            source.recursive_global_environment(&mut self.capture_storage_pool)
+                        } else {
+                            source
+                                .recursive_prefix_environment(count, &mut self.capture_storage_pool)
+                        };
+                        environment.swap_capture_prefix(source, count);
+                        environment.observe_capture_writes(true);
+                        let caller = std::mem::replace(&mut self.env, environment);
+                        self.environment_activations.push(EnvironmentActivation {
+                            capture: Some((captured.clone(), count)),
+                            caller,
+                            globals: CapturedGlobals::RecursiveOwner,
+                        });
+                        return;
+                    }
                 }
             }
         }
@@ -2601,7 +2607,7 @@ impl Interpreter {
                 .capture_global_owner_index(active)
                 .expect("foreign recursive capture has a suspended global owner");
             let owner = &mut self.environment_activations[index].caller;
-            completed.swap_global_scope(owner);
+            completed.swap_capture_prefix(owner, count);
             if changed {
                 owner.invalidate_capture_observation();
             }
