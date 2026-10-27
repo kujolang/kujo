@@ -128,7 +128,7 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
   split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216
   semantic runs pass; depth-four writes with 8,192 locals request 13,630,073
-  bytes per added outer call. This is baseline evidence, not fix acceptance.
+  bytes per added outer call. This is baseline evidence, not fix acceptance. A [current-runtime refresh](SPLIT_LOCAL_REFRESH_2026_10_27.md) confirms identical costs on `65a58f2` and adds explicit global/local ownership and helper-shadowing regression coverage.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).

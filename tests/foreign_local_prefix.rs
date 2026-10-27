@@ -8,7 +8,29 @@ fn verify(mode: &str, shared_helper: bool) {
     let owner = format!(
         r#"
 from bridge import invoke
-func bounce(f, n, fail) {{ return invoke(f, n, fail) }}
+mut owner_calls := 0
+mut helper_calls := 0
+mut helper_validations := 0
+export func owner_state() {{ return [owner_calls, helper_calls, helper_validations] }}
+func bounce(f, n, fail) {{
+    helper_calls += 1
+    let saved_n := n
+    mut owner_calls := [n]
+    let snapshot := owner_calls
+    try {{
+        let result := invoke(f, n, fail)
+        assert_equal(n, saved_n)
+        owner_calls[0] = 999
+        assert_equal(snapshot[0], saved_n)
+        helper_validations += 1
+        return result
+    }} except err {{
+        assert_equal(n, saved_n)
+        assert_equal(snapshot[0], saved_n)
+        helper_validations += 1
+        throw(err)
+    }}
+}}
 export func factory() {{
     mut counter := 0
     mut validated := 0
@@ -16,6 +38,7 @@ export func factory() {{
     const fixed := [7]
     {declarations}
     func step(depth, should_fail) {{
+        owner_calls += 1
         let entry := counter
         let original_depth := depth
         let saved := data
@@ -32,8 +55,9 @@ export func factory() {{
         assert(rejected)
         mut sum := 0
         {checks}
+        assert_equal(owner_calls, counter)
         validated += 1
-        return [counter, data[0], sum, fixed[0], validated]
+        return [counter, data[0], sum, fixed[0], validated, helper_calls, helper_validations]
     }}
     return step
 }}
@@ -69,22 +93,31 @@ export func invoke(f, n, fail) {
 }
 "#;
     let source = r#"
-from owner import factory
+from owner import factory, owner_state
 from bridge import bridge_count, bridge_validations
 let step := factory()
 let alias := step
 let separate := factory()
-assert_equal(step(2, false), [3, 3, 8128, 7, 3])
-assert_equal(alias(2, true), [6, 6, 8128, 7, 5])
-assert_equal(separate(1, false), [2, 2, 8128, 7, 2])
-assert_equal(step(0, false), [7, 7, 8128, 7, 6])
-assert_equal(step(16, false), [24, 24, 8128, 7, 23])
-assert_equal(alias(16, true), [41, 41, 8128, 7, 39])
-assert_equal(separate(0, false), [3, 3, 8128, 7, 3])
+assert_equal(step(2, false), [3, 3, 8128, 7, 3, HELPER_2, HELPER_2])
+assert_equal(alias(2, true), [6, 6, 8128, 7, 5, HELPER_4, HELPER_4])
+assert_equal(separate(1, false), [2, 2, 8128, 7, 2, HELPER_1, HELPER_1])
+assert_equal(step(0, false), [7, 7, 8128, 7, 6, HELPER_4, HELPER_4])
+assert_equal(step(16, false), [24, 24, 8128, 7, 23, HELPER_20, HELPER_20])
+assert_equal(alias(16, true), [41, 41, 8128, 7, 39, HELPER_36, HELPER_36])
+assert_equal(separate(0, false), [3, 3, 8128, 7, 3, HELPER_1, HELPER_1])
 assert_equal(bridge_count(), 37)
 assert_equal(bridge_validations(), 37)
+// Independently created function captures retain their original global snapshot.
+assert_equal(owner_state(), [0, 0, 0])
 print("FOREIGN LOCAL PREFIX PASS")
 "#;
+    let mut source = source.to_string();
+    for count in [36, 20, 4, 2, 1] {
+        source = source.replace(
+            &format!("HELPER_{count}"),
+            &if shared_helper { count } else { 0 }.to_string(),
+        );
+    }
     std::fs::write(directory.path().join("owner.kujo"), owner).unwrap();
     std::fs::write(directory.path().join("bridge.kujo"), bridge).unwrap();
     let path = directory.path().join("main.kujo");
