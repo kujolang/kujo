@@ -118,6 +118,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   collection/cold/append controls preserved. Indirect recursion and oversized
   outer activation remain open; pool limits and value semantics are unchanged.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
+  [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
+  split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216
+  semantic runs pass; depth-four writes with 8,192 locals request 13,630,073
+  bytes per added outer call. This is baseline evidence, not fix acceptance.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
 - [x] Test recursion, callbacks, exceptions, imports, captures and cancellation in the regression corpus (see exact revision limits in report).
