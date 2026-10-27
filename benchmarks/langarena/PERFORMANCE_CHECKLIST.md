@@ -109,6 +109,8 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Avoid discarded callback module-loader discovery (`2e020ee`), retaining cache, capability and error behavior.
 - [x] Preserve channel-ordered capture visibility across active task/caller reentry with public owner maps and independent snapshots intact. All 33 scenarios, 1,128 library tests, 283 distinct integration tests, linear append allocation controls and 150 test-size checksums pass. Interpreter regressions are enabled by default. See [owner-backed verification](LIVE_CAPTURE_OWNER_2026_10_26.md).
 
+- [x] Project proven global-only captured reads (`c79010d`), retaining fallback for live locals, tasks, reentry and uncertain syntax. Oversized read setup falls from 8,231 requests/2,720,272 bytes to 16/1,086 per added VM call. All 1,146 library tests, 292 integrations, 150 test-size checksums and allocation gates pass. General/deeper captures and module-width copying remain open. See [results, rejected draft and limits](CAPTURED_READ_PROJECTION_2026_10_26.md).
+
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for capture-map traversal, deeper active-prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),

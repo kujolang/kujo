@@ -5015,5 +5015,16 @@
     "contiguous_publication_comparisons": 27,
     "contiguous_publication_higher_bytes": 27,
     "limits": "Standalone real-Value integer/snapshot model; no runtime integration, speed claim or all-value semantics acceptance. Module collection-width copying remains open."
+  },
+  "captured_read_projection_verification_2026_10_26": {
+    "runtime_commit": "c79010d",
+    "status": "verified",
+    "report": "CAPTURED_READ_PROJECTION_2026_10_26.md",
+    "evidence": "captured-read-projection-2026-10-26.json",
+    "library_passes": 1146,
+    "integration_passes": 292,
+    "test_size_checksums": 150,
+    "allocation_result": "Oversized captured read VM setup falls from8231requests/2720272bytes to16/1086 per added call; candidate flat across0/128/8192 unrelated bindings. Append has constant+56bytes and unchanged request counts. All36 cold comparisons reduce total requests/bytes.",
+    "remaining": "General and deeper captured materialization, module collection-width copying, later checklist stages and clean-server acceptance remain open."
   }
 }
