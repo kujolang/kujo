@@ -5003,5 +5003,17 @@
     "cold_semantic_controls": 54,
     "allocation_result": "Depth-one read setup 82 requests/4399 bytes and scalar-write setup 98/4510 per added outer call, flat across0/128/2048 unrelated bindings inVM/JIT. All36 paired oversized/cold comparisons reduce requests and bytes versus6228389.",
     "remaining": "Capture-map traversal, deeper/oversized materialization, module collection-width copying, later stages, production/platform and clean-server comparisons remain open."
+  },
+  "chunked_owner_exploration_2026_10_26": {
+    "status": "rejected_under_current_public_representation",
+    "runtime_library_commit": "c0e45b3",
+    "report": "CHUNKED_OWNER_PROTOTYPE_2026_10_26.md",
+    "evidence": "chunked-owner-prototype-2026-10-26.json",
+    "cases": 63,
+    "private_chunked_comparisons": 27,
+    "private_chunked_lower_bytes": 16,
+    "contiguous_publication_comparisons": 27,
+    "contiguous_publication_higher_bytes": 27,
+    "limits": "Standalone real-Value integer/snapshot model; no runtime integration, speed claim or all-value semantics acceptance. Module collection-width copying remains open."
   }
 }
