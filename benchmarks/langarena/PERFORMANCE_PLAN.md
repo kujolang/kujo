@@ -7,6 +7,16 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Bounded nested-row batches (`3d06ea2`).**
+  [Verified results](NESTED_ROW_BATCH_2026_10_27.md) show two-entry struct-row
+  updates falling from 284,784 to 5,484 requested bytes per added call at 2,048
+  elements. Two-to-four-entry costs stay flat across 128/2,048 elements. All
+  384 target allocation pairs, historical controls, 1,186 library tests,
+  355 release integrations and 150 test-size checksums pass. Expanded invalid-index
+  controls reject earlier speculative-copy regressions and pass this revision.
+  Larger batches, dictionary scalar/multiple-key costs, deeper paths and broader
+  captures remain open; these are allocation results, not elapsed-speed claims.
+
 - **Compact oversized captured-local views (`82bdef6`).**
   [Verified results](COMPACT_CAPTURE_VIEWS_2026_10_27.md) show per-added-call
   allocation bytes falling from 5,447,495 to 1,253,191 at 16,384 retained locals,

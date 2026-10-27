@@ -186,15 +186,23 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   including competing direct-array/dictionary writes. All 1,177 library tests,
   339 release integrations and 150 test-size checksums pass. Real snapshots and
   fallback paths retain value semantics; this is not an elapsed-speed claim.
+- [x] Batch up to four distinct scalar writes to one captured array row (`3d06ea2`),
+  preserving snapshots, publication ordering and larger-batch fallback. Checked
+  negative-index reads avoid speculative row copies; invalid root-as-index
+  controls also pass. At 2,048 elements, two-entry struct-row updates fall from
+  284,784 to 5,484 requested bytes per added call. All 384 target allocation pairs,
+  576 associated semantic cases, historical allocation controls, 1,186 library
+  tests, 355 release integrations and 150 test-size checksums pass. See
+  [verified results and limits](NESTED_ROW_BATCH_2026_10_27.md).
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
-  [current accepted-runtime isolation](COLLECTION_GAP_ISOLATION_2026_10_27.md)
+  [earlier accepted-runtime isolation](COLLECTION_GAP_ISOLATION_2026_10_27.md)
   verifies 240 allocation measurements and 360 semantic cases on `82bdef6`.
   Two-key and floating-point dictionary writes request 631,177 bytes per added
   call at width 2,048; two-element struct-row writes request 284,436 bytes.
-  Fresh-snapshot controls remain separate. A four-entry row model fits within
-  the current Value-sized payload, but runtime integration is not yet accepted.
+  Fresh-snapshot controls remain separate. The four-entry row integration above
+  addresses the bounded row case; larger batches and the other costs remain open.
   [Scalar dictionary isolation](DICTIONARY_SCALAR_ISOLATION_2026_10_27.md)
   adds 120 allocation measurements and 180 semantic checks: float, Boolean,
   null and mixed-type writes still scale with dictionary width, while the

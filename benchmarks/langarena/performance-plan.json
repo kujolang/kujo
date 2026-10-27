@@ -5072,5 +5072,18 @@
     "append_comparisons": 8,
     "foreign_gate_rejects_baseline": true,
     "remaining": "Oversized retained locals, general capture materialization, publication traversal, module collection-width copying and later full-plan/clean-server gates remain open."
+  },
+  "nested_row_batch_verification_2026_10_27": {
+    "runtime_commit": "3d06ea242d798679d9e2f219023c123f791e386a",
+    "status": "verified",
+    "report": "NESTED_ROW_BATCH_2026_10_27.md",
+    "evidence": "nested-row-batch-2026-10-27.json",
+    "library_passes": 1186,
+    "integration_passes": 355,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 384,
+    "target_semantic_cases": 576,
+    "scope": "Up to four distinct scalar writes to one captured row; negative integer reads and invalid-operand copying controls.",
+    "remaining": "Larger/dense/escaping updates, deeper paths, dictionary scalar/multiple-key costs, broader captures and later checklist stages remain open; no clean-host speed claim."
   }
 }
