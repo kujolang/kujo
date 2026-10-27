@@ -1,0 +1,28 @@
+{
+  "binary": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/local-map-reserve-v1-2026-10-27/candidate-kujo",
+  "binary_sha256": "0fac26aa16025ef457c119b218e1fb1b85b17040b19367d5d363b6b601ba1bed",
+  "source_sha256": "d3fd72c9084aa762ba9c81582c4f15f7fbc72c7b5c4ef3b698d52bc2e5fc44b5",
+  "harness_sha256": "3c4c4d6b9a3a87585c7e22cd227be72cbb97baffac607a31b4f409f447928c5d",
+  "runtime_commit": "aee15a2",
+  "baseline_only": true,
+  "runtime_changed": false,
+  "tests_passed": 15,
+  "runtimes": [
+    "vm",
+    "interpreter",
+    "jit"
+  ],
+  "results": "\nrunning 15 tests\ntest interpreter_index_effects ... ok\ntest interpreter_native_and_capture ... ok\ntest interpreter_partial_errors ... ok\ntest interpreter_scalars ... ok\ntest jit_index_effects ... ok\ntest interpreter_shadow_and_nested ... ok\ntest jit_native_and_capture ... ok\ntest jit_partial_errors ... ok\ntest jit_scalars ... ok\ntest jit_shadow_and_nested ... ok\ntest vm_index_effects ... ok\ntest vm_native_and_capture ... ok\ntest vm_partial_errors ... ok\ntest vm_scalars ... ok\ntest vm_shadow_and_nested ... ok\n\ntest result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s\n\n",
+  "build_arguments": [
+    "rustc",
+    "--edition=2021",
+    "--test",
+    "tests/indexed_publication_contracts.rs",
+    "-L",
+    "dependency=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/deps",
+    "--extern",
+    "tempfile=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/deps/libtempfile-6f52f7ea4b14a39b.rlib",
+    "-o",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/indexed-publication-contracts-2026-10-27/contracts"
+  ]
+}

@@ -72,6 +72,18 @@ This is a feasibility observation, not proof that an integrated representation
 will preserve runtime frame, enum or stack sizes. Those must be checked directly.
 There is no elapsed-time, peak-memory or generated-native coverage claim.
 
+## Baseline language contracts
+
+[Indexed-publication contracts](../../tests/indexed_publication_contracts.rs) pass
+15 tests against the accepted `aee15a2` binary: five case groups in each of VM,
+interpreter and JIT. They cover scalar and nested-value fallback, dense writes,
+escaped arrays and captured locals, native operations, negative/float reads,
+index expressions replacing the target, completed writes before bounds/type/
+immutable/explicit errors, shadowing and nested snapshots.
+[Baseline evidence](indexed-publication-contracts-2026-10-27.json) records the
+source/harness/runtime identities and test output. These establish behavior
+before integration; passing them does not prove the optimization is active.
+
 ## Required integration gates
 
 - [ ] Keep the journal private. Preserve public `Value::Array` owner values before
