@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid copying dictionary keys or formatting unused missing-key diagnostics on
+  successful interpreter lookups, including imported helpers used by VM/JIT.
+  Preserve canonical numeric keys, present null values and error spelling.
+
 - Defer repeated integer writes to an existing captured-global dictionary key
   until publication in eligible synchronous helpers. Preserve public pre-return
   values, snapshots, recursion, callbacks and error ordering. Numeric-key admission

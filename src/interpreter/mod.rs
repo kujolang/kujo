@@ -3724,14 +3724,17 @@ impl Interpreter {
 
     fn index_value(object: &Value, index: &Value) -> Value {
         if object.dictionary_len().is_some() {
-            let (key, diagnostic) = match index {
-                Value::Str(key) => (key.as_ref().clone(), format!("{:?}", key.as_ref())),
-                Value::Int(key) => (key.to_string(), key.to_string()),
-                _ => return Value::Error("Invalid index operation".into()),
+            return match index {
+                Value::Str(key) => object.dictionary_get(key).unwrap_or_else(|| {
+                    Value::Error(format!("Missing map key: {:?}", key.as_ref()))
+                }),
+                Value::Int(index) => dictionary_publication::with_integer_key(*index, |key| {
+                    object
+                        .dictionary_get(key)
+                        .unwrap_or_else(|| Value::Error(format!("Missing map key: {index}")))
+                }),
+                _ => Value::Error("Invalid index operation".into()),
             };
-            return object
-                .dictionary_get(&key)
-                .unwrap_or_else(|| Value::Error(format!("Missing map key: {diagnostic}")));
         }
         match (object, index) {
             (Value::Array(arr), Value::Int(i)) => {
@@ -8640,5 +8643,35 @@ mod boundary_dictionary_tests {
         ] {
             assert!(!empty.is_truthy());
         }
+    }
+
+    #[test]
+    fn dictionary_index_lookup_keeps_numeric_limits_and_lazy_error_diagnostics() {
+        let map = Value::Dict(Arc::new(
+            [
+                (Arc::from("null"), Value::Null),
+                (Arc::from("-9223372036854775808"), Value::Int(1)),
+                (Arc::from("9223372036854775807"), Value::Int(2)),
+                (Arc::from("01"), Value::Int(3)),
+            ]
+            .into_iter()
+            .collect(),
+        ));
+        assert!(matches!(Interpreter::index_value(&map, &Value::str_ref("null")), Value::Null));
+        for (index, expected) in [(i64::MIN, 1), (i64::MAX, 2)] {
+            assert!(
+                matches!(Interpreter::index_value(&map, &Value::Int(index)), Value::Int(v) if v == expected)
+            );
+        }
+        assert!(matches!(Interpreter::index_value(&map, &Value::str_ref("01")), Value::Int(3)));
+        assert!(
+            matches!(Interpreter::index_value(&map, &Value::Int(1)), Value::Error(e) if e == "Missing map key: 1")
+        );
+        assert!(
+            matches!(Interpreter::index_value(&map, &Value::str_ref("missing\n\"key")), Value::Error(e) if e == "Missing map key: \"missing\\n\\\"key\"")
+        );
+        assert!(
+            matches!(Interpreter::index_value(&map, &Value::Float(1.0)), Value::Error(e) if e == "Invalid index operation")
+        );
     }
 }
