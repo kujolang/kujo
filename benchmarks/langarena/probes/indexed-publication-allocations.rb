@@ -1,9 +1,9 @@
 # Paired allocation/scaling gate; elapsed time is deliberately not an acceptance metric.
 require 'json';require 'digest';require 'fileutils';require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [array|dict|control]' unless [4,5].include?(ARGV.size)
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [array|dict|nested|control]' unless [4,5].include?(ARGV.size)
 baseline_probe,candidate_probe,binary,d=ARGV.first(4).map{|p|File.expand_path(p)}
 target_shape=ARGV[4] || 'array'
-raise 'Unsupported scaling target' unless %w[array dict control].include?(target_shape)
+raise 'Unsupported scaling target' unless %w[array dict nested control].include?(target_shape)
 raise 'Output directory already exists' if File.exist?(d)
 [baseline_probe,candidate_probe,binary].each{|p|raise 'Missing executable '+p unless File.executable?(p)}
 FileUtils.mkdir_p(d)
@@ -43,14 +43,15 @@ begin
  # targeted improvement has a separate gate (for example dictionary key reads).
  if target_shape != 'control'
  raise 'No actual runtime allocation reduction' unless report[:reductions]>0
-report[:scaling]=%w[vm jit].product([1,8]).map do |mode,updates|
+target_shapes=target_shape=='nested' ? %w[struct_array dict_array] : [target_shape]
+report[:scaling]=%w[vm jit].product([1,8],target_shapes).map do |mode,updates,shape|
  slopes=[128,2048].map do |width|
-  group=report[:rows].select{|r|r[:mode]==mode && r['shape']==target_shape && r['snapshot']=='once' && r['width']==width && r['updates_per_call']==updates}
+  group=report[:rows].select{|r|r[:mode]==mode && r['shape']==shape && r['snapshot']=='once' && r['width']==width && r['updates_per_call']==updates}
   raise 'Missing target scaling rows' unless group.size==2
   first,last=group.sort_by{|r|r['calls']}
   {width:width,baseline_bytes:last['baseline'][:bytes]-first['baseline'][:bytes],candidate_bytes:last['candidate'][:bytes]-first['candidate'][:bytes],candidate_requests:last['candidate'][:requests]-first['candidate'][:requests]}
  end
- {mode:mode,updates:updates,slopes:slopes}
+ {mode:mode,updates:updates,shape:shape,slopes:slopes}
 end
 save.call
 raise 'Baseline width-copy cost not reproduced' unless report[:scaling].all?{|r|r[:slopes][1][:baseline_bytes]>r[:slopes][0][:baseline_bytes]}

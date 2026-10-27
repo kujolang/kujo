@@ -3,14 +3,15 @@ require 'json'
 require 'digest'
 require 'fileutils'
 require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [read|write]' unless [4, 5].include?(ARGV.size)
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [read|write|control]' unless [4, 5].include?(ARGV.size)
 target = ARGV[4] || 'read'
-abort 'Expected read or write target' unless %w[read write].include?(target)
+abort 'Expected read, write or control target' unless %w[read write control].include?(target)
+slope_operation = target == 'control' ? 'read' : target
 baseline, candidate, binary, dir = ARGV.first(4).map { |p| File.expand_path(p) }
 raise 'Output directory already exists' if File.exist?(dir)
 [baseline, candidate, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }
 FileUtils.mkdir_p(dir)
-report = {status: 'running', target: target, rows: [], semantics: [],
+report = {status: 'running', target: target, slope_operation: slope_operation, rows: [], semantics: [],
           baseline_sha256: Digest::SHA256.file(baseline).hexdigest,
           candidate_sha256: Digest::SHA256.file(candidate).hexdigest,
           binary_sha256: Digest::SHA256.file(binary).hexdigest,
@@ -76,13 +77,14 @@ begin
   report[:regressions] = report[:rows].select { |r| r[:candidate][:requests] > r[:baseline][:requests] || r[:candidate][:bytes] > r[:baseline][:bytes] }
   raise 'Allocation regression' unless report[:regressions].empty?
   report[:slopes] = %w[vm jit].product([8, 1024]).map do |mode, length|
-    first, last = report[:rows].select { |r| r[:operation] == target && r[:mode] == mode && r[:length] == length }.sort_by { |r| r[:updates] }
+    first, last = report[:rows].select { |r| r[:operation] == slope_operation && r[:mode] == mode && r[:length] == length }.sort_by { |r| r[:updates] }
     {mode: mode, length: length, baseline_bytes: last[:baseline][:bytes] - first[:baseline][:bytes],
      candidate_bytes: last[:candidate][:bytes] - first[:candidate][:bytes],
      candidate_requests: last[:candidate][:requests] - first[:candidate][:requests]}
   end
   save.call
   %w[vm jit].each do |mode|
+    next if target == 'control'
     short, long = report[:slopes].select { |r| r[:mode] == mode }.sort_by { |r| r[:length] }
     raise 'Baseline key-length cost not reproduced' unless long[:baseline_bytes] > short[:baseline_bytes]
     raise 'Candidate key-length allocation remains' unless long[:candidate_bytes] == short[:candidate_bytes] && long[:candidate_requests] == short[:candidate_requests]
