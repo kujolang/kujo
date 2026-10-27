@@ -1,5 +1,9 @@
 # Indirect recursion isolation — 2026-10-27
 
+Follow-up: [foreign global transfer](FOREIGN_GLOBAL_TRANSFER_2026_10_27.md)
+fixes the eligible global-only case reproduced here and adds an acceptance gate.
+This document retains the original baseline characterization.
+
 The next confirmed allocation target is **foreign-module callback reentry**.
 Ordinary same-module helper bridges already have flat allocation traffic across
 0/128/2,048 unrelated bindings. No runtime change was made in this experiment.

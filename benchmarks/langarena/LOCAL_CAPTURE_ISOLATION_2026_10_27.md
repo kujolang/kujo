@@ -2,7 +2,7 @@
 
 The accepted `2b83f1e` runtime has a confirmed oversized local-capture allocation
 cost. This is baseline characterization, independent of the foreign-callback
-runtime candidate currently under verification.
+optimization verified separately in [foreign global transfer](FOREIGN_GLOBAL_TRANSFER_2026_10_27.md).
 
 The [evidence](local-capture-isolation-2026-10-27.json) contains artifact identities,
 fixture sources, raw rows and per-call deltas. All 32 allocation controls in

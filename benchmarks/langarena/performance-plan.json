@@ -5055,5 +5055,22 @@
     "allocation_controls": 32,
     "semantic_controls": 48,
     "remaining": "Oversized genuinely retained local capture:8192bindings requests/bytes grow to8233/5357679 per read call;0/128/2048flat at25/1266. Preserve live alias cells and independent closure snapshots."
+  },
+  "foreign_global_transfer_verification_2026_10_27": {
+    "status": "passed",
+    "runtime_commit": "0cd6ed6e6e0a1d41f0727dbd03dc7208c8eae3eb",
+    "evidence": "foreign-global-transfer-2026-10-27.json",
+    "library_passed": 1146,
+    "integration_passed": 301,
+    "test_size_checksums_passed": 150,
+    "paired_route_comparisons": 108,
+    "cold_comparisons": 36,
+    "cold_allocation_delta": [
+      0,
+      0
+    ],
+    "append_comparisons": 8,
+    "foreign_gate_rejects_baseline": true,
+    "remaining": "Oversized retained locals, general capture materialization, publication traversal, module collection-width copying and later full-plan/clean-server gates remain open."
   }
 }
