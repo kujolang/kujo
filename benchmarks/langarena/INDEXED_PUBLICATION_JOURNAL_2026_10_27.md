@@ -86,6 +86,36 @@ before integration; passing them does not prove the optimization is active.
 
 ## Required integration gates
 
+### Compact storage candidate
+
+The test-only [storage candidate](../../src/interpreter/indexed_publication.rs)
+narrows the four-slot model to two numeric/Boolean/null slots. Its 48-byte payload
+fits the existing capture-write journal's largest payload on the local x64 build.
+A test against the actual `CaptureWrites` type checks the candidate enum and its
+enclosing `Option<(usize, ...)>`; the standalone layout probe reports 56 bytes for
+both enums and 64 bytes for both enclosing fields. This does not establish layout
+on other targets or prove a future integrated environment is unchanged.
+
+The candidate takes an existing exactly-sized private map key without cloning it.
+It rejects spare-capacity keys, unsupported values, oversized indices and a third
+distinct update so the caller can retain ordinary behavior. Repeated writes to
+the same two indices remain inline. Integer extremes, float bits (including NaN
+payload and negative zero), Boolean and null round-trip unchanged. Publication
+uses `Arc::make_mut`; retained observers and replaced owners keep their snapshots.
+
+Storage tests include all 16,807 five-operation sequences drawn from three index
+writes, nested-array fallback, public snapshot, private snapshot and public-owner
+replacement. An independently allocated ordinary private-copy implementation is
+the oracle. Each step checks the private reads and unchanged public owner, and
+publication checks final contents plus every retained snapshot. Dedicated tests
+also check atomic rejection, rollback, cloned pending state and pointer reuse.
+[Storage evidence](indexed-publication-storage-2026-10-27.json) records the seven
+passing tests, command and source hashes.
+
+The module is compiled only under `cfg(test)`. No execution path uses this
+candidate yet. These storage checks do not close the integration gates below,
+prove a runtime allocation reduction, or replace the three-runtime boundary tests.
+
 - [ ] Keep the journal private. Preserve public `Value::Array` owner values before
   return, and ordinary values at every host, native, output and snapshot boundary.
 - [ ] Select a representation without enlarging ordinary values or call frames;

@@ -54,6 +54,27 @@ enum CaptureWrites {
     Many(HashSet<(usize, String)>),
 }
 
+#[cfg(test)]
+#[test]
+fn indexed_publication_candidate_fits_capture_storage_layout() {
+    // Compare against the actual existing enum, including its discriminant and
+    // enclosing Option. Payload-size comparison alone misses niche/layout costs.
+    // The candidate remains test-only until every semantic boundary is wired.
+    #[allow(dead_code)]
+    enum Candidate {
+        Empty,
+        One((usize, String)),
+        Many(HashSet<(usize, String)>),
+        Indexed(super::indexed_publication::IndexedPublication),
+    }
+    assert_eq!(std::mem::size_of::<Candidate>(), std::mem::size_of::<CaptureWrites>());
+    assert_eq!(std::mem::align_of::<Candidate>(), std::mem::align_of::<CaptureWrites>());
+    assert_eq!(
+        std::mem::size_of::<Option<(usize, Candidate)>>(),
+        std::mem::size_of::<Option<(usize, CaptureWrites)>>()
+    );
+}
+
 impl CaptureWrites {
     fn record(&mut self, index: usize, name: &str) {
         if matches!(self, Self::One((scope, existing)) if *scope == index && existing == name) {

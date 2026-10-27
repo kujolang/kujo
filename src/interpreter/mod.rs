@@ -27,6 +27,8 @@ pub mod database_handle;
 mod environment;
 pub mod generator;
 mod generator_lowering;
+#[cfg(test)]
+mod indexed_publication;
 pub(crate) mod native_functions;
 pub mod persistent_queue;
 pub mod promise;

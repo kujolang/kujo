@@ -1,0 +1,18 @@
+{
+  "scope": "Test-only compact indexed publication storage; no runtime activation or speed claim",
+  "command": "cargo test --lib indexed_publication -j 2",
+  "exit_code": 0,
+  "sequence_count": 16807,
+  "source_sha256": {
+    "src/interpreter/indexed_publication.rs": "e78d3bb2fea9d81483fe418c0d5e93487488e903c512f98b628bda7e07d6e97b",
+    "src/interpreter/environment.rs": "8c858172af37bbaa538e1096df5540ff04803fc4768e045384e8e377f9df6d73",
+    "src/interpreter/mod.rs": "3dc9d6c8024b8fe3fdb5fff8c960db3f6d2255b3b4bd7f4eff010bafdab17715"
+  },
+  "test_output": "running 7 tests\ntest interpreter::environment::indexed_publication_candidate_fits_capture_storage_layout ... ok\ntest interpreter::indexed_publication::tests::layout_fits_existing_capture_journal_payload ... ok\ntest interpreter::indexed_publication::tests::name_and_unique_public_storage_are_reused_only_at_publication ... ok\ntest interpreter::indexed_publication::tests::scalar_bits_and_constructor_rejections_preserve_values ... ok\ntest interpreter::indexed_publication::tests::unsupported_updates_are_atomic_and_materialization_is_independent ... ok\ntest interpreter::indexed_publication::tests::late_observer_and_owner_replacement_preserve_both_snapshots ... ok\ntest interpreter::indexed_publication::tests::operation_sequences_match_ordinary_private_copy_publication ... ok\n\ntest result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1155 filtered out; finished in 2.66s\n\n",
+  "limitations": [
+    "No integrated runtime allocation measurement",
+    "No dictionary or nested path optimization",
+    "Local x86_64 layout only",
+    "Existing baseline VM/interpreter/JIT contracts remain separate evidence"
+  ]
+}
