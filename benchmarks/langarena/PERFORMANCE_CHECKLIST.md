@@ -111,6 +111,8 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 
 - [x] Project proven global-only captured reads (`c79010d`), retaining fallback for live locals, tasks, reentry and uncertain syntax. Oversized read setup falls from 8,231 requests/2,720,272 bytes to 16/1,086 per added VM call. All 1,146 library tests, 292 integrations, 150 test-size checksums and allocation gates pass. General/deeper captures and module-width copying remain open. See [results, rejected draft and limits](CAPTURED_READ_PROJECTION_2026_10_26.md).
 
+- [x] Transfer private globals through direct synchronous global-only reentry with bounded scope reuse (`2b83f1e`). Depth-four setup is flat across 0/128/2,048 unrelated bindings; all 36 paired comparisons avoid request/byte growth. A stricter gate rejects the earlier shallow-call regression. All 1,146 library tests, 295 integrations and 150 test-size checksums pass. Indirect/local captures, publication traversal and module-width copying remain open. See [results and limits](RECURSIVE_GLOBAL_TRANSFER_2026_10_26.md).
+
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 Section 3 remains open for capture-map traversal, deeper active-prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, synchronous captured-state reentry and the reproduced task capture ownership defects are fixed. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
