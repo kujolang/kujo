@@ -30,11 +30,10 @@ pub(crate) fn split_target(mut target: &Expr) -> Result<(&str, Vec<AccessExpr<'_
     }
 }
 
-#[cfg_attr(test, derive(Clone, Debug))]
+#[derive(Clone, Debug)]
 pub(crate) enum Access {
     Index(Value),
     Field(String),
-    #[cfg(test)]
     DeferredRow(super::nested_publication::RowWrite),
 }
 

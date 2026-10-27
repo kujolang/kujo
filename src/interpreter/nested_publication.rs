@@ -1,5 +1,4 @@
-//! Test-only candidate: retain a nested write in the already allocated path.
-//! No runtime admission or read interception is enabled by this module.
+//! Private nested scalar writes retained in the already allocated assignment path.
 use super::assignment::Access;
 use super::dictionary_publication::with_integer_key;
 use super::Value;
@@ -35,7 +34,7 @@ impl Scalar {
 }
 
 #[derive(Clone, Copy)]
-pub(super) enum RowKey<'a> {
+pub(crate) enum RowKey<'a> {
     Field(&'a str),
     String(&'a str),
     Integer(i64),
@@ -132,28 +131,34 @@ impl NestedPublication {
         (resolved >= 0 && (resolved as usize) < length).then_some(resolved as usize)
     }
 
+    fn admission(root: &Value, path: &[Access], value: &Value) -> Option<(usize, Scalar)> {
+        let [first, Access::Index(Value::Int(index))] = path else { return None };
+        let shared_only_with_owner = match root {
+            Value::Struct { fields, .. } => Arc::strong_count(fields) == 2,
+            Value::Dict(map) => Arc::strong_count(map) == 2,
+            _ => false,
+        };
+        if !shared_only_with_owner {
+            return None;
+        }
+        let row = RowKey::from_access(first)?.row(root)?;
+        if Arc::strong_count(row) != 1 {
+            return None;
+        }
+        Some((Self::resolve(*index, row.len())?, Scalar::from_value(value)?))
+    }
+
+    pub(super) fn can_prepare(root: &Value, path: &[Access], value: &Value) -> bool {
+        Self::admission(root, path, value).is_some()
+    }
+
     pub(super) fn prepare(
         name: String,
         root: Value,
         mut path: Vec<Access>,
         value: &Value,
     ) -> Result<Self, (String, Value, Vec<Access>)> {
-        let admission = (|| {
-            let [first, Access::Index(Value::Int(index))] = path.as_slice() else { return None };
-            let shared_only_with_owner = match &root {
-                Value::Struct { fields, .. } => Arc::strong_count(fields) == 2,
-                Value::Dict(map) => Arc::strong_count(map) == 2,
-                _ => false,
-            };
-            if !shared_only_with_owner {
-                return None;
-            }
-            let row = RowKey::from_access(first)?.row(&root)?;
-            if Arc::strong_count(row) != 1 {
-                return None;
-            }
-            Some((Self::resolve(*index, row.len())?, Scalar::from_value(value)?))
-        })();
+        let admission = Self::admission(&root, &path, value);
         let Some((index, value)) = admission else { return Err((name, root, path)) };
         let selector = match std::mem::replace(&mut path[0], Access::Index(root)) {
             Access::Field(field) => Selector::Field(field),

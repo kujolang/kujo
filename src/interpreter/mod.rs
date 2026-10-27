@@ -30,7 +30,6 @@ pub mod generator;
 mod generator_lowering;
 mod indexed_publication;
 pub(crate) mod native_functions;
-#[cfg(test)]
 mod nested_publication;
 pub mod persistent_queue;
 pub mod promise;
@@ -4085,6 +4084,52 @@ impl Interpreter {
         })
     }
 
+    fn try_nested_publication_read(&self, object: &Expr, index: &Expr) -> Option<Value> {
+        use nested_publication::RowKey;
+        let root = match object {
+            Expr::FieldAccess { object, .. } | Expr::IndexAccess { object, .. } => object,
+            _ => return None,
+        };
+        let Expr::Identifier(name) = root.as_ref() else { return None };
+        if !self.env.pending_nested_visible(name) {
+            return None;
+        }
+        // Only lookup/literal indices can bypass the ordinary root snapshot.
+        // Calls and other expressions retain their original evaluation order.
+        let index = match index {
+            Expr::Int(index) => *index,
+            Expr::Identifier(index) => match self.env.get(index) {
+                Some(Value::Int(index)) => index,
+                _ => return None,
+            },
+            _ => return None,
+        };
+        match object {
+            Expr::FieldAccess { field, .. } => {
+                self.env.nested_publication_read(name, RowKey::Field(field), index)
+            }
+            Expr::IndexAccess { index: key, .. } => match key.as_ref() {
+                Expr::String(key) => {
+                    self.env.nested_publication_read(name, RowKey::String(key), index)
+                }
+                Expr::Int(key) => {
+                    self.env.nested_publication_read(name, RowKey::Integer(*key), index)
+                }
+                Expr::Identifier(key) => match self.env.get(key) {
+                    Some(Value::Str(key)) => {
+                        self.env.nested_publication_read(name, RowKey::String(&key), index)
+                    }
+                    Some(Value::Int(key)) => {
+                        self.env.nested_publication_read(name, RowKey::Integer(key), index)
+                    }
+                    _ => None,
+                },
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     fn assign_path(&mut self, target: &Expr, value: Value) -> Value {
         use assignment::{split_target, Access, AccessExpr};
         let (name, expressions) = match split_target(target) {
@@ -4104,6 +4149,10 @@ impl Interpreter {
                 AccessExpr::Field(field) => Access::Field(field.to_string()),
             });
         }
+        let path = match self.env.try_defer_nested_write(name, path, &value) {
+            Ok(()) => return Value::Null,
+            Err(path) => path,
+        };
         let mut error = None;
         let result = self.env.mutate_checked_runtime(name, |root| {
             error = assignment::update_in_place(root, &path, value).err();
@@ -5848,7 +5897,12 @@ impl Interpreter {
                 | Expr::BinaryOp { .. }
                 | Expr::IndexAccess { .. }
         ) {
-            self.env.flush_indexed_publication();
+            if matches!(expr, Expr::FieldAccess { object, .. } if matches!(object.as_ref(), Expr::Identifier(_)))
+            {
+                self.env.flush_indexed_for_field_read();
+            } else {
+                self.env.flush_indexed_publication();
+            }
         }
         if let Expr::Identifier(name) = expr {
             self.env.flush_indexed_name(name);
@@ -6869,6 +6923,9 @@ impl Interpreter {
                 Value::Dict(Arc::new(map))
             }
             Expr::IndexAccess { object, index } => {
+                if let Some(value) = self.try_nested_publication_read(object, index) {
+                    return value;
+                }
                 // Only a literal or identifier index may bypass the ordinary
                 // object snapshot: neither can replace the object while read.
                 if let Expr::Identifier(name) = object.as_ref() {

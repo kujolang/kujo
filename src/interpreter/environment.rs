@@ -54,6 +54,7 @@ enum CaptureWrites {
     Many(HashSet<(usize, String)>),
     Indexed(super::indexed_publication::IndexedPublication),
     Dictionary(super::dictionary_publication::DictionaryPublication),
+    Nested(super::nested_publication::NestedPublication),
 }
 
 #[cfg(test)]
@@ -110,7 +111,7 @@ impl CaptureWrites {
             Self::Many(writes) => {
                 writes.insert(write);
             }
-            Self::Indexed(_) | Self::Dictionary(_) => {
+            Self::Indexed(_) | Self::Dictionary(_) | Self::Nested(_) => {
                 unreachable!("private publication is not a task write journal")
             }
         }
@@ -118,7 +119,7 @@ impl CaptureWrites {
 
     fn iter(&self) -> impl Iterator<Item = &(usize, String)> {
         let (first, rest) = match self {
-            Self::Empty | Self::Indexed(_) | Self::Dictionary(_) => (None, None),
+            Self::Empty | Self::Indexed(_) | Self::Dictionary(_) | Self::Nested(_) => (None, None),
             Self::One(write) => (Some(write), None),
             Self::Many(writes) => (None, Some(writes)),
         };
@@ -135,6 +136,7 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.name()),
             Self::Dictionary(pending) => Some(pending.name()),
+            Self::Nested(pending) => Some(pending.name()),
             _ => None,
         }
     }
@@ -143,6 +145,7 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.snapshot_value()),
             Self::Dictionary(pending) => Some(pending.snapshot_value()),
+            Self::Nested(pending) => Some(pending.snapshot_value()),
             _ => None,
         }
     }
@@ -151,6 +154,7 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.publish(owner)),
             Self::Dictionary(pending) => Some(pending.publish(owner)),
+            Self::Nested(pending) => Some(pending.publish(owner)),
             _ => None,
         }
     }
@@ -159,6 +163,7 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.discard()),
             Self::Dictionary(pending) => Some(pending.discard()),
+            Self::Nested(pending) => Some(pending.discard()),
             _ => None,
         }
     }
@@ -344,7 +349,7 @@ impl Clone for Environment {
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
             live_capture: self.live_capture.clone(),
-            capture_writes: self.capture_writes.clone().filter(|(limit, _)| *limit != 0),
+            capture_writes: self.capture_writes.as_ref().filter(|(limit, _)| *limit != 0).cloned(),
             capture_observation: self.capture_observation,
         }
     }
@@ -390,6 +395,63 @@ impl Environment {
             && !self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
     }
 
+    pub(crate) fn pending_nested_visible(&self, name: &str) -> bool {
+        matches!(self.capture_writes, Some((0, CaptureWrites::Nested(_))))
+            && self.pending_visible(name)
+    }
+
+    pub(crate) fn nested_publication_read(
+        &self,
+        name: &str,
+        key: super::nested_publication::RowKey<'_>,
+        index: i64,
+    ) -> Option<Value> {
+        if !self.pending_visible(name) {
+            return None;
+        }
+        let Some((0, CaptureWrites::Nested(pending))) = &self.capture_writes else { return None };
+        pending.read(key, index)
+    }
+
+    pub(crate) fn try_defer_nested_write(
+        &mut self,
+        name: &str,
+        path: Vec<super::assignment::Access>,
+        value: &Value,
+    ) -> Result<(), Vec<super::assignment::Access>> {
+        if !matches!(
+            self.capture_writes,
+            Some((0, CaptureWrites::Empty | CaptureWrites::Nested(_)))
+        ) || self.live_capture.is_some()
+            || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
+            || self.binding_kinds[0].contains_key(name)
+            || self.pending_name().is_some_and(|pending| pending != name)
+        {
+            return Err(path);
+        }
+        if let Some((0, CaptureWrites::Nested(pending))) = &mut self.capture_writes {
+            if !pending.try_record(&path, value) {
+                return Err(path);
+            }
+        } else {
+            if !self.scopes[0].get(name).is_some_and(|root| {
+                super::nested_publication::NestedPublication::can_prepare(root, &path, value)
+            }) {
+                return Err(path);
+            }
+            let Some((key, root)) = self.scopes[0].remove_entry(name) else { return Err(path) };
+            match super::nested_publication::NestedPublication::prepare(key, root, path, value) {
+                Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Nested(pending))),
+                Err((key, root, path)) => {
+                    self.scopes[0].insert(key, root);
+                    return Err(path);
+                }
+            }
+        }
+        self.invalidate_capture_observation();
+        Ok(())
+    }
+
     pub(crate) fn flush_indexed_publication(&mut self) {
         if !matches!(self.capture_writes, Some((0, _))) {
             return;
@@ -398,6 +460,14 @@ impl Environment {
             if let Some((name, value)) = pending.publish(None) {
                 self.scopes[0].insert(name, value);
             }
+        }
+    }
+
+    /// A direct field lookup cannot enter user code. Preserve unused admission,
+    /// but materialize any pending write before exposing its field value.
+    pub(crate) fn flush_indexed_for_field_read(&mut self) {
+        if !matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
+            self.flush_indexed_publication();
         }
     }
 
@@ -446,6 +516,22 @@ impl Environment {
         index: &Value,
         value: &Value,
     ) -> bool {
+        // A new nested optimization must not displace an already eligible
+        // direct-array/dictionary optimization on another binding. Try the
+        // existing admission rules with the slot empty; a rejected write keeps
+        // the nested journal untouched. No value or journal is cloned here.
+        if matches!(&self.capture_writes, Some((0, CaptureWrites::Nested(pending))) if pending.name() != name)
+        {
+            let previous = self.capture_writes.replace((0, CaptureWrites::Empty));
+            if self.try_defer_index_write(name, index, value) {
+                let Some((0, pending)) = previous else { unreachable!() };
+                let Some((name, value)) = pending.publish(None) else { unreachable!() };
+                self.scopes[0].insert(name, value);
+                return true;
+            }
+            self.capture_writes = previous;
+            return false;
+        }
         if !matches!(self.capture_writes, Some((0, _)))
             || !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
             || self.scopes.iter().skip(1).any(|scope| scope.contains_key(name))
@@ -1671,6 +1757,146 @@ mod indexed_publication_environment_tests {
         let Value::Array(values) = environment.get("data").unwrap() else { panic!() };
         let Value::Int(value) = values[index] else { panic!() };
         value
+    }
+
+    fn nested_activation() -> (Arc<Mutex<Environment>>, Environment) {
+        let mut owner = Environment::new();
+        owner.define(
+            "data".into(),
+            Value::Struct {
+                name: "State".into(),
+                fields: Arc::new(
+                    [("row".into(), Value::array(vec![Value::Int(0); 128]))].into_iter().collect(),
+                ),
+            },
+        );
+        let owner = Arc::new(Mutex::new(owner));
+        let mut active = Environment::capture_activation(&owner);
+        active.observe_capture_writes(false);
+        active.enable_indexed_publication();
+        active.push_scope();
+        (owner, active)
+    }
+
+    fn nested_path() -> Vec<super::super::assignment::Access> {
+        use super::super::assignment::Access;
+        vec![Access::Field("row".into()), Access::Index(Value::Int(0))]
+    }
+
+    fn nested_row(root: &Value) -> &Arc<Vec<Value>> {
+        let Value::Struct { fields, .. } = root else { panic!() };
+        let Value::Array(row) = &fields["row"] else { panic!() };
+        row
+    }
+
+    #[test]
+    fn nested_publication_environment_keeps_public_values_and_reuses_row() {
+        use super::super::nested_publication::RowKey;
+        let (owner, mut active) = nested_activation();
+        let pointer = Arc::as_ptr(nested_row(&owner.lock().unwrap().scopes[0]["data"]));
+        assert!(active.try_defer_nested_write("data", nested_path(), &Value::Int(7)).is_ok());
+        assert!(active.pending_nested_visible("data"));
+        assert!(active.contains_binding("data"));
+        assert!(!active.capture_is_unchanged());
+        assert!(matches!(
+            active.nested_publication_read("data", RowKey::Field("row"), 0),
+            Some(Value::Int(7))
+        ));
+        assert!(matches!(nested_row(&owner.lock().unwrap().scopes[0]["data"])[0], Value::Int(0)));
+        active.publish_indexed_to(&mut owner.lock().unwrap());
+        let owner = owner.lock().unwrap();
+        assert_eq!(Arc::as_ptr(nested_row(&owner.scopes[0]["data"])), pointer);
+        assert!(matches!(nested_row(&owner.scopes[0]["data"])[0], Value::Int(7)));
+    }
+
+    #[test]
+    fn nested_publication_environment_clone_shadow_and_task_transition() {
+        let (owner, mut active) = nested_activation();
+        active.try_defer_nested_write("data", nested_path(), &Value::Int(7)).unwrap();
+        let snapshot = active.clone();
+        assert!(matches!(nested_row(&snapshot.get("data").unwrap())[0], Value::Int(7)));
+        active.define("data".into(), Value::Int(99));
+        assert!(!active.pending_nested_visible("data"));
+        assert!(active.try_defer_nested_write("data", nested_path(), &Value::Int(8)).is_err());
+        active.pop_scope();
+        assert!(active.pending_nested_visible("data"));
+        active.track_capture_writes();
+        assert!(!active.pending_nested_visible("data"));
+        assert!(matches!(nested_row(&active.get("data").unwrap())[0], Value::Int(7)));
+        assert!(matches!(
+            nested_row(&owner.lock().unwrap().get("data").unwrap())[0],
+            Value::Int(0)
+        ));
+    }
+
+    #[test]
+    fn nested_publication_environment_does_not_replace_another_journal() {
+        let (_owner, mut active) = nested_activation();
+        active.try_defer_nested_write("data", nested_path(), &Value::Int(7)).unwrap();
+        active.scopes[0].insert("other".into(), Value::array(vec![Value::Int(0)]));
+        assert!(!active.try_defer_index_write("other", &Value::Int(0), &Value::Int(9)));
+        assert!(active.pending_nested_visible("data"));
+        active.flush_indexed_name("data");
+        assert!(matches!(nested_row(&active.get("data").unwrap())[0], Value::Int(7)));
+    }
+
+    #[test]
+    fn nested_publication_field_reads_keep_unused_admission_but_flush_values() {
+        let (owner, mut active) = nested_activation();
+        active.flush_indexed_for_field_read();
+        assert!(active.try_defer_nested_write("data", nested_path(), &Value::Int(7)).is_ok());
+        active.flush_indexed_for_field_read();
+        assert!(!active.pending_nested_visible("data"));
+        assert!(matches!(nested_row(&active.get("data").unwrap())[0], Value::Int(7)));
+        assert!(matches!(
+            nested_row(&owner.lock().unwrap().get("data").unwrap())[0],
+            Value::Int(0)
+        ));
+        assert!(active.try_defer_nested_write("data", nested_path(), &Value::Int(8)).is_err());
+    }
+
+    #[test]
+    fn nested_publication_yields_only_to_an_eligible_direct_write() {
+        for dictionary in [false, true] {
+            let (owner, mut active) = nested_activation();
+            let side = if dictionary {
+                Value::Dict(Arc::new([("0".into(), Value::Int(0))].into_iter().collect()))
+            } else {
+                Value::array(vec![Value::Int(0); 2048])
+            };
+            owner.lock().unwrap().scopes[0].insert("side".into(), side.clone());
+            active.scopes[0].insert("side".into(), side);
+            active.try_defer_nested_write("data", nested_path(), &Value::Int(7)).unwrap();
+            assert!(!active.try_defer_index_write("side", &Value::Int(9999), &Value::Int(9)));
+            assert!(active.pending_nested_visible("data"));
+            assert!(active.try_defer_index_write("side", &Value::Int(0), &Value::Int(9)));
+            assert!(!active.pending_nested_visible("data"));
+            assert!(active.pending_visible("side"));
+            assert!(matches!(nested_row(&active.get("data").unwrap())[0], Value::Int(7)));
+            assert!(matches!(
+                nested_row(&owner.lock().unwrap().get("data").unwrap())[0],
+                Value::Int(0)
+            ));
+            assert!(matches!(active.indexed_publication_read("side", 0), Some(Value::Int(9))));
+            let before = owner.lock().unwrap().get("side").unwrap();
+            let snapshot = active.get("side").unwrap();
+            active.publish_indexed_to(&mut owner.lock().unwrap());
+            assert!(matches!(
+                super::super::Interpreter::index_value(&before, &Value::Int(0)),
+                Value::Int(0)
+            ));
+            assert!(matches!(
+                super::super::Interpreter::index_value(&snapshot, &Value::Int(0)),
+                Value::Int(9)
+            ));
+            assert!(matches!(
+                super::super::Interpreter::index_value(
+                    &owner.lock().unwrap().get("side").unwrap(),
+                    &Value::Int(0)
+                ),
+                Value::Int(9)
+            ));
+        }
     }
 
     #[test]
