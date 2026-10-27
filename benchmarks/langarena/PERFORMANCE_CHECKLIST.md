@@ -170,6 +170,8 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   first integration and the subsequent ownership/interference corrections.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
+[Indirect retained-local isolation](INDIRECT_LOCAL_ISOLATION_2026_10_27.md) reproduces remaining foreign-callback prefix copying with 144 allocation and 216 semantic cases on `ce923d1`; this is an open optimization target.
+
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global reentry and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),
 `imported-setup-and-bytes-2026-10-25.json`; final 150 test-size checksums pass.
