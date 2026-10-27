@@ -11,11 +11,13 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 fn verify(runtime: &str, recursive: bool) {
+    verify_route(runtime, recursive, false);
+}
+
+fn verify_route(runtime: &str, recursive: bool, foreign: bool) {
     let directory = tempfile::tempdir().unwrap();
-    std::fs::write(
-        directory.path().join("owner_state.kujo"),
-        if recursive {
-            r#"
+    let source = if recursive {
+        r#"
         mut state := [0]
         let entered := channel()
         let resume := channel()
@@ -31,8 +33,8 @@ fn verify(runtime: &str, recursive: bool) {
             return state[0]
         }
         "#
-        } else {
-            r#"
+    } else {
+        r#"
         mut state := [0]
         let entered := channel()
         let resume := channel()
@@ -43,9 +45,18 @@ fn verify(runtime: &str, recursive: bool) {
             return state[0]
         }
         "#
-        },
-    )
-    .unwrap();
+    };
+    let source = if foreign {
+        std::fs::write(
+            directory.path().join("bridge.kujo"),
+            "mut state := [71] export func invoke(f, n) { let old := state let result := f(n) assert_equal(state[0], 71) assert_equal(old[0], 71) return result }",
+        )
+        .unwrap();
+        format!("from bridge import invoke\n{}", source.replace("edit(0)", "invoke(edit, 0)"))
+    } else {
+        source.to_owned()
+    };
+    std::fs::write(directory.path().join("owner_state.kujo"), source).unwrap();
     let mut loader = ModuleLoader::new();
     loader.add_search_path(directory.path());
     let module = loader.load_module("owner_state").unwrap();
@@ -173,4 +184,19 @@ fn interpreter_recursive_return_publishes_inherited_writes_and_keeps_snapshots()
 #[test]
 fn jit_recursive_return_publishes_inherited_writes_and_keeps_snapshots() {
     verify("jit", true);
+}
+
+#[test]
+fn vm_foreign_recursive_return_preserves_publication_and_namespaces() {
+    verify_route("vm", true, true);
+}
+
+#[test]
+fn interpreter_foreign_recursive_return_preserves_publication_and_namespaces() {
+    verify_route("interpreter", true, true);
+}
+
+#[test]
+fn jit_foreign_recursive_return_preserves_publication_and_namespaces() {
+    verify_route("jit", true, true);
 }

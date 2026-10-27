@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse suspended private globals during synchronous global-only reentry through
+  foreign module callbacks. Preserve public-owner publication, independent
+  snapshots and completed writes before errors without enlarging call frames.
+
 - Avoid cloning captured environments for synchronous helpers proven to use only
   parameters and local values. Keep lexical setup for callbacks, captured names,
   overloaded operators and unsupported syntax; preserve collection snapshots.
