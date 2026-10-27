@@ -45,3 +45,6 @@ plus all three runtimes' test-size checksum suites.
 This refresh and expanded regression coverage are prerequisites. The split-frame
 optimization, wider performance checklist and production/clean-host comparisons
 remain unfinished. No runtime source changes or Kostya contact occurred.
+
+Follow-up: [split-owner transfer](SPLIT_OWNER_TRANSFER_2026_10_27.md) now records
+the accepted fix and complete matching-candidate verification for this route.
