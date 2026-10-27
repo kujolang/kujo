@@ -1,12 +1,14 @@
 # Paired allocation/scaling gate; elapsed time is deliberately not an acceptance metric.
 require 'json';require 'digest';require 'fileutils';require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR' unless ARGV.size==4
-baseline_probe,candidate_probe,binary,d=ARGV.map{|p|File.expand_path(p)}
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [array|dict]' unless [4,5].include?(ARGV.size)
+baseline_probe,candidate_probe,binary,d=ARGV.first(4).map{|p|File.expand_path(p)}
+target_shape=ARGV[4] || 'array'
+raise 'Unsupported scaling target' unless %w[array dict].include?(target_shape)
 raise 'Output directory already exists' if File.exist?(d)
 [baseline_probe,candidate_probe,binary].each{|p|raise 'Missing executable '+p unless File.executable?(p)}
 FileUtils.mkdir_p(d)
 fixtures=JSON.parse(File.read('benchmarks/langarena/module-owner-isolation-2026-10-26.json'))
-report={status:'running',rows:[],semantics:[],probe_sha256:{baseline:Digest::SHA256.file(baseline_probe).hexdigest,candidate:Digest::SHA256.file(candidate_probe).hexdigest},binary_sha256:Digest::SHA256.file(binary).hexdigest,runner_sha256:Digest::SHA256.file(__FILE__).hexdigest}
+report={status:'running',target_shape:target_shape,rows:[],semantics:[],probe_sha256:{baseline:Digest::SHA256.file(baseline_probe).hexdigest,candidate:Digest::SHA256.file(candidate_probe).hexdigest},binary_sha256:Digest::SHA256.file(binary).hexdigest,runner_sha256:Digest::SHA256.file(__FILE__).hexdigest}
 save=->{File.write(d+'/module-paired.json',JSON.pretty_generate(report)+"\n")};save.call
 begin
  fixtures['fixtures'].each do |f|
@@ -40,8 +42,8 @@ begin
  raise 'No actual runtime allocation reduction' unless report[:reductions]>0
 report[:scaling]=%w[vm jit].product([1,8]).map do |mode,updates|
  slopes=[128,2048].map do |width|
-  group=report[:rows].select{|r|r[:mode]==mode && r['shape']=='array' && r['snapshot']=='once' && r['width']==width && r['updates_per_call']==updates}
-  raise 'Missing array scaling rows' unless group.size==2
+  group=report[:rows].select{|r|r[:mode]==mode && r['shape']==target_shape && r['snapshot']=='once' && r['width']==width && r['updates_per_call']==updates}
+  raise 'Missing target scaling rows' unless group.size==2
   first,last=group.sort_by{|r|r['calls']}
   {width:width,baseline_bytes:last['baseline'][:bytes]-first['baseline'][:bytes],candidate_bytes:last['candidate'][:bytes]-first['candidate'][:bytes],candidate_requests:last['candidate'][:requests]-first['candidate'][:requests]}
  end

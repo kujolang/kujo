@@ -124,9 +124,18 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   1,157 library tests, 316 release integrations, 150 test-size checksums, 36 cold
   comparisons and eight append comparisons pass. The actual capture-enum layout
   remains unchanged on the local target; no elapsed-speed claim follows.
-- [ ] Reduce remaining module-width copying for dictionary/nested state and
-  dense/escaping update patterns. The sparse array path above leaves these costs
-  unchanged. The [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md) and its
+- [x] Defer repeated integer writes to one existing captured dictionary key
+  (`bdb232d`) while preserving public-owner values and snapshots.
+  [Runtime verification](DICTIONARY_PUBLICATION_RUNTIME_2026_10_27.md) shows flat
+  added-call allocation across 128/2,048-key dictionaries: 16 of 128 matrix pairs
+  improve, 112 match, none regress. The separate numeric-key gate passes all 12
+  pairs, including exact baseline equality for fresh snapshots. All 1,162 library
+  tests, 322 release integrations, 24 focused contracts and 150 test-size checksums
+  pass; cold/append controls also pass. No elapsed-speed claim follows.
+- [ ] Reduce remaining module-width copying for nested state, broader dictionary
+  value/multiple-key paths and dense/escaping update patterns. The bounded sparse
+  array and existing-key integer dictionary paths above do not close these costs.
+  The [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md) and its
   rejected growing journal remain historical design evidence, not broader coverage.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
