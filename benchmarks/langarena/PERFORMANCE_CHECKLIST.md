@@ -130,7 +130,15 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   unchanged pool regimes and no tested allocation regressions. All 1,179 library
   tests, 348 release integrations and 150 test-size checksums pass. Oversized
   outer activation and general captured-environment materialization remain open.
-- [x] Isolate oversized private lookup-table storage. [Component measurements](CAPTURE_KEY_LAYOUT_2026_10_27.md) show 5,444,778 to 1,250,474 requested bytes at 16,384 names using key/kind metadata, with unchanged request counts. The naive optional representation grows enclosing metadata from 16 to 24 bytes and is rejected as an integration design. Runtime optimization remains open.
+- [x] Isolate oversized private lookup-table storage. [Component measurements](CAPTURE_KEY_LAYOUT_2026_10_27.md) show 5,444,778 to 1,250,474 requested bytes at 16,384 names using key/kind metadata, with unchanged request counts. The naive optional representation grows enclosing metadata from 16 to 24 bytes and is rejected as an integration design. Runtime integration is verified below.
+- [x] Compact oversized captured-local lookup storage (`82bdef6`) without adding
+  Environment fields or raising pool limits. [Verified evidence](COMPACT_CAPTURE_VIEWS_2026_10_27.md)
+  shows per-added-call bytes falling from 5,447,495 to 1,253,191 at 16,384 locals,
+  with unchanged requests and matching VM/JIT deltas. All 12 target groups improve;
+  total, added-call, recursion and dense-write controls pass. A host-removal
+  regression in the first candidate was reproduced and corrected before acceptance.
+  All 1,184 library tests, 355 release integrations and 150 test-size checksums pass.
+  Retained-name cloning and general capture/collection costs remain open.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
   [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
   split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216

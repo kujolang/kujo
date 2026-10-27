@@ -1,4 +1,10 @@
-# Oversized capture lookup storage: candidate design, not implemented
+# Oversized capture lookup storage: historical design, now integrated
+
+Runtime `82bdef6` implements the existing-kind-map design described below.
+[Verified results](COMPACT_CAPTURE_VIEWS_2026_10_27.md) include the first candidate's
+host-removal regression, its correction, dense writes, release integration tests
+and all 150 test-size checksums. The remaining text preserves the pre-integration
+design and baseline; it is not the current acceptance record.
 
 Current accepted runtime4f5087b still builds local HashMap<String, Value> maps
 containing only Null placeholders. Values themselves remain in the public owner.

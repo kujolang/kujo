@@ -7,6 +7,16 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Compact oversized captured-local views (`82bdef6`).**
+  [Verified results](COMPACT_CAPTURE_VIEWS_2026_10_27.md) show per-added-call
+  allocation bytes falling from 5,447,495 to 1,253,191 at 16,384 retained locals,
+  with unchanged requests and matching VM/JIT deltas. Pool bounds and Environment
+  fields are unchanged. All 1,184 library tests, 355 release integrations and
+  150 test-size checksums pass, alongside dense-write and prior allocation controls.
+  The first candidate's host-removal regression was corrected before acceptance.
+  Retained-name cloning, broader collection costs, production/platform validation
+  and clean-host competitive speed remain open; this is not an elapsed-speed claim.
+
 - **Fresh local capture-map reserve (`aee15a2`).**
   [Measured results](LOCAL_MAP_RESERVE_2026_10_27.md) show 2,637,372 fewer
   allocated bytes per added call with 8,192 retained locals, in both VM and JIT.
