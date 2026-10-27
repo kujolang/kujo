@@ -107,6 +107,16 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   342 release integrations and 150 test-size checksums pass. Ordinary-local,
   cold, collection and publication controls pass. Pool bounds are unchanged;
   oversized activation, prefix materialization and traversal remain open.
+- [x] Transfer private captured prefixes through direct synchronous live-local
+  recursion (`ce923d1`). [Verified results](RECURSIVE_PREFIX_TRANSFER_2026_10_27.md)
+  show constant added depth-two recursion cost across 0/128/2,048/8,192 locals:
+  48 requests / 2,802 bytes for reads and 50 / 2,816 for writes, in VM/JIT.
+  All 96 allocation pairs avoid regressions; all eight larger read/write groups
+  strictly improve. The report preserves and explains the restoration-specific
+  gate rejection and the separate prefix-scaling acceptance. All 1,179 library
+  tests, 342 release integrations and 150 test-size checksums pass, with prior
+  collection/cold/append controls preserved. Indirect recursion and oversized
+  outer activation remain open; pool limits and value semantics are unchanged.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
 - [x] Check return transfers and reusable callback state against ownership/import/callback regression suites; no new transfer defect established.
 - [x] Check pooling/cache retention bounds and separately observe peak memory; no clean-host memory acceptance claim.
