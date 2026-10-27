@@ -74,6 +74,21 @@ fn indexed_publication_candidate_fits_capture_storage_layout() {
         std::mem::size_of::<Option<(usize, Previous)>>(),
         std::mem::size_of::<Option<(usize, CaptureWrites)>>()
     );
+    #[allow(dead_code)]
+    enum WithNestedCandidate {
+        Empty,
+        One((usize, String)),
+        Many(HashSet<(usize, String)>),
+        Indexed(super::indexed_publication::IndexedPublication),
+        Dictionary(super::dictionary_publication::DictionaryPublication),
+        Nested(super::nested_publication::NestedPublication),
+    }
+    assert_eq!(std::mem::size_of::<CaptureWrites>(), std::mem::size_of::<WithNestedCandidate>());
+    assert_eq!(std::mem::align_of::<CaptureWrites>(), std::mem::align_of::<WithNestedCandidate>());
+    assert_eq!(
+        std::mem::size_of::<Option<(usize, CaptureWrites)>>(),
+        std::mem::size_of::<Option<(usize, WithNestedCandidate)>>()
+    );
 }
 
 impl CaptureWrites {

@@ -30,6 +30,8 @@ pub mod generator;
 mod generator_lowering;
 mod indexed_publication;
 pub(crate) mod native_functions;
+#[cfg(test)]
+mod nested_publication;
 pub mod persistent_queue;
 pub mod promise;
 pub(crate) mod string_access;
