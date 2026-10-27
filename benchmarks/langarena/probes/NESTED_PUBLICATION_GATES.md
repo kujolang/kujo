@@ -19,9 +19,9 @@ candidate must fail the actual-reduction requirement.
 
 The additional controls cover struct and dictionary rows of 2, 128 and 2,048
 elements, repeated writes, dense writes, different rows, escaped snapshots and a
-competing direct-array write. All 60 allocation pairs must avoid request/byte
-regressions, and all 90 VM/interpreter/JIT runs must preserve asserted values and
-snapshots. The competing case returns the direct-array element, avoiding an
+competing direct-array or direct-dictionary write. All 72 allocation pairs must
+avoid request/byte regressions, and all 108 VM/interpreter/JIT runs must preserve asserted values and
+snapshots. Each competing case returns its direct collection element, avoiding an
 unrelated expression that would flush its pending write and hide interference.
 Passing identical baseline probes is a runner/fixture check, not an optimization
 result.
