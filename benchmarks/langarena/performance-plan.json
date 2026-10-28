@@ -5302,5 +5302,22 @@
     "deep_fallback_semantics": 768,
     "scope": "Scalar row overflow in explicit and bounded counted-loop helpers; existing four-slot storage unchanged",
     "remaining": "General/deeper loops, nonscalar and uncertain control flow, broader capture/collection costs, later production/platform/clean-host gates"
+  },
+  "compact_capture_names_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "b4dfdfdafbd8c4b298793d83d464c1c70da467c9",
+    "report": "COMPACT_CAPTURE_NAMES_2026_10_28.md",
+    "evidence": "compact-capture-names-2026-10-28.json",
+    "library_passes": 1226,
+    "integration_passes": 400,
+    "test_size_checksums": 150,
+    "target_allocation_observations": 288,
+    "target_semantic_observations": 432,
+    "unique_allocation_cases": 252,
+    "unique_semantic_cases": 378,
+    "dense_allocation_pairs": 12,
+    "dense_semantics": 18,
+    "scope": "Owned compact names at the existing oversized private captured-local boundary; ordinary maps and retention limits unchanged",
+    "remaining": "Capture traversal and slab copying, broader environment materialization/collection costs, production/platform/clean-host gates"
   }
 }

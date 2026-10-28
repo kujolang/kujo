@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `c83ee4b`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`row-overflow-publication-2026-10-28.json`).
-- [x] Latest relevant gate: 1,222 library passes, eight ignored; 397 distinct
-  integration passes, one manual profiling test ignored (`row-overflow-publication-2026-10-28.json`).
+- [x] Latest verified runtime `b4dfdfd`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`compact-capture-names-2026-10-28.json`).
+- [x] Latest relevant gate: 1,226 library passes, eight ignored; 400 distinct
+  integration passes, one manual profiling test ignored (`compact-capture-names-2026-10-28.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -139,6 +139,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   regression in the first candidate was reproduced and corrected before acceptance.
   All 1,184 library tests, 355 release integrations and 150 test-size checksums pass.
   Retained-name cloning and general capture/collection costs remain open.
+- [x] Pack oversized private captured-local names into compact owned storage (`b4dfdfd`).
+  [Verified results](COMPACT_CAPTURE_NAMES_2026_10_28.md) reduce 8,192-name read setup from 8,239 to 49 allocation
+  requests and 624,208 to 313,012 requested bytes per added call. All 12 oversized
+  groups improve without total, per-call or recursive allocation regressions.
+  All 1,226 library tests, 400 integrations and 150 test-size checksums pass,
+  with dense/cold/collection controls and unchanged pool limits. Slab copying,
+  capture traversal and broader materialization remain open; no elapsed-speed claim.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
   [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
   split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216
