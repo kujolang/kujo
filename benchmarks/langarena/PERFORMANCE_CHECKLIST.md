@@ -213,6 +213,12 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   allocation measurements and 360 semantic checks on this runtime: array-owned
   rows are flat; multiple dictionary keys, deeper rows and nested dictionaries
   remain width-dependent.
+- [x] Retain two existing canonical numeric dictionary keys inline, including
+  compound assignments (`924e949`). [Verified results](DICTIONARY_PAIR_PUBLICATION_2026_10_28.md):
+  target compound update bytes per added call fall from 639,941 to 13,146 at width
+  2,048 and are flat across widths 2/128/2,048. All 48 target allocation pairs,
+  72 semantic cases, 1,203 library tests, 379 release integrations and 150
+  test-size checksums pass. Broader compound/nested paths remain open.
 - [x] Defer eligible multiple-key captured dictionary writes (`19a1736`), including
   strings, bytes and new keys after promotion. [Verified results](DICTIONARY_MANY_PUBLICATION_2026_10_28.md)
   reduce two-write traffic at 2,048 keys from 634,379 to 7,788 bytes per added call.

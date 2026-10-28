@@ -5145,5 +5145,19 @@
     "rejected_drafts": 4,
     "scope": "Proven synchronous multiple-key dictionary publication with unchanged snapshots and public-owner boundaries",
     "remaining": "Compound indexed updates, nested dictionaries, deeper/larger rows, general captures and later full-plan gates; no clean-host speed claim."
+  },
+  "dictionary_pair_publication_verification_2026_10_28": {
+    "runtime_commit": "924e949b16c5bc936f667de615113a5a5f69b992",
+    "status": "verified",
+    "report": "DICTIONARY_PAIR_PUBLICATION_2026_10_28.md",
+    "evidence": "dictionary-pair-publication-2026-10-28.json",
+    "library_passes": 1203,
+    "integration_passes": 379,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 48,
+    "target_semantic_cases": 72,
+    "diagnostic_pairs": 48,
+    "scope": "Two existing canonical signed29-bit numeric keys retained inline for scalar and compound updates; broader paths preserve fallback",
+    "remaining": "Sections 3/4 remain open: broader nested dictionaries, deeper/larger rows, general capture materialization/traversal and oversized fallback. Later production/platform/clean-host gates pending."
   }
 }
