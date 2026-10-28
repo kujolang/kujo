@@ -5319,5 +5319,19 @@
     "dense_semantics": 18,
     "scope": "Owned compact names at the existing oversized private captured-local boundary; ordinary maps and retention limits unchanged",
     "remaining": "Capture traversal and slab copying, broader environment materialization/collection costs, production/platform/clean-host gates"
+  },
+  "priority_allocation_refresh_2026_10_28": {
+    "status": "verified_diagnosis",
+    "runtime_commit": "b4dfdfdafbd8c4b298793d83d464c1c70da467c9",
+    "report": "PRIORITY_ALLOCATION_REFRESH_2026_10_28.md",
+    "evidence": "priority-allocation-refresh-2026-10-28.json",
+    "priority_paired_cases": 16,
+    "priority_interpreter_cases": 8,
+    "quicksort_additional_repeat_pairs": 3,
+    "row_access_allocation_observations": 16,
+    "row_access_semantics": 24,
+    "vm_extra_requests_per_nested_write": 2,
+    "vm_extra_bytes_per_nested_write": 320,
+    "remaining": "Reduce ordinary nested path temporaries with semantics/fallback/real-workload gates; other high allocation totals still require attribution"
   }
 }

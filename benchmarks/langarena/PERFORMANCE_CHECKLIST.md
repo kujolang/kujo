@@ -344,6 +344,10 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   reductions, 96 matches and no regressions; numeric/cold/append controls pass.
   Canonical integer keys, insertion, snapshots and error atomicity are preserved.
   Nested-row publication and broader collection costs remain open; no speed claim.
+- [ ] Reduce ordinary nested-write path storage/cloning. The [current priority refresh](PRIORITY_ALLOCATION_REFRESH_2026_10_28.md)
+  on `b4dfdfd` reproduces two additional allocations and 320 requested bytes
+  per nested VM write at widths 128/2,048, with snapshots and all-runtime
+  semantics checked. The runtime fix and actual-workload acceptance remain open.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.

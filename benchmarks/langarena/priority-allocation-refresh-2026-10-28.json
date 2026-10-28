@@ -1,0 +1,1271 @@
+{
+  "status": "verified_diagnosis",
+  "runtime_commit": "b4dfdfdafbd8c4b298793d83d464c1c70da467c9",
+  "baseline_runtime_commit": "c83ee4b9d1dd7b12563ee0c7c6a9bd550ec42534",
+  "scope": "Eight priority allocation workloads plus nested-row access isolation; no runtime fixes or speed ranking",
+  "priority": {
+    "status": "characterized",
+    "pid": 67695,
+    "scope": "Eight unchanged priority test-size workloads; argv injection only; execution allocations include setup/warmup/checksum",
+    "runner_sha256": "7de3c2c8f82fbe1e686c95e66b14cccd4a8b8df21548eec1e086b9175c05f75f",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/row-overflow-v2-2026-10-28/task-allocation-probe": "cdb7a7e0b611dc2ef80a080f9125b4e41a3f994e3c9e98a06d28551d1d499d44",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/compact-binding-map-v1-2026-10-28/task-allocation-probe": "4b9f8e6cf9f875168bf768a4189ea4caf44c1132a570028af4550ba477f31ba5",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/compact-binding-map-v1-2026-10-28/candidate-kujo": "f2f7c1470595237e5dda2e07e8794d21538e574f6a4be3e71411962f137a6051",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/benchmarks/langarena/test.json": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797"
+    },
+    "rows": [
+      {
+        "name": "Sort::Quick",
+        "configuration": {
+          "name": "Sort::Quick",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Quick.kujo",
+        "source_sha256": "30f239d9f8c2b1e566d3ef39eaca7f7cd5da71788c6a8bff0e7384641a951f79",
+        "mode": "vm",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 13080696,
+          "bytes": 488862630,
+          "exit": 0,
+          "stdout": "@profile create-start ns=60239\n@profile create-done ns=202254\n@profile prepare-done ns=918034056\n@profile warmup-1 ns=3863270700\n@profile warmup-done ns=3863440202\n@profile run-1 ns=6807163170\n@profile run-2 ns=9827437419\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=13080696 requested_bytes=488862630\n"
+        },
+        "candidate": {
+          "requests": 13080694,
+          "bytes": 488862602,
+          "exit": 0,
+          "stdout": "@profile create-start ns=63646\n@profile create-done ns=210990\n@profile prepare-done ns=842849133\n@profile warmup-1 ns=4050487789\n@profile warmup-done ns=4050609099\n@profile run-1 ns=7444759511\n@profile run-2 ns=10928431245\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=13080694 requested_bytes=488862602\n"
+        }
+      },
+      {
+        "name": "Sort::Quick",
+        "configuration": {
+          "name": "Sort::Quick",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Quick.kujo",
+        "source_sha256": "30f239d9f8c2b1e566d3ef39eaca7f7cd5da71788c6a8bff0e7384641a951f79",
+        "mode": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 927148,
+          "bytes": 111094056,
+          "exit": 0,
+          "stdout": "@profile create-start ns=77933\n@profile create-done ns=348416\n@profile prepare-done ns=643037558\n@profile warmup-1 ns=1645543037\n@profile warmup-done ns=1645682534\n@profile run-1 ns=2544154042\n@profile run-2 ns=3576428080\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=927148 requested_bytes=111094056\n"
+        },
+        "baseline": {
+          "requests": 927046,
+          "bytes": 111073305,
+          "exit": 0,
+          "stdout": "@profile create-start ns=343892\n@profile create-done ns=1241039\n@profile prepare-done ns=676685736\n@profile warmup-1 ns=1815016480\n@profile warmup-done ns=1815144097\n@profile run-1 ns=2781099669\n@profile run-2 ns=3774431370\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=927046 requested_bytes=111073305\n"
+        }
+      },
+      {
+        "name": "Sort::Merge",
+        "configuration": {
+          "name": "Sort::Merge",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Merge.kujo",
+        "source_sha256": "71dc9135739c409e69ffa7d4c4a45ed5ecd63a39fb0968792ab0b4c1047adf19",
+        "mode": "vm",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 42190742,
+          "bytes": 3826368106,
+          "exit": 0,
+          "stdout": "@profile create-start ns=63246\n@profile create-done ns=212931\n@profile prepare-done ns=783653142\n@profile warmup-1 ns=10337279396\n@profile warmup-done ns=10337391274\n@profile run-1 ns=19790563974\n@profile run-2 ns=29431197382\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=42190742 requested_bytes=3826368106\n"
+        },
+        "baseline": {
+          "requests": 42190742,
+          "bytes": 3826368106,
+          "exit": 0,
+          "stdout": "@profile create-start ns=59834\n@profile create-done ns=193018\n@profile prepare-done ns=884942125\n@profile warmup-1 ns=11142388306\n@profile warmup-done ns=11142502678\n@profile run-1 ns=22498475587\n@profile run-2 ns=36219526674\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=42190742 requested_bytes=3826368106\n"
+        }
+      },
+      {
+        "name": "Sort::Merge",
+        "configuration": {
+          "name": "Sort::Merge",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Merge.kujo",
+        "source_sha256": "71dc9135739c409e69ffa7d4c4a45ed5ecd63a39fb0968792ab0b4c1047adf19",
+        "mode": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 11430663,
+          "bytes": 2938155534,
+          "exit": 0,
+          "stdout": "@profile create-start ns=163297\n@profile create-done ns=425411\n@profile prepare-done ns=794569553\n@profile warmup-1 ns=6664413393\n@profile warmup-done ns=6664555664\n@profile run-1 ns=12333754475\n@profile run-2 ns=17991337940\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=11430663 requested_bytes=2938155534\n"
+        },
+        "candidate": {
+          "requests": 11430675,
+          "bytes": 2938155152,
+          "exit": 0,
+          "stdout": "@profile create-start ns=342506\n@profile create-done ns=847129\n@profile prepare-done ns=804030992\n@profile warmup-1 ns=6369230911\n@profile warmup-done ns=6369368780\n@profile run-1 ns=11522570682\n@profile run-2 ns=16618420451\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=11430675 requested_bytes=2938155152\n"
+        }
+      },
+      {
+        "name": "Etc::NeuralNet",
+        "configuration": {
+          "name": "Etc::NeuralNet",
+          "checksum": 1586674334,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-NeuralNet.kujo",
+        "source_sha256": "6963a26e4f98dbe54afda4ef031485ac6c7355db9ae702b2f4745b67b2bc8744",
+        "mode": "vm",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 35390990,
+          "bytes": 1927902452,
+          "exit": 0,
+          "stdout": "@profile create-start ns=391264\n@profile create-done ns=1748309\n@profile prepare-done ns=3201489\n@profile warmup-1 ns=4983489014\n@profile warmup-done ns=4983628060\n@profile run-1 ns=10235650916\n@profile run-2 ns=15296930205\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=35390990 requested_bytes=1927902452\n"
+        },
+        "candidate": {
+          "requests": 35390989,
+          "bytes": 1927902432,
+          "exit": 0,
+          "stdout": "@profile create-start ns=317272\n@profile create-done ns=1099905\n@profile prepare-done ns=2232114\n@profile warmup-1 ns=4918908995\n@profile warmup-done ns=4919045908\n@profile run-1 ns=9638284602\n@profile run-2 ns=14351356265\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=35390989 requested_bytes=1927902432\n"
+        }
+      },
+      {
+        "name": "Etc::NeuralNet",
+        "configuration": {
+          "name": "Etc::NeuralNet",
+          "checksum": 1586674334,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-NeuralNet.kujo",
+        "source_sha256": "6963a26e4f98dbe54afda4ef031485ac6c7355db9ae702b2f4745b67b2bc8744",
+        "mode": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 13984651,
+          "bytes": 1528239231,
+          "exit": 0,
+          "stdout": "@profile create-start ns=71510\n@profile create-done ns=237108\n@profile prepare-done ns=114839485\n@profile warmup-1 ns=3612239655\n@profile warmup-done ns=3612370465\n@profile run-1 ns=6784979774\n@profile run-2 ns=9867082476\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=13984651 requested_bytes=1528239231\n"
+        },
+        "baseline": {
+          "requests": 13984534,
+          "bytes": 1528224130,
+          "exit": 0,
+          "stdout": "@profile create-start ns=67165\n@profile create-done ns=219996\n@profile prepare-done ns=109710414\n@profile warmup-1 ns=3686926532\n@profile warmup-done ns=3687075326\n@profile run-1 ns=7392512602\n@profile run-2 ns=11106745215\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=13984534 requested_bytes=1528224130\n"
+        }
+      },
+      {
+        "name": "Etc::CacheSimulation",
+        "configuration": {
+          "name": "Etc::CacheSimulation",
+          "checksum": 179773224,
+          "values": 2000,
+          "size": 1000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-CacheSimulation.kujo",
+        "source_sha256": "53dbe4d50c0acb13e204a45a9125afb95bdcb375a5c2c32b462b10a77668f884",
+        "mode": "vm",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 761339,
+          "bytes": 520387058,
+          "exit": 0,
+          "stdout": "@profile create-start ns=116304\n@profile create-done ns=446055\n@profile prepare-done ns=624636\n@profile warmup-1 ns=153097301\n@profile warmup-done ns=153227509\n@profile run-1 ns=473014496\n@profile run-2 ns=1013675076\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=761339 requested_bytes=520387058\n"
+        },
+        "baseline": {
+          "requests": 761359,
+          "bytes": 520540400,
+          "exit": 0,
+          "stdout": "@profile create-start ns=67465\n@profile create-done ns=224784\n@profile prepare-done ns=346496\n@profile warmup-1 ns=160511064\n@profile warmup-done ns=160667141\n@profile run-1 ns=483718443\n@profile run-2 ns=1016493224\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=761359 requested_bytes=520540400\n"
+        }
+      },
+      {
+        "name": "Etc::CacheSimulation",
+        "configuration": {
+          "name": "Etc::CacheSimulation",
+          "checksum": 179773224,
+          "values": 2000,
+          "size": 1000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-CacheSimulation.kujo",
+        "source_sha256": "53dbe4d50c0acb13e204a45a9125afb95bdcb375a5c2c32b462b10a77668f884",
+        "mode": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 634900,
+          "bytes": 564650408,
+          "exit": 0,
+          "stdout": "@profile create-start ns=66640\n@profile create-done ns=221371\n@profile prepare-done ns=344989\n@profile warmup-1 ns=310233882\n@profile warmup-done ns=310427278\n@profile run-1 ns=600102131\n@profile run-2 ns=1100751271\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=634900 requested_bytes=564650408\n"
+        },
+        "candidate": {
+          "requests": 634848,
+          "bytes": 564611336,
+          "exit": 0,
+          "stdout": "@profile create-start ns=67862\n@profile create-done ns=229240\n@profile prepare-done ns=350542\n@profile warmup-1 ns=305049398\n@profile warmup-done ns=305180412\n@profile run-1 ns=601867844\n@profile run-2 ns=1152486457\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=634848 requested_bytes=564611336\n"
+        }
+      },
+      {
+        "name": "Etc::GameOfLife",
+        "configuration": {
+          "name": "Etc::GameOfLife",
+          "checksum": 4006235749,
+          "w": 20,
+          "h": 20,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-GameOfLife.kujo",
+        "source_sha256": "c3433ac763db303244de771cab6373aba0a010266111e3ae4fac5d84e9a528f0",
+        "mode": "vm",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 218972,
+          "bytes": 11253669,
+          "exit": 0,
+          "stdout": "@profile create-start ns=65937\n@profile create-done ns=20707156\n@profile prepare-done ns=27678695\n@profile warmup-1 ns=49922872\n@profile warmup-done ns=50136151\n@profile run-1 ns=68901259\n@profile run-2 ns=84225393\n@profile run-3 ns=99593768\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=218972 requested_bytes=11253669\n"
+        },
+        "candidate": {
+          "requests": 218980,
+          "bytes": 11255717,
+          "exit": 0,
+          "stdout": "@profile create-start ns=68121\n@profile create-done ns=21870828\n@profile prepare-done ns=28829346\n@profile warmup-1 ns=44762552\n@profile warmup-done ns=44882092\n@profile run-1 ns=60821994\n@profile run-2 ns=76784419\n@profile run-3 ns=93388127\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=218980 requested_bytes=11255717\n"
+        }
+      },
+      {
+        "name": "Etc::GameOfLife",
+        "configuration": {
+          "name": "Etc::GameOfLife",
+          "checksum": 4006235749,
+          "w": 20,
+          "h": 20,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-GameOfLife.kujo",
+        "source_sha256": "c3433ac763db303244de771cab6373aba0a010266111e3ae4fac5d84e9a528f0",
+        "mode": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 195438,
+          "bytes": 65991969,
+          "exit": 0,
+          "stdout": "@profile create-start ns=69465\n@profile create-done ns=80910629\n@profile prepare-done ns=99340843\n@profile warmup-1 ns=170771833\n@profile warmup-done ns=170904425\n@profile run-1 ns=180056187\n@profile run-2 ns=189242974\n@profile run-3 ns=200299103\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=195438 requested_bytes=65991969\n"
+        },
+        "baseline": {
+          "requests": 195345,
+          "bytes": 65692883,
+          "exit": 0,
+          "stdout": "@profile create-start ns=66639\n@profile create-done ns=90036249\n@profile prepare-done ns=108821544\n@profile warmup-1 ns=182006742\n@profile warmup-done ns=182136288\n@profile run-1 ns=190587014\n@profile run-2 ns=199409800\n@profile run-3 ns=210081818\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=195345 requested_bytes=65692883\n"
+        }
+      },
+      {
+        "name": "Etc::TextRaytracer",
+        "configuration": {
+          "name": "Etc::TextRaytracer",
+          "checksum": 1438660,
+          "w": 100,
+          "h": 100,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-TextRaytracer.kujo",
+        "source_sha256": "e9be075ba3a20b3357dc931cd75f1b3a1662f25177795e8b169edaf9d7e98676",
+        "mode": "vm",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 17891850,
+          "bytes": 800782291,
+          "exit": 0,
+          "stdout": "@profile create-start ns=103165\n@profile create-done ns=307804\n@profile prepare-done ns=438197\n@profile warmup-1 ns=1776804316\n@profile warmup-done ns=1776939814\n@profile run-1 ns=3520328010\n@profile run-2 ns=5253811893\n@profile run-3 ns=6967968855\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=17891850 requested_bytes=800782291\n"
+        },
+        "baseline": {
+          "requests": 17891849,
+          "bytes": 800782272,
+          "exit": 0,
+          "stdout": "@profile create-start ns=67955\n@profile create-done ns=222423\n@profile prepare-done ns=342007\n@profile warmup-1 ns=1803435098\n@profile warmup-done ns=1803580061\n@profile run-1 ns=3583897568\n@profile run-2 ns=5347700665\n@profile run-3 ns=7167279754\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=17891849 requested_bytes=800782272\n"
+        }
+      },
+      {
+        "name": "Etc::TextRaytracer",
+        "configuration": {
+          "name": "Etc::TextRaytracer",
+          "checksum": 1438660,
+          "w": 100,
+          "h": 100,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-TextRaytracer.kujo",
+        "source_sha256": "e9be075ba3a20b3357dc931cd75f1b3a1662f25177795e8b169edaf9d7e98676",
+        "mode": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 8807511,
+          "bytes": 464215228,
+          "exit": 0,
+          "stdout": "@profile create-start ns=95943\n@profile create-done ns=282203\n@profile prepare-done ns=432007\n@profile warmup-1 ns=1782748250\n@profile warmup-done ns=1782893535\n@profile run-1 ns=3245073978\n@profile run-2 ns=4862749442\n@profile run-3 ns=6492493837\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=8807511 requested_bytes=464215228\n"
+        },
+        "candidate": {
+          "requests": 8807620,
+          "bytes": 464229800,
+          "exit": 0,
+          "stdout": "@profile create-start ns=83163\n@profile create-done ns=266372\n@profile prepare-done ns=407422\n@profile warmup-1 ns=2137436135\n@profile warmup-done ns=2137581480\n@profile run-1 ns=3885812247\n@profile run-2 ns=5651370784\n@profile run-3 ns=7448983475\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=8807620 requested_bytes=464229800\n"
+        }
+      },
+      {
+        "name": "Brainfuck::Array",
+        "configuration": {
+          "name": "Brainfuck::Array",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Array.kujo",
+        "source_sha256": "9f2a584cb31b9be79f38acb8341fbb933278e92630052cafccc6493d4ebc0f93",
+        "mode": "vm",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 304111,
+          "bytes": 30005077,
+          "exit": 0,
+          "stdout": "@profile create-start ns=69848\n@profile create-done ns=229616\n@profile prepare-done ns=356551\n@profile warmup-1 ns=76884634\n@profile warmup-done ns=77062541\n@profile run-1 ns=154918620\n@profile run-2 ns=231567673\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=304111 requested_bytes=30005077\n"
+        },
+        "candidate": {
+          "requests": 304110,
+          "bytes": 30005062,
+          "exit": 0,
+          "stdout": "@profile create-start ns=78533\n@profile create-done ns=252275\n@profile prepare-done ns=378584\n@profile warmup-1 ns=75548443\n@profile warmup-done ns=75683042\n@profile run-1 ns=147864484\n@profile run-2 ns=223712023\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=304110 requested_bytes=30005062\n"
+        }
+      },
+      {
+        "name": "Brainfuck::Array",
+        "configuration": {
+          "name": "Brainfuck::Array",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Array.kujo",
+        "source_sha256": "9f2a584cb31b9be79f38acb8341fbb933278e92630052cafccc6493d4ebc0f93",
+        "mode": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 307688,
+          "bytes": 94485763,
+          "exit": 0,
+          "stdout": "@profile create-start ns=74684\n@profile create-done ns=247047\n@profile prepare-done ns=378476\n@profile warmup-1 ns=264476118\n@profile warmup-done ns=264611669\n@profile run-1 ns=303604972\n@profile run-2 ns=346055108\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=307688 requested_bytes=94485763\n"
+        },
+        "baseline": {
+          "requests": 307682,
+          "bytes": 94485658,
+          "exit": 0,
+          "stdout": "@profile create-start ns=70143\n@profile create-done ns=227119\n@profile prepare-done ns=356733\n@profile warmup-1 ns=283045170\n@profile warmup-done ns=283178982\n@profile run-1 ns=325473315\n@profile run-2 ns=369555564\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=307682 requested_bytes=94485658\n"
+        }
+      },
+      {
+        "name": "Brainfuck::Recursion",
+        "configuration": {
+          "name": "Brainfuck::Recursion",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Recursion.kujo",
+        "source_sha256": "b831b3b5fd63c06b5db7b601a5646326bd212707eb958d4f7566f988264f35d8",
+        "mode": "vm",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "candidate": {
+          "requests": 316485,
+          "bytes": 31281683,
+          "exit": 0,
+          "stdout": "@profile create-start ns=135935\n@profile create-done ns=435952\n@profile prepare-done ns=658207\n@profile warmup-1 ns=86531862\n@profile warmup-done ns=86663795\n@profile run-1 ns=166389187\n@profile run-2 ns=245558082\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=316485 requested_bytes=31281683\n"
+        },
+        "baseline": {
+          "requests": 316485,
+          "bytes": 31281681,
+          "exit": 0,
+          "stdout": "@profile create-start ns=90101\n@profile create-done ns=292541\n@profile prepare-done ns=434663\n@profile warmup-1 ns=75298850\n@profile warmup-done ns=75427220\n@profile run-1 ns=151030874\n@profile run-2 ns=232669917\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=316485 requested_bytes=31281681\n"
+        }
+      },
+      {
+        "name": "Brainfuck::Recursion",
+        "configuration": {
+          "name": "Brainfuck::Recursion",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Recursion.kujo",
+        "source_sha256": "b831b3b5fd63c06b5db7b601a5646326bd212707eb958d4f7566f988264f35d8",
+        "mode": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baseline": {
+          "requests": 281292,
+          "bytes": 75967233,
+          "exit": 0,
+          "stdout": "@profile create-start ns=71891\n@profile create-done ns=234145\n@profile prepare-done ns=365998\n@profile warmup-1 ns=229559149\n@profile warmup-done ns=229697226\n@profile run-1 ns=269628801\n@profile run-2 ns=316470749\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=281292 requested_bytes=75967233\n"
+        },
+        "candidate": {
+          "requests": 281274,
+          "bytes": 75965673,
+          "exit": 0,
+          "stdout": "@profile create-start ns=74103\n@profile create-done ns=245012\n@profile prepare-done ns=462748\n@profile warmup-1 ns=180320163\n@profile warmup-done ns=180452473\n@profile run-1 ns=223230754\n@profile run-2 ns=272810313\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+          "stderr": "ALLOCATION_AUDIT requests=281274 requested_bytes=75965673\n"
+        }
+      }
+    ],
+    "semantics": [
+      {
+        "name": "Sort::Quick",
+        "configuration": {
+          "name": "Sort::Quick",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Quick.kujo",
+        "source_sha256": "30f239d9f8c2b1e566d3ef39eaca7f7cd5da71788c6a8bff0e7384641a951f79",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=35972\n@profile create-done ns=445524\n@profile prepare-done ns=693345586\n@profile warmup-1 ns=9111714928\n@profile warmup-done ns=9111747365\n@profile run-1 ns=17085372854\n@profile run-2 ns=24769931535\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Sort::Merge",
+        "configuration": {
+          "name": "Sort::Merge",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Merge.kujo",
+        "source_sha256": "71dc9135739c409e69ffa7d4c4a45ed5ecd63a39fb0968792ab0b4c1047adf19",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=139761\n@profile create-done ns=731244\n@profile prepare-done ns=979130665\n@profile warmup-1 ns=24659639676\n@profile warmup-done ns=24659706336\n@profile run-1 ns=46087428048\n@profile run-2 ns=66680594420\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Etc::NeuralNet",
+        "configuration": {
+          "name": "Etc::NeuralNet",
+          "checksum": 1586674334,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-NeuralNet.kujo",
+        "source_sha256": "6963a26e4f98dbe54afda4ef031485ac6c7355db9ae702b2f4745b67b2bc8744",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=36137\n@profile create-done ns=109885\n@profile prepare-done ns=2437922\n@profile warmup-1 ns=6983533609\n@profile warmup-done ns=6983593571\n@profile run-1 ns=15714668366\n@profile run-2 ns=22560706902\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Etc::CacheSimulation",
+        "configuration": {
+          "name": "Etc::CacheSimulation",
+          "checksum": 179773224,
+          "values": 2000,
+          "size": 1000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-CacheSimulation.kujo",
+        "source_sha256": "53dbe4d50c0acb13e204a45a9125afb95bdcb375a5c2c32b462b10a77668f884",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=32348\n@profile create-done ns=105419\n@profile prepare-done ns=133323\n@profile warmup-1 ns=54871053\n@profile warmup-done ns=54902786\n@profile run-1 ns=193700288\n@profile run-2 ns=375361632\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Etc::GameOfLife",
+        "configuration": {
+          "name": "Etc::GameOfLife",
+          "checksum": 4006235749,
+          "w": 20,
+          "h": 20,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-GameOfLife.kujo",
+        "source_sha256": "c3433ac763db303244de771cab6373aba0a010266111e3ae4fac5d84e9a528f0",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=31298\n@profile create-done ns=18388412\n@profile prepare-done ns=23484714\n@profile warmup-1 ns=34427113\n@profile warmup-done ns=34457820\n@profile run-1 ns=44250919\n@profile run-2 ns=54853115\n@profile run-3 ns=64168757\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Etc::TextRaytracer",
+        "configuration": {
+          "name": "Etc::TextRaytracer",
+          "checksum": 1438660,
+          "w": 100,
+          "h": 100,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-TextRaytracer.kujo",
+        "source_sha256": "e9be075ba3a20b3357dc931cd75f1b3a1662f25177795e8b169edaf9d7e98676",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=34847\n@profile create-done ns=106500\n@profile prepare-done ns=149736\n@profile warmup-1 ns=2610544409\n@profile warmup-done ns=2610615160\n@profile run-1 ns=5127217955\n@profile run-2 ns=7639760550\n@profile run-3 ns=10136319236\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Brainfuck::Array",
+        "configuration": {
+          "name": "Brainfuck::Array",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Array.kujo",
+        "source_sha256": "9f2a584cb31b9be79f38acb8341fbb933278e92630052cafccc6493d4ebc0f93",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=35079\n@profile create-done ns=106235\n@profile prepare-done ns=134930\n@profile warmup-1 ns=60708018\n@profile warmup-done ns=60752405\n@profile run-1 ns=127622537\n@profile run-2 ns=191907359\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      },
+      {
+        "name": "Brainfuck::Recursion",
+        "configuration": {
+          "name": "Brainfuck::Recursion",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Recursion.kujo",
+        "source_sha256": "b831b3b5fd63c06b5db7b601a5646326bd212707eb958d4f7566f988264f35d8",
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "@profile create-start ns=63866\n@profile create-done ns=200826\n@profile prepare-done ns=241570\n@profile warmup-1 ns=68441867\n@profile warmup-done ns=68498087\n@profile run-1 ns=129886141\n@profile run-2 ns=193136360\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+        "stderr": ""
+      }
+    ],
+    "fixtures": [
+      {
+        "name": "Sort::Quick",
+        "configuration": {
+          "name": "Sort::Quick",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Quick.kujo",
+        "source_sha256": "30f239d9f8c2b1e566d3ef39eaca7f7cd5da71788c6a8bff0e7384641a951f79"
+      },
+      {
+        "name": "Sort::Merge",
+        "configuration": {
+          "name": "Sort::Merge",
+          "checksum": 2548773,
+          "size": 100000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Sort-Merge.kujo",
+        "source_sha256": "71dc9135739c409e69ffa7d4c4a45ed5ecd63a39fb0968792ab0b4c1047adf19"
+      },
+      {
+        "name": "Etc::NeuralNet",
+        "configuration": {
+          "name": "Etc::NeuralNet",
+          "checksum": 1586674334,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-NeuralNet.kujo",
+        "source_sha256": "6963a26e4f98dbe54afda4ef031485ac6c7355db9ae702b2f4745b67b2bc8744"
+      },
+      {
+        "name": "Etc::CacheSimulation",
+        "configuration": {
+          "name": "Etc::CacheSimulation",
+          "checksum": 179773224,
+          "values": 2000,
+          "size": 1000,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-CacheSimulation.kujo",
+        "source_sha256": "53dbe4d50c0acb13e204a45a9125afb95bdcb375a5c2c32b462b10a77668f884"
+      },
+      {
+        "name": "Etc::GameOfLife",
+        "configuration": {
+          "name": "Etc::GameOfLife",
+          "checksum": 4006235749,
+          "w": 20,
+          "h": 20,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-GameOfLife.kujo",
+        "source_sha256": "c3433ac763db303244de771cab6373aba0a010266111e3ae4fac5d84e9a528f0"
+      },
+      {
+        "name": "Etc::TextRaytracer",
+        "configuration": {
+          "name": "Etc::TextRaytracer",
+          "checksum": 1438660,
+          "w": 100,
+          "h": 100,
+          "iterations": 3
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Etc-TextRaytracer.kujo",
+        "source_sha256": "e9be075ba3a20b3357dc931cd75f1b3a1662f25177795e8b169edaf9d7e98676"
+      },
+      {
+        "name": "Brainfuck::Array",
+        "configuration": {
+          "name": "Brainfuck::Array",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Array.kujo",
+        "source_sha256": "9f2a584cb31b9be79f38acb8341fbb933278e92630052cafccc6493d4ebc0f93"
+      },
+      {
+        "name": "Brainfuck::Recursion",
+        "configuration": {
+          "name": "Brainfuck::Recursion",
+          "checksum": 3562897308,
+          "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+          "warmup_iterations": 1,
+          "iterations": 2
+        },
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/priority-refresh-2026-10-28/Brainfuck-Recursion.kujo",
+        "source_sha256": "b831b3b5fd63c06b5db7b601a5646326bd212707eb958d4f7566f988264f35d8"
+      }
+    ]
+  },
+  "quicksort_repeats": {
+    "status": "characterized",
+    "pid": 69221,
+    "stage": "complete",
+    "rows": [
+      {
+        "round": 0,
+        "label": "candidate",
+        "requests": 927081,
+        "bytes": 111074895,
+        "stdout": "@profile create-start ns=80646\n@profile create-done ns=247209\n@profile prepare-done ns=648822855\n@profile warmup-1 ns=1632141221\n@profile warmup-done ns=1632271728\n@profile run-1 ns=2549603202\n@profile run-2 ns=3556495103\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927081 requested_bytes=111074895\n"
+      },
+      {
+        "round": 0,
+        "label": "baseline",
+        "requests": 927081,
+        "bytes": 111073839,
+        "stdout": "@profile create-start ns=59845\n@profile create-done ns=244765\n@profile prepare-done ns=658536651\n@profile warmup-1 ns=1700978525\n@profile warmup-done ns=1701097536\n@profile run-1 ns=2680850702\n@profile run-2 ns=3646157201\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927081 requested_bytes=111073839\n"
+      },
+      {
+        "round": 1,
+        "label": "baseline",
+        "requests": 927155,
+        "bytes": 111094819,
+        "stdout": "@profile create-start ns=63572\n@profile create-done ns=213872\n@profile prepare-done ns=645777804\n@profile warmup-1 ns=1706453223\n@profile warmup-done ns=1706563553\n@profile run-1 ns=2756298831\n@profile run-2 ns=4188109558\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927155 requested_bytes=111094819\n"
+      },
+      {
+        "round": 1,
+        "label": "candidate",
+        "requests": 927050,
+        "bytes": 111073475,
+        "stdout": "@profile create-start ns=71427\n@profile create-done ns=220567\n@profile prepare-done ns=646541226\n@profile warmup-1 ns=1724860905\n@profile warmup-done ns=1724977518\n@profile run-1 ns=2719487498\n@profile run-2 ns=3758701128\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927050 requested_bytes=111073475\n"
+      },
+      {
+        "round": 2,
+        "label": "candidate",
+        "requests": 927092,
+        "bytes": 111079331,
+        "stdout": "@profile create-start ns=68115\n@profile create-done ns=223654\n@profile prepare-done ns=649763104\n@profile warmup-1 ns=1773976925\n@profile warmup-done ns=1774097766\n@profile run-1 ns=2821685995\n@profile run-2 ns=3881571666\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927092 requested_bytes=111079331\n"
+      },
+      {
+        "round": 2,
+        "label": "baseline",
+        "requests": 927080,
+        "bytes": 111075471,
+        "stdout": "@profile create-start ns=64071\n@profile create-done ns=208577\n@profile prepare-done ns=681684195\n@profile warmup-1 ns=1897937248\n@profile warmup-done ns=1898057635\n@profile run-1 ns=3053195436\n@profile run-2 ns=4237029043\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+        "stderr": "ALLOCATION_AUDIT requests=927080 requested_bytes=111075471\n"
+      }
+    ],
+    "fixture_sha256": "30f239d9f8c2b1e566d3ef39eaca7f7cd5da71788c6a8bff0e7384641a951f79",
+    "identities": {
+      "baseline": "cdb7a7e0b611dc2ef80a080f9125b4e41a3f994e3c9e98a06d28551d1d499d44",
+      "candidate": "4b9f8e6cf9f875168bf768a4189ea4caf44c1132a570028af4550ba477f31ba5"
+    }
+  },
+  "quicksort_ranges": {
+    "baseline": {
+      "requests": [
+        927046,
+        927155
+      ],
+      "bytes": [
+        111073305,
+        111094819
+      ]
+    },
+    "candidate": {
+      "requests": [
+        927050,
+        927148
+      ],
+      "bytes": [
+        111073475,
+        111094056
+      ]
+    }
+  },
+  "quicksort_ranges_overlap": true,
+  "row_access": {
+    "status": "characterized",
+    "pid": 69632,
+    "scope": "Diagnostic nested-row versus extracted-row copy loops; not a benchmark rewrite or optimization acceptance",
+    "runner_sha256": "2f2c37fa4b3b00e76b1d3bf55f1aee1f80e16df9dec98afdaac1af7e27de7533",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/compact-binding-map-v1-2026-10-28/task-allocation-probe": "4b9f8e6cf9f875168bf768a4189ea4caf44c1132a570028af4550ba477f31ba5",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/compact-binding-map-v1-2026-10-28/candidate-kujo": "f2f7c1470595237e5dda2e07e8794d21538e574f6a4be3e71411962f137a6051"
+    },
+    "rows": [
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0",
+        "requests": 925,
+        "bytes": 192813
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0",
+        "requests": 12491,
+        "bytes": 6539680
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2",
+        "requests": 412,
+        "bytes": 110913
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2",
+        "requests": 13757,
+        "bytes": 7335470
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0",
+        "requests": 1695,
+        "bytes": 274991
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0",
+        "requests": 12743,
+        "bytes": 6609580
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033",
+        "requests": 670,
+        "bytes": 111171
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033",
+        "requests": 13796,
+        "bytes": 7339926
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7",
+        "requests": 12453,
+        "bytes": 2454573
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7",
+        "requests": 16361,
+        "bytes": 8617884
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971",
+        "requests": 4260,
+        "bytes": 1143873
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971",
+        "requests": 13770,
+        "bytes": 8365634
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d",
+        "requests": 24743,
+        "bytes": 3769391
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d",
+        "requests": 20430,
+        "bytes": 9728284
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0",
+        "requests": 8358,
+        "bytes": 1147971
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0",
+        "requests": 13776,
+        "bytes": 8365106
+      }
+    ],
+    "semantics": [
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 2,
+        "mode": "interpreter",
+        "source_sha256": "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 2,
+        "mode": "interpreter",
+        "source_sha256": "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 4,
+        "mode": "interpreter",
+        "source_sha256": "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 4,
+        "mode": "interpreter",
+        "source_sha256": "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "interpreter",
+        "source_sha256": "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "vm",
+        "source_sha256": "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "interpreter",
+        "source_sha256": "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 2,
+        "mode": "jit",
+        "source_sha256": "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "interpreter",
+        "source_sha256": "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d",
+        "exit": 0
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "vm",
+        "source_sha256": "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "interpreter",
+        "source_sha256": "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0",
+        "exit": 0
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "rounds": 4,
+        "mode": "jit",
+        "source_sha256": "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0",
+        "exit": 0
+      }
+    ],
+    "sources": {
+      "629fd52d53a615679a5037ea0fff7b2e4b94016269bbe91711f5b9e8b018f8d0": "func copy_rows(input, rounds) { mut state := input\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 128 { state[1][i] = state[0][i]\ni += 1 }\nr += 1 }\nreturn state }\nlet original := [range(0, 128), range(128, 256)]\nlet result := copy_rows(original, 2)\nassert_equal(original[1][0], 128)\nassert_equal(original[1][-1], 255)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "3d42aeaff47279bc3ebaca1946cf82dbfe5c5019d98b2a615ece5be9e01ad9f2": "func copy_rows(input, rounds) { let src := input[0] mut dst := input[1]\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 128 { dst[i] = src[i]\ni += 1 }\nr += 1 }\nreturn [src, dst] }\nlet original := [range(0, 128), range(128, 256)]\nlet result := copy_rows(original, 2)\nassert_equal(original[1][0], 128)\nassert_equal(original[1][-1], 255)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "8e39c29de35f586dde2392c2a348baedf01771d517db619ea22f0a570185ece0": "func copy_rows(input, rounds) { mut state := input\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 128 { state[1][i] = state[0][i]\ni += 1 }\nr += 1 }\nreturn state }\nlet original := [range(0, 128), range(128, 256)]\nlet result := copy_rows(original, 4)\nassert_equal(original[1][0], 128)\nassert_equal(original[1][-1], 255)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "f987ff6bac6e5779ec6e66c3139f692d8aff571e956985541cd492de0a0c8033": "func copy_rows(input, rounds) { let src := input[0] mut dst := input[1]\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 128 { dst[i] = src[i]\ni += 1 }\nr += 1 }\nreturn [src, dst] }\nlet original := [range(0, 128), range(128, 256)]\nlet result := copy_rows(original, 4)\nassert_equal(original[1][0], 128)\nassert_equal(original[1][-1], 255)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "c8f698f0afec5d9cb5c963efd17164a36032427524445be4f3527a5d6efd0cc7": "func copy_rows(input, rounds) { mut state := input\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 2048 { state[1][i] = state[0][i]\ni += 1 }\nr += 1 }\nreturn state }\nlet original := [range(0, 2048), range(2048, 4096)]\nlet result := copy_rows(original, 2)\nassert_equal(original[1][0], 2048)\nassert_equal(original[1][-1], 4095)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "d60c5f634baa27062091c6978daa175a780349f19a5b65082ac0e7131bae7971": "func copy_rows(input, rounds) { let src := input[0] mut dst := input[1]\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 2048 { dst[i] = src[i]\ni += 1 }\nr += 1 }\nreturn [src, dst] }\nlet original := [range(0, 2048), range(2048, 4096)]\nlet result := copy_rows(original, 2)\nassert_equal(original[1][0], 2048)\nassert_equal(original[1][-1], 4095)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "9e577082600633389d54d51d6465f20fdf884636789d2bfce3222f2f3af0993d": "func copy_rows(input, rounds) { mut state := input\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 2048 { state[1][i] = state[0][i]\ni += 1 }\nr += 1 }\nreturn state }\nlet original := [range(0, 2048), range(2048, 4096)]\nlet result := copy_rows(original, 4)\nassert_equal(original[1][0], 2048)\nassert_equal(original[1][-1], 4095)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n",
+      "fc6195c0aa087cbffe136bcf0b3d2568cb600068136bb784999ee19fe42bebf0": "func copy_rows(input, rounds) { let src := input[0] mut dst := input[1]\nmut r := 0\nwhile r < rounds { mut i := 0\nwhile i < 2048 { dst[i] = src[i]\ni += 1 }\nr += 1 }\nreturn [src, dst] }\nlet original := [range(0, 2048), range(2048, 4096)]\nlet result := copy_rows(original, 4)\nassert_equal(original[1][0], 2048)\nassert_equal(original[1][-1], 4095)\nassert_equal(result[0], original[0])\nassert_equal(result[1], original[0])\nprint(\"ROW ACCESS PASS\")\n"
+    },
+    "deltas": [
+      {
+        "form": "nested",
+        "width": 128,
+        "mode": "vm",
+        "requests_per_write": 3.0078125,
+        "bytes_per_write": 321.0078125
+      },
+      {
+        "form": "nested",
+        "width": 128,
+        "mode": "jit",
+        "requests_per_write": 0.984375,
+        "bytes_per_write": 273.046875
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "mode": "vm",
+        "requests_per_write": 1.0078125,
+        "bytes_per_write": 1.0078125
+      },
+      {
+        "form": "extracted",
+        "width": 128,
+        "mode": "jit",
+        "requests_per_write": 0.15234375,
+        "bytes_per_write": 17.40625
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "mode": "vm",
+        "requests_per_write": 3.00048828125,
+        "bytes_per_write": 321.00048828125
+      },
+      {
+        "form": "nested",
+        "width": 2048,
+        "mode": "jit",
+        "requests_per_write": 0.993408203125,
+        "bytes_per_write": 271.09375
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "mode": "vm",
+        "requests_per_write": 1.00048828125,
+        "bytes_per_write": 1.00048828125
+      },
+      {
+        "form": "extracted",
+        "width": 2048,
+        "mode": "jit",
+        "requests_per_write": 0.00146484375,
+        "bytes_per_write": -0.12890625
+      }
+    ]
+  },
+  "vm_nested_penalties": [
+    {
+      "width": 128,
+      "requests": 2.0,
+      "bytes": 320.0
+    },
+    {
+      "width": 2048,
+      "requests": 2.0,
+      "bytes": 320.0
+    }
+  ],
+  "setup_repair": {
+    "status": "failed",
+    "pid": 68323,
+    "stage": "wait-refresh",
+    "rows": [
+
+    ],
+    "error": "undefined local variable or method `r' for main:Object"
+  },
+  "verification_sources": {
+    "refresh": "# Repository-maintenance diagnostic: pin unchanged port/config, inject only argv.\n# Counts execution-time requested allocation traffic, not retained memory or speed.\nrequire 'json'\nrequire 'digest'\nrequire 'fileutils'\nrequire 'open3'\nabort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 4\nbaseline, candidate, binary, output = ARGV.map { |p| File.expand_path(p) }\nraise 'Output exists' if File.exist?(output)\n[baseline, candidate, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }\nport_path = File.expand_path('benchmarks/langarena/port.kujo')\nconfig_path = File.expand_path('benchmarks/langarena/test.json')\nport = File.read(port_path)\nconfig = JSON.parse(File.read(config_path))\nnames = %w[Sort::Quick Sort::Merge Etc::NeuralNet Etc::CacheSimulation Etc::GameOfLife Etc::TextRaytracer Brainfuck::Array Brainfuck::Recursion]\nraise 'Argument injection boundary changed' unless port.scan('let arguments := args()').size == 1\nraise 'Missing/duplicate priority cases' unless names.all? { |n| config.count { |c| c['name'] == n } == 1 }\nFileUtils.mkdir_p(output)\nr = { status: 'running', pid: Process.pid, scope: 'Eight unchanged priority test-size workloads; argv injection only; execution allocations include setup/warmup/checksum',\n      runner_sha256: Digest::SHA256.file(__FILE__).hexdigest,\n      identities: [baseline, candidate, binary, port_path, config_path].to_h { |p| [p, Digest::SHA256.file(p).hexdigest] },\n      rows: [], semantics: [], fixtures: [] }\nsave = -> { File.write(output + '/report.json', JSON.pretty_generate(r) + \"\\n\") }\nsave.call\nbegin\n  names.each_with_index do |name, index|\n    configuration = config.find { |c| c['name'] == name }\n    source = port.sub('let arguments := args()', 'let arguments := ' + JSON.generate([config_path, name, '--profile']))\n    path = output + '/' + name.gsub('::', '-') + '.kujo'\n    File.write(path, source)\n    metadata = { name: name, configuration: configuration, path: path, source_sha256: Digest::SHA256.hexdigest(source) }\n    r[:fixtures] << metadata\n    expected = name + ': OK ' + configuration.fetch('checksum').to_s\n    %w[vm jit].each_with_index do |mode, mode_index|\n      row = metadata.merge(mode: mode)\n      # Alternate revision order; no timing acceptance is derived from this run.\n      order = (index + mode_index).even? ? %i[baseline candidate] : %i[candidate baseline]\n      row[:order] = order\n      order.each do |label|\n        executable = label == :baseline ? baseline : candidate\n        out, err, status = Open3.capture3(executable, mode, path)\n        File.write(output + \"/#{name.gsub('::', '-')}-#{mode}-#{label}.stdout\", out)\n        File.write(output + \"/#{name.gsub('::', '-')}-#{mode}-#{label}.stderr\", err)\n        raise \"Checksum/execution failure #{name} #{mode} #{label}: #{out}#{err}\" unless status.success? && out.lines.map(&:strip).include?(expected) && out.include?('Summary: 1, 1, 0')\n        counts = err.match(/ALLOCATION_AUDIT requests=(\\d+) requested_bytes=(\\d+)/)\n        raise 'Missing allocation observation' unless counts\n        row[label] = { requests: counts[1].to_i, bytes: counts[2].to_i, exit: status.exitstatus, stdout: out, stderr: err }\n      end\n      r[:rows] << row\n      save.call\n    end\n    out, err, status = Open3.capture3(binary, 'run', path, '--interpreter', '--scheduler-no-timeout')\n    raise \"Interpreter checksum failure #{name}: #{out}#{err}\" unless status.success? && out.lines.map(&:strip).include?(expected) && out.include?('Summary: 1, 1, 0')\n    r[:semantics] << metadata.merge(mode: 'interpreter', exit: status.exitstatus, stdout: out, stderr: err)\n    save.call\n  end\n  raise 'Allocation coverage' unless r[:rows].map { |x| x.values_at(:name, :mode) }.sort == names.product(%w[vm jit]).sort\n  raise 'Interpreter coverage' unless r[:semantics].map { |x| x[:name] } == names\n  r[:identities].each { |p, h| raise 'Artifact/source drift ' + p unless Digest::SHA256.file(p).hexdigest == h }\n  r[:fixtures].each { |f| raise 'Fixture drift' unless Digest::SHA256.file(f[:path]).hexdigest == f[:source_sha256] }\n  r[:status] = 'characterized'\n  save.call\nrescue => e\n  r[:status] = 'failed'\n  r[:error] = e.message\n  save.call\n  raise\nend\n",
+    "repeatability": "require 'json';require 'open3';require 'digest'\nd=File.expand_path(__dir__);s={status:'running',pid:Process.pid,stage:'wait-refresh',rows:[]};save=->{File.write(d+'/repeatability.json',JSON.pretty_generate(s)+\"\\n\")};save.call\nbegin\n r=nil\n loop do\n  r=JSON.parse(File.read(d+'/report.json'));break if r['status']=='characterized';raise r['error'] if r['status']=='failed';Process.kill(0,r.fetch('pid'));sleep 2\n end\n target=r.fetch('rows').find{|x|x['name']=='Sort::Quick'&&x['mode']=='jit'} or raise 'Missing case'\n binaries={baseline:File.expand_path('../row-overflow-v2-2026-10-28/task-allocation-probe',d),candidate:File.expand_path('../compact-binding-map-v1-2026-10-28/task-allocation-probe',d)}\n s[:stage]='repeat-quicksort-jit';s[:fixture_sha256]=Digest::SHA256.file(target['path']).hexdigest;s[:identities]=binaries.transform_values{|p|Digest::SHA256.file(p).hexdigest};save.call\n 3.times do |round|\n  order=round.even? ? %i[candidate baseline] : %i[baseline candidate]\n  order.each do |label|\n   out,err,status=Open3.capture3(binaries.fetch(label),'jit',target['path'])\n   raise out+err unless status.success?&&out.lines.map(&:strip).include?('Sort::Quick: OK '+target['configuration']['checksum'].to_s)&&out.include?('Summary: 1, 1, 0')\n   m=err.match(/ALLOCATION_AUDIT requests=(\\d+) requested_bytes=(\\d+)/);raise err unless m\n   s[:rows]<<{round:round,label:label,requests:m[1].to_i,bytes:m[2].to_i,stdout:out,stderr:err};save.call\n  end\n end\n raise 'Fixture drift' unless Digest::SHA256.file(target['path']).hexdigest==s[:fixture_sha256]\n s[:status]='characterized';s[:stage]='complete';save.call\nrescue=>e;s[:status]='failed';s[:error]=e.message;save.call;raise\nend\n",
+    "row_access": "require 'json';require 'digest';require 'open3'\nd=File.expand_path(__dir__);root=File.expand_path('../compact-binding-map-v1-2026-10-28',d);probe=root+'/task-allocation-probe';binary=root+'/candidate-kujo'\nr={status:'running',pid:Process.pid,scope:'Diagnostic nested-row versus extracted-row copy loops; not a benchmark rewrite or optimization acceptance',runner_sha256:Digest::SHA256.file(__FILE__).hexdigest,identities:[probe,binary].to_h{|p|[p,Digest::SHA256.file(p).hexdigest]},rows:[],semantics:[],sources:{}}\nsave=->{File.write(d+'/report.json',JSON.pretty_generate(r)+\"\\n\")};save.call\nbegin\n [128,2048].product([2,4],%w[nested extracted]).each do |width,rounds,form|\n  init=form=='nested' ? 'mut state := input' : 'let src := input[0] mut dst := input[1]'\n  body=form=='nested' ? 'state[1][i] = state[0][i]' : 'dst[i] = src[i]'\n  result=form=='nested' ? 'state' : '[src, dst]'\n  source=\"func copy_rows(input, rounds) { #{init}\\nmut r := 0\\nwhile r < rounds { mut i := 0\\nwhile i < #{width} { #{body}\\ni += 1 }\\nr += 1 }\\nreturn #{result} }\\nlet original := [range(0, #{width}), range(#{width}, #{2*width})]\\nlet result := copy_rows(original, #{rounds})\\nassert_equal(original[1][0], #{width})\\nassert_equal(original[1][-1], #{2*width-1})\\nassert_equal(result[0], original[0])\\nassert_equal(result[1], original[0])\\nprint(\\\"ROW ACCESS PASS\\\")\\n\"\n  path=d+\"/#{form}-#{width}-#{rounds}.kujo\";File.write(path,source);hash=Digest::SHA256.hexdigest(source);r[:sources][hash]=source\n  %w[vm jit].each do |mode|\n   out,err,status=Open3.capture3(probe,mode,path);raise out+err unless status.success?&&out==\"ROW ACCESS PASS\\n\"\n   m=err.match(/requests=(\\d+) requested_bytes=(\\d+)/);raise err unless m\n   r[:rows]<<{form:form,width:width,rounds:rounds,mode:mode,source_sha256:hash,requests:m[1].to_i,bytes:m[2].to_i};save.call\n  end\n  %w[vm interpreter jit].each do |mode|\n   args=[binary,'run',path,'--untrusted'];args<<'--'+mode unless mode=='vm'\n   out,err,status=Open3.capture3(*args);raise out+err unless status.success?&&out==\"ROW ACCESS PASS\\n\"\n   r[:semantics]<<{form:form,width:width,rounds:rounds,mode:mode,source_sha256:hash,exit:status.exitstatus};save.call\n  end\n end\n raise 'Coverage' unless r[:rows].size==16&&r[:semantics].size==24\n r[:deltas]=r[:rows].group_by{|x|x.values_at(:form,:width,:mode)}.map{|key,rows|a,b=rows.sort_by{|x|x[:rounds]};{form:key[0],width:key[1],mode:key[2],requests_per_write:(b[:requests]-a[:requests])/(2.0*key[1]),bytes_per_write:(b[:bytes]-a[:bytes])/(2.0*key[1])}}\n r[:identities].each{|p,h|raise 'Artifact drift' unless Digest::SHA256.file(p).hexdigest==h}\n r[:status]='characterized';save.call\nrescue=>e;r[:status]='failed';r[:error]=e.message;save.call;raise\nend\n",
+    "verification": "require 'json';require 'digest'\nd=File.expand_path(__dir__);micro=File.expand_path('../local-row-access-2026-10-28',d);sha=->(p){Digest::SHA256.file(p).hexdigest}\nr=JSON.parse(File.read(d+'/report.json'));repeats=JSON.parse(File.read(d+'/repeatability.json'));rows=JSON.parse(File.read(micro+'/report.json'))\nraise 'Incomplete evidence' unless [r,repeats,rows].all?{|x|x['status']=='characterized'}\nnames=%w[Sort::Quick Sort::Merge Etc::NeuralNet Etc::CacheSimulation Etc::GameOfLife Etc::TextRaytracer Brainfuck::Array Brainfuck::Recursion]\nraise 'Priority coverage' unless r['rows'].map{|x|x.values_at('name','mode')}.sort==names.product(%w[vm jit]).sort&&r['semantics'].map{|x|x['name']}==names\nraise 'Runner drift' unless r['runner_sha256']==sha.call('benchmarks/langarena/probes/priority-allocation-refresh.rb')\nr['identities'].each{|p,h|raise 'Artifact drift '+p unless sha.call(p)==h}\nport=File.read('benchmarks/langarena/port.kujo');config=JSON.parse(File.read('benchmarks/langarena/test.json'));configpath=File.expand_path('benchmarks/langarena/test.json')\nr['fixtures'].each do |f|\n expected=port.sub('let arguments := args()','let arguments := '+JSON.generate([configpath,f['name'],'--profile']))\n raise 'Changed algorithm/input' unless File.read(f['path'])==expected&&sha.call(f['path'])==f['source_sha256']&&f['configuration']==config.find{|c|c['name']==f['name']}\nend\nr['rows'].each{|x|%w[baseline candidate].each{|label|v=x[label];raise 'Priority checksum' unless v['exit']==0&&v['stdout'].lines.map(&:strip).include?(x['name']+': OK '+x['configuration']['checksum'].to_s)&&v['stdout'].include?('Summary: 1, 1, 0');m=v['stderr'].match(/requests=(\\d+) requested_bytes=(\\d+)/);raise 'Priority counters' unless m&&v['requests']==m[1].to_i&&v['bytes']==m[2].to_i}}\nraise 'Repeat coverage' unless repeats['rows'].map{|x|x.values_at('round','label')}.sort==[0,1,2].product(%w[baseline candidate]).sort\nquick=r['rows'].find{|x|x['name']=='Sort::Quick'&&x['mode']=='jit'}\nraise 'Repeat fixture' unless repeats['fixture_sha256']==quick['source_sha256']\nranges=%w[baseline candidate].to_h{|label|values=[quick[label]]+repeats['rows'].select{|x|x['label']==label};[label,%w[requests bytes].to_h{|m|[m,values.map{|x|x[m]}.minmax]}]}\noverlap=%w[requests bytes].all?{|m|[ranges['baseline'][m][0],ranges['candidate'][m][0]].max<=[ranges['baseline'][m][1],ranges['candidate'][m][1]].min}\nraise 'Micro coverage' unless rows['rows'].map{|x|x.values_at('form','width','rounds','mode')}.sort==%w[nested extracted].product([128,2048],[2,4],%w[vm jit]).sort&&rows['semantics'].size==24&&rows['semantics'].all?{|x|x['exit']==0}\nrows['sources'].each{|h,s|raise 'Micro source hash' unless Digest::SHA256.hexdigest(s)==h}\nrows['identities'].each{|p,h|raise 'Micro artifact drift' unless sha.call(p)==h}\nrows['rows'].each{|x|raise 'Micro fixture drift' unless sha.call(micro+\"/#{x['form']}-#{x['width']}-#{x['rounds']}.kujo\")==x['source_sha256']}\npenalties=[128,2048].map do |width|\n a,b=%w[nested extracted].map{|form|pair=rows['rows'].select{|x|x.values_at('form','width','mode')==[form,width,'vm']}.sort_by{|x|x['rounds']};%w[requests bytes].to_h{|m|[m,(pair[1][m]-pair[0][m])/(2.0*width)]}}\n delta={width:width,requests:a['requests']-b['requests'],bytes:a['bytes']-b['bytes']};raise 'Micro diagnosis not reproduced' unless delta[:requests]==2&&delta[:bytes]==320;delta\nend\ncurrent=JSON.parse(File.read('benchmarks/langarena/compact-capture-names-2026-10-28.json'));old=JSON.parse(File.read('benchmarks/langarena/row-overflow-publication-2026-10-28.json'))\nprobe_paths=r['identities'].keys.select{|p|p.end_with?('/task-allocation-probe')};raise 'Probe provenance' unless probe_paths.size==2&&probe_paths.map{|p|r['identities'][p]}.sort==[old['allocation_identity']['binary_sha256'],current['allocation_identity']['binary_sha256']].sort\nout={status:'verified_diagnosis',runtime_commit:current['runtime_commit'],baseline_runtime_commit:old['runtime_commit'],scope:'Eight priority allocation workloads plus nested-row access isolation; no runtime fixes or speed ranking',priority:r,quicksort_repeats:repeats,quicksort_ranges:ranges,quicksort_ranges_overlap:overlap,row_access:rows,vm_nested_penalties:penalties,setup_repair:JSON.parse(File.read(d+'/repeatability-driver-scope-failure.json')),verification_sources:{refresh:File.read('benchmarks/langarena/probes/priority-allocation-refresh.rb'),repeatability:File.read(d+'/check-quicksort-repeatability.rb'),row_access:File.read(micro+'/run.rb'),verification:File.read(__FILE__)},limitations:['Requested allocation traffic includes execution setup/warmup/checksum; not retained memory or loop-only cost','QuickSort repetition does not classify differences in other cases','Nested/extracted fixtures diagnose representation cost; unchanged benchmark port is not rewritten','JIT micro deltas vary with compilation; VM two-allocation/320-byte penalty is the specific reproduced target']}\nFile.write('benchmarks/langarena/priority-allocation-refresh-2026-10-28.json',JSON.pretty_generate(out)+\"\\n\")\nputs JSON.generate(status:out[:status],quicksort_overlap:overlap,penalties:penalties)\n"
+  },
+  "limitations": [
+    "Requested allocation traffic includes execution setup/warmup/checksum; not retained memory or loop-only cost",
+    "QuickSort repetition does not classify differences in other cases",
+    "Nested/extracted fixtures diagnose representation cost; unchanged benchmark port is not rewritten",
+    "JIT micro deltas vary with compilation; VM two-allocation/320-byte penalty is the specific reproduced target"
+  ]
+}
