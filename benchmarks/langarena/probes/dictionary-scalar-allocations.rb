@@ -1,10 +1,12 @@
 # Paired scalar dictionary allocation gate; retain integer and snapshot controls.
 require 'json';require 'digest';require 'fileutils';require 'open3'
-abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 4
+abort 'Expected BASELINE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [improvement|control]' unless [4, 5].include?(ARGV.size)
+target = ARGV.size == 5 ? ARGV.pop : 'improvement'
+raise 'Unknown target mode' unless %w[improvement control].include?(target)
 baseline, candidate, binary, out = ARGV.map { |p| File.expand_path(p) }
 [baseline, candidate, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }
 raise 'Output exists' if File.exist?(out);FileUtils.mkdir_p(out)
-r={status:'running',runner_sha256:Digest::SHA256.file(__FILE__).hexdigest,identities:[baseline,candidate,binary].to_h{|p|[p,Digest::SHA256.file(p).hexdigest]},rows:[],semantics:[],sources:{}}
+r={status:'running',target:target,runner_sha256:Digest::SHA256.file(__FILE__).hexdigest,identities:[baseline,candidate,binary].to_h{|p|[p,Digest::SHA256.file(p).hexdigest]},rows:[],semantics:[],sources:{}}
 save=->{File.write(out+'/report.json',JSON.pretty_generate(r)+"\n")};save.call
 begin
  %w[int float bool null mixed].product([2,128,2048],%w[once fresh]).each do |kind,width,snapshot|
@@ -44,7 +46,7 @@ r[:deltas]=r[:rows].group_by{|x|x.values_at(:kind,:width,:snapshot,:mode)}.map d
  delta={kind:key[0],width:key[1],snapshot:key[2],mode:key[3]}
  %i[baseline candidate].each{|label|delta[label]=%i[requests bytes].to_h{|m|[m,(b[label][m]-a[label][m])/16.0]}}
  raise "Added-call regression #{key}" unless %i[requests bytes].all?{|m|delta[:candidate][m]<=delta[:baseline][m]}
- if key[0]!='int'&&key[1]>=128&&key[2]=='once'
+ if target=='improvement'&&key[0]!='int'&&key[1]>=128&&key[2]=='once'
   raise "Missing target improvement #{key}" unless delta[:candidate][:bytes]<delta[:baseline][:bytes]
  end
  delta

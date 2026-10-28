@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Extend bounded captured-row updates to array-owned rows, preserving positive
+  and negative selector aliases, snapshots, shared rows and larger-batch fallback.
+  Invalid root-as-index reads avoid speculative snapshots while retaining their
+  ordinary errors and publication order.
+
 - Extend deferred captured-dictionary writes to floats, Booleans, null and mixed
   scalar types, avoiding repeated full-dictionary copies for one existing key.
   Preserve snapshots, exact floating-point bits, callbacks, error ordering and

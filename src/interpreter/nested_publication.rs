@@ -50,7 +50,16 @@ impl<'a> RowKey<'a> {
         }
     }
 
-    fn same(self, other: Self) -> bool {
+    fn same(self, other: Self, root: &Value) -> bool {
+        if let Value::Array(rows) = root {
+            return match (self, other) {
+                (Self::Integer(a), Self::Integer(b)) => {
+                    let a = NestedPublication::resolve(a, rows.len());
+                    a.is_some() && a == NestedPublication::resolve(b, rows.len())
+                }
+                _ => false,
+            };
+        }
         match (self, other) {
             (Self::Field(a), Self::Field(b)) | (Self::String(a), Self::String(b)) => a == b,
             (Self::Integer(a), Self::Integer(b)) => a == b,
@@ -66,6 +75,9 @@ impl<'a> RowKey<'a> {
             (Self::Field(field), Value::Struct { fields, .. }) => fields.get(field),
             (Self::String(key), Value::Dict(map)) => map.get(key),
             (Self::Integer(key), Value::Dict(map)) => with_integer_key(key, |key| map.get(key)),
+            (Self::Integer(key), Value::Array(rows)) => {
+                rows.get(NestedPublication::resolve(key, rows.len())?)
+            }
             _ => None,
         }?;
         if let Value::Array(row) = value {
@@ -115,6 +127,10 @@ impl RowWrite {
             (Selector::Integer(key), Value::Dict(map)) => {
                 with_integer_key(*key, |key| Arc::make_mut(map).get_mut(key))
             }
+            (Selector::Integer(key), Value::Array(rows)) => {
+                let index = NestedPublication::resolve(*key, rows.len()).expect("validated row");
+                Arc::make_mut(rows).get_mut(index)
+            }
             _ => unreachable!("validated nested publication root"),
         };
         let Some(Value::Array(row)) = leaf else { unreachable!("validated row") };
@@ -144,6 +160,7 @@ impl NestedPublication {
         let shared_only_with_owner = match root {
             Value::Struct { fields, .. } => Arc::strong_count(fields) == 2,
             Value::Dict(map) => Arc::strong_count(map) == 2,
+            Value::Array(rows) => Arc::strong_count(rows) == 2,
             _ => false,
         };
         if !shared_only_with_owner {
@@ -194,7 +211,7 @@ impl NestedPublication {
 
     pub(super) fn read(&self, key: RowKey<'_>, index: i64) -> Option<Value> {
         let (root, write) = self.parts();
-        if !write.selector.key().same(key) {
+        if !write.selector.key().same(key, root) {
             return None;
         }
         let row = write.selector.key().row(root).expect("validated row");
@@ -215,7 +232,7 @@ impl NestedPublication {
         let Some(value) = Scalar::from_value(value) else { return false };
         let (root, write) = self.parts();
         let row = write.selector.key().row(root).expect("validated row");
-        if !write.selector.key().same(key) {
+        if !write.selector.key().same(key, root) {
             return false;
         }
         let Some(index) = Self::resolve(*index, row.len()) else { return false };
@@ -245,6 +262,7 @@ impl NestedPublication {
         if let Some(owner) = owner {
             let same = match (&root, &*owner) {
                 (Value::Dict(a), Value::Dict(b)) => Arc::ptr_eq(a, b),
+                (Value::Array(a), Value::Array(b)) => Arc::ptr_eq(a, b),
                 (Value::Struct { name: a, fields: af }, Value::Struct { name: b, fields: bf }) => {
                     a == b && Arc::ptr_eq(af, bf)
                 }
@@ -270,6 +288,97 @@ impl NestedPublication {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn array_path(row: i64, index: i64) -> Vec<Access> {
+        vec![Access::Index(Value::Int(row)), Access::Index(Value::Int(index))]
+    }
+
+    #[test]
+    fn array_row_publication_coalesces_selector_aliases_and_preserves_snapshots() {
+        let mut owner = Value::array(vec![Value::array(vec![Value::Int(0); 8]), Value::Null]);
+        let Value::Array(rows) = &owner else { unreachable!() };
+        let root_pointer = Arc::as_ptr(rows);
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        let row_pointer = Arc::as_ptr(row);
+        let mut pending = NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            array_path(-2, -8),
+            &Value::Int(10),
+        )
+        .unwrap();
+        assert!(pending.try_record(&array_path(0, 0), &Value::Float(-0.0)));
+        for index in 1..4 {
+            assert!(pending.try_record(&array_path(0, index), &Value::Int(index)));
+        }
+        let snapshot = pending.snapshot_value();
+        assert!(!pending.try_record(&array_path(0, 4), &Value::Int(99)));
+        assert!(!pending.try_record(&array_path(1, 0), &Value::Int(99)));
+        assert!(!pending.try_record(&array_path(-3, 0), &Value::Int(99)));
+        assert!(!pending.try_record(&array_path(0, 8), &Value::Int(99)));
+        assert!(pending.read(RowKey::String("0"), 0).is_none());
+        assert!(pending.read(RowKey::Integer(2), 0).is_none());
+        assert!(pending.read(RowKey::Integer(i64::MIN), 0).is_none());
+        assert!(
+            matches!(pending.read(RowKey::Integer(0), 0), Some(Value::Float(v)) if v.to_bits() == (-0.0_f64).to_bits())
+        );
+        assert!(pending.try_record(&array_path(-2, -8), &Value::Bool(true)));
+        let (_, current) = pending.publish(Some(&mut owner));
+        let Value::Array(rows) = &owner else { unreachable!() };
+        assert_eq!(Arc::as_ptr(rows), root_pointer);
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        assert_eq!(Arc::as_ptr(row), row_pointer);
+        assert!(matches!(row[0], Value::Bool(true)));
+        let Value::Array(saved) = snapshot else { unreachable!() };
+        let Value::Array(saved_row) = &saved[0] else { unreachable!() };
+        assert!(matches!(saved_row[0], Value::Float(v) if v.to_bits() == (-0.0_f64).to_bits()));
+        assert!(matches!(current, Value::Array(_)));
+    }
+
+    #[test]
+    fn array_row_admission_rejects_real_aliases_and_invalid_selectors() {
+        let row = Value::array(vec![Value::Int(0); 8]);
+        let owner = Value::array(vec![row.clone()]);
+        assert!(NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            array_path(0, 0),
+            &Value::Int(1)
+        )
+        .is_err());
+        drop(row);
+        for selector in
+            [Value::Str(Arc::new("0".into())), Value::Int(1), Value::Int(-2), Value::Null]
+        {
+            assert!(NestedPublication::prepare(
+                "state".into(),
+                owner.clone(),
+                vec![Access::Index(selector), Access::Index(Value::Int(0))],
+                &Value::Int(1)
+            )
+            .is_err());
+        }
+        let snapshot = owner.clone();
+        assert!(NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            array_path(0, 0),
+            &Value::Int(1)
+        )
+        .is_err());
+        drop(snapshot);
+        let pending = NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            array_path(0, 0),
+            &Value::Int(1),
+        )
+        .unwrap();
+        let (_, unchanged) = pending.discard();
+        let Value::Array(rows) = unchanged else { unreachable!() };
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        assert!(matches!(row[0], Value::Int(0)));
+    }
 
     #[test]
     fn bounded_row_entries_do_not_grow_assignment_storage() {

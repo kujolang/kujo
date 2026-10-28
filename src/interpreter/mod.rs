@@ -4178,6 +4178,22 @@ impl Interpreter {
                 Expr::Int(key) => {
                     self.env.nested_publication_read(name, RowKey::Integer(*key), index)
                 }
+                Expr::UnaryOp { op, operand } if op == "-" => {
+                    let key = match operand.as_ref() {
+                        Expr::Int(key) => *key,
+                        Expr::Identifier(key) if key == name => return None,
+                        Expr::Identifier(key) => match self.env.get(key) {
+                            Some(Value::Int(key)) => key,
+                            _ => return None,
+                        },
+                        _ => return None,
+                    };
+                    self.env.nested_publication_read(
+                        name,
+                        RowKey::Integer(key.checked_neg()?),
+                        index,
+                    )
+                }
                 // A pending collection cannot be a scalar row selector.
                 // Leave its materialization to the ordinary evaluator.
                 Expr::Identifier(key) if key == name => None,
@@ -6999,6 +7015,10 @@ impl Interpreter {
                         match index.as_ref() {
                             Expr::Int(index) => self.env.indexed_publication_read(name, *index),
                             Expr::String(key) => self.env.dictionary_publication_read(name, key),
+                            // A pending root is a collection, never a scalar
+                            // index. Let ordinary evaluation materialize it once
+                            // instead of taking a speculative snapshot here.
+                            Expr::Identifier(index) if index == name => None,
                             Expr::Identifier(index) => match self.env.get(index) {
                                 Some(Value::Int(index)) => {
                                     self.env.indexed_publication_read(name, index)
