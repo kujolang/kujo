@@ -259,6 +259,11 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   1,213 library tests, 388 release integrations and 150 test-size checksums pass.
   Two rejected candidates are preserved; uncertain bodies and broader paths
   retain fallback. Sections 3/4 remain open.
+- [x] Isolate deeper array/dictionary leaf updates on `a5d07bb`: 384 allocation
+  measurements and 576 semantic checks cover three root owners, depths 2/4,
+  one/eight writes and initial/fresh snapshots. [Verified baseline](DEEP_COLLECTION_ISOLATION_2026_10_28.md)
+  reproduces per-call width penalties of 261,120 bytes for arrays and 587,520
+  for dictionaries, independent of write count. Deeper-path runtime work remains open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The

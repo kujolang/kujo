@@ -5243,5 +5243,16 @@
     "branch_control_pairs": 48,
     "scope": "Proven synchronous nested scalar dictionary batches beyond four keys; proportional overflow storage and borrowed proof inputs preserve snapshots and fallback",
     "remaining": "Unproven bodies, dynamic loops, deeper/nonscalar paths, larger array rows, capture traversal/prefix/oversized fallback and later production/platform/clean-host gates"
+  },
+  "deep_collection_isolation_2026_10_28": {
+    "status": "verified_characterization",
+    "runtime_commit": "a5d07bbc1b925eb087f3392b7b576f0abeed1e10",
+    "report": "DEEP_COLLECTION_ISOLATION_2026_10_28.md",
+    "evidence": "deep-collection-isolation-2026-10-28.json",
+    "allocation_measurements": 384,
+    "semantic_cases": 576,
+    "array_width_penalty_per_call": 261120,
+    "dictionary_width_penalty_per_call": 587520,
+    "remaining": "Deep owner publication/read support and escape/ownership/error controls before runtime acceptance; sections3/4 stay open"
   }
 }
