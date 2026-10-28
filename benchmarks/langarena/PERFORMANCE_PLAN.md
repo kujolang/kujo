@@ -7,6 +7,15 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Captured dictionary scalar publication (`36b8006`).**
+  [Verified results](DICTIONARY_SCALARS_2026_10_27.md) extend the single-key path
+  to floats, Booleans, null and mixed scalars without growing capture storage.
+  At 2,048 keys, float/Boolean writes fall from 631,601 to 4,806 requested bytes
+  per added call; integer costs stay unchanged. All 696 allocation pairs,
+  1,044 semantic cases, 1,190 library tests, 358 release integrations and 150
+  test-size checksums pass. Multiple-key, nonscalar and broader collection/capture
+  costs remain open. These are allocation results, not clean-host speed claims.
+
 - **Bounded nested-row batches (`3d06ea2`).**
   [Verified results](NESTED_ROW_BATCH_2026_10_27.md) show two-entry struct-row
   updates falling from 284,784 to 5,484 requested bytes per added call at 2,048

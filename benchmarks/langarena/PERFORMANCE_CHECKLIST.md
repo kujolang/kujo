@@ -194,6 +194,14 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   576 associated semantic cases, historical allocation controls, 1,186 library
   tests, 355 release integrations and 150 test-size checksums pass. See
   [verified results and limits](NESTED_ROW_BATCH_2026_10_27.md).
+- [x] Extend single-key captured dictionary publication to float, Boolean, null
+  and mixed scalar types (`36b8006`). [Verified results](DICTIONARY_SCALARS_2026_10_27.md)
+  show float/Boolean writes at 2,048 keys falling from 631,601 to 4,806 requested
+  bytes per added call; integer controls stay unchanged. All 696 target/control
+  allocation pairs, 1,044 semantic cases, 1,190 library tests, 358 release
+  integrations and 150 test-size checksums pass. Capture storage layout, snapshots,
+  exact float bits and escape behavior are preserved. Multiple-key/nonscalar and
+  broader nested costs remain open; this is not an elapsed-speed claim.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
@@ -205,8 +213,8 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   addresses the bounded row case; larger batches and the other costs remain open.
   [Scalar dictionary isolation](DICTIONARY_SCALAR_ISOLATION_2026_10_27.md)
   adds 120 allocation measurements and 180 semantic checks: float, Boolean,
-  null and mixed-type writes still scale with dictionary width, while the
-  eligible integer control stays flat. These are baseline measurements only.
+  null and mixed-type writes scaled with dictionary width before the scalar fix, while the
+  eligible integer control stays flat. These are historical baseline measurements; the scalar fix above now addresses this single-key case.
   The
   [earlier model](INDEXED_PUBLICATION_JOURNAL_2026_10_27.md),
   [nested-row attribution](NESTED_ROW_ATTRIBUTION_2026_10_27.md) and
