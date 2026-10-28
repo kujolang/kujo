@@ -231,6 +231,12 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   and array owners with numeric/string keys: 144 allocation measurements and
   216 semantic checks pass. [Baseline and next acceptance gates](NESTED_DICTIONARY_ISOLATION_2026_10_28.md).
   This confirms remaining work; it does not mark the runtime optimization complete.
+- [x] Defer one existing scalar dictionary leaf key under dictionary, struct and
+  array owners (`2caf05f`). [Verified results](NESTED_DICTIONARY_PUBLICATION_2026_10_28.md):
+  numeric dictionary-owner traffic falls from 632,275 to 4,804 bytes per added
+  call at width 2,048. Eligible numeric/string-key costs are flat across widths.
+  All 144 target pairs, 240 fallback pairs, 1,205 library tests, 382 release
+  integrations and 150 test-size checksums pass. Broader paths remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
