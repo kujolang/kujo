@@ -5223,5 +5223,25 @@
     "semantic_cases": 360,
     "unchanged_control_pairs": 240,
     "next": "Investigate proof-gated overflow while preserving uncertain/escaping fallback; no runtime fix accepted"
+  },
+  "nested_dictionary_spill_publication_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "a5d07bbc1b925eb087f3392b7b576f0abeed1e10",
+    "report": "NESTED_DICTIONARY_SPILL_PUBLICATION_2026_10_28.md",
+    "evidence": "nested-dictionary-spill-publication-2026-10-28.json",
+    "library_passes": 1213,
+    "integration_passes": 388,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 384,
+    "target_semantic_cases_baseline_and_candidate": 1152,
+    "single_key_control_pairs": 144,
+    "four_key_control_pairs": 480,
+    "nested_fallback_pairs": 240,
+    "batch_fallback_pairs": 240,
+    "spill_fallback_pairs": 240,
+    "arithmetic_error_pairs": 96,
+    "branch_control_pairs": 48,
+    "scope": "Proven synchronous nested scalar dictionary batches beyond four keys; proportional overflow storage and borrowed proof inputs preserve snapshots and fallback",
+    "remaining": "Unproven bodies, dynamic loops, deeper/nonscalar paths, larger array rows, capture traversal/prefix/oversized fallback and later production/platform/clean-host gates"
   }
 }

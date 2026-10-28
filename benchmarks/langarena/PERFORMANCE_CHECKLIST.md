@@ -252,6 +252,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   80 escape/fallback allocation pairs regress by 280 bytes per warmed call.
   Runtime changes are reverted; full-key snapshot tests and the five-write
   fallback gate are retained. Overflow optimization remains open.
+- [x] Extend proven synchronous nested scalar dictionary batches beyond four
+  keys (`a5d07bb`). [Verified results](NESTED_DICTIONARY_SPILL_PUBLICATION_2026_10_28.md) show
+  five-key numeric dictionary traffic falling from 634,213 to 6,979 bytes per
+  added call at width 2,048. All 384 target pairs, fallback/error/branch controls,
+  1,213 library tests, 388 release integrations and 150 test-size checksums pass.
+  Two rejected candidates are preserved; uncertain bodies and broader paths
+  retain fallback. Sections 3/4 remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
