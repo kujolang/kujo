@@ -5185,5 +5185,23 @@
     "root_replacement_semantic_cases_baseline_and_candidate": 36,
     "scope": "One existing scalar dictionary leaf key under dictionary, struct or array owners; numeric and string keys; value semantics preserved",
     "remaining": "Broader nested/deeper paths, multiple leaf keys, larger rows, capture traversal/prefix/oversized fallback and later production/platform/clean-host gates"
+  },
+  "nested_dictionary_batch_publication_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "21a0907eee3cd3813c6d09accec84e4ca73007cb",
+    "report": "NESTED_DICTIONARY_BATCH_PUBLICATION_2026_10_28.md",
+    "evidence": "nested-dictionary-batch-publication-2026-10-28.json",
+    "library_passes": 1206,
+    "integration_passes": 385,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 480,
+    "target_semantic_cases_baseline_and_candidate": 1440,
+    "fallback_allocation_pairs": 240,
+    "batch_fallback_allocation_pairs": 240,
+    "single_key_control_pairs": 144,
+    "fallback_semantic_cases": 360,
+    "root_replacement_semantic_cases_baseline_and_candidate": 36,
+    "scope": "Up to four scalar dictionary leaf keys under dictionary, struct or array owners; insertion after an existing key, numeric/string aliases and value semantics preserved",
+    "remaining": "Broader nested/deeper paths, more than four leaf keys, larger rows, capture traversal/prefix/oversized fallback and later production/platform/clean-host gates"
   }
 }

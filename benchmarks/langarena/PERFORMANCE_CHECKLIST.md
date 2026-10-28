@@ -237,6 +237,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   call at width 2,048. Eligible numeric/string-key costs are flat across widths.
   All 144 target pairs, 240 fallback pairs, 1,205 library tests, 382 release
   integrations and 150 test-size checksums pass. Broader paths remain open.
+- [x] Extend nested dictionary publication to four scalar keys, including
+  insertion after an existing-key write (`21a0907`).
+  [Verified results](NESTED_DICTIONARY_BATCH_PUBLICATION_2026_10_28.md): two-key
+  numeric dictionary-owner traffic falls from 633,076 to 5,562 bytes per added
+  call at width 2,048. All 480 target pairs, two 240-pair fallback matrices,
+  1,206 library tests, 385 release integrations and 150 test-size checksums pass.
+  Five-key and deeper-path costs remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
