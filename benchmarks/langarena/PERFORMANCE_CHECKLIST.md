@@ -288,9 +288,12 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   unchanged. All 288 target pairs, 832 larger escape pairs, 1,222 library tests,
   397 release integrations and 150 test-size checksums pass. General/deeper loops
   and broader capture/collection costs remain open.
-- [ ] Reduce remaining module-width copying for broader nested paths, dictionary
-  value/multiple-key paths and dense/escaping update patterns. The bounded sparse
-  publication paths above do not close these costs. The
+- [ ] Reduce remaining module-width copying for insertion, nonscalar updates,
+  general/deeper loops and dense/escaping update patterns. The [current refresh](OWNERSHIP_COST_REFRESH_2026_10_28.md)
+  on `4d11952` verifies flat initial-snapshot added-call costs for all ten historical
+  small-update shapes across widths 2/128/2,048 (240 allocation observations,
+  360 semantic checks). Those small-update examples are fixed; this broader item
+  remains open for cases outside that matrix. The
   [post-scalar refresh](COLLECTION_GAP_REFRESH_2026_10_27.md) verifies 240 allocation
   measurements and 360 semantic cases on `36b8006`: single-key scalar and bounded
   row costs are flat, while multiple keys, array-owned/deeper rows and nested
@@ -314,6 +317,11 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 [Indirect retained-local isolation](INDIRECT_LOCAL_ISOLATION_2026_10_27.md) reproduces remaining foreign-callback prefix copying with 144 allocation and 216 semantic cases on `ce923d1`; eligible same-owner and split-owner foreign reentry are now addressed by [foreign prefix transfer](FOREIGN_LOCAL_PREFIX_TRANSFER_2026_10_27.md) and [split-owner transfer](SPLIT_OWNER_TRANSFER_2026_10_27.md). Broader capture materialization remains open.
+
+The [current ownership refresh](OWNERSHIP_COST_REFRESH_2026_10_28.md) confirms oversized
+capture setup remains: at 8,192 retained bindings, reads request 311,959 bytes and
+writes 311,970 bytes per added call in VM/JIT; 48 allocation observations and
+72 semantic checks pass. This remains a measured follow-up target.
 
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global and local reentry (including separately suspended owners) and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. The [shared-name component experiment](SHARED_CAPTURE_NAMES_2026_10_28.md) finds repeated-call savings but cold-owner allocation regressions in 30 of 55 boundary groups; unconditional String-to-Arc key conversion is rejected, with no runtime change. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),

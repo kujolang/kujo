@@ -5347,5 +5347,17 @@
     "allocation_result": "Nested VM writes remove two allocation requests and 320 requested bytes per write at widths128/2048; extracted controls unchanged. Priority MergeSort requested bytes fall82.356% VM/91.165% JIT; NeuralNet31.671%/33.961%. These are allocation figures, not elapsed speeds.",
     "repeatability": "Four paired observations each for QuickSort and BrainfuckArray in VM/JIT show overlapping ranges; initial tiny increases did not consistently reproduce.",
     "remaining": "Sections3/4 remain open for broader capture materialization/module collection copying and representation review. Production, platform and clean-host acceptance remain separate."
+  },
+  "ownership_cost_refresh_2026_10_28": {
+    "status": "characterized",
+    "runtime_commit": "4d1195238008792349a8054815c354f0c075d896",
+    "report": "OWNERSHIP_COST_REFRESH_2026_10_28.md",
+    "evidence": "ownership-cost-refresh-2026-10-28.json",
+    "collection_allocation_observations": 240,
+    "collection_semantic_checks": 360,
+    "capture_allocation_observations": 48,
+    "capture_semantic_checks": 72,
+    "result": "All ten historical small-update shapes have flat initial-snapshot width costs; oversized captured-local setup remains311959 read/311970 write requested bytes per added call at8192bindings in VM/JIT.",
+    "remaining": "Capture materialization/traversal, insertion,nonscalar/general-loop/dense/escaping collection cases and representation review remain open; no new runtime fix in this refresh."
   }
 }
