@@ -263,7 +263,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   measurements and 576 semantic checks cover three root owners, depths 2/4,
   one/eight writes and initial/fresh snapshots. [Verified baseline](DEEP_COLLECTION_ISOLATION_2026_10_28.md)
   reproduces per-call width penalties of 261,120 bytes for arrays and 587,520
-  for dictionaries, independent of write count. Deeper-path runtime work remains open.
+  for dictionaries, independent of write count. The eligible deeper-path fix is verified below.
+- [x] Extend scalar publication/read handling through unique deeper collection
+  prefixes (`ca3403d`). [Verified results](DEEP_COLLECTION_PUBLICATION_2026_10_28.md) show
+  width-2,048 deep array/dictionary one-write traffic falling from 285,988/634,172
+  to 5,259 bytes per added call. All 384 target pairs, 512 deep fallback pairs,
+  78 diagnostic pairs, 1,216 library tests, 391 release integrations and
+  150 test-size checksums pass. Larger batches and broader capture costs remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The

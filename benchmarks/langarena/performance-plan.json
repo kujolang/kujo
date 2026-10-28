@@ -5254,5 +5254,24 @@
     "array_width_penalty_per_call": 261120,
     "dictionary_width_penalty_per_call": 587520,
     "remaining": "Deep owner publication/read support and escape/ownership/error controls before runtime acceptance; sections3/4 stay open"
+  },
+  "deep_collection_publication_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "ca3403dca52d53acbc967a4dc9ff12c08cbd31a4",
+    "report": "DEEP_COLLECTION_PUBLICATION_2026_10_28.md",
+    "evidence": "deep-collection-publication-2026-10-28.json",
+    "library_passes": 1216,
+    "integration_passes": 391,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 384,
+    "target_semantic_cases_baseline_and_candidate": 1152,
+    "deep_fallback_pairs": 512,
+    "deep_fallback_semantics": 768,
+    "deep_diagnostic_pairs": 78,
+    "single_key_control_pairs": 144,
+    "four_key_control_pairs": 480,
+    "wide_dictionary_control_pairs": 384,
+    "scope": "Scalar array/dictionary publication through unique mixed-owner prefixes, preserving snapshots, aliases and evaluation order",
+    "remaining": "Larger distinct-key/row batches, first-write insertion, nonscalar/shared fallback, broader capture traversal/materialization and later production/platform/clean-host gates"
   }
 }
