@@ -5098,5 +5098,20 @@
     "target_semantic_cases": 1044,
     "scope": "Typed scalar writes to one existing captured dictionary key; exact scalar identity, snapshots and escapes preserved.",
     "remaining": "Multiple-key/nonscalar updates, deeper/larger collections, general captures and later full-plan gates remain open; no clean-host speed claim."
+  },
+  "collection_gap_refresh_2026_10_27": {
+    "runtime_commit": "36b8006d1bd3af2883a6f22e6d839efb3c42ea11",
+    "status": "confirmed_remaining_costs",
+    "report": "COLLECTION_GAP_REFRESH_2026_10_27.md",
+    "evidence": "collection-gap-refresh-2026-10-27.json",
+    "allocation_measurements": 240,
+    "semantic_cases": 360,
+    "remaining": [
+      "Multiple dictionary keys",
+      "Array-owned rows",
+      "Deeper nested rows",
+      "Nested dictionaries",
+      "Larger/dense updates and broader capture materialization"
+    ]
   }
 }

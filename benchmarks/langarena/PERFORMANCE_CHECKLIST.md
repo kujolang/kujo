@@ -205,6 +205,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
+  [post-scalar refresh](COLLECTION_GAP_REFRESH_2026_10_27.md) verifies 240 allocation
+  measurements and 360 semantic cases on `36b8006`: single-key scalar and bounded
+  row costs are flat, while multiple keys, array-owned/deeper rows and nested
+  dictionaries still scale with width. The
   [earlier accepted-runtime isolation](COLLECTION_GAP_ISOLATION_2026_10_27.md)
   verifies 240 allocation measurements and 360 semantic cases on `82bdef6`.
   Two-key and floating-point dictionary writes request 631,177 bytes per added
