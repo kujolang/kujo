@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `4d11952`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`nested-path-storage-2026-10-28.json`).
-- [x] Latest relevant gate: 1,226 library passes, eight ignored; 403 distinct
-  integration passes, one manual profiling test ignored (`nested-path-storage-2026-10-28.json`).
+- [x] Latest verified runtime `6d28861`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`shared-capture-metadata-2026-10-28.json`).
+- [x] Latest relevant gate: 1,229 library passes, eight ignored; 403 distinct
+  integration passes, one manual profiling test ignored (`shared-capture-metadata-2026-10-28.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -146,6 +146,17 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   All 1,226 library tests, 400 integrations and 150 test-size checksums pass,
   with dense/cold/collection controls and unchanged pool limits. Slab copying,
   capture traversal and broader materialization remain open; no elapsed-speed claim.
+- [x] Share validated oversized captured-local metadata (`6d28861`) with copy-on-write
+  kind snapshots and stale-membership eviction after host scope edits.
+  [Verified evidence](SHARED_CAPTURE_METADATA_2026_10_28.md) reduces 8,192-name
+  read/write setup from 311,959/311,970 to 1,650/1,661 requested bytes per added call
+  in VM/JIT. All 240 target/control allocation pairs, 360 associated semantic
+  cases, 1,229 library tests, 403 integrations and 150 test-size checksums pass.
+  A newly reproduced stale-owner cache regression was fixed before acceptance.
+  The component memory tradeoff is 244,746 retained metadata bytes per 8,192-name
+  owner; 32-owner local peak RSS means increase 2.9–3.7%. Pool limits and value
+  semantics are preserved. Traversal, broader materialization and collection
+  copying remain open; no elapsed-speed claim follows.
 - [ ] Reduce remaining captured value-environment materialization without changing snapshots, writes, recursion or JIT lifetimes. [Component attribution](IMPORTED_ENVIRONMENT_ATTRIBUTION_2026_10_25.md) confirms map storage dominates requested bytes; copied names dominate requests. Four historical controls and 12 runtime snapshot/state checks passed. The [pre-fix refresh](IMPORTED_COST_REFRESH_2026_10_26.md) confirms remaining binding-count and mutable-module-array costs with 32 allocation and 60 semantic controls; general captured-binding and mutable-module write optimization remain open; eligible independent helpers are covered by the verified fix above. [Call-boundary isolation](MODULE_OWNER_ISOLATION_2026_10_26.md) now covers four collection shapes, one/eight writes, and once/fresh snapshots: 128 allocation and 192 semantic controls pass; three host-owner callback contracts also pass. Width-dependent copying remains per invocation, not per element write.
   [Shared-helper isolation](SPLIT_LOCAL_ISOLATION_2026_10_27.md) also confirms
   split-frame reentry costs on accepted `ce923d1`: 144 allocation cases and 216
@@ -318,10 +329,11 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 Gate: the reproduced call/frame costs are reduced with bounded retention.
 [Indirect retained-local isolation](INDIRECT_LOCAL_ISOLATION_2026_10_27.md) reproduces remaining foreign-callback prefix copying with 144 allocation and 216 semantic cases on `ce923d1`; eligible same-owner and split-owner foreign reentry are now addressed by [foreign prefix transfer](FOREIGN_LOCAL_PREFIX_TRANSFER_2026_10_27.md) and [split-owner transfer](SPLIT_OWNER_TRANSFER_2026_10_27.md). Broader capture materialization remains open.
 
-The [current ownership refresh](OWNERSHIP_COST_REFRESH_2026_10_28.md) confirms oversized
-capture setup remains: at 8,192 retained bindings, reads request 311,959 bytes and
-writes 311,970 bytes per added call in VM/JIT; 48 allocation observations and
-72 semantic checks pass. This remains a measured follow-up target.
+The [ownership refresh](OWNERSHIP_COST_REFRESH_2026_10_28.md) measured oversized
+capture setup at 311,959 read/311,970 write bytes per added call with 8,192 bindings.
+[Shared metadata verification](SHARED_CAPTURE_METADATA_2026_10_28.md) now reduces
+that eligible path to 1,650/1,661 bytes in VM/JIT, with an explicit retained-memory
+tradeoff. General traversal, exceptional fallback and broader materialization remain open.
 
 Section 3 remains open for capture-map traversal, captured-local prefix materialization, oversized-owner fallback and module collection detachment; native preload copying, eligible direct/foreign synchronous global and local reentry (including separately suspended owners) and the reproduced task capture ownership defects are fixed. [Indirect recursion isolation](INDIRECT_RECURSION_ISOLATION_2026_10_27.md) records the foreign-callback baseline addressed above. [Retained-local isolation](LOCAL_CAPTURE_ISOLATION_2026_10_27.md) records the oversized capture baseline at 8,192 genuinely retained locals. The [fresh-map reserve fix](LOCAL_MAP_RESERVE_2026_10_27.md) removes repeated table growth; retained-name copying and the other costs listed here remain open. The [shared-name component experiment](SHARED_CAPTURE_NAMES_2026_10_28.md) finds repeated-call savings but cold-owner allocation regressions in 30 of 55 boundary groups; unconditional String-to-Arc key conversion is rejected, with no runtime change. Follow-up evidence:
 [imported setup and bytes report](IMPORTED_SETUP_AND_BYTES_2026_10_25.md),

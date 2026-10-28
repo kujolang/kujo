@@ -5359,5 +5359,25 @@
     "capture_semantic_checks": 72,
     "result": "All ten historical small-update shapes have flat initial-snapshot width costs; oversized captured-local setup remains311959 read/311970 write requested bytes per added call at8192bindings in VM/JIT.",
     "remaining": "Capture materialization/traversal, insertion,nonscalar/general-loop/dense/escaping collection cases and representation review remain open; no new runtime fix in this refresh."
+  },
+  "shared_capture_metadata_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "6d288612375548ae9ca941776d20d37df51c0420",
+    "report": "SHARED_CAPTURE_METADATA_2026_10_28.md",
+    "evidence": "shared-capture-metadata-2026-10-28.json",
+    "library_passes": 1229,
+    "library_ignored": 8,
+    "integration_distinct_passes": 403,
+    "integration_manual_ignored": 1,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 48,
+    "target_semantic_checks": 72,
+    "control_allocation_pairs": 192,
+    "control_semantic_checks": 288,
+    "memory_pairs": 48,
+    "allocation_result": "8192-name added-call bytes fall311959→1650 read and311970→1661 write in VM/JIT; no tested target/control allocation regressions",
+    "memory_tradeoff": "244746 retained metadata bytes per8192-nameowner;32owner RSS means increase2.9–3.7% locally; explicit cache tradeoff, not memory-neutral",
+    "retention_regression": "Host scope shrink stale-name retention reproduced and fixed; immutable reinsertion and existing view snapshots preserved",
+    "remaining": "Sections3/4 remain open for broader capture traversal/materialization, collection copying and representation review. No elapsed-speed/production/platform/clean-host acceptance."
   }
 }
