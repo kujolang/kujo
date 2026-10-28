@@ -209,6 +209,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   361 release integrations, prior controls and 150 test-size checksums pass.
   An earlier eight-case speculative-copy regression was reproduced and corrected;
   larger batches, deeper paths and multiple-key dictionaries remain open.
+  The [post-array refresh](COLLECTION_GAP_AFTER_ARRAY_2026_10_27.md) verifies 240
+  allocation measurements and 360 semantic checks on this runtime: array-owned
+  rows are flat; multiple dictionary keys, deeper rows and nested dictionaries
+  remain width-dependent.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
