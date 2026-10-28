@@ -11,6 +11,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse validated oversized captured binding metadata with copy-on-write kind snapshots,
+  preserving host membership edits and immutable binding rules.
 - Resolve nested writes from borrowed VM opcode metadata and bounded VM/JIT path storage,
   preserving deep-path fallback, snapshots and assignment evaluation order.
 

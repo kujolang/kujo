@@ -66,6 +66,13 @@ assert(caught)
 assert_equal(alias(false), [4, {fourth}, [4, 1]])
 assert_equal(first, [1, {first}, [1, 1]])
 assert_equal(separate(false), [2, {second}, [2, 1]])
+mut round := 5
+while round <= 20 {{
+    assert_equal(alias(false), [round, {original} + round * {mutable}, [round, 1]])
+    assert_equal(first, [1, {first}, [1, 1]])
+    round += 1
+}}
+assert_equal(separate(false), [3, {original} + 3 * {mutable}, [3, 1]])
 print("COMPACT CAPTURE NAMES PASS")
 "#,
         first = original + mutable,

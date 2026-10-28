@@ -2,6 +2,7 @@
 //! membership packs owned names into one slab and an indexed table.
 use super::BindingKind;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 struct Entry {
@@ -11,9 +12,9 @@ struct Entry {
 }
 #[derive(Clone, Debug)]
 pub(crate) struct Compact {
-    names: String,
-    entries: Vec<Entry>,
-    buckets: Vec<u32>,
+    names: Box<str>,
+    entries: Box<[Entry]>,
+    buckets: Box<[u32]>,
     hash_builder: ahash::RandomState,
 }
 impl Compact {
@@ -54,31 +55,42 @@ impl Compact {
             return None;
         }
         let buckets = count.max(1).checked_mul(2)?.checked_next_power_of_two()?;
-        let mut out = Self {
-            names: String::with_capacity(bytes),
-            entries: Vec::with_capacity(count),
-            buckets: vec![0; buckets],
-            hash_builder: ahash::RandomState::new(),
-        };
+        let mut names = String::with_capacity(bytes);
+        let mut entries: Vec<Entry> = Vec::with_capacity(count);
+        let mut table = vec![0u32; buckets];
+        let hash_builder = ahash::RandomState::new();
         for (name, kind) in source {
-            let slot = match out.find_slot(name) {
-                Ok(index) => {
-                    out.entries[index].kind = kind;
-                    continue;
+            let mut slot = hash_builder.hash_one(name) as usize & (table.len() - 1);
+            loop {
+                let entry = table[slot];
+                if entry == 0 {
+                    entries.push(Entry { start: names.len() as u32, len: name.len() as u32, kind });
+                    names.push_str(name);
+                    table[slot] = entries.len() as u32;
+                    break;
                 }
-                Err(slot) => slot,
-            };
-            out.entries.push(Entry { start: out.names.len() as u32, len: name.len() as u32, kind });
-            out.names.push_str(name);
-            out.buckets[slot] = out.entries.len() as u32;
+                let existing = &mut entries[entry as usize - 1];
+                if &names[existing.start as usize..existing.start as usize + existing.len as usize]
+                    == name
+                {
+                    existing.kind = kind;
+                    break;
+                }
+                slot = (slot + 1) & (table.len() - 1);
+            }
         }
-        Some(out)
+        Some(Self {
+            names: names.into_boxed_str(),
+            entries: entries.into_boxed_slice(),
+            buckets: table.into_boxed_slice(),
+            hash_builder,
+        })
     }
 }
 #[derive(Clone, Debug)]
 pub(crate) enum BindingMap {
     Owned(HashMap<String, BindingKind>),
-    Compact(Box<Compact>),
+    Compact(Arc<Compact>),
 }
 impl Default for BindingMap {
     fn default() -> Self {
@@ -116,7 +128,7 @@ impl BindingMap {
     where
         I: Iterator<Item = (&'a str, BindingKind)> + Clone,
     {
-        Compact::build(source).map(|c| Self::Compact(Box::new(c)))
+        Compact::build(source).map(|c| Self::Compact(Arc::new(c)))
     }
     pub(crate) fn is_compact(&self) -> bool {
         matches!(self, Self::Compact(_))
@@ -134,13 +146,13 @@ impl BindingMap {
     pub(crate) fn capacity(&self) -> usize {
         match self {
             Self::Owned(m) => m.capacity(),
-            Self::Compact(c) => c.buckets.capacity(),
+            Self::Compact(c) => c.buckets.len(),
         }
     }
     pub(crate) fn key_capacity_bytes(&self) -> usize {
         match self {
             Self::Owned(m) => m.keys().map(String::capacity).fold(0usize, usize::saturating_add),
-            Self::Compact(c) => c.names.capacity(),
+            Self::Compact(c) => c.names.len(),
         }
     }
     pub(crate) fn iter(&self) -> Iter<'_> {
@@ -164,7 +176,10 @@ impl BindingMap {
     pub(crate) fn get_mut(&mut self, name: &str) -> Option<&mut BindingKind> {
         match self {
             Self::Owned(m) => m.get_mut(name),
-            Self::Compact(c) => c.find(name).map(|i| &mut c.entries[i].kind),
+            Self::Compact(c) => {
+                let index = c.find(name)?;
+                Some(&mut Arc::make_mut(c).entries[index].kind)
+            }
         }
     }
     pub(crate) fn contains_key(&self, name: &str) -> bool {
@@ -232,6 +247,26 @@ impl std::ops::Index<&str> for BindingMap {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn shared_compact_metadata_detaches_only_for_existing_kind_mutation() {
+        let mut original = BindingMap::compact_from(
+            [("mutable", BindingKind::Mutable), ("fixed", BindingKind::Const)].into_iter(),
+        )
+        .unwrap();
+        let mut snapshot = original.clone();
+        let (BindingMap::Compact(a), BindingMap::Compact(b)) = (&original, &snapshot) else {
+            panic!("expected compact metadata");
+        };
+        assert!(Arc::ptr_eq(a, b));
+        assert!(snapshot.get_mut("missing").is_none());
+        *original.get_mut("mutable").unwrap() = BindingKind::LetImmutable;
+        assert_eq!(snapshot["mutable"], BindingKind::Mutable);
+        assert_eq!(original["mutable"], BindingKind::LetImmutable);
+        assert_eq!(snapshot["fixed"], BindingKind::Const);
+        snapshot.remove("fixed");
+        assert_eq!(original["fixed"], BindingKind::Const);
+    }
+
     #[test]
     fn layout_and_pool_boundary() {
         use std::{

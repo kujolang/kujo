@@ -931,7 +931,7 @@ impl Environment {
         owner: &Arc<Mutex<Self>>,
         pool: &mut CaptureStoragePool,
     ) -> Self {
-        let captured = owner.lock().unwrap_or_else(|p| p.into_inner());
+        let mut captured = owner.lock().unwrap_or_else(|p| p.into_inner());
         debug_assert!(captured.live_capture.is_none(), "capture owners must own real values");
         let mut storage = pool.take();
         storage.scopes.resize_with(captured.scopes.len(), HashMap::new);
@@ -958,11 +958,47 @@ impl Environment {
                 }
             }
         }
+        let Self { scopes, binding_kinds, .. } = &mut *captured;
         for (index, (target, source)) in
-            storage.binding_kinds.iter_mut().zip(&captured.binding_kinds).enumerate()
+            storage.binding_kinds.iter_mut().zip(binding_kinds.iter_mut()).enumerate()
         {
-            let names = &captured.scopes[index];
-            if index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY {
+            let names = &scopes[index];
+            let oversized = index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY;
+            if index > 0 && source.is_compact() {
+                let matches = oversized
+                    && names.len() == source.len()
+                    && names.keys().all(|name| source.contains_key(name));
+                if matches {
+                    *target = source.clone();
+                    continue;
+                }
+                // Public host edits can shrink or replace the owner's scope.
+                // Discard stale cached membership but retain immutable exceptions
+                // for names that a host may later reinsert. Existing views keep
+                // their independent shared metadata until they are released.
+                *source = source
+                    .iter()
+                    .filter(|(_, kind)| **kind != BindingKind::Mutable)
+                    .map(|(name, kind)| (name.to_owned(), *kind))
+                    .collect();
+            }
+            if oversized {
+                // Mutable kinds are implicit in ordinary owners. Cache complete
+                // membership only when every immutable exception is still present;
+                // a removed exception must survive possible host reinsertion.
+                let preserves_exceptions = source
+                    .iter()
+                    .all(|(name, kind)| *kind == BindingKind::Mutable || names.contains_key(name));
+                if preserves_exceptions {
+                    let entries = names.keys().map(|name| {
+                        (name.as_str(), source.get(name).copied().unwrap_or(BindingKind::Mutable))
+                    });
+                    if let Some(compact) = BindingMap::compact_from(entries) {
+                        *source = compact;
+                        *target = source.clone();
+                        continue;
+                    }
+                }
                 let entries = names.keys().map(|name| {
                     (name.as_str(), source.get(name).copied().unwrap_or(BindingKind::Mutable))
                 });
@@ -1110,7 +1146,8 @@ impl Environment {
 
     fn snapshot_binding_kinds(&self, index: usize) -> BindingMap {
         let kinds = &self.binding_kinds[index];
-        if self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit)
+        if (kinds.is_compact()
+            || self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit))
             && kinds.values().any(|kind| *kind == BindingKind::Mutable)
         {
             // Complete private membership must not become duplicate mutable-name
@@ -1559,7 +1596,9 @@ impl Environment {
                 .map(|(index, scope)| {
                     scope
                         .iter()
-                        .filter(|(name, _)| selected[index].contains(*name))
+                        .filter(|(name, kind)| {
+                            **kind != BindingKind::Mutable && selected[index].contains(*name)
+                        })
                         .map(|(name, kind)| (name.to_owned(), *kind))
                         .collect()
                 })
@@ -3709,6 +3748,95 @@ mod compact_capture_view_tests {
 #[cfg(test)]
 mod compact_name_pool_tests {
     use super::*;
+
+    #[test]
+    fn shared_capture_cache_drops_stale_mutable_membership_after_host_edits() {
+        for retained in [1, 8192] {
+            let mut env = Environment::new();
+            env.push_scope();
+            for index in 0..8192 {
+                env.define(format!("old_{index}"), Value::Int(index));
+            }
+            env.define_with_kind("old_0".into(), Value::Int(0), BindingKind::Const);
+            let owner = Arc::new(Mutex::new(env));
+            let original = Environment::capture_activation(&owner);
+            assert!(owner.lock().unwrap().binding_kinds[1].is_compact());
+            {
+                let mut env = owner.lock().unwrap();
+                env.scopes[1].clear();
+                for index in 0..retained {
+                    env.scopes[1].insert(format!("new_{index}"), Value::Int(index));
+                }
+            }
+            let changed = Environment::capture_activation(&owner);
+            {
+                let env = owner.lock().unwrap();
+                assert!(
+                    !env.binding_kinds[1].is_compact(),
+                    "stale membership must not remain cached"
+                );
+                assert_eq!(env.binding_kinds[1].len(), 1);
+                assert_eq!(env.binding_kinds[1]["old_0"], BindingKind::Const);
+                assert!(env.binding_kinds[1].key_capacity_bytes() < 128);
+            }
+            assert_eq!(original.binding_kinds[1]["old_0"], BindingKind::Const);
+            assert!(changed.get("old_0").is_none());
+            assert!(matches!(changed.get("new_0"), Some(Value::Int(0))));
+            owner.lock().unwrap().scopes[1].insert("old_0".into(), Value::Int(7));
+            let restored = Environment::capture_activation(&owner);
+            assert_eq!(restored.binding_kinds[1]["old_0"], BindingKind::Const);
+        }
+    }
+
+    #[test]
+    fn shared_capture_metadata_preserves_host_membership_and_reinserted_kinds() {
+        let mut env = Environment::new();
+        env.push_scope();
+        for index in 0..8192 {
+            env.define(format!("name_{index}"), Value::Int(index));
+        }
+        env.define_with_kind("name_0".into(), Value::Int(0), BindingKind::Const);
+        let owner = Arc::new(Mutex::new(env));
+        let first = Environment::capture_activation(&owner);
+        let second = Environment::capture_activation(&owner);
+        assert!(
+            owner.lock().unwrap().binding_kinds[1].is_compact(),
+            "ordinary mutable bindings must be eligible for shared metadata"
+        );
+        assert_eq!(owner.lock().unwrap().detached_snapshot().binding_kinds[1].len(), 1);
+        assert_eq!(first.binding_kinds[1]["name_0"], BindingKind::Const);
+        assert_eq!(second.binding_kinds[1]["name_0"], BindingKind::Const);
+        {
+            let mut env = owner.lock().unwrap();
+            env.scopes[1].remove("name_0");
+            env.scopes[1].insert("host_added".into(), Value::Int(9));
+        }
+        // Same length is insufficient: additions and removals must be checked.
+        let changed = Environment::capture_activation(&owner);
+        assert!(changed.binding_kinds[1].get("name_0").is_none());
+        assert_eq!(changed.binding_kinds[1]["host_added"], BindingKind::Mutable);
+        assert!(first.get("host_added").is_none());
+        assert!(first.get("name_0").is_none());
+        {
+            let mut env = owner.lock().unwrap();
+            env.scopes[1].remove("host_added");
+            env.scopes[1].insert("name_0".into(), Value::Int(7));
+        }
+        let restored = Environment::capture_activation(&owner);
+        assert_eq!(restored.binding_kinds[1]["name_0"], BindingKind::Const);
+        assert!(changed.binding_kinds[1].get("name_0").is_none());
+        owner.lock().unwrap().define_with_kind(
+            "name_0".into(),
+            Value::Int(8),
+            BindingKind::Mutable,
+        );
+        let mut latest = Environment::capture_activation(&owner);
+        assert_eq!(latest.binding_kinds[1]["name_0"], BindingKind::Mutable);
+        assert_eq!(restored.binding_kinds[1]["name_0"], BindingKind::Const);
+        assert_eq!(first.binding_kinds[1]["name_0"], BindingKind::Const);
+        latest.mutate_checked("name_0", |value| *value = Value::Int(10)).unwrap();
+        assert!(matches!(owner.lock().unwrap().get("name_0"), Some(Value::Int(10))));
+    }
 
     #[test]
     fn empty_globals_do_not_admit_oversized_name_storage_to_idle_pool() {
