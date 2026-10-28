@@ -31,6 +31,7 @@ mod generator_lowering;
 mod indexed_publication;
 pub(crate) mod native_functions;
 mod nested_publication;
+mod nested_spill_proof;
 pub mod persistent_queue;
 pub mod promise;
 pub(crate) mod string_access;
@@ -388,6 +389,7 @@ pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Env
 
 struct EnvironmentActivation {
     allow_multi_key: bool,
+    nested_spill_hint: u16,
     globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
     caller: Environment,
@@ -2486,6 +2488,7 @@ impl Interpreter {
                     let caller = std::mem::replace(&mut self.env, environment);
                     self.environment_activations.push(EnvironmentActivation {
                         allow_multi_key: false,
+                        nested_spill_hint: 0,
                         capture: Some((captured.clone(), count)),
                         caller,
                         globals: CapturedGlobals::Snapshot,
@@ -2494,11 +2497,24 @@ impl Interpreter {
                 }
             }
         }
+        let may_check_nested =
+            self.task_cancellation.is_none() && self.active_capture_index(captured).is_none();
         let allow_multi_key = self.task_cancellation.is_none()
             && self.active_capture_index(captured).is_none()
             && body.can_batch_dictionary_writes(params, args);
         self.enter_captured_environment(captured);
+        let nested_spill_hint = if may_check_nested
+            && self
+                .environment_activations
+                .last()
+                .is_some_and(|frame| frame.globals == CapturedGlobals::Snapshot)
+        {
+            body.can_batch_nested_dictionary_writes(params, args, &self.env)
+        } else {
+            0
+        };
         if let Some(frame) = self.environment_activations.last_mut() {
+            frame.nested_spill_hint = nested_spill_hint;
             frame.allow_multi_key = allow_multi_key && frame.globals == CapturedGlobals::Snapshot;
         }
     }
@@ -2523,6 +2539,7 @@ impl Interpreter {
             let caller = std::mem::replace(&mut self.env, environment);
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
+                nested_spill_hint: 0,
                 capture: Some((captured.clone(), count)),
                 caller,
                 globals: CapturedGlobals::RecursiveCaller,
@@ -2552,6 +2569,7 @@ impl Interpreter {
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
+                            nested_spill_hint: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveOwner,
@@ -2572,6 +2590,7 @@ impl Interpreter {
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
+                            nested_spill_hint: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveSplitOwner,
@@ -2622,6 +2641,7 @@ impl Interpreter {
         let caller = std::mem::replace(&mut self.env, environment);
         self.environment_activations.push(EnvironmentActivation {
             allow_multi_key: false,
+            nested_spill_hint: 0,
             capture: Some((captured.clone(), count)),
             caller,
             globals,
@@ -2731,6 +2751,7 @@ impl Interpreter {
         } else {
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
+                nested_spill_hint: 0,
                 capture: None,
                 caller,
                 globals: CapturedGlobals::Snapshot,
@@ -4267,10 +4288,13 @@ impl Interpreter {
                 AccessExpr::Field(field) => Access::Field(field.to_string()),
             });
         }
-        let path = match self.env.try_defer_nested_write(name, path, &value) {
-            Ok(()) => return Value::Null,
-            Err(path) => path,
-        };
+        let allow_spill =
+            self.environment_activations.last().map_or(0, |frame| frame.nested_spill_hint);
+        let path =
+            match self.env.try_defer_nested_write_with_batching(name, path, &value, allow_spill) {
+                Ok(()) => return Value::Null,
+                Err(path) => path,
+            };
         let mut error = None;
         let result = self.env.mutate_checked_runtime(name, |root| {
             error = assignment::update_in_place(root, &path, value).err();
@@ -8897,4 +8921,18 @@ mod sparse_activation_layout_tests {
         assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<EnvironmentActivation>());
         assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<EnvironmentActivation>());
     }
+}
+
+#[cfg(test)]
+#[test]
+fn nested_spill_policy_keeps_activation_layout() {
+    #[allow(dead_code)]
+    struct Previous {
+        allow_multi_key: bool,
+        globals: CapturedGlobals,
+        capture: Option<(Arc<Mutex<Environment>>, usize)>,
+        caller: Environment,
+    }
+    assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<EnvironmentActivation>());
+    assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<EnvironmentActivation>());
 }

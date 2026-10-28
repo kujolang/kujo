@@ -219,6 +219,26 @@ pub(super) fn is_capture_primitive(value: &Value) -> bool {
 }
 
 impl FunctionBodyRef {
+    pub(super) fn can_batch_nested_dictionary_writes(
+        &self,
+        params: &[String],
+        args: &[Value],
+        env: &super::environment::Environment,
+    ) -> u16 {
+        let Some(proof) = self
+            .storage
+            .capture_independence
+            .get_or_init(|| super::capture_independence::analyze(&self.storage.body))
+        else {
+            return 0;
+        };
+        if proof.nested_spill_region {
+            super::nested_spill_proof::eligible(&self.storage.body, params, args, env)
+        } else {
+            0
+        }
+    }
+
     pub(super) fn can_batch_dictionary_writes(&self, params: &[String], args: &[Value]) -> bool {
         let Some(proof) = self
             .storage

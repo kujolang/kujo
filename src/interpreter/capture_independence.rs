@@ -13,6 +13,7 @@ pub(super) struct Proof {
     pub read_only: bool,
     pub whole_value_mask: u32,
     pub sparse_write_region: bool,
+    pub nested_spill_region: bool,
 }
 
 struct Analyzer<'a> {
@@ -39,6 +40,7 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
     Some(Proof {
         whole_value_mask: region.whole_value_mask,
         sparse_write_region,
+        nested_spill_region: super::nested_spill_proof::shape(body),
         required_parameters,
         primitive_arguments: analyzer.primitive_arguments,
         read_only: analyzer.read_only,

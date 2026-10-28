@@ -36,6 +36,7 @@ pub(crate) enum Access {
     Field(String),
     DeferredRow(super::nested_publication::RowWrite),
     DeferredDictionary(super::nested_publication::DictionaryWrite),
+    DeferredDictionaryMany(super::nested_publication::DictionaryManyWrite),
 }
 
 // Borrow string keys and format integer keys on the stack. Only insertion of a

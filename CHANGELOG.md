@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Extend proven synchronous nested-dictionary scalar batches beyond four keys
+  using sparse overflow storage. Borrow proof inputs and size initial storage
+  without cloning unrelated values; preserve snapshots, error ordering, exact
+  scalar values and fallback for uncertain bodies.
+
 - Extend captured nested-dictionary updates to four scalar keys, including new
   keys after an existing-key write. Preserve snapshots, exact scalar values,
   callbacks, error ordering and fallback without increasing assignment storage.

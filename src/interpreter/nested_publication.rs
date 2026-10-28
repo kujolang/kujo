@@ -235,6 +235,72 @@ impl DictionaryWrite {
     }
 }
 
+/// Overflow storage grows with distinct writes, never with the untouched leaf.
+/// The inline four-key representation remains allocation-free.
+#[derive(Clone, Debug)]
+pub(crate) struct DictionaryManyWrite {
+    selector: Selector,
+    writes:
+        std::collections::HashMap<Arc<str>, Scalar, std::hash::BuildHasherDefault<ahash::AHasher>>,
+}
+
+impl DictionaryManyWrite {
+    fn from_inline(write: DictionaryWrite, spill_hint: u16) -> Self {
+        let mut writes = std::collections::HashMap::with_capacity_and_hasher(
+            usize::from(spill_hint).max(5),
+            Default::default(),
+        );
+        for (slot, key) in write.keys.iter().enumerate() {
+            if let Some(key) = key {
+                writes.insert(key.clone(), Scalar::from_value(&write.value(slot)).unwrap());
+            }
+        }
+        Self { selector: write.selector, writes }
+    }
+
+    fn record(&mut self, root: &Value, key: &str, value: Scalar) {
+        if let Some(previous) = self.writes.get_mut(key) {
+            *previous = value;
+            return;
+        }
+        let Some(Value::Dict(map)) = self.selector.key().value(root) else {
+            unreachable!("validated dictionary leaf")
+        };
+        let key = map.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone());
+        self.writes.insert(key, value);
+    }
+
+    fn read(&self, root: &Value, owner: RowKey<'_>, key: &str) -> Option<Value> {
+        if !self.selector.key().same(owner, root) {
+            return None;
+        }
+        let Value::Dict(map) = self.selector.key().value(root)? else { return None };
+        self.writes.get(key).map(|value| value.value()).or_else(|| map.get(key).cloned())
+    }
+
+    fn apply(&self, root: &mut Value) {
+        let leaf = match (&self.selector, root) {
+            (Selector::Field(field), Value::Struct { fields, .. }) => {
+                Arc::make_mut(fields).get_mut(field)
+            }
+            (Selector::String(key), Value::Dict(map)) => Arc::make_mut(map).get_mut(key.as_str()),
+            (Selector::Integer(key), Value::Dict(map)) => {
+                with_integer_key(*key, |key| Arc::make_mut(map).get_mut(key))
+            }
+            (Selector::Integer(key), Value::Array(rows)) => {
+                let index = NestedPublication::resolve(*key, rows.len()).expect("validated owner");
+                Arc::make_mut(rows).get_mut(index)
+            }
+            _ => unreachable!("validated dictionary publication root"),
+        };
+        let Some(Value::Dict(map)) = leaf else { unreachable!("validated dictionary leaf") };
+        let map = Arc::make_mut(map);
+        for (key, value) in &self.writes {
+            map.insert(key.clone(), value.value());
+        }
+    }
+}
+
 /// Two Vec slots hold the original root and the write metadata. Admission moves
 /// existing path/key storage; it does not allocate a journal or clone the root.
 #[derive(Clone, Debug)]
@@ -349,6 +415,9 @@ impl NestedPublication {
         if let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_slice() {
             return with_integer_key(index, |index| write.read(root, key, index));
         }
+        if let [Access::Index(root), Access::DeferredDictionaryMany(write)] = self.path.as_slice() {
+            return with_integer_key(index, |index| write.read(root, key, index));
+        }
         let (root, write) = self.parts();
         if !write.selector.key().same(key, root) {
             return None;
@@ -366,24 +435,69 @@ impl NestedPublication {
     }
 
     pub(super) fn read_string(&self, owner: RowKey<'_>, key: &str) -> Option<Value> {
-        let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_slice() else {
-            return None;
-        };
-        write.read(root, owner, key)
+        match self.path.as_slice() {
+            [Access::Index(root), Access::DeferredDictionary(write)] => {
+                write.read(root, owner, key)
+            }
+            [Access::Index(root), Access::DeferredDictionaryMany(write)] => {
+                write.read(root, owner, key)
+            }
+            _ => None,
+        }
     }
 
+    #[cfg(test)]
     pub(super) fn try_record(&mut self, path: &[Access], value: &Value) -> bool {
-        if let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_mut_slice() {
+        self.try_record_with_batching(path, value, 0)
+    }
+
+    pub(super) fn try_record_with_batching(
+        &mut self,
+        path: &[Access],
+        value: &Value,
+        spill_hint: u16,
+    ) -> bool {
+        if let [Access::Index(root), write @ (Access::DeferredDictionary(_) | Access::DeferredDictionaryMany(_))] =
+            self.path.as_mut_slice()
+        {
             let [first, Access::Index(index)] = path else { return false };
             let Some(owner) = RowKey::from_access(first) else { return false };
             let Some(value) = Scalar::from_value(value) else { return false };
-            if !write.selector.key().same(owner, root) {
+            let selector = match write {
+                Access::DeferredDictionary(write) => &write.selector,
+                Access::DeferredDictionaryMany(write) => &write.selector,
+                _ => unreachable!(),
+            };
+            if !selector.key().same(owner, root) {
                 return false;
             }
+            let mut record = |key: &str| {
+                if spill_hint == 0 {
+                    if let Access::DeferredDictionary(inline) = write {
+                        return inline.record(root, key, value);
+                    }
+                }
+                if let Access::DeferredDictionary(inline) = write {
+                    if inline.record(root, key, value) {
+                        return true;
+                    }
+                    let Access::DeferredDictionary(inline) =
+                        std::mem::replace(write, Access::Field(String::new()))
+                    else {
+                        unreachable!()
+                    };
+                    *write = Access::DeferredDictionaryMany(DictionaryManyWrite::from_inline(
+                        inline, spill_hint,
+                    ));
+                }
+                let Access::DeferredDictionaryMany(many) = write else { unreachable!() };
+                many.record(root, key, value);
+                true
+            };
             return match index {
-                Value::Str(key) => write.record(root, key, value),
-                Value::Int(index) => with_integer_key(*index, |key| write.record(root, key, value)),
-                _ => false,
+                Value::Str(key) => record(key),
+                Value::Int(index) => with_integer_key(*index, record),
+                _ => return false,
             };
         }
 
@@ -410,6 +524,11 @@ impl NestedPublication {
     }
 
     pub(super) fn snapshot_value(&self) -> Value {
+        if let [Access::Index(root), Access::DeferredDictionaryMany(write)] = self.path.as_slice() {
+            let mut root = root.clone();
+            write.apply(&mut root);
+            return root;
+        }
         if let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_slice() {
             let mut root = root.clone();
             write.apply(&mut root);
@@ -448,6 +567,7 @@ impl NestedPublication {
         match write {
             Access::DeferredRow(write) => write.apply(root),
             Access::DeferredDictionary(write) => write.apply(root),
+            Access::DeferredDictionaryMany(write) => write.apply(root),
             _ => unreachable!("nested publication write"),
         }
     }
@@ -1023,5 +1143,101 @@ mod dictionary_batch_tests {
         assert!(matches!(map.get("0"), Some(Value::Int(i64::MIN))));
         assert!(matches!(map.get("new"), Some(Value::Bool(true))));
         assert!(matches!(map.get("01"), Some(Value::Float(v)) if v.to_bits()==bits));
+    }
+}
+
+#[cfg(test)]
+mod dictionary_spill_tests {
+    use super::*;
+    use crate::interpreter::value::DictMap;
+
+    fn path(key: &str) -> Vec<Access> {
+        vec![Access::Index(Value::Int(0)), Access::Index(Value::str_ref(key))]
+    }
+
+    #[test]
+    fn spill_preserves_scalars_snapshots_and_unique_owner_storage() {
+        assert!(std::mem::size_of::<DictionaryManyWrite>() <= std::mem::size_of::<Value>());
+        let mut owner = Value::array(vec![Value::dict(DictMap::from_iter(
+            (0..300).map(|i| (Arc::from(i.to_string()), Value::Int(i))),
+        ))]);
+        let Value::Array(rows) = &owner else { unreachable!() };
+        let Value::Dict(map) = &rows[0] else { unreachable!() };
+        let pointer = Arc::as_ptr(map);
+        let mut pending =
+            NestedPublication::prepare("state".into(), owner.clone(), path("0"), &Value::Int(1000))
+                .unwrap();
+        for i in 1..257 {
+            assert!(pending.try_record_with_batching(
+                &path(&i.to_string()),
+                &Value::Int(i + 1000),
+                257
+            ));
+        }
+        let [_, Access::DeferredDictionaryMany(many)] = pending.path.as_slice() else {
+            panic!("did not spill")
+        };
+        assert_eq!(many.writes.len(), 257);
+        let bits = 0xfff8_0000_0000_0042;
+        for (key, value) in [
+            ("0", Value::Int(i64::MIN)),
+            ("1", Value::Float(f64::from_bits(bits))),
+            ("2", Value::Float(-0.0)),
+            ("3", Value::Bool(true)),
+            ("4", Value::Null),
+        ] {
+            assert!(pending.try_record_with_batching(&path(key), &value, 257));
+        }
+        assert!(!pending.try_record_with_batching(&path("invalid"), &Value::array(vec![]), 257));
+        let saved = pending.snapshot_value();
+        assert!(pending.try_record_with_batching(&path("0"), &Value::Int(i64::MAX), 257));
+        assert!(matches!(pending.read(RowKey::Integer(-1), 0), Some(Value::Int(i64::MAX))));
+        assert!(
+            matches!(pending.read_string(RowKey::Integer(0), "1"), Some(Value::Float(v)) if v.to_bits() == bits)
+        );
+        pending.publish(Some(&mut owner));
+        let Value::Array(rows) = &owner else { unreachable!() };
+        let Value::Dict(map) = &rows[0] else { unreachable!() };
+        assert_eq!(Arc::as_ptr(map), pointer);
+        assert!(matches!(map.get("0"), Some(Value::Int(i64::MAX))));
+        assert!(
+            matches!(map.get("2"), Some(Value::Float(v)) if v.to_bits() == (-0.0f64).to_bits())
+        );
+        assert!(matches!(map.get("3"), Some(Value::Bool(true))));
+        assert!(matches!(map.get("4"), Some(Value::Null)));
+        let Value::Array(saved) = saved else { unreachable!() };
+        let Value::Dict(saved) = &saved[0] else { unreachable!() };
+        assert!(matches!(saved.get("0"), Some(Value::Int(i64::MIN))));
+        for i in 5..300 {
+            let expected = if i < 257 { i + 1000 } else { i };
+            assert!(
+                matches!(map.get(i.to_string().as_str()), Some(Value::Int(v)) if *v == expected)
+            );
+            assert!(
+                matches!(saved.get(i.to_string().as_str()), Some(Value::Int(v)) if *v == expected)
+            );
+        }
+    }
+
+    #[test]
+    fn discard_releases_spill_keys_without_changing_owner() {
+        let owner =
+            Value::array(vec![Value::dict(DictMap::from_iter([(Arc::from("0"), Value::Int(0))]))]);
+        let mut pending =
+            NestedPublication::prepare("state".into(), owner.clone(), path("0"), &Value::Int(1))
+                .unwrap();
+        for i in 1..6 {
+            assert!(pending.try_record_with_batching(&path(&i.to_string()), &Value::Int(i), 257));
+        }
+        let [_, Access::DeferredDictionaryMany(many)] = pending.path.as_slice() else {
+            panic!("did not spill")
+        };
+        let key = Arc::downgrade(many.writes.get_key_value("5").unwrap().0);
+        let (_, unchanged) = pending.discard();
+        assert!(key.upgrade().is_none());
+        let Value::Array(rows) = unchanged else { unreachable!() };
+        let Value::Dict(map) = &rows[0] else { unreachable!() };
+        assert_eq!(map.len(), 1);
+        assert!(matches!(map.get("0"), Some(Value::Int(0))));
     }
 }

@@ -612,11 +612,22 @@ impl Environment {
         pending.read_string(owner, key)
     }
 
+    #[cfg(test)]
     pub(crate) fn try_defer_nested_write(
         &mut self,
         name: &str,
         path: Vec<super::assignment::Access>,
         value: &Value,
+    ) -> Result<(), Vec<super::assignment::Access>> {
+        self.try_defer_nested_write_with_batching(name, path, value, 0)
+    }
+
+    pub(crate) fn try_defer_nested_write_with_batching(
+        &mut self,
+        name: &str,
+        path: Vec<super::assignment::Access>,
+        value: &Value,
+        spill_hint: u16,
     ) -> Result<(), Vec<super::assignment::Access>> {
         if !matches!(
             self.capture_writes,
@@ -629,7 +640,7 @@ impl Environment {
             return Err(path);
         }
         if let Some((0, CaptureWrites::Nested(pending))) = &mut self.capture_writes {
-            if !pending.try_record(&path, value) {
+            if !pending.try_record_with_batching(&path, value, spill_hint) {
                 return Err(path);
             }
         } else {
@@ -1794,6 +1805,27 @@ impl Environment {
             std::mem::swap(&mut self.scopes[index], &mut other.scopes[index]);
             std::mem::swap(&mut self.binding_kinds[index], &mut other.binding_kinds[index]);
         }
+    }
+
+    /// Borrow only directly represented values for the optional spill guard.
+    /// Pending/live values retain fallback rather than materializing a snapshot.
+    pub(super) fn nested_spill_proof_value(&self, name: &str) -> Option<&Value> {
+        if self.pending_visible(name) {
+            return None;
+        }
+        for (index, scope) in self.scopes.iter().enumerate().rev() {
+            if let Some(value) = scope.get(name) {
+                if self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit) {
+                    return None;
+                }
+                return Some(value);
+            }
+            if Self::capture_metadata_contains(&self.live_capture, &self.binding_kinds, index, name)
+            {
+                return None;
+            }
+        }
+        None
     }
 
     /// Get a variable from the environment, searching from inner to outer scopes
