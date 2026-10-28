@@ -144,16 +144,59 @@ impl RowWrite {
     }
 }
 
-/// A single existing dictionary leaf key reuses the assignment path storage.
+/// Up to four scalar dictionary leaf writes reuse assignment path storage.
 /// The canonical key is shared with the map; admission never copies key bytes.
 #[derive(Clone, Debug)]
 pub(crate) struct DictionaryWrite {
     selector: Selector,
-    key: Arc<str>,
-    value: Scalar,
+    keys: [Option<Arc<str>>; 4],
+    words: [u64; 4],
+    kinds: u8,
 }
 
 impl DictionaryWrite {
+    fn new(selector: Selector, key: Arc<str>, value: Scalar) -> Self {
+        let mut write =
+            Self { selector, keys: [Some(key), None, None, None], words: [0; 4], kinds: 0 };
+        write.set_value(0, value);
+        write
+    }
+
+    fn set_value(&mut self, slot: usize, value: Scalar) {
+        let (kind, word) = match value {
+            Scalar::Int(value) => (0, value as u64),
+            Scalar::Float(value) => (1, value.to_bits()),
+            Scalar::Bool(value) => (2, u64::from(value)),
+            Scalar::Null => (3, 0),
+        };
+        self.words[slot] = word;
+        self.kinds = (self.kinds & !(3 << (slot * 2))) | (kind << (slot * 2));
+    }
+
+    fn value(&self, slot: usize) -> Value {
+        match (self.kinds >> (slot * 2)) & 3 {
+            0 => Value::Int(self.words[slot] as i64),
+            1 => Value::Float(f64::from_bits(self.words[slot])),
+            2 => Value::Bool(self.words[slot] != 0),
+            3 => Value::Null,
+            _ => unreachable!(),
+        }
+    }
+
+    fn record(&mut self, root: &Value, key: &str, value: Scalar) -> bool {
+        if let Some(slot) = self.keys.iter().position(|stored| stored.as_deref() == Some(key)) {
+            self.set_value(slot, value);
+            return true;
+        }
+        // Reject overflow before allocating an insertion key or changing any entry.
+        let Some(slot) = self.keys.iter().position(Option::is_none) else { return false };
+        let Some(Value::Dict(map)) = self.selector.key().value(root) else { return false };
+        self.keys[slot] =
+            Some(map.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone()));
+        self.set_value(slot, value);
+        true
+    }
+
     fn apply(&self, root: &mut Value) {
         let leaf = match (&self.selector, root) {
             (Selector::Field(field), Value::Struct { fields, .. }) => {
@@ -170,8 +213,12 @@ impl DictionaryWrite {
             _ => unreachable!("validated dictionary publication root"),
         };
         let Some(Value::Dict(map)) = leaf else { unreachable!("validated dictionary leaf") };
-        *Arc::make_mut(map).get_mut(self.key.as_ref()).expect("existing leaf key") =
-            self.value.value();
+        let map = Arc::make_mut(map);
+        for (slot, key) in self.keys.iter().enumerate() {
+            if let Some(key) = key {
+                map.insert(key.clone(), self.value(slot));
+            }
+        }
     }
 
     fn read(&self, root: &Value, owner: RowKey<'_>, key: &str) -> Option<Value> {
@@ -179,8 +226,8 @@ impl DictionaryWrite {
             return None;
         }
         let Value::Dict(map) = self.selector.key().value(root)? else { return None };
-        if key == self.key.as_ref() {
-            Some(self.value.value())
+        if let Some(slot) = self.keys.iter().position(|stored| stored.as_deref() == Some(key)) {
+            Some(self.value(slot))
         } else {
             // Missing keys retain ordinary diagnostics and evaluation order.
             map.get(key).cloned()
@@ -268,7 +315,7 @@ impl NestedPublication {
                 Access::Index(Value::Int(key)) => Selector::Integer(key),
                 _ => unreachable!("admitted dictionary owner"),
             };
-            path[1] = Access::DeferredDictionary(DictionaryWrite { selector, key, value });
+            path[1] = Access::DeferredDictionary(DictionaryWrite::new(selector, key, value));
             return Ok(Self { name, path });
         }
         let admission = Self::admission(&root, &path, value);
@@ -333,15 +380,11 @@ impl NestedPublication {
             if !write.selector.key().same(owner, root) {
                 return false;
             }
-            let same = match index {
-                Value::Str(key) => key.as_str() == write.key.as_ref(),
-                Value::Int(index) => with_integer_key(*index, |key| key == write.key.as_ref()),
+            return match index {
+                Value::Str(key) => write.record(root, key, value),
+                Value::Int(index) => with_integer_key(*index, |key| write.record(root, key, value)),
                 _ => false,
             };
-            if same {
-                write.value = value;
-            }
-            return same;
         }
 
         let [first, Access::Index(Value::Int(index))] = path else { return false };
@@ -864,7 +907,8 @@ mod dictionary_tests {
         );
         let saved = pending.snapshot_value();
         assert!(pending.try_record(&path(Value::str_ref("0")), &Value::Bool(true)));
-        assert!(!pending.try_record(&path(Value::str_ref("01")), &Value::Int(50)));
+        assert!(pending.try_record(&path(Value::str_ref("01")), &Value::Int(50)));
+        assert!(matches!(pending.read_string(RowKey::Integer(0), "01"), Some(Value::Int(50))));
         assert!(!pending.try_record(&path(Value::Int(0)), &Value::array(vec![])));
         assert!(matches!(pending.read(RowKey::Integer(0), 0), Some(Value::Bool(true))));
         let (_, published) = pending.publish(Some(&mut owner));
@@ -925,5 +969,59 @@ mod dictionary_tests {
         let Value::Array(rows) = unchanged else { unreachable!() };
         let Value::Dict(map) = &rows[0] else { unreachable!() };
         assert!(matches!(map.get("0"), Some(Value::Int(1))));
+    }
+}
+
+#[cfg(test)]
+mod dictionary_batch_tests {
+    use super::*;
+    use crate::interpreter::value::DictMap;
+
+    fn path(key: &str) -> Vec<Access> {
+        vec![Access::Index(Value::Int(0)), Access::Index(Value::str_ref(key))]
+    }
+
+    #[test]
+    fn dictionary_batch_fits_storage_and_preserves_full_scalar_bits() {
+        assert!(std::mem::size_of::<DictionaryWrite>() <= std::mem::size_of::<Value>());
+        let leaf = Value::dict(DictMap::from_iter([
+            (Arc::from("0"), Value::Int(1)),
+            (Arc::from("01"), Value::Int(2)),
+        ]));
+        let mut owner = Value::array(vec![leaf]);
+        let mut pending = NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            path("0"),
+            &Value::Int(i64::MIN),
+        )
+        .unwrap();
+        let bits = 0xfff8_0000_0000_0042;
+        assert!(pending.try_record(&path("01"), &Value::Float(f64::from_bits(bits))));
+        assert!(pending.try_record(&path("new"), &Value::Bool(true)));
+        assert!(pending.try_record(&path("null"), &Value::Null));
+        assert!(!pending.try_record(&path("overflow"), &Value::Int(5)));
+        let saved = pending.snapshot_value();
+        assert!(pending.try_record(&path("0"), &Value::Int(i64::MAX)));
+        assert!(pending.try_record(&path("new"), &Value::Float(-0.0)));
+        assert!(
+            matches!(pending.read_string(RowKey::Integer(-1), "01"), Some(Value::Float(v)) if v.to_bits()==bits)
+        );
+        assert!(matches!(pending.read(RowKey::Integer(0), 0), Some(Value::Int(i64::MAX))));
+        assert!(
+            matches!(pending.read_string(RowKey::Integer(0), "new"), Some(Value::Float(v)) if v.to_bits()==(-0.0f64).to_bits())
+        );
+        assert!(pending.read_string(RowKey::Integer(0), "overflow").is_none());
+        pending.publish(Some(&mut owner));
+        let Value::Array(rows) = owner else { unreachable!() };
+        let Value::Dict(map) = &rows[0] else { unreachable!() };
+        assert!(matches!(map.get("0"), Some(Value::Int(i64::MAX))));
+        assert!(matches!(map.get("null"), Some(Value::Null)));
+        assert!(!map.contains_key("overflow"));
+        let Value::Array(rows) = saved else { unreachable!() };
+        let Value::Dict(map) = &rows[0] else { unreachable!() };
+        assert!(matches!(map.get("0"), Some(Value::Int(i64::MIN))));
+        assert!(matches!(map.get("new"), Some(Value::Bool(true))));
+        assert!(matches!(map.get("01"), Some(Value::Float(v)) if v.to_bits()==bits));
     }
 }

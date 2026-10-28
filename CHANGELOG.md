@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Extend captured nested-dictionary updates to four scalar keys, including new
+  keys after an existing-key write. Preserve snapshots, exact scalar values,
+  callbacks, error ordering and fallback without increasing assignment storage.
+
 - Avoid repeated copies when captured helpers update one scalar key in a nested
   dictionary under dictionary, struct or array owners. Preserve snapshots, numeric
   and string key behavior, callbacks, errors and replacement-root assignment order.
