@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `c0e45b3`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`recursive-capture-pool-2026-10-26.json`).
-- [x] Latest relevant gate: 1,142 library passes, eight ignored; 289 distinct
-  integration passes, one manual profiling test ignored (`recursive-capture-pool-2026-10-26.json`).
+- [x] Latest verified runtime `c83ee4b`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`row-overflow-publication-2026-10-28.json`).
+- [x] Latest relevant gate: 1,222 library passes, eight ignored; 397 distinct
+  integration passes, one manual profiling test ignored (`row-overflow-publication-2026-10-28.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -273,7 +273,14 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
 - [x] Refresh larger row-batch isolation on `ca3403d`: [verified baseline](ROW_OVERFLOW_ISOLATION_2026_10_28.md)
   covers 288 allocation pairs, 432 semantic cases and 54 permanent regression
   combinations. Both loop and explicit writes above four elements retain a
-  261,120-byte per-call width penalty. Overflow storage and admission remain open.
+  261,120-byte per-call width penalty. The measured overflow storage and admission fix is verified below.
+- [x] Retain larger scalar row batches in private overflow storage (`c83ee4b`).
+  [Verified results](ROW_OVERFLOW_PUBLICATION_2026_10_28.md) cover both explicit writes and bounded counted
+  loops: five writes into a width-2,048 dictionary-owned row fall from
+  286,036 to 6,922 bytes per added loop-helper call. The four-entry path stays
+  unchanged. All 288 target pairs, 832 larger escape pairs, 1,222 library tests,
+  397 release integrations and 150 test-size checksums pass. General/deeper loops
+  and broader capture/collection costs remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
@@ -432,7 +439,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations after these optimizations (`6228389`; capture-frame-pool-2026-10-26.json). Repeat for later runtime changes.
+- [x] Recheck all 150 test-size combinations after these optimizations (`c83ee4b`; row-overflow-publication-2026-10-28.json). Repeat for later runtime changes.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.

@@ -5284,5 +5284,23 @@
     "regression_tests": 3,
     "regression_combinations": 54,
     "remaining": "Row overflow storage and profitable loop/explicit admission; preserve snapshots and fallback costs"
+  },
+  "row_overflow_publication_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "c83ee4b9d1dd7b12563ee0c7c6a9bd550ec42534",
+    "report": "ROW_OVERFLOW_PUBLICATION_2026_10_28.md",
+    "evidence": "row-overflow-publication-2026-10-28.json",
+    "library_passes": 1222,
+    "integration_passes": 397,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 288,
+    "target_semantics": 432,
+    "exact_path_baseline_calibration": 288,
+    "larger_escape_pairs": 832,
+    "larger_escape_semantics": 1248,
+    "deep_fallback_pairs": 512,
+    "deep_fallback_semantics": 768,
+    "scope": "Scalar row overflow in explicit and bounded counted-loop helpers; existing four-slot storage unchanged",
+    "remaining": "General/deeper loops, nonscalar and uncertain control flow, broader capture/collection costs, later production/platform/clean-host gates"
   }
 }
