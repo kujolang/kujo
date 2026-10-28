@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Pack oversized captured-local binding names into private compact tables while
+  preserving immutable bindings, live owner visibility, snapshots and idle-pool limits.
+
 - Retain larger scalar row-update batches in private overflow storage for
   admitted explicit assignments and bounded counted loops, preserving snapshots,
   aliases, callback visibility and partial writes before errors.

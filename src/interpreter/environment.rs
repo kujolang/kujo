@@ -3,6 +3,7 @@
 // Lexical scoping environment for variable management in the Kujo interpreter.
 // Implements a stack of scopes where inner scopes shadow outer scopes.
 
+use super::binding_map::BindingMap;
 use super::dictionary_publication::{
     DictionaryManyPublication, DictionaryPairPublication, DictionaryPublication, DictionaryScalar,
 };
@@ -360,7 +361,7 @@ impl CaptureWrites {
 #[derive(Default)]
 struct CaptureStorage {
     scopes: Vec<HashMap<String, Value>>,
-    binding_kinds: Vec<HashMap<String, BindingKind>>,
+    binding_kinds: Vec<BindingMap>,
     capacity: usize,
     key_bytes: usize,
 }
@@ -400,7 +401,7 @@ impl CaptureStoragePool {
             .scopes
             .iter()
             .map(HashMap::capacity)
-            .chain(environment.binding_kinds.iter().map(HashMap::capacity))
+            .chain(environment.binding_kinds.iter().map(BindingMap::capacity))
             .fold(0usize, usize::saturating_add);
         if capacity > Self::MAX_CAPACITY {
             return;
@@ -409,8 +410,8 @@ impl CaptureStoragePool {
             .scopes
             .iter()
             .flat_map(HashMap::keys)
-            .chain(environment.binding_kinds.iter().flat_map(HashMap::keys))
             .map(String::capacity)
+            .chain(environment.binding_kinds.iter().map(BindingMap::key_capacity_bytes))
             .fold(0usize, usize::saturating_add);
         if key_bytes > Self::MAX_KEY_BYTES {
             return;
@@ -465,6 +466,15 @@ fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMa
     }
 }
 
+fn refill_binding_map(target: &mut BindingMap, source: &BindingMap) {
+    match (target, source) {
+        (BindingMap::Owned(target), BindingMap::Owned(source)) => {
+            refill_capture_map(target, source)
+        }
+        (target, source) => *target = source.clone(),
+    }
+}
+
 /// Variable storage using lexical scoping
 ///
 /// The Environment maintains a stack of scopes (Vec<HashMap>). When looking up
@@ -499,7 +509,7 @@ pub struct Environment {
     // exceptions. Oversized private live-capture locals instead store complete
     // membership here, avoiding Value-sized placeholder buckets; materialized
     // snapshots normalize these back to immutable exceptions.
-    binding_kinds: Vec<HashMap<String, BindingKind>>,
+    binding_kinds: Vec<BindingMap>,
     global_owner: std::sync::Arc<()>,
     // Lexical provenance survives task snapshots; execution ownership does not.
     global_source: std::sync::Arc<()>,
@@ -925,7 +935,7 @@ impl Environment {
         debug_assert!(captured.live_capture.is_none(), "capture owners must own real values");
         let mut storage = pool.take();
         storage.scopes.resize_with(captured.scopes.len(), HashMap::new);
-        storage.binding_kinds.resize_with(captured.binding_kinds.len(), HashMap::new);
+        storage.binding_kinds.resize_with(captured.binding_kinds.len(), BindingMap::new);
         for (index, (target, source)) in storage.scopes.iter_mut().zip(&captured.scopes).enumerate()
         {
             if index == 0 {
@@ -953,18 +963,14 @@ impl Environment {
         {
             let names = &captured.scopes[index];
             if index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY {
-                target.retain(|name, _| names.contains_key(name));
-                target.reserve(names.len().saturating_sub(target.len()));
-                for name in names.keys() {
-                    let kind = source.get(name).copied().unwrap_or(BindingKind::Mutable);
-                    if let Some(slot) = target.get_mut(name) {
-                        *slot = kind;
-                    } else {
-                        target.insert(name.clone(), kind);
-                    }
-                }
+                let entries = names.keys().map(|name| {
+                    (name.as_str(), source.get(name).copied().unwrap_or(BindingKind::Mutable))
+                });
+                *target = BindingMap::compact_from(entries.clone()).unwrap_or_else(|| {
+                    entries.map(|(name, kind)| (name.to_owned(), kind)).collect()
+                });
             } else {
-                refill_capture_map(target, source);
+                refill_binding_map(target, source);
                 if index > 0 {
                     // Hosts may remove public scope entries without editing the
                     // private kind map. Only names present at admission belong
@@ -990,7 +996,7 @@ impl Environment {
     // than allocating Value-sized null buckets. Public owners never use this form.
     fn capture_metadata_contains(
         link: &Option<LiveCapture>,
-        kinds: &[HashMap<String, BindingKind>],
+        kinds: &[BindingMap],
         index: usize,
         name: &str,
     ) -> bool {
@@ -1019,7 +1025,7 @@ impl Environment {
                     self.binding_kinds[index]
                         .keys()
                         .filter(|name| !self.scopes[index].contains_key(*name))
-                        .cloned(),
+                        .map(str::to_owned),
                 );
             }
         }
@@ -1077,7 +1083,7 @@ impl Environment {
                 scope.reserve(self.binding_kinds[index].len().saturating_sub(scope.len()));
                 for name in self.binding_kinds[index].keys() {
                     if !scope.contains_key(name) {
-                        scope.insert(name.clone(), Value::Null);
+                        scope.insert(name.to_owned(), Value::Null);
                     }
                 }
             }
@@ -1102,7 +1108,7 @@ impl Environment {
         self.live_capture.is_some()
     }
 
-    fn snapshot_binding_kinds(&self, index: usize) -> HashMap<String, BindingKind> {
+    fn snapshot_binding_kinds(&self, index: usize) -> BindingMap {
         let kinds = &self.binding_kinds[index];
         if self.live_capture.as_ref().is_some_and(|link| index > 0 && index < link.limit)
             && kinds.values().any(|kind| *kind == BindingKind::Mutable)
@@ -1110,12 +1116,13 @@ impl Environment {
             // Complete private membership must not become duplicate mutable-name
             // storage in a materialized/public snapshot.
             let count = kinds.values().filter(|kind| **kind != BindingKind::Mutable).count();
-            let mut result = HashMap::with_capacity(count);
+            let mut result = BindingMap::new();
+            result.reserve(count);
             result.extend(
                 kinds
                     .iter()
                     .filter(|(_, kind)| **kind != BindingKind::Mutable)
-                    .map(|(name, kind)| (name.clone(), *kind)),
+                    .map(|(name, kind)| (name.to_owned(), *kind)),
             );
             result
         } else {
@@ -1174,8 +1181,11 @@ impl Environment {
         }
         let mut storage = pool.take();
         storage.scopes.resize_with(1, HashMap::new);
-        storage.binding_kinds.resize_with(1, HashMap::new);
-        let wanted = |name: &String| names.contains(name) && !params.contains(name);
+        storage.binding_kinds.resize_with(1, BindingMap::new);
+        let wanted = |name: &str| {
+            names.iter().any(|candidate| candidate == name)
+                && !params.iter().any(|candidate| candidate == name)
+        };
         storage.scopes[0].retain(|name, _| wanted(name));
         storage.binding_kinds[0].retain(|name, _| wanted(name));
         for name in names.iter().filter(|name| wanted(name)) {
@@ -1222,12 +1232,12 @@ impl Environment {
         }
         let mut storage = pool.take();
         storage.scopes.resize_with(count, HashMap::new);
-        storage.binding_kinds.resize_with(count, HashMap::new);
+        storage.binding_kinds.resize_with(count, BindingMap::new);
         for (target, source) in storage.scopes.iter_mut().zip(&self.scopes[..count]) {
             refill_capture_map(target, source);
         }
         for (target, source) in storage.binding_kinds.iter_mut().zip(&self.binding_kinds[..count]) {
-            refill_capture_map(target, source);
+            refill_binding_map(target, source);
         }
         Self {
             scopes: storage.scopes,
@@ -1249,7 +1259,7 @@ impl Environment {
         self.invalidate_capture_observation();
         self.global_source.clone_from(&source.global_source);
         refill_capture_map(&mut self.scopes[0], &source.scopes[0]);
-        refill_capture_map(&mut self.binding_kinds[0], &source.binding_kinds[0]);
+        refill_binding_map(&mut self.binding_kinds[0], &source.binding_kinds[0]);
         self.native_defaults.clone_from(&source.native_defaults);
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &source.capture_writes)
@@ -1298,7 +1308,7 @@ impl Environment {
         for (target, source) in
             self.binding_kinds[1..count].iter_mut().zip(&completed.binding_kinds[1..count])
         {
-            refill_capture_map(target, source);
+            refill_binding_map(target, source);
         }
         if let (Some((_, target)), Some((_, writes))) =
             (&mut self.capture_writes, &completed.capture_writes)
@@ -1415,7 +1425,7 @@ impl Environment {
     pub fn new() -> Self {
         Environment {
             scopes: vec![HashMap::new()],
-            binding_kinds: vec![HashMap::new()],
+            binding_kinds: vec![BindingMap::new()],
             native_defaults: None,
             global_owner: std::sync::Arc::new(()),
             global_source: std::sync::Arc::new(()),
@@ -1550,7 +1560,7 @@ impl Environment {
                     scope
                         .iter()
                         .filter(|(name, _)| selected[index].contains(*name))
-                        .map(|(name, kind)| (name.clone(), *kind))
+                        .map(|(name, kind)| (name.to_owned(), *kind))
                         .collect()
                 })
                 .collect(),
@@ -1641,7 +1651,7 @@ impl Environment {
     /// Push a new scope onto the stack (e.g., entering a function)
     pub fn push_scope(&mut self) {
         self.scopes.push(HashMap::new());
-        self.binding_kinds.push(HashMap::new());
+        self.binding_kinds.push(BindingMap::new());
     }
 
     /// Pop the innermost scope from the stack (e.g., exiting a function)
@@ -1734,7 +1744,7 @@ impl Environment {
     pub(crate) fn generator_environment(&self, capture_locals: bool) -> Self {
         let mut result = Self {
             scopes: vec![HashMap::new()],
-            binding_kinds: vec![HashMap::new()],
+            binding_kinds: vec![BindingMap::new()],
             native_defaults: self.native_defaults.clone(),
             global_owner: self.global_owner.clone(),
             global_source: self.global_source.clone(),
@@ -1769,7 +1779,7 @@ impl Environment {
         }
         let mut storage = pool.take();
         storage.scopes.resize_with(count, HashMap::new);
-        storage.binding_kinds.resize_with(count, HashMap::new);
+        storage.binding_kinds.resize_with(count, BindingMap::new);
         for scope in &mut storage.scopes {
             scope.clear();
         }
@@ -3693,5 +3703,35 @@ mod compact_capture_view_tests {
         assert!(!active.capture_writes.as_ref().unwrap().1.contains(&(1, "extra_2".into())));
         assert!(!active.capture_writes.as_ref().unwrap().1.contains(&(1, "extra_3".into())));
         assert_eq!(active.scopes[1].capacity(), 0);
+    }
+}
+
+#[cfg(test)]
+mod compact_name_pool_tests {
+    use super::*;
+
+    #[test]
+    fn empty_globals_do_not_admit_oversized_name_storage_to_idle_pool() {
+        for width in [8191, 8192, 8193] {
+            let mut env = Environment::new();
+            env.push_scope();
+            for index in 0..width {
+                env.define(format!("name_{index}"), Value::Int(index));
+            }
+            let owner = Arc::new(Mutex::new(env));
+            let mut pool = CaptureStoragePool::default();
+            let active = Environment::capture_activation_with_pool(&owner, &mut pool);
+            assert!(active.scopes[0].is_empty());
+            assert_eq!(active.binding_kinds[1].is_compact(), width >= 8192);
+            for index in 0..width {
+                assert!(
+                    matches!(active.get(&format!("name_{index}")), Some(Value::Int(value)) if value == index)
+                );
+            }
+            pool.recycle(active);
+            assert!(pool.frames.is_empty(), "retained oversized width {width}");
+            assert_eq!(pool.capacity, 0);
+            assert_eq!(pool.key_bytes, 0);
+        }
     }
 }

@@ -19,6 +19,7 @@
 // Module structure
 pub(crate) mod assignment;
 mod async_runtime;
+mod binding_map;
 mod capabilities;
 mod capture_independence;
 mod control_flow;
