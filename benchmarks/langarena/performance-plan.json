@@ -5273,5 +5273,16 @@
     "wide_dictionary_control_pairs": 384,
     "scope": "Scalar array/dictionary publication through unique mixed-owner prefixes, preserving snapshots, aliases and evaluation order",
     "remaining": "Larger distinct-key/row batches, first-write insertion, nonscalar/shared fallback, broader capture traversal/materialization and later production/platform/clean-host gates"
+  },
+  "row_overflow_isolation_2026_10_28": {
+    "status": "verified_baseline",
+    "runtime_commit": "ca3403dca52d53acbc967a4dc9ff12c08cbd31a4",
+    "report": "ROW_OVERFLOW_ISOLATION_2026_10_28.md",
+    "evidence": "row-overflow-isolation-2026-10-28.json",
+    "allocation_pairs": 288,
+    "semantic_cases": 432,
+    "regression_tests": 3,
+    "regression_combinations": 54,
+    "remaining": "Row overflow storage and profitable loop/explicit admission; preserve snapshots and fallback costs"
   }
 }

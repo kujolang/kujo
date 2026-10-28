@@ -270,6 +270,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   to 5,259 bytes per added call. All 384 target pairs, 512 deep fallback pairs,
   78 diagnostic pairs, 1,216 library tests, 391 release integrations and
   150 test-size checksums pass. Larger batches and broader capture costs remain open.
+- [x] Refresh larger row-batch isolation on `ca3403d`: [verified baseline](ROW_OVERFLOW_ISOLATION_2026_10_28.md)
+  covers 288 allocation pairs, 432 semantic cases and 54 permanent regression
+  combinations. Both loop and explicit writes above four elements retain a
+  261,120-byte per-call width penalty. Overflow storage and admission remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
