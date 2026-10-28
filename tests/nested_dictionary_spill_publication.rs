@@ -15,6 +15,10 @@ while k < 300 { seed[k] = k k += 1 }
 INIT
 seed = null
 export func snapshot() { return state }
+export func straight() {
+STRAIGHT_WRITES
+  return ROW[0]
+}
 export func edit(count) {
   mut j := 0
   while j < count { ROW[j] += 1 j += 1 }
@@ -31,10 +35,14 @@ export func insert() {
   return ROW["01"]
 }
 "#
+        .replace(
+            "STRAIGHT_WRITES",
+            &(0..257).map(|i| format!("ROW[{i}] += 1\n")).collect::<String>(),
+        )
         .replace("INIT", init)
         .replace("ROW", row);
         let main = r#"
-from owner import snapshot, edit, callback, fail, fallback, insert
+from owner import snapshot, edit, callback, fail, fallback, insert, straight
 let original := snapshot()
 for count in [5, 16, 64, 257] {
   let before := snapshot()
@@ -67,6 +75,16 @@ for count in [4, 5, 16, 64, 257] {
     repeat += 1
   }
 }
+let before_straight := snapshot()
+assert_equal(straight(), BEFORE_STRAIGHT[0] + 1)
+let after_straight := snapshot()
+mut straight_index := 0
+while straight_index < 300 {
+  if straight_index < 257 { assert_equal(AFTER_STRAIGHT[straight_index], BEFORE_STRAIGHT[straight_index] + 1) }
+  else { assert_equal(AFTER_STRAIGHT[straight_index], BEFORE_STRAIGHT[straight_index]) }
+  assert_equal(ORIGINAL[straight_index], straight_index)
+  straight_index += 1
+}
 let before_callback := snapshot()
 let observed := callback()
 mut j := 0
@@ -92,6 +110,8 @@ print("NESTED SPILL PASS")
         let mut main = main.to_string();
         // Replace longer tokens first so BEFORE does not consume BEFORE_FAIL.
         for (token, name) in [
+            ("BEFORE_STRAIGHT", "before_straight"),
+            ("AFTER_STRAIGHT", "after_straight"),
             ("BEFORE_CALLBACK", "before_callback"),
             ("BEFORE_INSERT", "before_insert"),
             ("BEFORE_FAIL", "before_fail"),
