@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid repeated wide-leaf copies in captured scalar updates through unique
+  deeper collection paths. Reuse assignment-path storage while preserving
+  snapshots, shared-alias fallback, callbacks, errors and index/root evaluation
+  order.
+
 - Extend proven synchronous nested-dictionary scalar batches beyond four keys
   using sparse overflow storage. Borrow proof inputs and size initial storage
   without cloning unrelated values; preserve snapshots, error ordering, exact

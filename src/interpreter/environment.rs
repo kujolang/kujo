@@ -612,6 +612,20 @@ impl Environment {
         pending.read_string(owner, key)
     }
 
+    pub(crate) fn nested_publication_read_expression<'a>(
+        &self,
+        name: &str,
+        object: &'a crate::ast::Expr,
+        leaf: super::nested_publication::RowKey<'_>,
+        resolve: impl Fn(&'a crate::ast::Expr) -> Option<super::nested_publication::RowKey<'a>>,
+    ) -> Option<Value> {
+        if !self.pending_visible(name) {
+            return None;
+        }
+        let Some((0, CaptureWrites::Nested(pending))) = &self.capture_writes else { return None };
+        pending.read_expression(object, leaf, resolve)
+    }
+
     #[cfg(test)]
     pub(crate) fn try_defer_nested_write(
         &mut self,

@@ -4184,7 +4184,11 @@ impl Interpreter {
             Expr::FieldAccess { object, .. } | Expr::IndexAccess { object, .. } => object,
             _ => return None,
         };
-        let Expr::Identifier(name) = root.as_ref() else { return None };
+        let mut root = root.as_ref();
+        while let Expr::FieldAccess { object, .. } | Expr::IndexAccess { object, .. } = root {
+            root = object;
+        }
+        let Expr::Identifier(name) = root else { return None };
         if !self.env.pending_nested_visible(name) {
             return None;
         }
@@ -4226,6 +4230,32 @@ impl Interpreter {
         self.read_nested_at(object, name, RowKey::Integer(index))
     }
 
+    fn pure_nested_selector<'a>(
+        &'a self,
+        expr: &'a Expr,
+        root: &str,
+    ) -> Option<nested_publication::RowKey<'a>> {
+        use nested_publication::RowKey;
+        match expr {
+            Expr::Int(value) => Some(RowKey::Integer(*value)),
+            Expr::String(value) => Some(RowKey::String(value)),
+            Expr::Identifier(name) if name != root => {
+                match self.env.nested_spill_proof_value(name)? {
+                    Value::Int(value) => Some(RowKey::Integer(*value)),
+                    Value::Str(value) => Some(RowKey::String(value)),
+                    _ => None,
+                }
+            }
+            Expr::UnaryOp { op, operand } if op == "-" => {
+                let RowKey::Integer(value) = self.pure_nested_selector(operand, root)? else {
+                    return None;
+                };
+                Some(RowKey::Integer(value.checked_neg()?))
+            }
+            _ => None,
+        }
+    }
+
     fn read_nested_at(
         &self,
         object: &Expr,
@@ -4233,6 +4263,15 @@ impl Interpreter {
         leaf: nested_publication::RowKey<'_>,
     ) -> Option<Value> {
         use nested_publication::RowKey;
+        let parent = match object {
+            Expr::FieldAccess { object, .. } | Expr::IndexAccess { object, .. } => object.as_ref(),
+            _ => return None,
+        };
+        if !matches!(parent, Expr::Identifier(_)) {
+            return self.env.nested_publication_read_expression(name, object, leaf, |expr| {
+                self.pure_nested_selector(expr, name)
+            });
+        }
         let read = |owner| match leaf {
             RowKey::Integer(index) => self.env.nested_publication_read(name, owner, index),
             RowKey::String(key) => self.env.nested_dictionary_publication_read(name, owner, key),

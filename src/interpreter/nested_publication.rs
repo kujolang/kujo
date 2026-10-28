@@ -315,17 +315,37 @@ impl NestedPublication {
         (resolved >= 0 && (resolved as usize) < length).then_some(resolved as usize)
     }
 
-    fn admission(root: &Value, path: &[Access], value: &Value) -> Option<(usize, Scalar)> {
-        let [first, Access::Index(Value::Int(index))] = path else { return None };
-        let shared_only_with_owner = match root {
-            Value::Struct { fields, .. } => Arc::strong_count(fields) == 2,
-            Value::Dict(map) => Arc::strong_count(map) == 2,
-            Value::Array(rows) => Arc::strong_count(rows) == 2,
-            _ => false,
-        };
-        if !shared_only_with_owner {
+    fn owner_count(value: &Value) -> Option<usize> {
+        match value {
+            Value::Struct { fields, .. } => Some(Arc::strong_count(fields)),
+            Value::Dict(map) => Some(Arc::strong_count(map)),
+            Value::Array(rows) => Some(Arc::strong_count(rows)),
+            _ => None,
+        }
+    }
+
+    /// Only the root is shared with the suspended owner. Every traversed
+    /// intermediate container must be unique; retained aliases keep fallback.
+    fn admission_owner<'a>(
+        root: &'a Value,
+        path: &'a [Access],
+    ) -> Option<(&'a Value, &'a [Access])> {
+        if path.len() < 2 || Self::owner_count(root) != Some(2) {
             return None;
         }
+        let mut owner = root;
+        for access in &path[..path.len() - 2] {
+            owner = RowKey::from_access(access)?.value(owner)?;
+            if Self::owner_count(owner) != Some(1) {
+                return None;
+            }
+        }
+        Some((owner, &path[path.len() - 2..]))
+    }
+
+    fn admission(root: &Value, path: &[Access], value: &Value) -> Option<(usize, Scalar)> {
+        let (root, path) = Self::admission_owner(root, path)?;
+        let [first, Access::Index(Value::Int(index))] = path else { return None };
         let row = RowKey::from_access(first)?.row(root)?;
         if Arc::strong_count(row) != 1 {
             return None;
@@ -338,16 +358,8 @@ impl NestedPublication {
         path: &[Access],
         value: &Value,
     ) -> Option<(Arc<str>, Scalar)> {
+        let (root, path) = Self::admission_owner(root, path)?;
         let [first, Access::Index(index)] = path else { return None };
-        let owner_count = match root {
-            Value::Struct { fields, .. } => Arc::strong_count(fields),
-            Value::Dict(map) => Arc::strong_count(map),
-            Value::Array(rows) => Arc::strong_count(rows),
-            _ => return None,
-        };
-        if owner_count != 2 {
-            return None;
-        }
         let Value::Dict(map) = RowKey::from_access(first)?.value(root)? else { return None };
         if Arc::strong_count(map) != 1 {
             return None;
@@ -374,76 +386,135 @@ impl NestedPublication {
         mut path: Vec<Access>,
         value: &Value,
     ) -> Result<Self, (String, Value, Vec<Access>)> {
-        if let Some((key, value)) = Self::dictionary_admission(&root, &path, value) {
-            let selector = match std::mem::replace(&mut path[0], Access::Index(root)) {
-                Access::Field(field) => Selector::Field(field),
-                Access::Index(Value::Str(key)) => Selector::String(key),
-                Access::Index(Value::Int(key)) => Selector::Integer(key),
-                _ => unreachable!("admitted dictionary owner"),
-            };
-            path[1] = Access::DeferredDictionary(DictionaryWrite::new(selector, key, value));
-            return Ok(Self { name, path });
+        let dictionary = Self::dictionary_admission(&root, &path, value);
+        let row = if dictionary.is_none() { Self::admission(&root, &path, value) } else { None };
+        if dictionary.is_none() && row.is_none() {
+            return Err((name, root, path));
         }
-        let admission = Self::admission(&root, &path, value);
-
-        let Some((index, value)) = admission else { return Err((name, root, path)) };
-        let selector = match std::mem::replace(&mut path[0], Access::Index(root)) {
+        path.pop(); // Leaf key/index is retained in the write metadata.
+        let selector = match path.pop().expect("admitted owner selector") {
             Access::Field(field) => Selector::Field(field),
             Access::Index(Value::Str(key)) => Selector::String(key),
             Access::Index(Value::Int(key)) => Selector::Integer(key),
             _ => unreachable!("admitted selector"),
         };
-        path[1] = Access::DeferredRow(RowWrite {
-            selector,
-            entries: [Some(RowEntry { index, value }), None, None, None],
-        });
+        // Reuse the original allocation: root + prefix + write has the same
+        // length as the resolved assignment path, including for deep owners.
+        path.insert(0, Access::Index(root));
+        let write = if let Some((key, value)) = dictionary {
+            Access::DeferredDictionary(DictionaryWrite::new(selector, key, value))
+        } else {
+            let (index, value) = row.unwrap();
+            Access::DeferredRow(RowWrite {
+                selector,
+                entries: [Some(RowEntry { index, value }), None, None, None],
+            })
+        };
+        path.push(write);
         Ok(Self { name, path })
     }
 
-    fn parts(&self) -> (&Value, &RowWrite) {
-        let [Access::Index(root), Access::DeferredRow(write)] = self.path.as_slice() else {
-            unreachable!("nested publication storage")
-        };
-        (root, write)
+    fn storage(&self) -> (&Value, &[Access], &Access) {
+        let Some((Access::Index(root), rest)) = self.path.split_first() else { unreachable!() };
+        let (write, prefix) = rest.split_last().expect("nested write");
+        (root, prefix, write)
     }
 
     pub(super) fn name(&self) -> &str {
         &self.name
     }
 
+    fn read_at(root: &Value, write: &Access, owner: RowKey<'_>, key: RowKey<'_>) -> Option<Value> {
+        match write {
+            Access::DeferredDictionary(write) => match key {
+                RowKey::Integer(index) => {
+                    with_integer_key(index, |key| write.read(root, owner, key))
+                }
+                RowKey::String(key) => write.read(root, owner, key),
+                _ => None,
+            },
+            Access::DeferredDictionaryMany(write) => match key {
+                RowKey::Integer(index) => {
+                    with_integer_key(index, |key| write.read(root, owner, key))
+                }
+                RowKey::String(key) => write.read(root, owner, key),
+                _ => None,
+            },
+            Access::DeferredRow(write) => {
+                let RowKey::Integer(index) = key else { return None };
+                if !write.selector.key().same(owner, root) {
+                    return None;
+                }
+                let row = write.selector.key().row(root).expect("validated row");
+                Some(match Self::resolve(index, row.len()) {
+                    Some(index) => write
+                        .entries
+                        .iter()
+                        .flatten()
+                        .find(|entry| entry.index == index)
+                        .map_or_else(|| row[index].clone(), |entry| entry.value.value()),
+                    None => Value::Error(format!("Index out of bounds: {index}")),
+                })
+            }
+            _ => unreachable!(),
+        }
+    }
+
     pub(super) fn read(&self, key: RowKey<'_>, index: i64) -> Option<Value> {
-        if let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_slice() {
-            return with_integer_key(index, |index| write.read(root, key, index));
-        }
-        if let [Access::Index(root), Access::DeferredDictionaryMany(write)] = self.path.as_slice() {
-            return with_integer_key(index, |index| write.read(root, key, index));
-        }
-        let (root, write) = self.parts();
-        if !write.selector.key().same(key, root) {
+        let (root, prefix, write) = self.storage();
+        if !prefix.is_empty() {
             return None;
         }
-        let row = write.selector.key().row(root).expect("validated row");
-        Some(match Self::resolve(index, row.len()) {
-            Some(index) => write
-                .entries
-                .iter()
-                .flatten()
-                .find(|entry| entry.index == index)
-                .map_or_else(|| row[index].clone(), |entry| entry.value.value()),
-            None => Value::Error(format!("Index out of bounds: {index}")),
-        })
+        Self::read_at(root, write, key, RowKey::Integer(index))
     }
 
     pub(super) fn read_string(&self, owner: RowKey<'_>, key: &str) -> Option<Value> {
-        match self.path.as_slice() {
-            [Access::Index(root), Access::DeferredDictionary(write)] => {
-                write.read(root, owner, key)
-            }
-            [Access::Index(root), Access::DeferredDictionaryMany(write)] => {
-                write.read(root, owner, key)
-            }
-            _ => None,
+        let (root, prefix, write) = self.storage();
+        if !prefix.is_empty() {
+            return None;
         }
+        Self::read_at(root, write, owner, RowKey::String(key))
+    }
+
+    /// Match only pure selectors against the retained prefix, without creating
+    /// a root snapshot or allocating another path. Effectful syntax falls back.
+    pub(super) fn read_expression<'a>(
+        &self,
+        object: &'a crate::ast::Expr,
+        leaf: RowKey<'_>,
+        resolve: impl Fn(&'a crate::ast::Expr) -> Option<RowKey<'a>>,
+    ) -> Option<Value> {
+        use crate::ast::Expr;
+        fn matches<'a, 'r>(
+            expr: &'a Expr,
+            root: &'r Value,
+            name: &str,
+            prefix: &[Access],
+            resolve: &impl Fn(&'a Expr) -> Option<RowKey<'a>>,
+        ) -> Option<&'r Value> {
+            if prefix.is_empty() {
+                return matches!(expr, Expr::Identifier(n) if n == name).then_some(root);
+            }
+            let (object, key) = match expr {
+                Expr::FieldAccess { object, field } => (object.as_ref(), RowKey::Field(field)),
+                Expr::IndexAccess { object, index } => (object.as_ref(), resolve(index)?),
+                _ => return None,
+            };
+            let owner = matches(object, root, name, &prefix[..prefix.len() - 1], resolve)?;
+            let expected = RowKey::from_access(prefix.last()?)?;
+            if !expected.same(key, owner) {
+                return None;
+            }
+            expected.value(owner)
+        }
+        let (root, prefix, write) = self.storage();
+        let (parent, owner_key) = match object {
+            Expr::FieldAccess { object, field } => (object.as_ref(), RowKey::Field(field)),
+            Expr::IndexAccess { object, index } => (object.as_ref(), resolve(index)?),
+            _ => return None,
+        };
+        let owner = matches(parent, root, &self.name, prefix, &resolve)?;
+        Self::read_at(owner, write, owner_key, leaf)
     }
 
     #[cfg(test)]
@@ -457,9 +528,24 @@ impl NestedPublication {
         value: &Value,
         spill_hint: u16,
     ) -> bool {
-        if let [Access::Index(root), write @ (Access::DeferredDictionary(_) | Access::DeferredDictionaryMany(_))] =
-            self.path.as_mut_slice()
-        {
+        let Some((Access::Index(root), rest)) = self.path.split_first_mut() else { unreachable!() };
+        let (write, prefix) = rest.split_last_mut().expect("nested write");
+        if path.len() != prefix.len() + 2 {
+            return false;
+        }
+        let mut owner: &Value = root;
+        for (stored, actual) in prefix.iter().zip(path.iter()) {
+            let Some(expected) = RowKey::from_access(stored) else { return false };
+            let Some(actual) = RowKey::from_access(actual) else { return false };
+            if !expected.same(actual, owner) {
+                return false;
+            }
+            let Some(child) = expected.value(owner) else { return false };
+            owner = child;
+        }
+        let root = owner;
+        let path = &path[prefix.len()..];
+        if matches!(write, Access::DeferredDictionary(_) | Access::DeferredDictionaryMany(_)) {
             let [first, Access::Index(index)] = path else { return false };
             let Some(owner) = RowKey::from_access(first) else { return false };
             let Some(value) = Scalar::from_value(value) else { return false };
@@ -504,7 +590,7 @@ impl NestedPublication {
         let [first, Access::Index(Value::Int(index))] = path else { return false };
         let Some(key) = RowKey::from_access(first) else { return false };
         let Some(value) = Scalar::from_value(value) else { return false };
-        let (root, write) = self.parts();
+        let Access::DeferredRow(write) = write else { unreachable!() };
         let row = write.selector.key().row(root).expect("validated row");
         if !write.selector.key().same(key, root) {
             return false;
@@ -518,32 +604,50 @@ impl NestedPublication {
             .position(|entry| entry.is_some_and(|entry| entry.index == index))
             .or_else(|| write.entries.iter().position(Option::is_none));
         let Some(slot) = slot else { return false };
-        let Access::DeferredRow(write) = &mut self.path[1] else { unreachable!() };
         write.entries[slot] = Some(RowEntry { index, value });
         true
     }
 
-    pub(super) fn snapshot_value(&self) -> Value {
-        if let [Access::Index(root), Access::DeferredDictionaryMany(write)] = self.path.as_slice() {
-            let mut root = root.clone();
-            write.apply(&mut root);
-            return root;
+    fn apply_path(prefix: &[Access], write: &Access, root: &mut Value) {
+        if let Some((first, rest)) = prefix.split_first() {
+            let child = match (first, root) {
+                (Access::Field(field), Value::Struct { fields, .. }) => {
+                    Arc::make_mut(fields).get_mut(field)
+                }
+                (Access::Index(Value::Str(key)), Value::Dict(map)) => {
+                    Arc::make_mut(map).get_mut(key.as_str())
+                }
+                (Access::Index(Value::Int(key)), Value::Dict(map)) => {
+                    with_integer_key(*key, |key| Arc::make_mut(map).get_mut(key))
+                }
+                (Access::Index(Value::Int(key)), Value::Array(rows)) => {
+                    let index = Self::resolve(*key, rows.len()).expect("validated prefix");
+                    Arc::make_mut(rows).get_mut(index)
+                }
+                _ => unreachable!("validated prefix"),
+            }
+            .expect("validated prefix child");
+            Self::apply_path(rest, write, child);
+            return;
         }
-        if let [Access::Index(root), Access::DeferredDictionary(write)] = self.path.as_slice() {
-            let mut root = root.clone();
-            write.apply(&mut root);
-            return root;
+        match write {
+            Access::DeferredRow(write) => write.apply(root),
+            Access::DeferredDictionary(write) => write.apply(root),
+            Access::DeferredDictionaryMany(write) => write.apply(root),
+            _ => unreachable!("nested publication write"),
         }
+    }
 
-        let (root, write) = self.parts();
+    pub(super) fn snapshot_value(&self) -> Value {
+        let (root, prefix, write) = self.storage();
         let mut root = root.clone();
-        write.apply(&mut root);
+        Self::apply_path(prefix, write, &mut root);
         root
     }
 
     pub(super) fn publish(mut self, owner: Option<&mut Value>) -> (String, Value) {
         let write = self.path.pop().expect("nested write");
-        let Some(Access::Index(mut root)) = self.path.pop() else { unreachable!() };
+        let Access::Index(mut root) = self.path.remove(0) else { unreachable!() };
         if let Some(owner) = owner {
             let same = match (&root, &*owner) {
                 (Value::Dict(a), Value::Dict(b)) => Arc::ptr_eq(a, b),
@@ -555,26 +659,16 @@ impl NestedPublication {
             };
             if same {
                 drop(root);
-                Self::apply_write(&write, owner);
+                Self::apply_path(&self.path, &write, owner);
                 return (self.name, owner.clone());
             }
         }
-        Self::apply_write(&write, &mut root);
+        Self::apply_path(&self.path, &write, &mut root);
         (self.name, root)
     }
 
-    fn apply_write(write: &Access, root: &mut Value) {
-        match write {
-            Access::DeferredRow(write) => write.apply(root),
-            Access::DeferredDictionary(write) => write.apply(root),
-            Access::DeferredDictionaryMany(write) => write.apply(root),
-            _ => unreachable!("nested publication write"),
-        }
-    }
-
     pub(super) fn discard(mut self) -> (String, Value) {
-        self.path.pop();
-        let Some(Access::Index(root)) = self.path.pop() else { unreachable!() };
+        let Access::Index(root) = self.path.remove(0) else { unreachable!() };
         (self.name, root)
     }
 }
@@ -1239,5 +1333,169 @@ mod dictionary_spill_tests {
         let Value::Dict(map) = &rows[0] else { unreachable!() };
         assert_eq!(map.len(), 1);
         assert!(matches!(map.get("0"), Some(Value::Int(0))));
+    }
+}
+
+#[cfg(test)]
+mod deep_tests {
+    use super::*;
+    use crate::ast::{Expr, Stmt};
+    use crate::interpreter::value::DictMap;
+
+    fn leaf(dictionary: bool) -> Value {
+        if dictionary {
+            Value::dict(DictMap::from_iter([
+                (Arc::from("0"), Value::Int(0)),
+                (Arc::from("1"), Value::Int(1)),
+            ]))
+        } else {
+            Value::array(vec![Value::Int(0), Value::Int(1)])
+        }
+    }
+
+    fn inner(leaf: Value) -> Value {
+        Value::array(vec![Value::Struct {
+            name: "Inner".into(),
+            fields: Arc::new(std::collections::HashMap::from([("row".into(), leaf)])),
+        }])
+    }
+
+    fn root(inner: Value) -> Value {
+        Value::dict(DictMap::from_iter([(Arc::from("top"), inner)]))
+    }
+
+    fn path(index: i64) -> Vec<Access> {
+        vec![
+            Access::Index(Value::str_ref("top")),
+            Access::Index(Value::Int(-1)),
+            Access::Field("row".into()),
+            Access::Index(Value::Int(index)),
+        ]
+    }
+
+    fn row(root: &Value) -> &Value {
+        let inner = RowKey::String("top").value(root).unwrap();
+        let object = RowKey::Integer(0).value(inner).unwrap();
+        RowKey::Field("row").value(object).unwrap()
+    }
+
+    fn value(root: &Value, index: i64) -> &Value {
+        RowKey::Integer(index).value(row(root)).unwrap()
+    }
+
+    fn pointer(root: &Value) -> usize {
+        match row(root) {
+            Value::Array(row) => Arc::as_ptr(row) as usize,
+            Value::Dict(map) => Arc::as_ptr(map) as usize,
+            _ => unreachable!(),
+        }
+    }
+
+    fn object(source: &str) -> Expr {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        let Stmt::Return(Some(Expr::IndexAccess { object, .. })) =
+            parsed.stmts.into_iter().next().unwrap()
+        else {
+            panic!("expected indexed return")
+        };
+        *object
+    }
+
+    fn selector(expr: &Expr) -> Option<RowKey<'_>> {
+        match expr {
+            Expr::Int(value) => Some(RowKey::Integer(*value)),
+            Expr::String(value) => Some(RowKey::String(value)),
+            _ => None,
+        }
+    }
+
+    #[test]
+    fn deep_mixed_paths_reuse_storage_and_preserve_snapshots_and_scalar_bits() {
+        for dictionary in [false, true] {
+            let mut owner = root(inner(leaf(dictionary)));
+            let backing = pointer(&owner);
+            let path = path(0);
+            let allocation = path.as_ptr();
+            let capacity = path.capacity();
+            let mut pending =
+                NestedPublication::prepare("state".into(), owner.clone(), path, &Value::Int(42))
+                    .unwrap();
+            assert_eq!(pending.path.as_ptr(), allocation);
+            assert_eq!(pending.path.capacity(), capacity);
+            let object = object("return state[\"top\"][0].row[0]");
+            assert!(matches!(
+                pending.read_expression(&object, RowKey::Integer(0), selector),
+                Some(Value::Int(42))
+            ));
+            let snapshot = pending.snapshot_value();
+            let mut alias_path = super::deep_tests::path(0);
+            alias_path[1] = Access::Index(Value::Int(0));
+            if dictionary {
+                alias_path[3] = Access::Index(Value::str_ref("0"));
+            }
+            assert!(pending.try_record(&alias_path, &Value::Int(100)));
+            let bits = 0xfff8_0000_0000_0042;
+            assert!(pending
+                .try_record(&super::deep_tests::path(1), &Value::Float(f64::from_bits(bits))));
+            assert!(!pending.try_record(&super::deep_tests::path(1), &Value::array(vec![])));
+            assert!(matches!(
+                pending.read_expression(&object, RowKey::Integer(0), selector),
+                Some(Value::Int(100))
+            ));
+            pending.publish(Some(&mut owner));
+            assert_eq!(pointer(&owner), backing);
+            assert!(matches!(value(&owner, 0), Value::Int(100)));
+            assert!(matches!(value(&owner, 1), Value::Float(v) if v.to_bits()==bits));
+            assert!(matches!(value(&snapshot, 0), Value::Int(42)));
+            assert!(matches!(value(&snapshot, 1), Value::Int(1)));
+        }
+    }
+
+    #[test]
+    fn deep_admission_rejects_shared_intermediates_and_leaves() {
+        for dictionary in [false, true] {
+            let retained = inner(leaf(dictionary));
+            let owner = root(retained.clone());
+            assert!(NestedPublication::prepare(
+                "state".into(),
+                owner.clone(),
+                path(0),
+                &Value::Int(9)
+            )
+            .is_err());
+            assert!(matches!(value(&owner, 0), Value::Int(0)));
+            let retained = leaf(dictionary);
+            let owner = root(inner(retained.clone()));
+            assert!(NestedPublication::prepare(
+                "state".into(),
+                owner.clone(),
+                path(0),
+                &Value::Int(9)
+            )
+            .is_err());
+            assert!(matches!(value(&owner, 0), Value::Int(0)));
+        }
+    }
+
+    #[test]
+    fn deep_reads_reject_effectful_or_different_prefixes_and_discard_is_unchanged() {
+        let owner = root(inner(leaf(false)));
+        let pending =
+            NestedPublication::prepare("state".into(), owner.clone(), path(0), &Value::Int(9))
+                .unwrap();
+        for expression in [
+            "return state[\"top\"][callback()].row[0]",
+            "return state[\"other\"][0].row[0]",
+            "return other[\"top\"][0].row[0]",
+        ] {
+            assert!(pending
+                .read_expression(&object(expression), RowKey::Integer(0), selector)
+                .is_none());
+        }
+        let (_, unchanged) = pending.discard();
+        assert_eq!(pointer(&unchanged), pointer(&owner));
+        assert!(matches!(value(&unchanged, 0), Value::Int(0)));
     }
 }
