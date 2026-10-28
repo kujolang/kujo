@@ -45,3 +45,14 @@ shallow paths and escape cases. Verify matching release artifacts and all three
 runtimes before accepting a runtime change. Depth two/four is measurement coverage,
 not a proposed language depth limit. Larger row batches and broader capture costs
 remain separate open work; sections 3/4 are not complete.
+
+## Permanent semantic baseline
+
+`tests/deep_collection_publication.rs` passes on the accepted release in VM,
+interpreter and JIT modes: three test functions, each covering twelve combinations
+of root owner, array/dictionary leaf and path depths 3/6. It preserves original,
+fresh and leaf-alias snapshots, callback visibility, writes preceding an error,
+object-before-index reads and replacement-root writes. The source, matching
+artifact identity, build arguments and passing log are included in the evidence.
+These tests establish behavior before optimization; they do not claim the deeper
+copying cost is fixed.
