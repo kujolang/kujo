@@ -40,6 +40,37 @@ pub(crate) enum Access {
     DeferredDictionaryMany(super::nested_publication::DictionaryManyWrite),
 }
 
+/// Operation-local resolved operands. Keep common paths off the heap without
+/// retaining values between writes; deeper paths have no new length limit.
+pub(crate) enum ResolvedPath {
+    Inline { entries: [Access; 4], len: usize },
+    Heap(Vec<Access>),
+}
+impl ResolvedPath {
+    pub(crate) fn new(len: usize) -> Self {
+        if len <= 4 {
+            Self::Inline { entries: std::array::from_fn(|_| Access::Index(Value::Null)), len }
+        } else {
+            Self::Heap((0..len).map(|_| Access::Index(Value::Null)).collect())
+        }
+    }
+    pub(crate) fn as_mut_slice(&mut self) -> &mut [Access] {
+        match self {
+            Self::Inline { entries, len } => &mut entries[..*len],
+            Self::Heap(entries) => entries,
+        }
+    }
+}
+impl std::ops::Deref for ResolvedPath {
+    type Target = [Access];
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Inline { entries, len } => &entries[..*len],
+            Self::Heap(entries) => entries,
+        }
+    }
+}
+
 // Borrow string keys and format integer keys on the stack. Only insertion of a
 // previously absent key needs owned storage; traversing an assignment does not.
 fn with_dictionary_key<T>(

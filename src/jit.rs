@@ -1592,9 +1592,9 @@ pub unsafe extern "C" fn jit_try_pop_rebind(
             return Ok(None);
         }
         let mut offset = 0;
-        let mut path = Vec::with_capacity(shape.len());
-        for step in shape {
-            path.push(match step {
+        let mut path = crate::interpreter::assignment::ResolvedPath::new(shape.len());
+        for (slot, step) in path.as_mut_slice().iter_mut().zip(shape) {
+            *slot = match step {
                 Some(field) => crate::interpreter::assignment::Access::Field(field.clone()),
                 None => {
                     let index = ctx
@@ -1604,7 +1604,7 @@ pub unsafe extern "C" fn jit_try_pop_rebind(
                     offset += 2;
                     crate::interpreter::assignment::Access::Index(index)
                 }
-            });
+            };
         }
         let key = if argc == 2 {
             Some(
@@ -1852,10 +1852,10 @@ unsafe fn jit_mutate_binding_path(
         let count = shape.iter().filter(|step| step.is_none()).count();
         let operands =
             std::slice::from_raw_parts(operands, (count + if append { 3 } else { 1 }) * 2);
-        let mut path = Vec::with_capacity(shape.len());
+        let mut path = crate::interpreter::assignment::ResolvedPath::new(shape.len());
         let mut offset = 0;
-        for step in shape {
-            path.push(match step {
+        for (slot, step) in path.as_mut_slice().iter_mut().zip(shape) {
+            *slot = match step {
                 Some(field) => crate::interpreter::assignment::Access::Field(field.clone()),
                 None => {
                     let value = ctx
@@ -1865,7 +1865,7 @@ unsafe fn jit_mutate_binding_path(
                     offset += 2;
                     crate::interpreter::assignment::Access::Index(value)
                 }
-            });
+            };
         }
         let concat = append
             && matches!(
@@ -13227,7 +13227,10 @@ mod tests {
 
     #[test]
     fn compiled_nested_writes_release_operands_and_retain_path_metadata() {
-        for repetitions in [8, 128] {
+        for (depth, repetitions) in [2, 4, 5, 8]
+            .into_iter()
+            .flat_map(|depth| [8, 128].into_iter().map(move |repetitions| (depth, repetitions)))
+        {
             let mut compiler = JitCompiler::new().unwrap();
             let mut chunk = BytecodeChunk::new();
             chunk.local_names.push("local".into());
@@ -13238,11 +13241,12 @@ mod tests {
             let zero = chunk.add_constant(Constant::Int(0));
             for _ in 0..repetitions {
                 chunk.emit(OpCode::LoadVar("item".into()));
-                chunk.emit(OpCode::LoadConst(zero));
-                chunk.emit(OpCode::LoadConst(zero));
+                for _ in 0..depth {
+                    chunk.emit(OpCode::LoadConst(zero));
+                }
                 chunk.emit(OpCode::UpdateBindingPath(
                     crate::bytecode::MutationBinding::Local(0),
-                    vec![None, None],
+                    vec![None; depth],
                 ));
                 chunk.emit(OpCode::Pop);
             }
@@ -13250,7 +13254,7 @@ mod tests {
             chunk.emit(OpCode::Return);
             let compiled = compiler.compile_function(&chunk, "nested_owned_write").unwrap();
             drop(chunk);
-            let seed = Value::array(vec![Value::array(vec![Value::Int(0)])]);
+            let seed = (0..depth).fold(Value::Int(0), |inner, _| Value::array(vec![inner]));
             let mut globals = HashMap::from([
                 ("seed".into(), seed.clone()),
                 ("item".into(), Value::Str(Arc::new("new".into()))),
@@ -13270,10 +13274,13 @@ mod tests {
                 "{:?}",
                 context.runtime_error
             );
-            let expected =
-                Value::array(vec![Value::array(vec![Value::Str(Arc::new("new".into()))])]);
+            let expected = (0..depth)
+                .fold(Value::Str(Arc::new("new".into())), |inner, _| Value::array(vec![inner]));
             assert!(Value::equals(&context.take_return_value(context.return_value), &expected));
-            assert!(Value::equals(&seed, &Value::array(vec![Value::array(vec![Value::Int(0)])])));
+            assert!(Value::equals(
+                &seed,
+                &(0..depth).fold(Value::Int(0), |inner, _| Value::array(vec![inner]))
+            ));
             assert!(matches!(caller.as_slice(), [Value::Int(77)]));
             let (_, live, capacity, _) = context.owned_roots.storage_state();
             assert_eq!(live, 0);

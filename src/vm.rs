@@ -2592,6 +2592,51 @@ impl VM {
         })
     }
 
+    /// Consume a resolved write's operands without copying its opcode metadata.
+    /// Short paths live on this call's stack; arbitrary deeper paths keep the
+    /// existing owned storage. No values survive the operation in a reuse pool.
+    fn execute_path_update(&mut self) -> Result<(), String> {
+        use crate::interpreter::assignment::{self, Access};
+        let instruction = &self.chunk.instructions[self.ip];
+        self.ip += 1;
+        let (binding, root, shape) = match instruction {
+            OpCode::UpdateBindingPath(binding, shape) => (Some(binding.clone()), None, shape),
+            OpCode::UpdatePath(shape) => {
+                (None, Some(self.stack.pop().ok_or("Stack underflow")?), shape)
+            }
+            _ => unreachable!("expected assignment path opcode"),
+        };
+        let mut storage = assignment::ResolvedPath::new(shape.len());
+        let path = storage.as_mut_slice();
+        for (slot, access) in path.iter_mut().rev().zip(shape.iter().rev()) {
+            *slot = match access {
+                Some(field) => Access::Field(field.clone()),
+                None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
+            };
+        }
+        let value = self.stack.pop().ok_or("Stack underflow")?;
+        if let Some(binding) = binding {
+            let mut validated = std::mem::take(&mut self.path_depth_valid);
+            let result = self.mutate_binding(&binding, |root| {
+                assignment::update_checked(root, path, value, &mut validated)
+            });
+            self.path_depth_valid = validated;
+            if let Err(error) = result {
+                self.throw_runtime_value(Value::Error(error))?;
+            } else {
+                self.stack.push(Value::Null);
+            }
+        } else {
+            match assignment::update(root.expect("owned path root"), path, value) {
+                Ok(updated) => {
+                    self.push_checked_value(updated, "updating nested assignment")?;
+                }
+                Err(error) => self.throw_runtime_value(Value::Error(error))?,
+            }
+        }
+        Ok(())
+    }
+
     fn execute_dispatch(
         &mut self,
         chunk: BytecodeChunk,
@@ -3157,6 +3202,15 @@ impl VM {
                 }
             }
 
+            // Resolve assignment paths before cloning the opcode: its immutable
+            // shape is needed only while consuming the already-evaluated indices.
+            if matches!(
+                &self.chunk.instructions[self.ip],
+                OpCode::UpdateBindingPath(_, _) | OpCode::UpdatePath(_)
+            ) {
+                self.execute_path_update()?;
+                continue;
+            }
             let instruction = self.chunk.instructions[self.ip].clone();
             self.ip += 1;
 
@@ -5558,51 +5612,8 @@ impl VM {
                     self.stack.push(function);
                 }
 
-                OpCode::UpdateBindingPath(binding, shape) => {
-                    use crate::interpreter::assignment::{self, Access};
-                    let mut path = Vec::with_capacity(shape.len());
-                    for access in shape.into_iter().rev() {
-                        path.push(match access {
-                            Some(field) => Access::Field(field),
-                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
-                        });
-                    }
-                    path.reverse();
-                    let value = self.stack.pop().ok_or("Stack underflow")?;
-                    let mut validated = std::mem::take(&mut self.path_depth_valid);
-                    let result = self.mutate_binding(&binding, |root| {
-                        assignment::update_checked(root, &path, value, &mut validated)
-                    });
-                    self.path_depth_valid = validated;
-                    if let Err(error) = result {
-                        self.throw_runtime_value(Value::Error(error))?;
-                        continue;
-                    }
-                    self.stack.push(Value::Null);
-                }
-
-                OpCode::UpdatePath(shape) => {
-                    use crate::interpreter::assignment::{update, Access};
-                    let root = self.stack.pop().ok_or("Stack underflow")?;
-                    let mut path = Vec::with_capacity(shape.len());
-                    for access in shape.into_iter().rev() {
-                        path.push(match access {
-                            Some(field) => Access::Field(field),
-                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
-                        });
-                    }
-                    path.reverse();
-                    let value = self.stack.pop().ok_or("Stack underflow")?;
-                    match update(root, &path, value) {
-                        Ok(updated) => {
-                            if !self.push_checked_value(updated, "updating nested assignment")? {
-                                continue;
-                            }
-                        }
-                        Err(error) => {
-                            self.throw_runtime_value(Value::Error(error))?;
-                        }
-                    }
+                OpCode::UpdateBindingPath(_, _) | OpCode::UpdatePath(_) => {
+                    unreachable!("assignment paths are handled before opcode cloning")
                 }
 
                 OpCode::FieldSet(field) => {

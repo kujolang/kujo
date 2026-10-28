@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Resolve nested writes from borrowed VM opcode metadata and bounded VM/JIT path storage,
+  preserving deep-path fallback, snapshots and assignment evaluation order.
+
 - Pack oversized captured-local binding names into private compact tables while
   preserving immutable bindings, live owner visibility, snapshots and idle-pool limits.
 
