@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Array-owned row publication (`1c3acd4`).**
+  [Verified results](ARRAY_ROW_PUBLICATION_2026_10_27.md) extend bounded row updates
+  to array roots with positive/negative selector aliases. The target and fallback
+  matrices pass 624 allocation pairs and 936 semantic cases; all 30 diagnostic
+  pairs, 1,192 library tests, 361 integrations and 150 checksums pass. An earlier
+  invalid-index copying regression was rejected and corrected. Deeper paths,
+  larger updates and multiple-key dictionaries remain open; no elapsed-speed claim.
+
 - **Captured dictionary scalar publication (`36b8006`).**
   [Verified results](DICTIONARY_SCALARS_2026_10_27.md) extend the single-key path
   to floats, Booleans, null and mixed scalars without growing capture storage.

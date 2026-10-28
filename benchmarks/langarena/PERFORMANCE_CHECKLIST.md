@@ -202,6 +202,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   integrations and 150 test-size checksums pass. Capture storage layout, snapshots,
   exact float bits and escape behavior are preserved. Multiple-key/nonscalar and
   broader nested costs remain open; this is not an elapsed-speed claim.
+- [x] Extend bounded row publication to array roots (`1c3acd4`), preserving
+  positive/negative selector aliases, shared rows, snapshots and ordinary errors.
+  [Verified results](ARRAY_ROW_PUBLICATION_2026_10_27.md) cover 624 new allocation
+  pairs, 936 semantic cases and 30 diagnostic pairs. All 1,192 library tests,
+  361 release integrations, prior controls and 150 test-size checksums pass.
+  An earlier eight-case speculative-copy regression was reproduced and corrected;
+  larger batches, deeper paths and multiple-key dictionaries remain open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The

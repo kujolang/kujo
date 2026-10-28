@@ -5113,5 +5113,20 @@
       "Nested dictionaries",
       "Larger/dense updates and broader capture materialization"
     ]
+  },
+  "array_row_publication_verification_2026_10_27": {
+    "runtime_commit": "1c3acd427571f1e4964d61991944809af1b7a5ab",
+    "status": "verified",
+    "report": "ARRAY_ROW_PUBLICATION_2026_10_27.md",
+    "evidence": "array-row-publication-2026-10-27.json",
+    "library_passes": 1192,
+    "integration_passes": 361,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 624,
+    "target_semantic_cases": 936,
+    "diagnostic_pairs": 30,
+    "rejected_regression_cases": 8,
+    "scope": "Bounded scalar writes to array-owned rows; selector aliases, snapshots and fallback preserved.",
+    "remaining": "Multiple-key/nested dictionaries, deeper/larger collections, general captures and later full-plan gates remain open; no clean-host speed claim."
   }
 }
