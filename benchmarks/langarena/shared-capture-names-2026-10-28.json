@@ -1,0 +1,2359 @@
+{
+  "status": "component_measured_design_rejected",
+  "baseline_runtime_commit": "ca3403dca52d53acbc967a4dc9ff12c08cbd31a4",
+  "initial": {
+    "status": "component_analysis",
+    "identity": {
+      "status": "component_measured",
+      "source_sha256": "3a27d1ee6496c302ab7219c52ad19d5979c5fe57a84d8cb6d364f048aff09036",
+      "binary_sha256": "71672229533188add7256c69d5fed05906f1c918e4568ccf37e6451e360c0622",
+      "library_sha256": "222630a69c69f1dba64e3bbd18a2a50f664ceea78107743a32cddb1ff1cc202c",
+      "limitation": "Component map construction/clone only; no runtime integration or speed claim"
+    },
+    "source": "use std::alloc::{GlobalAlloc, Layout, System};\nuse std::collections::HashMap;\nuse std::sync::Arc;\nuse std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};\nuse kujo::interpreter::BindingKind;\nstatic TRACK: AtomicBool = AtomicBool::new(false);\nstatic REQUESTS: AtomicU64 = AtomicU64::new(0);\nstatic BYTES: AtomicU64 = AtomicU64::new(0);\nstruct Counter;\nunsafe impl GlobalAlloc for Counter {\n    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {\n        if TRACK.load(Relaxed) { REQUESTS.fetch_add(1, Relaxed); BYTES.fetch_add(layout.size() as u64, Relaxed); }\n        unsafe { System.alloc(layout) }\n    }\n    unsafe fn dealloc(&self, p: *mut u8, layout: Layout) { unsafe { System.dealloc(p, layout) } }\n    unsafe fn realloc(&self, p: *mut u8, old: Layout, size: usize) -> *mut u8 {\n        if TRACK.load(Relaxed) { REQUESTS.fetch_add(1, Relaxed); BYTES.fetch_add(size as u64, Relaxed); }\n        unsafe { System.realloc(p, old, size) }\n    }\n}\n#[global_allocator] static ALLOCATOR: Counter = Counter;\nfn measure<T>(make: impl FnOnce() -> T) -> (T, u64, u64) {\n    REQUESTS.store(0, Relaxed); BYTES.store(0, Relaxed); TRACK.store(true, Relaxed);\n    let result = make();\n    TRACK.store(false, Relaxed);\n    (result, REQUESTS.load(Relaxed), BYTES.load(Relaxed))\n}\nfn main() {\n    println!(\"width,name_length,phase,string_requests,string_bytes,shared_requests,shared_bytes\");\n    for width in [0,128,8192,16384] {\n        for length in [16,64,1024] {\n            let names:Vec<String>=(0..width).map(|i|format!(\"{i:016}{}\",\"x\".repeat(length-16))).collect();\n            let (mut owned, sr, sb)=measure(|| {\n                let mut map=HashMap::with_capacity(width);\n                for name in &names {map.insert(name.clone(),BindingKind::Mutable);}\n                map\n            });\n            let (mut shared, ar, ab)=measure(|| {\n                let mut map:HashMap<Arc<str>,BindingKind>=HashMap::with_capacity(width);\n                for name in &names {map.insert(Arc::from(name.as_str()),BindingKind::Mutable);}\n                map\n            });\n            println!(\"{width},{length},owner,{sr},{sb},{ar},{ab}\");\n            let (private,sr,sb)=measure(||owned.clone());\n            let (view,ar,ab)=measure(||shared.clone());\n            println!(\"{width},{length},invocation,{sr},{sb},{ar},{ab}\");\n            assert_eq!(private.len(),view.len());\n            for name in &names {assert_eq!(private.get(name),view.get(name.as_str()));}\n            if let Some(first)=names.first() {\n                owned.remove(first); shared.remove(first.as_str());\n                assert_eq!(private.get(first),Some(&BindingKind::Mutable));\n                assert_eq!(view.get(first.as_str()),Some(&BindingKind::Mutable));\n            }\n            owned.insert(\"later\".into(),BindingKind::LetImmutable);\n            shared.insert(Arc::from(\"later\"),BindingKind::LetImmutable);\n            assert!(!private.contains_key(\"later\"));assert!(!view.contains_key(\"later\"));\n        }\n    }\n}\n",
+    "build_arguments": [
+      "rustc",
+      "-C",
+      "lto=thin",
+      "--edition=2021",
+      "-O",
+      "-L",
+      "dependency=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps",
+      "--extern",
+      "aes_gcm=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libaes_gcm-2ab2706586152c9e.rlib",
+      "--extern",
+      "ahash=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libahash-b75245b976539b39.rlib",
+      "--extern",
+      "apple_native_keyring_store=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libapple_native_keyring_store-e5351213c490d95d.rlib",
+      "--extern",
+      "base64=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbase64-8e87c92b0946842b.rlib",
+      "--extern",
+      "bcrypt=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbcrypt-1111a51efa76349d.rlib",
+      "--extern",
+      "cap_fs_ext=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_fs_ext-6fc57b184c6845e1.rlib",
+      "--extern",
+      "cap_std=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_std-f97677e4e6a5f89c.rlib",
+      "--extern",
+      "chrono=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono-bd5ccb9626420b81.rlib",
+      "--extern",
+      "chrono_tz=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono_tz-ac9dffcb2e488341.rlib",
+      "--extern",
+      "clap=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libclap-7f9d751eac796737.rlib",
+      "--extern",
+      "colored=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcolored-c92ebfcbe099e541.rlib",
+      "--extern",
+      "cranelift=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift-5756ee1eed26f847.rlib",
+      "--extern",
+      "cranelift_jit=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_jit-4724975a77cf9efc.rlib",
+      "--extern",
+      "cranelift_module=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_module-60bad6d23a074cae.rlib",
+      "--extern",
+      "cranelift_native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_native-67f9c27102087ccd.rlib",
+      "--extern",
+      "csv=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcsv-25ecc0488748f56d.rlib",
+      "--extern",
+      "encoding_rs=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libencoding_rs-0103a4daeaee0077.rlib",
+      "--extern",
+      "flate2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libflate2-e48e592b108c4411.rlib",
+      "--extern",
+      "fs2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfs2-9771b11ce1a1e220.rlib",
+      "--extern",
+      "futures=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfutures-0d71f0b47c062bf8.rlib",
+      "--extern",
+      "hickory_resolver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhickory_resolver-25fa97cb1a314266.rlib",
+      "--extern",
+      "hmac=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhmac-d5dd8b8b85cd36f5.rlib",
+      "--extern",
+      "html5ever=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhtml5ever-80fde4336fa94362.rlib",
+      "--extern",
+      "image=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libimage-721c8778debd4960.rlib",
+      "--extern",
+      "infer=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libinfer-1849901695e59a6e.rlib",
+      "--extern",
+      "jsonwebtoken=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libjsonwebtoken-465689346ef8322b.rlib",
+      "--extern",
+      "keyring_core=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libkeyring_core-d3004045a19788e1.rlib",
+      "--extern",
+      "kujo=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/deep-publication-v1-2026-10-28/candidate-library/libkujo-0204a58eed7d01d2.rlib",
+      "--extern",
+      "libc=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblibc-415b7ce05b7e3ac7.rlib",
+      "--extern",
+      "lopdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblopdf-c5cff0a01179d6c5.rlib",
+      "--extern",
+      "md5=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmd5-2b4196c48871519a.rlib",
+      "--extern",
+      "mime_guess=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmime_guess-7a1568df10637618.rlib",
+      "--extern",
+      "mysql_async=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmysql_async-359dbfabce40fa5c.rlib",
+      "--extern",
+      "nohash_hasher=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libnohash_hasher-bf387be57d227e83.rlib",
+      "--extern",
+      "once_cell=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libonce_cell-8a52b48ae836a14e.rlib",
+      "--extern",
+      "openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libopenssl-e8c6b1622dc1cee2.rlib",
+      "--extern",
+      "postgres=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres-fe2a6c60c0e4fefd.rlib",
+      "--extern",
+      "postgres_openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres_openssl-1c715c9f27412bdb.rlib",
+      "--extern",
+      "printpdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libprintpdf-b8173921e07e6296.rlib",
+      "--extern",
+      "quick_xml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libquick_xml-ddb5d78e20a9a80a.rlib",
+      "--extern",
+      "rand=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librand-ea3601f6f1a75437.rlib",
+      "--extern",
+      "rayon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librayon-e17fec4b663fc259.rlib",
+      "--extern",
+      "regex=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libregex-f9d54fccf949bd42.rlib",
+      "--extern",
+      "reqwest=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libreqwest-3ddca67589400784.rlib",
+      "--extern",
+      "rpassword=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librpassword-d7d98d242374475f.rlib",
+      "--extern",
+      "rusqlite=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librusqlite-4926f7c74f2d562b.rlib",
+      "--extern",
+      "rustyline=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librustyline-1b0ef2e76591f5f0.rlib",
+      "--extern",
+      "same_file=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsame_file-ee560b9f08aa9e43.rlib",
+      "--extern",
+      "semver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsemver-ed908d032fe42e98.rlib",
+      "--extern",
+      "serde=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde-fb1f3b1f20f2aaad.rlib",
+      "--extern",
+      "serde_json=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde_json-4da7eb7415a056dd.rlib",
+      "--extern",
+      "sha2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsha2-b18d88aa1b17b980.rlib",
+      "--extern",
+      "socket2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsocket2-6ddac4ddc5f7f8f2.rlib",
+      "--extern",
+      "stacker=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libstacker-92848d2b910e9a3b.rlib",
+      "--extern",
+      "tar=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtar-3ba6bc29b862712a.rlib",
+      "--extern",
+      "target_lexicon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtarget_lexicon-28aaef7589df97f7.rlib",
+      "--extern",
+      "tempfile=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtempfile-ca5bfd3a5e81fcb3.rlib",
+      "--extern",
+      "tiny_http=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtiny_http-efd852aaee20dfe5.rlib",
+      "--extern",
+      "tokio=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio-f415931db4c038a6.rlib",
+      "--extern",
+      "tokio_stream=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_stream-7bb23fd72f9130f1.rlib",
+      "--extern",
+      "tokio_util=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_util-58857219264f427a.rlib",
+      "--extern",
+      "toml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtoml-167196d6b2e93042.rlib",
+      "--extern",
+      "url=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburl-3cac95566145e72f.rlib",
+      "--extern",
+      "urlencoding=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburlencoding-9c319db2231f81df.rlib",
+      "--extern",
+      "uuid=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libuuid-0f6bc019fb4b8393.rlib",
+      "--extern",
+      "serde_yaml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libyaml_serde-a7a42f667bdff968.rlib",
+      "--extern",
+      "zip=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libzip-a3f66da6d5a1b9de.rlib",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/ring-5e132bc13ea204bb/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/aws-lc-sys-f076ac421db8c715/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/openssl-sys-391d27b958f9be75/out/openssl-build/install/lib",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/libsqlite3-sys-a083a4fe69a406e9/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/psm-5b3f39ba70b73d3e/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/zstd-sys-ded86d63bfaa5dc4/out",
+      "--extern",
+      "kujo=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/deep-publication-v1-2026-10-28/candidate-library/libkujo-0204a58eed7d01d2.rlib",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/shared-capture-names-2026-10-28/probe.rs",
+      "-o",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/shared-capture-names-2026-10-28/probe"
+    ],
+    "rows": [
+      {
+        "width": 0,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 10512,
+        "shared_requests": 129,
+        "shared_bytes": 10512
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 10512,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 16656,
+        "shared_requests": 129,
+        "shared_bytes": 16656
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 16656,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 139536,
+        "shared_requests": 129,
+        "shared_bytes": 139536
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 139536,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 671760,
+        "shared_requests": 8193,
+        "shared_bytes": 671760
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 671760,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 1064976,
+        "shared_requests": 8193,
+        "shared_bytes": 1064976
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 1064976,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 8929296,
+        "shared_requests": 8193,
+        "shared_bytes": 8929296
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 8929296,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 1343504,
+        "shared_requests": 16385,
+        "shared_bytes": 1343504
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 1343504,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 2129936,
+        "shared_requests": 16385,
+        "shared_bytes": 2129936
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 2129936,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 17858576,
+        "shared_requests": 16385,
+        "shared_bytes": 17858576
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 17858576,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      }
+    ],
+    "groups": [
+      {
+        "width": 0,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 4096,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 10240,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 133120,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 262144,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 655360,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 8519680,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 524288,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 1310720,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 17039360,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      }
+    ],
+    "cold_regressions": [
+
+    ],
+    "decision": "No component cold-byte regression; runtime integration still unproven",
+    "limitations": [
+      "Component map storage only, not actual Environment activation",
+      "Full runtime semantics, layout, concurrency and retention not tested",
+      "Allocation traffic only, no time or retained-memory claim"
+    ]
+  },
+  "boundaries": {
+    "status": "component_analysis",
+    "identity": {
+      "status": "component_measured",
+      "source_sha256": "0496faca55d51c6f34a3e77d731c9236b35f10ddebfcdee5ba88e0c7310420fc",
+      "binary_sha256": "16fe36a3982c4176dcd9f965c27203207a581b806c52119fef97a72f196d96fc",
+      "library_sha256": "222630a69c69f1dba64e3bbd18a2a50f664ceea78107743a32cddb1ff1cc202c",
+      "limitation": "Component boundary map construction/clone only; no runtime integration or speed claim"
+    },
+    "source": "use std::alloc::{GlobalAlloc, Layout, System};\nuse std::collections::HashMap;\nuse std::sync::Arc;\nuse std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};\nuse kujo::interpreter::BindingKind;\nstatic TRACK: AtomicBool = AtomicBool::new(false);\nstatic REQUESTS: AtomicU64 = AtomicU64::new(0);\nstatic BYTES: AtomicU64 = AtomicU64::new(0);\nstruct Counter;\nunsafe impl GlobalAlloc for Counter {\n    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {\n        if TRACK.load(Relaxed) { REQUESTS.fetch_add(1, Relaxed); BYTES.fetch_add(layout.size() as u64, Relaxed); }\n        unsafe { System.alloc(layout) }\n    }\n    unsafe fn dealloc(&self, p: *mut u8, layout: Layout) { unsafe { System.dealloc(p, layout) } }\n    unsafe fn realloc(&self, p: *mut u8, old: Layout, size: usize) -> *mut u8 {\n        if TRACK.load(Relaxed) { REQUESTS.fetch_add(1, Relaxed); BYTES.fetch_add(size as u64, Relaxed); }\n        unsafe { System.realloc(p, old, size) }\n    }\n}\n#[global_allocator] static ALLOCATOR: Counter = Counter;\nfn measure<T>(make: impl FnOnce() -> T) -> (T, u64, u64) {\n    REQUESTS.store(0, Relaxed); BYTES.store(0, Relaxed); TRACK.store(true, Relaxed);\n    let result = make();\n    TRACK.store(false, Relaxed);\n    (result, REQUESTS.load(Relaxed), BYTES.load(Relaxed))\n}\nfn main() {\n    println!(\"width,name_length,phase,string_requests,string_bytes,shared_requests,shared_bytes\");\n    for width in [0,1,3,128,129,2048,8191,8192,8193,12288,16384] {\n        for length in [16,17,64,65,1024] {\n            let names:Vec<String>=(0..width).map(|i|format!(\"{i:016}{}\",\"x\".repeat(length-16))).collect();\n            let (mut owned, sr, sb)=measure(|| {\n                let mut map=HashMap::with_capacity(width);\n                for name in &names {map.insert(name.clone(),BindingKind::Mutable);}\n                map\n            });\n            let (mut shared, ar, ab)=measure(|| {\n                let mut map:HashMap<Arc<str>,BindingKind>=HashMap::with_capacity(width);\n                for name in &names {map.insert(Arc::from(name.as_str()),BindingKind::Mutable);}\n                map\n            });\n            println!(\"{width},{length},owner,{sr},{sb},{ar},{ab}\");\n            let (private,sr,sb)=measure(||owned.clone());\n            let (view,ar,ab)=measure(||shared.clone());\n            println!(\"{width},{length},invocation,{sr},{sb},{ar},{ab}\");\n            assert_eq!(private.len(),view.len());\n            for name in &names {assert_eq!(private.get(name),view.get(name.as_str()));}\n            if let Some(first)=names.first() {\n                owned.remove(first); shared.remove(first.as_str());\n                assert_eq!(private.get(first),Some(&BindingKind::Mutable));\n                assert_eq!(view.get(first.as_str()),Some(&BindingKind::Mutable));\n            }\n            owned.insert(\"later\".into(),BindingKind::LetImmutable);\n            shared.insert(Arc::from(\"later\"),BindingKind::LetImmutable);\n            assert!(!private.contains_key(\"later\"));assert!(!view.contains_key(\"later\"));\n        }\n    }\n}\n",
+    "build_arguments": [
+      "rustc",
+      "-C",
+      "lto=thin",
+      "--edition=2021",
+      "-O",
+      "-L",
+      "dependency=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps",
+      "--extern",
+      "aes_gcm=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libaes_gcm-2ab2706586152c9e.rlib",
+      "--extern",
+      "ahash=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libahash-b75245b976539b39.rlib",
+      "--extern",
+      "apple_native_keyring_store=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libapple_native_keyring_store-e5351213c490d95d.rlib",
+      "--extern",
+      "base64=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbase64-8e87c92b0946842b.rlib",
+      "--extern",
+      "bcrypt=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libbcrypt-1111a51efa76349d.rlib",
+      "--extern",
+      "cap_fs_ext=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_fs_ext-6fc57b184c6845e1.rlib",
+      "--extern",
+      "cap_std=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcap_std-f97677e4e6a5f89c.rlib",
+      "--extern",
+      "chrono=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono-bd5ccb9626420b81.rlib",
+      "--extern",
+      "chrono_tz=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libchrono_tz-ac9dffcb2e488341.rlib",
+      "--extern",
+      "clap=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libclap-7f9d751eac796737.rlib",
+      "--extern",
+      "colored=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcolored-c92ebfcbe099e541.rlib",
+      "--extern",
+      "cranelift=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift-5756ee1eed26f847.rlib",
+      "--extern",
+      "cranelift_jit=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_jit-4724975a77cf9efc.rlib",
+      "--extern",
+      "cranelift_module=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_module-60bad6d23a074cae.rlib",
+      "--extern",
+      "cranelift_native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcranelift_native-67f9c27102087ccd.rlib",
+      "--extern",
+      "csv=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libcsv-25ecc0488748f56d.rlib",
+      "--extern",
+      "encoding_rs=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libencoding_rs-0103a4daeaee0077.rlib",
+      "--extern",
+      "flate2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libflate2-e48e592b108c4411.rlib",
+      "--extern",
+      "fs2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfs2-9771b11ce1a1e220.rlib",
+      "--extern",
+      "futures=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libfutures-0d71f0b47c062bf8.rlib",
+      "--extern",
+      "hickory_resolver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhickory_resolver-25fa97cb1a314266.rlib",
+      "--extern",
+      "hmac=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhmac-d5dd8b8b85cd36f5.rlib",
+      "--extern",
+      "html5ever=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libhtml5ever-80fde4336fa94362.rlib",
+      "--extern",
+      "image=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libimage-721c8778debd4960.rlib",
+      "--extern",
+      "infer=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libinfer-1849901695e59a6e.rlib",
+      "--extern",
+      "jsonwebtoken=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libjsonwebtoken-465689346ef8322b.rlib",
+      "--extern",
+      "keyring_core=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libkeyring_core-d3004045a19788e1.rlib",
+      "--extern",
+      "kujo=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/deep-publication-v1-2026-10-28/candidate-library/libkujo-0204a58eed7d01d2.rlib",
+      "--extern",
+      "libc=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblibc-415b7ce05b7e3ac7.rlib",
+      "--extern",
+      "lopdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liblopdf-c5cff0a01179d6c5.rlib",
+      "--extern",
+      "md5=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmd5-2b4196c48871519a.rlib",
+      "--extern",
+      "mime_guess=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmime_guess-7a1568df10637618.rlib",
+      "--extern",
+      "mysql_async=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libmysql_async-359dbfabce40fa5c.rlib",
+      "--extern",
+      "nohash_hasher=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libnohash_hasher-bf387be57d227e83.rlib",
+      "--extern",
+      "once_cell=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libonce_cell-8a52b48ae836a14e.rlib",
+      "--extern",
+      "openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libopenssl-e8c6b1622dc1cee2.rlib",
+      "--extern",
+      "postgres=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres-fe2a6c60c0e4fefd.rlib",
+      "--extern",
+      "postgres_openssl=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libpostgres_openssl-1c715c9f27412bdb.rlib",
+      "--extern",
+      "printpdf=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libprintpdf-b8173921e07e6296.rlib",
+      "--extern",
+      "quick_xml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libquick_xml-ddb5d78e20a9a80a.rlib",
+      "--extern",
+      "rand=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librand-ea3601f6f1a75437.rlib",
+      "--extern",
+      "rayon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librayon-e17fec4b663fc259.rlib",
+      "--extern",
+      "regex=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libregex-f9d54fccf949bd42.rlib",
+      "--extern",
+      "reqwest=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libreqwest-3ddca67589400784.rlib",
+      "--extern",
+      "rpassword=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librpassword-d7d98d242374475f.rlib",
+      "--extern",
+      "rusqlite=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librusqlite-4926f7c74f2d562b.rlib",
+      "--extern",
+      "rustyline=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/librustyline-1b0ef2e76591f5f0.rlib",
+      "--extern",
+      "same_file=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsame_file-ee560b9f08aa9e43.rlib",
+      "--extern",
+      "semver=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsemver-ed908d032fe42e98.rlib",
+      "--extern",
+      "serde=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde-fb1f3b1f20f2aaad.rlib",
+      "--extern",
+      "serde_json=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libserde_json-4da7eb7415a056dd.rlib",
+      "--extern",
+      "sha2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsha2-b18d88aa1b17b980.rlib",
+      "--extern",
+      "socket2=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libsocket2-6ddac4ddc5f7f8f2.rlib",
+      "--extern",
+      "stacker=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libstacker-92848d2b910e9a3b.rlib",
+      "--extern",
+      "tar=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtar-3ba6bc29b862712a.rlib",
+      "--extern",
+      "target_lexicon=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtarget_lexicon-28aaef7589df97f7.rlib",
+      "--extern",
+      "tempfile=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtempfile-ca5bfd3a5e81fcb3.rlib",
+      "--extern",
+      "tiny_http=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtiny_http-efd852aaee20dfe5.rlib",
+      "--extern",
+      "tokio=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio-f415931db4c038a6.rlib",
+      "--extern",
+      "tokio_stream=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_stream-7bb23fd72f9130f1.rlib",
+      "--extern",
+      "tokio_util=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtokio_util-58857219264f427a.rlib",
+      "--extern",
+      "toml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libtoml-167196d6b2e93042.rlib",
+      "--extern",
+      "url=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburl-3cac95566145e72f.rlib",
+      "--extern",
+      "urlencoding=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/liburlencoding-9c319db2231f81df.rlib",
+      "--extern",
+      "uuid=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libuuid-0f6bc019fb4b8393.rlib",
+      "--extern",
+      "serde_yaml=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libyaml_serde-a7a42f667bdff968.rlib",
+      "--extern",
+      "zip=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/deps/libzip-a3f66da6d5a1b9de.rlib",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/ring-5e132bc13ea204bb/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/aws-lc-sys-f076ac421db8c715/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/openssl-sys-391d27b958f9be75/out/openssl-build/install/lib",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/libsqlite3-sys-a083a4fe69a406e9/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/psm-5b3f39ba70b73d3e/out",
+      "-L",
+      "native=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/build/zstd-sys-ded86d63bfaa5dc4/out",
+      "--extern",
+      "kujo=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/deep-publication-v1-2026-10-28/candidate-library/libkujo-0204a58eed7d01d2.rlib",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/shared-capture-names-boundaries-2026-10-28/probe.rs",
+      "-o",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/shared-capture-names-boundaries-2026-10-28/probe"
+    ],
+    "rows": [
+      {
+        "width": 0,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 0,
+        "string_bytes": 0,
+        "shared_requests": 0,
+        "shared_bytes": 0
+      },
+      {
+        "width": 1,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 2,
+        "string_bytes": 164,
+        "shared_requests": 2,
+        "shared_bytes": 148
+      },
+      {
+        "width": 1,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 2,
+        "string_bytes": 164,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 1,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 2,
+        "string_bytes": 165,
+        "shared_requests": 2,
+        "shared_bytes": 156
+      },
+      {
+        "width": 1,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 2,
+        "string_bytes": 165,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 1,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 2,
+        "string_bytes": 212,
+        "shared_requests": 2,
+        "shared_bytes": 196
+      },
+      {
+        "width": 1,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 2,
+        "string_bytes": 212,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 1,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 2,
+        "string_bytes": 213,
+        "shared_requests": 2,
+        "shared_bytes": 204
+      },
+      {
+        "width": 1,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 2,
+        "string_bytes": 213,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 1,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 2,
+        "string_bytes": 1172,
+        "shared_requests": 2,
+        "shared_bytes": 1156
+      },
+      {
+        "width": 1,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 2,
+        "string_bytes": 1172,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 3,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 4,
+        "string_bytes": 196,
+        "shared_requests": 4,
+        "shared_bytes": 212
+      },
+      {
+        "width": 3,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 4,
+        "string_bytes": 196,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 3,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 4,
+        "string_bytes": 199,
+        "shared_requests": 4,
+        "shared_bytes": 236
+      },
+      {
+        "width": 3,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 4,
+        "string_bytes": 199,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 3,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 4,
+        "string_bytes": 340,
+        "shared_requests": 4,
+        "shared_bytes": 356
+      },
+      {
+        "width": 3,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 4,
+        "string_bytes": 340,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 3,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 4,
+        "string_bytes": 343,
+        "shared_requests": 4,
+        "shared_bytes": 380
+      },
+      {
+        "width": 3,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 4,
+        "string_bytes": 343,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 3,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 4,
+        "string_bytes": 3220,
+        "shared_requests": 4,
+        "shared_bytes": 3236
+      },
+      {
+        "width": 3,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 4,
+        "string_bytes": 3220,
+        "shared_requests": 1,
+        "shared_bytes": 116
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 10512,
+        "shared_requests": 129,
+        "shared_bytes": 10512
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 10512,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 10640,
+        "shared_requests": 129,
+        "shared_bytes": 11536
+      },
+      {
+        "width": 128,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 10640,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 16656,
+        "shared_requests": 129,
+        "shared_bytes": 16656
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 16656,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 16784,
+        "shared_requests": 129,
+        "shared_bytes": 17680
+      },
+      {
+        "width": 128,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 16784,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 129,
+        "string_bytes": 139536,
+        "shared_requests": 129,
+        "shared_bytes": 139536
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 129,
+        "string_bytes": 139536,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 129,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 130,
+        "string_bytes": 10528,
+        "shared_requests": 130,
+        "shared_bytes": 10544
+      },
+      {
+        "width": 129,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 130,
+        "string_bytes": 10528,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 129,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 130,
+        "string_bytes": 10657,
+        "shared_requests": 130,
+        "shared_bytes": 11576
+      },
+      {
+        "width": 129,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 130,
+        "string_bytes": 10657,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 129,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 130,
+        "string_bytes": 16720,
+        "shared_requests": 130,
+        "shared_bytes": 16736
+      },
+      {
+        "width": 129,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 130,
+        "string_bytes": 16720,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 129,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 130,
+        "string_bytes": 16849,
+        "shared_requests": 130,
+        "shared_bytes": 17768
+      },
+      {
+        "width": 129,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 130,
+        "string_bytes": 16849,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 129,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 130,
+        "string_bytes": 140560,
+        "shared_requests": 130,
+        "shared_bytes": 140576
+      },
+      {
+        "width": 129,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 130,
+        "string_bytes": 140560,
+        "shared_requests": 1,
+        "shared_bytes": 6416
+      },
+      {
+        "width": 2048,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 2049,
+        "string_bytes": 167952,
+        "shared_requests": 2049,
+        "shared_bytes": 167952
+      },
+      {
+        "width": 2048,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 2049,
+        "string_bytes": 167952,
+        "shared_requests": 1,
+        "shared_bytes": 102416
+      },
+      {
+        "width": 2048,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 2049,
+        "string_bytes": 170000,
+        "shared_requests": 2049,
+        "shared_bytes": 184336
+      },
+      {
+        "width": 2048,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 2049,
+        "string_bytes": 170000,
+        "shared_requests": 1,
+        "shared_bytes": 102416
+      },
+      {
+        "width": 2048,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 2049,
+        "string_bytes": 266256,
+        "shared_requests": 2049,
+        "shared_bytes": 266256
+      },
+      {
+        "width": 2048,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 2049,
+        "string_bytes": 266256,
+        "shared_requests": 1,
+        "shared_bytes": 102416
+      },
+      {
+        "width": 2048,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 2049,
+        "string_bytes": 268304,
+        "shared_requests": 2049,
+        "shared_bytes": 282640
+      },
+      {
+        "width": 2048,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 2049,
+        "string_bytes": 268304,
+        "shared_requests": 1,
+        "shared_bytes": 102416
+      },
+      {
+        "width": 2048,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 2049,
+        "string_bytes": 2232336,
+        "shared_requests": 2049,
+        "shared_bytes": 2232336
+      },
+      {
+        "width": 2048,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 2049,
+        "string_bytes": 2232336,
+        "shared_requests": 1,
+        "shared_bytes": 102416
+      },
+      {
+        "width": 8191,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 8192,
+        "string_bytes": 671744,
+        "shared_requests": 8192,
+        "shared_bytes": 671728
+      },
+      {
+        "width": 8191,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 8192,
+        "string_bytes": 671744,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8191,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 8192,
+        "string_bytes": 679935,
+        "shared_requests": 8192,
+        "shared_bytes": 737256
+      },
+      {
+        "width": 8191,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 8192,
+        "string_bytes": 679935,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8191,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 8192,
+        "string_bytes": 1064912,
+        "shared_requests": 8192,
+        "shared_bytes": 1064896
+      },
+      {
+        "width": 8191,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 8192,
+        "string_bytes": 1064912,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8191,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 8192,
+        "string_bytes": 1073103,
+        "shared_requests": 8192,
+        "shared_bytes": 1130424
+      },
+      {
+        "width": 8191,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 8192,
+        "string_bytes": 1073103,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8191,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 8192,
+        "string_bytes": 8928272,
+        "shared_requests": 8192,
+        "shared_bytes": 8928256
+      },
+      {
+        "width": 8191,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 8192,
+        "string_bytes": 8928272,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 671760,
+        "shared_requests": 8193,
+        "shared_bytes": 671760
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 671760,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 679952,
+        "shared_requests": 8193,
+        "shared_bytes": 737296
+      },
+      {
+        "width": 8192,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 679952,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 1064976,
+        "shared_requests": 8193,
+        "shared_bytes": 1064976
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 1064976,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 1073168,
+        "shared_requests": 8193,
+        "shared_bytes": 1130512
+      },
+      {
+        "width": 8192,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 1073168,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 8193,
+        "string_bytes": 8929296,
+        "shared_requests": 8193,
+        "shared_bytes": 8929296
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 8193,
+        "string_bytes": 8929296,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8193,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 8194,
+        "string_bytes": 671776,
+        "shared_requests": 8194,
+        "shared_bytes": 671792
+      },
+      {
+        "width": 8193,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 8194,
+        "string_bytes": 671776,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8193,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 8194,
+        "string_bytes": 679969,
+        "shared_requests": 8194,
+        "shared_bytes": 737336
+      },
+      {
+        "width": 8193,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 8194,
+        "string_bytes": 679969,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8193,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 8194,
+        "string_bytes": 1065040,
+        "shared_requests": 8194,
+        "shared_bytes": 1065056
+      },
+      {
+        "width": 8193,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 8194,
+        "string_bytes": 1065040,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8193,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 8194,
+        "string_bytes": 1073233,
+        "shared_requests": 8194,
+        "shared_bytes": 1130600
+      },
+      {
+        "width": 8193,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 8194,
+        "string_bytes": 1073233,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 8193,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 8194,
+        "string_bytes": 8930320,
+        "shared_requests": 8194,
+        "shared_bytes": 8930336
+      },
+      {
+        "width": 8193,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 8194,
+        "string_bytes": 8930320,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 12288,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 12289,
+        "string_bytes": 737296,
+        "shared_requests": 12289,
+        "shared_bytes": 802832
+      },
+      {
+        "width": 12288,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 12289,
+        "string_bytes": 737296,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 12288,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 12289,
+        "string_bytes": 749584,
+        "shared_requests": 12289,
+        "shared_bytes": 901136
+      },
+      {
+        "width": 12288,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 12289,
+        "string_bytes": 749584,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 12288,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 12289,
+        "string_bytes": 1327120,
+        "shared_requests": 12289,
+        "shared_bytes": 1392656
+      },
+      {
+        "width": 12288,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 12289,
+        "string_bytes": 1327120,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 12288,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 12289,
+        "string_bytes": 1339408,
+        "shared_requests": 12289,
+        "shared_bytes": 1490960
+      },
+      {
+        "width": 12288,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 12289,
+        "string_bytes": 1339408,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 12288,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 12289,
+        "string_bytes": 13123600,
+        "shared_requests": 12289,
+        "shared_bytes": 13189136
+      },
+      {
+        "width": 12288,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 12289,
+        "string_bytes": 13123600,
+        "shared_requests": 1,
+        "shared_bytes": 409616
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 1343504,
+        "shared_requests": 16385,
+        "shared_bytes": 1343504
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 1343504,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 17,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 1359888,
+        "shared_requests": 16385,
+        "shared_bytes": 1474576
+      },
+      {
+        "width": 16384,
+        "name_length": 17,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 1359888,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 2129936,
+        "shared_requests": 16385,
+        "shared_bytes": 2129936
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 2129936,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 65,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 2146320,
+        "shared_requests": 16385,
+        "shared_bytes": 2261008
+      },
+      {
+        "width": 16384,
+        "name_length": 65,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 2146320,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "phase": "owner",
+        "string_requests": 16385,
+        "string_bytes": 17858576,
+        "shared_requests": 16385,
+        "shared_bytes": 17858576
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "phase": "invocation",
+        "string_requests": 16385,
+        "string_bytes": 17858576,
+        "shared_requests": 1,
+        "shared_bytes": 819216
+      }
+    ],
+    "groups": [
+      {
+        "width": 0,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 17,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 65,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 0,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 0,
+        "invocation_request_reduction": 0,
+        "calls_to_amortize_cold_bytes": null
+      },
+      {
+        "width": 1,
+        "name_length": 16,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 48,
+        "invocation_request_reduction": 1,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 1,
+        "name_length": 17,
+        "cold_byte_delta": -9,
+        "invocation_byte_reduction": 49,
+        "invocation_request_reduction": 1,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 1,
+        "name_length": 64,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 96,
+        "invocation_request_reduction": 1,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 1,
+        "name_length": 65,
+        "cold_byte_delta": -9,
+        "invocation_byte_reduction": 97,
+        "invocation_request_reduction": 1,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 1,
+        "name_length": 1024,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 1056,
+        "invocation_request_reduction": 1,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 3,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 80,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 17,
+        "cold_byte_delta": 37,
+        "invocation_byte_reduction": 83,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 224,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 65,
+        "cold_byte_delta": 37,
+        "invocation_byte_reduction": 227,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 3104,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 128,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 4096,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 128,
+        "name_length": 17,
+        "cold_byte_delta": 896,
+        "invocation_byte_reduction": 4224,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 128,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 10240,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 128,
+        "name_length": 65,
+        "cold_byte_delta": 896,
+        "invocation_byte_reduction": 10368,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 128,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 133120,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 129,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 4112,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 17,
+        "cold_byte_delta": 919,
+        "invocation_byte_reduction": 4241,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 10304,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 65,
+        "cold_byte_delta": 919,
+        "invocation_byte_reduction": 10433,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 134144,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 2048,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 65536,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 2048,
+        "name_length": 17,
+        "cold_byte_delta": 14336,
+        "invocation_byte_reduction": 67584,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 2048,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 163840,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 2048,
+        "name_length": 65,
+        "cold_byte_delta": 14336,
+        "invocation_byte_reduction": 165888,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 2048,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 2129920,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8191,
+        "name_length": 16,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 262128,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8191,
+        "name_length": 17,
+        "cold_byte_delta": 57321,
+        "invocation_byte_reduction": 270319,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8191,
+        "name_length": 64,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 655296,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8191,
+        "name_length": 65,
+        "cold_byte_delta": 57321,
+        "invocation_byte_reduction": 663487,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8191,
+        "name_length": 1024,
+        "cold_byte_delta": -16,
+        "invocation_byte_reduction": 8518656,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 262144,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 17,
+        "cold_byte_delta": 57344,
+        "invocation_byte_reduction": 270336,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8192,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 655360,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8192,
+        "name_length": 65,
+        "cold_byte_delta": 57344,
+        "invocation_byte_reduction": 663552,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8192,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 8519680,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 8193,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 262160,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 17,
+        "cold_byte_delta": 57367,
+        "invocation_byte_reduction": 270353,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 655424,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 65,
+        "cold_byte_delta": 57367,
+        "invocation_byte_reduction": 663617,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 8520704,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 16,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 327680,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 17,
+        "cold_byte_delta": 151552,
+        "invocation_byte_reduction": 339968,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 64,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 917504,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 65,
+        "cold_byte_delta": 151552,
+        "invocation_byte_reduction": 929792,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 1024,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 12713984,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 16384,
+        "name_length": 16,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 524288,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 16384,
+        "name_length": 17,
+        "cold_byte_delta": 114688,
+        "invocation_byte_reduction": 540672,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 16384,
+        "name_length": 64,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 1310720,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      },
+      {
+        "width": 16384,
+        "name_length": 65,
+        "cold_byte_delta": 114688,
+        "invocation_byte_reduction": 1327104,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 16384,
+        "name_length": 1024,
+        "cold_byte_delta": 0,
+        "invocation_byte_reduction": 17039360,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 0
+      }
+    ],
+    "cold_regressions": [
+      {
+        "width": 3,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 80,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 17,
+        "cold_byte_delta": 37,
+        "invocation_byte_reduction": 83,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 224,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 65,
+        "cold_byte_delta": 37,
+        "invocation_byte_reduction": 227,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 3,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 3104,
+        "invocation_request_reduction": 3,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 128,
+        "name_length": 17,
+        "cold_byte_delta": 896,
+        "invocation_byte_reduction": 4224,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 128,
+        "name_length": 65,
+        "cold_byte_delta": 896,
+        "invocation_byte_reduction": 10368,
+        "invocation_request_reduction": 128,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 4112,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 17,
+        "cold_byte_delta": 919,
+        "invocation_byte_reduction": 4241,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 10304,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 65,
+        "cold_byte_delta": 919,
+        "invocation_byte_reduction": 10433,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 129,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 134144,
+        "invocation_request_reduction": 129,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 2048,
+        "name_length": 17,
+        "cold_byte_delta": 14336,
+        "invocation_byte_reduction": 67584,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 2048,
+        "name_length": 65,
+        "cold_byte_delta": 14336,
+        "invocation_byte_reduction": 165888,
+        "invocation_request_reduction": 2048,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8191,
+        "name_length": 17,
+        "cold_byte_delta": 57321,
+        "invocation_byte_reduction": 270319,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8191,
+        "name_length": 65,
+        "cold_byte_delta": 57321,
+        "invocation_byte_reduction": 663487,
+        "invocation_request_reduction": 8191,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8192,
+        "name_length": 17,
+        "cold_byte_delta": 57344,
+        "invocation_byte_reduction": 270336,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8192,
+        "name_length": 65,
+        "cold_byte_delta": 57344,
+        "invocation_byte_reduction": 663552,
+        "invocation_request_reduction": 8192,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 16,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 262160,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 17,
+        "cold_byte_delta": 57367,
+        "invocation_byte_reduction": 270353,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 64,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 655424,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 65,
+        "cold_byte_delta": 57367,
+        "invocation_byte_reduction": 663617,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 8193,
+        "name_length": 1024,
+        "cold_byte_delta": 16,
+        "invocation_byte_reduction": 8520704,
+        "invocation_request_reduction": 8193,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 16,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 327680,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 17,
+        "cold_byte_delta": 151552,
+        "invocation_byte_reduction": 339968,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 64,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 917504,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 65,
+        "cold_byte_delta": 151552,
+        "invocation_byte_reduction": 929792,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 12288,
+        "name_length": 1024,
+        "cold_byte_delta": 65536,
+        "invocation_byte_reduction": 12713984,
+        "invocation_request_reduction": 12288,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 16384,
+        "name_length": 17,
+        "cold_byte_delta": 114688,
+        "invocation_byte_reduction": 540672,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 1
+      },
+      {
+        "width": 16384,
+        "name_length": 65,
+        "cold_byte_delta": 114688,
+        "invocation_byte_reduction": 1327104,
+        "invocation_request_reduction": 16384,
+        "calls_to_amortize_cold_bytes": 1
+      }
+    ],
+    "decision": "Unconditional replacement rejected by cold-allocation control; seek an ownership design that avoids the cold penalty",
+    "limitations": [
+      "Component map storage only, not actual Environment activation",
+      "Full runtime semantics, layout, concurrency and retention not tested",
+      "Allocation traffic only, no time or retained-memory claim"
+    ]
+  },
+  "analysis_source": "require 'csv';require 'json';require 'digest'\nd=File.expand_path(__dir__)\ni=JSON.parse(File.read(d+'/identity.json'));raise 'Unmeasured' unless i['status']=='component_measured'\nraise 'Source drift' unless i['source_sha256']==Digest::SHA256.file(d+'/probe.rs').hexdigest\nraise 'Binary drift' unless i['binary_sha256']==Digest::SHA256.file(d+'/probe').hexdigest\nrows=CSV.read(d+'/results.csv',headers:true).map{|r|r.to_h.transform_values.with_index{|v,index|index==2 ? v : Integer(v)}}\nexpected=[0,1,3,128,129,2048,8191,8192,8193,12288,16384].product([16,17,64,65,1024],%w[owner invocation])\nraise 'Coverage mismatch' unless rows.map{|r|r.values_at('width','name_length','phase')}.sort==expected.sort\nraise 'Negative allocation' unless rows.all?{|r|r.reject{|k,_|k=='phase'}.values.all?{|v|v>=0}}\ngroups=rows.group_by{|r|r.values_at('width','name_length')}.map do |key,rs|\n owner=rs.find{|r|r['phase']=='owner'};call=rs.find{|r|r['phase']=='invocation'}\n penalty=owner['shared_bytes']-owner['string_bytes'];saving=call['string_bytes']-call['shared_bytes']\n {width:key[0],name_length:key[1],cold_byte_delta:penalty,invocation_byte_reduction:saving,invocation_request_reduction:call['string_requests']-call['shared_requests'],calls_to_amortize_cold_bytes:saving>0 ? [(penalty.to_f/saving).ceil,0].max : nil}\nend\ncold_regressions=groups.select{|r|r[:cold_byte_delta]>0}\nresult={status:'component_analysis',identity:i,source:File.read(d+'/probe.rs'),build_arguments:JSON.parse(File.read(d+'/build-lto-argv.json')),rows:rows,groups:groups,cold_regressions:cold_regressions,decision:cold_regressions.empty? ? 'No component cold-byte regression; runtime integration still unproven' : 'Unconditional replacement rejected by cold-allocation control; seek an ownership design that avoids the cold penalty',limitations:['Component map storage only, not actual Environment activation','Full runtime semantics, layout, concurrency and retention not tested','Allocation traffic only, no time or retained-memory claim']}\nFile.write(d+'/analysis.json',JSON.pretty_generate(result)+\"\\n\")\nputs result[:decision]\nputs JSON.pretty_generate(groups.select{|x|x[:width]==8192})\n",
+  "initial_raw_csv": "width,name_length,phase,string_requests,string_bytes,shared_requests,shared_bytes\n0,16,owner,0,0,0,0\n0,16,invocation,0,0,0,0\n0,64,owner,0,0,0,0\n0,64,invocation,0,0,0,0\n0,1024,owner,0,0,0,0\n0,1024,invocation,0,0,0,0\n128,16,owner,129,10512,129,10512\n128,16,invocation,129,10512,1,6416\n128,64,owner,129,16656,129,16656\n128,64,invocation,129,16656,1,6416\n128,1024,owner,129,139536,129,139536\n128,1024,invocation,129,139536,1,6416\n8192,16,owner,8193,671760,8193,671760\n8192,16,invocation,8193,671760,1,409616\n8192,64,owner,8193,1064976,8193,1064976\n8192,64,invocation,8193,1064976,1,409616\n8192,1024,owner,8193,8929296,8193,8929296\n8192,1024,invocation,8193,8929296,1,409616\n16384,16,owner,16385,1343504,16385,1343504\n16384,16,invocation,16385,1343504,1,819216\n16384,64,owner,16385,2129936,16385,2129936\n16384,64,invocation,16385,2129936,1,819216\n16384,1024,owner,16385,17858576,16385,17858576\n16384,1024,invocation,16385,17858576,1,819216\n",
+  "boundary_raw_csv": "width,name_length,phase,string_requests,string_bytes,shared_requests,shared_bytes\n0,16,owner,0,0,0,0\n0,16,invocation,0,0,0,0\n0,17,owner,0,0,0,0\n0,17,invocation,0,0,0,0\n0,64,owner,0,0,0,0\n0,64,invocation,0,0,0,0\n0,65,owner,0,0,0,0\n0,65,invocation,0,0,0,0\n0,1024,owner,0,0,0,0\n0,1024,invocation,0,0,0,0\n1,16,owner,2,164,2,148\n1,16,invocation,2,164,1,116\n1,17,owner,2,165,2,156\n1,17,invocation,2,165,1,116\n1,64,owner,2,212,2,196\n1,64,invocation,2,212,1,116\n1,65,owner,2,213,2,204\n1,65,invocation,2,213,1,116\n1,1024,owner,2,1172,2,1156\n1,1024,invocation,2,1172,1,116\n3,16,owner,4,196,4,212\n3,16,invocation,4,196,1,116\n3,17,owner,4,199,4,236\n3,17,invocation,4,199,1,116\n3,64,owner,4,340,4,356\n3,64,invocation,4,340,1,116\n3,65,owner,4,343,4,380\n3,65,invocation,4,343,1,116\n3,1024,owner,4,3220,4,3236\n3,1024,invocation,4,3220,1,116\n128,16,owner,129,10512,129,10512\n128,16,invocation,129,10512,1,6416\n128,17,owner,129,10640,129,11536\n128,17,invocation,129,10640,1,6416\n128,64,owner,129,16656,129,16656\n128,64,invocation,129,16656,1,6416\n128,65,owner,129,16784,129,17680\n128,65,invocation,129,16784,1,6416\n128,1024,owner,129,139536,129,139536\n128,1024,invocation,129,139536,1,6416\n129,16,owner,130,10528,130,10544\n129,16,invocation,130,10528,1,6416\n129,17,owner,130,10657,130,11576\n129,17,invocation,130,10657,1,6416\n129,64,owner,130,16720,130,16736\n129,64,invocation,130,16720,1,6416\n129,65,owner,130,16849,130,17768\n129,65,invocation,130,16849,1,6416\n129,1024,owner,130,140560,130,140576\n129,1024,invocation,130,140560,1,6416\n2048,16,owner,2049,167952,2049,167952\n2048,16,invocation,2049,167952,1,102416\n2048,17,owner,2049,170000,2049,184336\n2048,17,invocation,2049,170000,1,102416\n2048,64,owner,2049,266256,2049,266256\n2048,64,invocation,2049,266256,1,102416\n2048,65,owner,2049,268304,2049,282640\n2048,65,invocation,2049,268304,1,102416\n2048,1024,owner,2049,2232336,2049,2232336\n2048,1024,invocation,2049,2232336,1,102416\n8191,16,owner,8192,671744,8192,671728\n8191,16,invocation,8192,671744,1,409616\n8191,17,owner,8192,679935,8192,737256\n8191,17,invocation,8192,679935,1,409616\n8191,64,owner,8192,1064912,8192,1064896\n8191,64,invocation,8192,1064912,1,409616\n8191,65,owner,8192,1073103,8192,1130424\n8191,65,invocation,8192,1073103,1,409616\n8191,1024,owner,8192,8928272,8192,8928256\n8191,1024,invocation,8192,8928272,1,409616\n8192,16,owner,8193,671760,8193,671760\n8192,16,invocation,8193,671760,1,409616\n8192,17,owner,8193,679952,8193,737296\n8192,17,invocation,8193,679952,1,409616\n8192,64,owner,8193,1064976,8193,1064976\n8192,64,invocation,8193,1064976,1,409616\n8192,65,owner,8193,1073168,8193,1130512\n8192,65,invocation,8193,1073168,1,409616\n8192,1024,owner,8193,8929296,8193,8929296\n8192,1024,invocation,8193,8929296,1,409616\n8193,16,owner,8194,671776,8194,671792\n8193,16,invocation,8194,671776,1,409616\n8193,17,owner,8194,679969,8194,737336\n8193,17,invocation,8194,679969,1,409616\n8193,64,owner,8194,1065040,8194,1065056\n8193,64,invocation,8194,1065040,1,409616\n8193,65,owner,8194,1073233,8194,1130600\n8193,65,invocation,8194,1073233,1,409616\n8193,1024,owner,8194,8930320,8194,8930336\n8193,1024,invocation,8194,8930320,1,409616\n12288,16,owner,12289,737296,12289,802832\n12288,16,invocation,12289,737296,1,409616\n12288,17,owner,12289,749584,12289,901136\n12288,17,invocation,12289,749584,1,409616\n12288,64,owner,12289,1327120,12289,1392656\n12288,64,invocation,12289,1327120,1,409616\n12288,65,owner,12289,1339408,12289,1490960\n12288,65,invocation,12289,1339408,1,409616\n12288,1024,owner,12289,13123600,12289,13189136\n12288,1024,invocation,12289,13123600,1,409616\n16384,16,owner,16385,1343504,16385,1343504\n16384,16,invocation,16385,1343504,1,819216\n16384,17,owner,16385,1359888,16385,1474576\n16384,17,invocation,16385,1359888,1,819216\n16384,64,owner,16385,2129936,16385,2129936\n16384,64,invocation,16385,2129936,1,819216\n16384,65,owner,16385,2146320,16385,2261008\n16384,65,invocation,16385,2146320,1,819216\n16384,1024,owner,16385,17858576,16385,17858576\n16384,1024,invocation,16385,17858576,1,819216\n",
+  "analysis_log": "Unconditional replacement rejected by cold-allocation control; seek an ownership design that avoids the cold penalty\n[\n  {\n    \"width\": 8192,\n    \"name_length\": 16,\n    \"cold_byte_delta\": 0,\n    \"invocation_byte_reduction\": 262144,\n    \"invocation_request_reduction\": 8192,\n    \"calls_to_amortize_cold_bytes\": 0\n  },\n  {\n    \"width\": 8192,\n    \"name_length\": 17,\n    \"cold_byte_delta\": 57344,\n    \"invocation_byte_reduction\": 270336,\n    \"invocation_request_reduction\": 8192,\n    \"calls_to_amortize_cold_bytes\": 1\n  },\n  {\n    \"width\": 8192,\n    \"name_length\": 64,\n    \"cold_byte_delta\": 0,\n    \"invocation_byte_reduction\": 655360,\n    \"invocation_request_reduction\": 8192,\n    \"calls_to_amortize_cold_bytes\": 0\n  },\n  {\n    \"width\": 8192,\n    \"name_length\": 65,\n    \"cold_byte_delta\": 57344,\n    \"invocation_byte_reduction\": 663552,\n    \"invocation_request_reduction\": 8192,\n    \"calls_to_amortize_cold_bytes\": 1\n  },\n  {\n    \"width\": 8192,\n    \"name_length\": 1024,\n    \"cold_byte_delta\": 0,\n    \"invocation_byte_reduction\": 8519680,\n    \"invocation_request_reduction\": 8192,\n    \"calls_to_amortize_cold_bytes\": 0\n  }\n]\n",
+  "decision": "Do not unconditionally replace String binding-kind keys with Arc<str>; repeated-call savings do not erase cold-owner regressions",
+  "scope": "No runtime source change; this narrows section-3 representation design, not runtime acceptance"
+}
