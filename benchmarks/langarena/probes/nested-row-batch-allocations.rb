@@ -3,12 +3,14 @@ require 'json'
 require 'digest'
 require 'fileutils'
 require 'open3'
-abort 'Expected BASE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 4
+abort 'Expected BASE_PROBE CANDIDATE_PROBE CANDIDATE_BINARY NEW_OUTPUT_DIR [improvement|control]' unless [4, 5].include?(ARGV.size)
+target = ARGV.size == 5 ? ARGV.pop : 'improvement'
+raise 'Unknown target mode' unless %w[improvement control].include?(target)
 baseline, candidate, binary, output = ARGV.map { |p| File.expand_path(p) }
 raise 'Output exists' if File.exist?(output)
 [baseline, candidate, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }
 FileUtils.mkdir_p(output)
-report = {status: 'running', runner_sha256: Digest::SHA256.file(__FILE__).hexdigest,
+report = {status: 'running', target: target, runner_sha256: Digest::SHA256.file(__FILE__).hexdigest,
           artifacts: [baseline, candidate, binary].to_h { |p| [p, Digest::SHA256.file(p).hexdigest] },
           rows: [], semantics: [], sources: {}}
 save = -> { File.write(output + '/report.json', JSON.pretty_generate(report) + "\n") }
@@ -63,7 +65,7 @@ begin
       [version, %i[requests bytes].to_h { |metric| [metric, (b[version][metric] - a[version][metric]) / 16.0] }]
     end
     %i[requests bytes].each { |metric| raise "Added-call regression #{key}" if values[:candidate][metric] > values[:baseline][metric] }
-    if key[1] >= 128 && (2..4).cover?(key[2]) && key[3] == 'once'
+    if target == 'improvement' && key[1] >= 128 && (2..4).cover?(key[2]) && key[3] == 'once'
       raise "Missing target improvement #{key}" unless values[:candidate][:bytes] < values[:baseline][:bytes]
     end
     {shape: key[0], width: key[1], writes: key[2], snapshots: key[3], mode: key[4], **values}

@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Extend deferred captured-dictionary writes to floats, Booleans, null and mixed
+  scalar types, avoiding repeated full-dictionary copies for one existing key.
+  Preserve snapshots, exact floating-point bits, callbacks, error ordering and
+  fallback for other keys or collection values without growing capture storage.
+
 - Retain up to four distinct scalar writes to one captured struct/dictionary
   array row without copying the row on each helper call. Preserve snapshots,
   publication ordering and fallback for larger batches. Checked negative-index

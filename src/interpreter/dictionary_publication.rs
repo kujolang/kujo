@@ -16,19 +16,57 @@ pub(super) fn with_integer_key<T>(index: i64, lookup: impl FnOnce(&str) -> T) ->
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct DictionaryPublication {
+pub(super) struct DictionaryPublication<T = i64> {
     name: Box<str>,
     base: Arc<DictMap>,
     key: Arc<str>,
-    value: i64,
+    value: T,
 }
 
-impl DictionaryPublication {
+// The kind belongs to CaptureWrites' existing discriminant, not this payload.
+// Keeping each value concrete avoids growing every captured call frame.
+pub(super) trait DictionaryScalar: Copy + std::fmt::Debug {
+    fn into_value(self) -> Value;
+}
+
+impl DictionaryScalar for i64 {
+    fn into_value(self) -> Value {
+        Value::Int(self)
+    }
+}
+impl DictionaryScalar for f64 {
+    fn into_value(self) -> Value {
+        Value::Float(self)
+    }
+}
+impl DictionaryScalar for bool {
+    fn into_value(self) -> Value {
+        Value::Bool(self)
+    }
+}
+impl DictionaryScalar for () {
+    fn into_value(self) -> Value {
+        Value::Null
+    }
+}
+
+impl DictionaryPublication<i64> {
     pub(super) fn prepare(
         name: String,
         base: Arc<DictMap>,
         key: &str,
         value: i64,
+    ) -> Result<Self, (String, Arc<DictMap>)> {
+        Self::prepare_scalar(name, base, key, value)
+    }
+}
+
+impl<T: DictionaryScalar> DictionaryPublication<T> {
+    pub(super) fn prepare_scalar(
+        name: String,
+        base: Arc<DictMap>,
+        key: &str,
+        value: T,
     ) -> Result<Self, (String, Arc<DictMap>)> {
         if name.capacity() != name.len() {
             return Err((name, base));
@@ -44,13 +82,22 @@ impl DictionaryPublication {
 
     pub(super) fn get(&self, key: &str) -> Option<Value> {
         if key == self.key.as_ref() {
-            Some(Value::Int(self.value))
+            Some(self.value.into_value())
         } else {
             self.base.get(key).cloned()
         }
     }
 
-    pub(super) fn try_record(&mut self, key: &str, value: i64) -> bool {
+    pub(super) fn matches_key(&self, key: &str) -> bool {
+        key == self.key.as_ref()
+    }
+
+    pub(super) fn with_value<U: DictionaryScalar>(self, value: U) -> DictionaryPublication<U> {
+        DictionaryPublication { name: self.name, base: self.base, key: self.key, value }
+    }
+
+    #[cfg(test)]
+    pub(super) fn try_record(&mut self, key: &str, value: T) -> bool {
         if key != self.key.as_ref() {
             return false;
         }
@@ -58,9 +105,9 @@ impl DictionaryPublication {
         true
     }
 
-    fn apply(base: &mut Arc<DictMap>, key: &str, value: i64) {
+    fn apply(base: &mut Arc<DictMap>, key: &str, value: T) {
         *Arc::make_mut(base).get_mut(key).expect("admitted existing dictionary key") =
-            Value::Int(value);
+            value.into_value();
     }
 
     pub(super) fn snapshot_value(&self) -> Value {
@@ -90,6 +137,42 @@ impl DictionaryPublication {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scalar_type_changes_move_storage_without_canonicalizing_float_bits() {
+        let base = original();
+        let mut owner = Value::Dict(base.clone());
+        let pending =
+            DictionaryPublication::prepare("state".into(), base, "key", i64::MIN).unwrap();
+        let pointers = (pending.name.as_ptr(), Arc::as_ptr(&pending.base), pending.key.as_ptr());
+        let pending = pending.with_value(f64::from_bits(0xfff8_0000_0000_0042));
+        let Some(Value::Float(value)) = pending.get("key") else { panic!() };
+        assert_eq!(value.to_bits(), 0xfff8_0000_0000_0042);
+        let pending = pending.with_value(-0.0_f64);
+        let snapshot = pending.snapshot_value();
+        let pending = pending.with_value(false);
+        assert!(matches!(pending.get("key"), Some(Value::Bool(false))));
+        let pending = pending.with_value(());
+        assert!(matches!(pending.get("key"), Some(Value::Null)));
+        assert!(pending.get("missing").is_none());
+        let pending = pending.with_value(i64::MAX);
+        assert_eq!(
+            pointers,
+            (pending.name.as_ptr(), Arc::as_ptr(&pending.base), pending.key.as_ptr())
+        );
+        let (_, result) = pending.publish(Some(&mut owner));
+        assert!(matches!(result.dictionary_get("key"), Some(Value::Int(i64::MAX))));
+        let Some(Value::Float(value)) = snapshot.dictionary_get("key") else { panic!() };
+        assert_eq!(value.to_bits(), (-0.0_f64).to_bits());
+    }
+
+    #[test]
+    fn scalar_payloads_fit_existing_storage() {
+        let original = std::mem::size_of::<DictionaryPublication>();
+        assert!(std::mem::size_of::<DictionaryPublication<f64>>() <= original);
+        assert!(std::mem::size_of::<DictionaryPublication<bool>>() <= original);
+        assert!(std::mem::size_of::<DictionaryPublication<()>>() <= original);
+    }
 
     #[test]
     fn integer_keys_use_canonical_decimal_at_both_limits() {

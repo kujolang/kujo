@@ -3,6 +3,7 @@
 // Lexical scoping environment for variable management in the Kujo interpreter.
 // Implements a stack of scopes where inner scopes shadow outer scopes.
 
+use super::dictionary_publication::{DictionaryPublication, DictionaryScalar};
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, Weak};
@@ -53,7 +54,10 @@ enum CaptureWrites {
     One((usize, String)),
     Many(HashSet<(usize, String)>),
     Indexed(super::indexed_publication::IndexedPublication),
-    Dictionary(super::dictionary_publication::DictionaryPublication),
+    Dictionary(DictionaryPublication),
+    DictionaryFloat(DictionaryPublication<f64>),
+    DictionaryBool(DictionaryPublication<bool>),
+    DictionaryNull(DictionaryPublication<()>),
     Nested(super::nested_publication::NestedPublication),
 }
 
@@ -81,7 +85,7 @@ fn indexed_publication_candidate_fits_capture_storage_layout() {
         One((usize, String)),
         Many(HashSet<(usize, String)>),
         Indexed(super::indexed_publication::IndexedPublication),
-        Dictionary(super::dictionary_publication::DictionaryPublication),
+        Dictionary(DictionaryPublication),
         Nested(super::nested_publication::NestedPublication),
     }
     assert_eq!(std::mem::size_of::<CaptureWrites>(), std::mem::size_of::<WithNestedCandidate>());
@@ -93,6 +97,70 @@ fn indexed_publication_candidate_fits_capture_storage_layout() {
 }
 
 impl CaptureWrites {
+    fn dictionary_get(&self, key: &str) -> Option<Value> {
+        match self {
+            Self::Dictionary(pending) => pending.get(key),
+            Self::DictionaryFloat(pending) => pending.get(key),
+            Self::DictionaryBool(pending) => pending.get(key),
+            Self::DictionaryNull(pending) => pending.get(key),
+            _ => None,
+        }
+    }
+
+    fn dictionary_matches_key(&self, key: &str) -> bool {
+        match self {
+            Self::Dictionary(pending) => pending.matches_key(key),
+            Self::DictionaryFloat(pending) => pending.matches_key(key),
+            Self::DictionaryBool(pending) => pending.matches_key(key),
+            Self::DictionaryNull(pending) => pending.matches_key(key),
+            _ => false,
+        }
+    }
+
+    fn prepare_dictionary(
+        name: String,
+        base: Arc<super::value::DictMap>,
+        key: &str,
+        value: &Value,
+    ) -> Result<Self, (String, Arc<super::value::DictMap>)> {
+        match value {
+            Value::Int(value) => {
+                DictionaryPublication::prepare(name, base, key, *value).map(Self::Dictionary)
+            }
+            Value::Float(value) => DictionaryPublication::prepare_scalar(name, base, key, *value)
+                .map(Self::DictionaryFloat),
+            Value::Bool(value) => DictionaryPublication::prepare_scalar(name, base, key, *value)
+                .map(Self::DictionaryBool),
+            Value::Null => {
+                DictionaryPublication::prepare_scalar(name, base, key, ()).map(Self::DictionaryNull)
+            }
+            _ => Err((name, base)),
+        }
+    }
+
+    fn replace_dictionary_value<T: DictionaryScalar>(
+        pending: DictionaryPublication<T>,
+        value: &Value,
+    ) -> Self {
+        match value {
+            Value::Int(value) => Self::Dictionary(pending.with_value(*value)),
+            Value::Float(value) => Self::DictionaryFloat(pending.with_value(*value)),
+            Value::Bool(value) => Self::DictionaryBool(pending.with_value(*value)),
+            Value::Null => Self::DictionaryNull(pending.with_value(())),
+            _ => unreachable!("admitted scalar dictionary value"),
+        }
+    }
+
+    fn with_dictionary_value(self, value: &Value) -> Self {
+        match self {
+            Self::Dictionary(pending) => Self::replace_dictionary_value(pending, value),
+            Self::DictionaryFloat(pending) => Self::replace_dictionary_value(pending, value),
+            Self::DictionaryBool(pending) => Self::replace_dictionary_value(pending, value),
+            Self::DictionaryNull(pending) => Self::replace_dictionary_value(pending, value),
+            _ => unreachable!("admitted dictionary journal"),
+        }
+    }
+
     fn record(&mut self, index: usize, name: &str) {
         if matches!(self, Self::One((scope, existing)) if *scope == index && existing == name) {
             return;
@@ -111,7 +179,12 @@ impl CaptureWrites {
             Self::Many(writes) => {
                 writes.insert(write);
             }
-            Self::Indexed(_) | Self::Dictionary(_) | Self::Nested(_) => {
+            Self::Indexed(_)
+            | Self::Dictionary(_)
+            | Self::DictionaryFloat(_)
+            | Self::DictionaryBool(_)
+            | Self::DictionaryNull(_)
+            | Self::Nested(_) => {
                 unreachable!("private publication is not a task write journal")
             }
         }
@@ -119,7 +192,13 @@ impl CaptureWrites {
 
     fn iter(&self) -> impl Iterator<Item = &(usize, String)> {
         let (first, rest) = match self {
-            Self::Empty | Self::Indexed(_) | Self::Dictionary(_) | Self::Nested(_) => (None, None),
+            Self::Empty
+            | Self::Indexed(_)
+            | Self::Dictionary(_)
+            | Self::DictionaryFloat(_)
+            | Self::DictionaryBool(_)
+            | Self::DictionaryNull(_)
+            | Self::Nested(_) => (None, None),
             Self::One(write) => (Some(write), None),
             Self::Many(writes) => (None, Some(writes)),
         };
@@ -136,6 +215,9 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.name()),
             Self::Dictionary(pending) => Some(pending.name()),
+            Self::DictionaryFloat(pending) => Some(pending.name()),
+            Self::DictionaryBool(pending) => Some(pending.name()),
+            Self::DictionaryNull(pending) => Some(pending.name()),
             Self::Nested(pending) => Some(pending.name()),
             _ => None,
         }
@@ -145,6 +227,9 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.snapshot_value()),
             Self::Dictionary(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryFloat(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryBool(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryNull(pending) => Some(pending.snapshot_value()),
             Self::Nested(pending) => Some(pending.snapshot_value()),
             _ => None,
         }
@@ -154,6 +239,9 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.publish(owner)),
             Self::Dictionary(pending) => Some(pending.publish(owner)),
+            Self::DictionaryFloat(pending) => Some(pending.publish(owner)),
+            Self::DictionaryBool(pending) => Some(pending.publish(owner)),
+            Self::DictionaryNull(pending) => Some(pending.publish(owner)),
             Self::Nested(pending) => Some(pending.publish(owner)),
             _ => None,
         }
@@ -163,6 +251,9 @@ impl CaptureWrites {
         match self {
             Self::Indexed(pending) => Some(pending.discard()),
             Self::Dictionary(pending) => Some(pending.discard()),
+            Self::DictionaryFloat(pending) => Some(pending.discard()),
+            Self::DictionaryBool(pending) => Some(pending.discard()),
+            Self::DictionaryNull(pending) => Some(pending.discard()),
             Self::Nested(pending) => Some(pending.discard()),
             _ => None,
         }
@@ -385,9 +476,15 @@ impl Environment {
         Some((pending.publication_name()?.to_owned(), pending.publication_snapshot()?))
     }
 
-    fn pending_dictionary(&self) -> Option<&super::dictionary_publication::DictionaryPublication> {
+    fn pending_dictionary(&self) -> Option<&CaptureWrites> {
         match &self.capture_writes {
-            Some((0, CaptureWrites::Dictionary(pending))) => Some(pending),
+            Some((
+                0,
+                pending @ (CaptureWrites::Dictionary(_)
+                | CaptureWrites::DictionaryFloat(_)
+                | CaptureWrites::DictionaryBool(_)
+                | CaptureWrites::DictionaryNull(_)),
+            )) => Some(pending),
             _ => None,
         }
     }
@@ -496,8 +593,10 @@ impl Environment {
         }
         if let Some(pending) = self.pending_dictionary() {
             return Some(
-                super::dictionary_publication::with_integer_key(index, |key| pending.get(key))
-                    .unwrap_or_else(|| Value::Error(format!("Missing map key: {index}"))),
+                super::dictionary_publication::with_integer_key(index, |key| {
+                    pending.dictionary_get(key)
+                })
+                .unwrap_or_else(|| Value::Error(format!("Missing map key: {index}"))),
             );
         }
         let pending = self.pending_indexed()?;
@@ -592,13 +691,15 @@ impl Environment {
         }
         Some(
             self.pending_dictionary()?
-                .get(key)
+                .dictionary_get(key)
                 .unwrap_or_else(|| Value::Error(format!("Missing map key: {key:?}"))),
         )
     }
 
     fn try_defer_dictionary_write(&mut self, name: &str, index: &Value, value: &Value) -> bool {
-        let Value::Int(value) = value else { return false };
+        if !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null) {
+            return false;
+        }
         if self.pending_dictionary().is_none()
             && (!matches!(self.capture_writes, Some((0, CaptureWrites::Empty)))
                 || !matches!(self.scopes[0].get(name), Some(Value::Dict(base)) if Arc::strong_count(base) == 2))
@@ -606,19 +707,21 @@ impl Environment {
             return false;
         }
         match index {
-            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, *value),
+            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, value),
             Value::Int(index) => super::dictionary_publication::with_integer_key(*index, |key| {
-                self.try_defer_dictionary_key_write(name, key, *value)
+                self.try_defer_dictionary_key_write(name, key, value)
             }),
             _ => false,
         }
     }
 
-    fn try_defer_dictionary_key_write(&mut self, name: &str, key: &str, value: i64) -> bool {
-        if let Some((0, CaptureWrites::Dictionary(pending))) = &mut self.capture_writes {
-            if !pending.try_record(key, value) {
+    fn try_defer_dictionary_key_write(&mut self, name: &str, key: &str, value: &Value) -> bool {
+        if let Some(pending) = self.pending_dictionary() {
+            if !pending.dictionary_matches_key(key) {
                 return false;
             }
+            let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
+            self.capture_writes = Some((0, pending.with_dictionary_value(value)));
         } else {
             if !matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
                 return false;
@@ -630,10 +733,8 @@ impl Environment {
             let (name, Value::Dict(base)) = self.scopes[0].remove_entry(name).unwrap() else {
                 unreachable!()
             };
-            match super::dictionary_publication::DictionaryPublication::prepare(
-                name, base, key, value,
-            ) {
-                Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Dictionary(pending))),
+            match CaptureWrites::prepare_dictionary(name, base, key, value) {
+                Ok(pending) => self.capture_writes = Some((0, pending)),
                 Err((name, base)) => {
                     self.scopes[0].insert(name, Value::Dict(base));
                     return false;
@@ -2299,6 +2400,117 @@ mod indexed_publication_environment_tests {
             assert!(
                 matches!(owner.get("array"), Some(Value::Array(a)) if matches!(a[0], Value::Int(9)))
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod dictionary_scalar_publication_tests {
+    use super::*;
+
+    fn exact(actual: &Value, expected: &Value) {
+        match (actual, expected) {
+            (Value::Float(a), Value::Float(b)) => assert_eq!(a.to_bits(), b.to_bits()),
+            (Value::Int(a), Value::Int(b)) => assert_eq!(a, b),
+            (Value::Bool(a), Value::Bool(b)) => assert_eq!(a, b),
+            (Value::Null, Value::Null) => {}
+            _ => panic!("scalar type changed: {actual:?} versus {expected:?}"),
+        }
+    }
+
+    #[test]
+    fn typed_dictionary_journal_replacement_and_discard_preserve_originals() {
+        for value in [Value::Float(-0.0), Value::Bool(false), Value::Null, Value::Int(i64::MIN)] {
+            let base = Arc::new([(Arc::from("key"), Value::Int(1))].into_iter().collect());
+            let pending =
+                CaptureWrites::prepare_dictionary("map".into(), base, "key", &value).unwrap();
+            let snapshot = pending.publication_snapshot().unwrap();
+            exact(&snapshot.dictionary_get("key").unwrap(), &value);
+            let original = pending.clone().discard().unwrap().1;
+            assert!(matches!(original.dictionary_get("key"), Some(Value::Int(1))));
+            let mut replacement = Value::Null;
+            let (name, published) = pending.publish(Some(&mut replacement)).unwrap();
+            assert_eq!(name, "map");
+            assert!(matches!(replacement, Value::Null));
+            exact(&published.dictionary_get("key").unwrap(), &value);
+            assert!(matches!(original.dictionary_get("key"), Some(Value::Int(1))));
+        }
+    }
+
+    #[test]
+    fn typed_dictionary_journals_preserve_snapshots_bits_and_rejected_writes() {
+        let values = [
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Float(-0.0),
+            Value::Float(f64::from_bits(0xfff8_0000_0000_0042)),
+            Value::Float(f64::INFINITY),
+            Value::Bool(false),
+            Value::Bool(true),
+            Value::Null,
+        ];
+        for first in &values {
+            for second in &values {
+                let mut environment = Environment::new();
+                environment.define(
+                    "map".into(),
+                    Value::Dict(Arc::new(
+                        [(Arc::from("1"), Value::Int(1)), (Arc::from("01"), Value::Int(2))]
+                            .into_iter()
+                            .collect(),
+                    )),
+                );
+                let pointer = match &environment.scopes[0]["map"] {
+                    Value::Dict(base) => Arc::as_ptr(base),
+                    _ => unreachable!(),
+                };
+                let owner = Arc::new(Mutex::new(environment));
+                let mut active = Environment::capture_activation(&owner);
+                active.enable_indexed_publication();
+                active.push_scope();
+                assert!(active.try_defer_index_write("map", &Value::Int(1), first));
+                exact(&active.indexed_publication_read("map", 1).unwrap(), first);
+                let snapshot = active.get("map").unwrap();
+                // A different key or unsupported value must not consume the journal.
+                assert!(!active.try_defer_index_write("map", &Value::Int(2), second));
+                assert!(!active.try_defer_index_write(
+                    "map",
+                    &Value::Str(Arc::new("01".into())),
+                    second
+                ));
+                assert!(!active.try_defer_index_write(
+                    "map",
+                    &Value::Int(1),
+                    &Value::array(vec![])
+                ));
+                exact(&active.dictionary_publication_read("map", "1").unwrap(), first);
+                assert!(active.try_defer_index_write(
+                    "map",
+                    &Value::Str(Arc::new("1".into())),
+                    second
+                ));
+                exact(&active.dictionary_publication_read("map", "1").unwrap(), second);
+                exact(&snapshot.dictionary_get("1").unwrap(), first);
+                assert!(matches!(
+                    active.dictionary_publication_read("map", "01"),
+                    Some(Value::Int(2))
+                ));
+                assert!(matches!(
+                    active.dictionary_publication_read("map", "missing"),
+                    Some(Value::Error(_))
+                ));
+                assert!(matches!(
+                    owner.lock().unwrap().get("map").unwrap().dictionary_get("1"),
+                    Some(Value::Int(1))
+                ));
+                active.pop_scope();
+                owner.lock().unwrap().publish_global_scope_from(&mut active);
+                let guard = owner.lock().unwrap();
+                let Value::Dict(base) = &guard.scopes[0]["map"] else { unreachable!() };
+                assert_eq!(Arc::as_ptr(base), pointer);
+                exact(&base["1"], second);
+                exact(&snapshot.dictionary_get("1").unwrap(), first);
+            }
         }
     }
 }
