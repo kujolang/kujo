@@ -244,6 +244,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   call at width 2,048. All 480 target pairs, two 240-pair fallback matrices,
   1,206 library tests, 385 release integrations and 150 test-size checksums pass.
   Five-key and deeper-path costs remain open.
+- [x] Isolate larger nested dictionary batches on `21a0907`: 384 allocation
+  measurements and 576 semantic cases cover 4/5/16/64 writes across owners, key
+  forms and snapshot policies. [Baseline and spill acceptance gates](NESTED_DICTIONARY_WIDE_ISOLATION_2026_10_28.md)
+  confirm a width-dependent copy at the fifth key; the runtime fix remains open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The

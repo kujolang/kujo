@@ -5203,5 +5203,14 @@
     "root_replacement_semantic_cases_baseline_and_candidate": 36,
     "scope": "Up to four scalar dictionary leaf keys under dictionary, struct or array owners; insertion after an existing key, numeric/string aliases and value semantics preserved",
     "remaining": "Broader nested/deeper paths, more than four leaf keys, larger rows, capture traversal/prefix/oversized fallback and later production/platform/clean-host gates"
+  },
+  "nested_dictionary_wide_isolation_2026_10_28": {
+    "status": "verified_characterization",
+    "runtime_commit": "21a0907",
+    "report": "NESTED_DICTIONARY_WIDE_ISOLATION_2026_10_28.md",
+    "evidence": "nested-dictionary-wide-isolation-2026-10-28.json",
+    "allocation_measurements": 384,
+    "semantic_cases": 576,
+    "next": "Preserve four-key inline storage and measure a sparse overflow journal; no runtime fix accepted"
   }
 }
