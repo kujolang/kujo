@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `b4dfdfd`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`compact-capture-names-2026-10-28.json`).
-- [x] Latest relevant gate: 1,226 library passes, eight ignored; 400 distinct
-  integration passes, one manual profiling test ignored (`compact-capture-names-2026-10-28.json`).
+- [x] Latest verified runtime `4d11952`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`nested-path-storage-2026-10-28.json`).
+- [x] Latest relevant gate: 1,226 library passes, eight ignored; 403 distinct
+  integration passes, one manual profiling test ignored (`nested-path-storage-2026-10-28.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -344,10 +344,15 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   reductions, 96 matches and no regressions; numeric/cold/append controls pass.
   Canonical integer keys, insertion, snapshots and error atomicity are preserved.
   Nested-row publication and broader collection costs remain open; no speed claim.
-- [ ] Reduce ordinary nested-write path storage/cloning. The [current priority refresh](PRIORITY_ALLOCATION_REFRESH_2026_10_28.md)
-  on `b4dfdfd` reproduces two additional allocations and 320 requested bytes
-  per nested VM write at widths 128/2,048, with snapshots and all-runtime
-  semantics checked. The runtime fix and actual-workload acceptance remain open.
+- [x] Borrow VM nested-write opcode metadata and keep short resolved paths in
+  operation-local inline storage (`4d11952`), retaining deeper-path fallback.
+  [Verified results](NESTED_PATH_STORAGE_2026_10_28.md) remove two requests and
+  320 requested bytes per nested VM write at widths 128/2,048. Unchanged priority
+  workloads show 82.356%/91.165% fewer requested MergeSort bytes in VM/JIT;
+  NeuralNet falls 31.671%/33.961%. All 1,226 library tests, 403 integrations,
+  150 test-size checksums and targeted controls pass. The reusable gate rejects
+  the unchanged baseline; tiny QuickSort/BrainfuckArray differences overlap in
+  four paired observations. These are allocation results, not elapsed-speed wins.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.

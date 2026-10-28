@@ -5333,5 +5333,19 @@
     "vm_extra_requests_per_nested_write": 2,
     "vm_extra_bytes_per_nested_write": 320,
     "remaining": "Reduce ordinary nested path temporaries with semantics/fallback/real-workload gates; other high allocation totals still require attribution"
+  },
+  "nested_path_storage_verification_2026_10_28": {
+    "status": "verified",
+    "runtime_commit": "4d1195238008792349a8054815c354f0c075d896",
+    "report": "NESTED_PATH_STORAGE_2026_10_28.md",
+    "evidence": "nested-path-storage-2026-10-28.json",
+    "library_passes": 1226,
+    "library_ignored": 8,
+    "integration_distinct_passes": 403,
+    "integration_manual_ignored": 1,
+    "test_size_checksums": 150,
+    "allocation_result": "Nested VM writes remove two allocation requests and 320 requested bytes per write at widths128/2048; extracted controls unchanged. Priority MergeSort requested bytes fall82.356% VM/91.165% JIT; NeuralNet31.671%/33.961%. These are allocation figures, not elapsed speeds.",
+    "repeatability": "Four paired observations each for QuickSort and BrainfuckArray in VM/JIT show overlapping ranges; initial tiny increases did not consistently reproduce.",
+    "remaining": "Sections3/4 remain open for broader capture materialization/module collection copying and representation review. Production, platform and clean-host acceptance remain separate."
   }
 }
