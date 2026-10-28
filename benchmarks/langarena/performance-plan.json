@@ -5159,5 +5159,15 @@
     "diagnostic_pairs": 48,
     "scope": "Two existing canonical signed29-bit numeric keys retained inline for scalar and compound updates; broader paths preserve fallback",
     "remaining": "Sections 3/4 remain open: broader nested dictionaries, deeper/larger rows, general capture materialization/traversal and oversized fallback. Later production/platform/clean-host gates pending."
+  },
+  "nested_dictionary_isolation_2026_10_28": {
+    "status": "confirmed_remaining_cost",
+    "runtime_commit": "924e949",
+    "report": "NESTED_DICTIONARY_ISOLATION_2026_10_28.md",
+    "evidence": "nested-dictionary-isolation-2026-10-28.json",
+    "allocation_measurements": 144,
+    "semantic_cases": 216,
+    "finding": "Nested dictionary leaves retain width-dependent copies across dictionary/struct/array owners and numeric/string keys",
+    "next": "Extend private nested publication to dictionary leaves while preserving owner/snapshot/evaluation semantics; verify layout and fallback before release gates"
   }
 }

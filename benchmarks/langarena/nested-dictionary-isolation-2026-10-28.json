@@ -1,0 +1,4387 @@
+{
+  "status": "characterized",
+  "scope": "Added-call allocation characterization on accepted runtime; no candidate acceptance",
+  "runner_sha256": "401237023da7f4a1f2d383a5f92223c398c069d9b499dd7b31d44ede597e6bdf",
+  "probe_sha256": "7e163116d25f1890ec696677369147361bcaf771556dfbe0157f857c9aa3228c",
+  "binary_sha256": "0592d7d3adf4a210a6c570f9f7f0566c4b53321bbb5544f0e97b864dd7ba65e3",
+  "rows": [
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "requests": 4840,
+      "bytes": 862618
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "requests": 4930,
+      "bytes": 872783
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "requests": 5688,
+      "bytes": 961802
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "requests": 5778,
+      "bytes": 971967
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "requests": 6186,
+      "bytes": 1037566
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "requests": 6276,
+      "bytes": 1047731
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "requests": 8394,
+      "bytes": 1314302
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "requests": 8484,
+      "bytes": 1324467
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "requests": 5224,
+      "bytes": 1562380
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "requests": 5314,
+      "bytes": 1572545
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "requests": 6072,
+      "bytes": 2278460
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "requests": 6162,
+      "bytes": 2288625
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "requests": 6570,
+      "bytes": 1737328
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "requests": 6660,
+      "bytes": 1747493
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "requests": 8778,
+      "bytes": 2630960
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "requests": 8868,
+      "bytes": 2641125
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "requests": 10988,
+      "bytes": 12222369
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "requests": 11078,
+      "bytes": 12232534
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "requests": 11836,
+      "bytes": 22338769
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "requests": 11926,
+      "bytes": 22348934
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "requests": 12334,
+      "bytes": 12397317
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "requests": 12424,
+      "bytes": 12407482
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "requests": 14542,
+      "bytes": 22691269
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "requests": 14632,
+      "bytes": 22701434
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "requests": 4978,
+      "bytes": 866975
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "requests": 5068,
+      "bytes": 877140
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "requests": 5922,
+      "bytes": 968319
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "requests": 6012,
+      "bytes": 978484
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "requests": 6356,
+      "bytes": 1042755
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "requests": 6446,
+      "bytes": 1052920
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "requests": 8692,
+      "bytes": 1322483
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "requests": 8782,
+      "bytes": 1332648
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "requests": 6622,
+      "bytes": 1603325
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "requests": 6712,
+      "bytes": 1613490
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "requests": 7566,
+      "bytes": 2321565
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "requests": 7656,
+      "bytes": 2331730
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "requests": 8000,
+      "bytes": 1779105
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "requests": 8090,
+      "bytes": 1789270
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "requests": 10336,
+      "bytes": 2675729
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "requests": 10426,
+      "bytes": 2685894
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "requests": 31586,
+      "bytes": 12823054
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "requests": 31676,
+      "bytes": 12833219
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "requests": 32530,
+      "bytes": 22941614
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "requests": 32620,
+      "bytes": 22951779
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "requests": 32964,
+      "bytes": 12998834
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "requests": 33054,
+      "bytes": 13008999
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "requests": 35300,
+      "bytes": 23295778
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "requests": 35390,
+      "bytes": 23305943
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "requests": 4934,
+      "bytes": 855539
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "requests": 5024,
+      "bytes": 865704
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "requests": 5846,
+      "bytes": 954803
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "requests": 5936,
+      "bytes": 964968
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "requests": 6455,
+      "bytes": 1030242
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "requests": 6545,
+      "bytes": 1040407
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "requests": 8903,
+      "bytes": 1306818
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "requests": 8993,
+      "bytes": 1316983
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "requests": 5318,
+      "bytes": 1555301
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "requests": 5408,
+      "bytes": 1565466
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "requests": 6230,
+      "bytes": 2271461
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "requests": 6320,
+      "bytes": 2281626
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "requests": 6839,
+      "bytes": 1730004
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "requests": 6929,
+      "bytes": 1740169
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "requests": 9287,
+      "bytes": 2623476
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "requests": 9377,
+      "bytes": 2633641
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "requests": 11082,
+      "bytes": 12215262
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "requests": 11172,
+      "bytes": 12225427
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "requests": 11994,
+      "bytes": 22331742
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "requests": 12084,
+      "bytes": 22341907
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "requests": 12603,
+      "bytes": 12389965
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "requests": 12693,
+      "bytes": 12400130
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "requests": 15051,
+      "bytes": 22683757
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "requests": 15141,
+      "bytes": 22693922
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "requests": 5073,
+      "bytes": 866552
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "requests": 5163,
+      "bytes": 876717
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "requests": 6081,
+      "bytes": 967976
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "requests": 6171,
+      "bytes": 978141
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "requests": 6626,
+      "bytes": 1042087
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "requests": 6716,
+      "bytes": 1052252
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "requests": 9202,
+      "bytes": 1321655
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "requests": 9292,
+      "bytes": 1331820
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "requests": 6717,
+      "bytes": 1602902
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "requests": 6807,
+      "bytes": 1613067
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "requests": 7725,
+      "bytes": 2321222
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "requests": 7815,
+      "bytes": 2331387
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "requests": 8270,
+      "bytes": 1778437
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "requests": 8360,
+      "bytes": 1788602
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "requests": 10846,
+      "bytes": 2674901
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "requests": 10936,
+      "bytes": 2685066
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "requests": 31681,
+      "bytes": 12822631
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "requests": 31771,
+      "bytes": 12832796
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "requests": 32689,
+      "bytes": 22941271
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "requests": 32779,
+      "bytes": 22951436
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "requests": 33234,
+      "bytes": 12998166
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "requests": 33324,
+      "bytes": 13008331
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "requests": 35810,
+      "bytes": 23294950
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "requests": 35900,
+      "bytes": 23305115
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "requests": 4722,
+      "bytes": 851259
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "requests": 4812,
+      "bytes": 861424
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "requests": 5474,
+      "bytes": 940379
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "requests": 5564,
+      "bytes": 950544
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "requests": 6004,
+      "bytes": 1024831
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "requests": 6094,
+      "bytes": 1034996
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "requests": 8052,
+      "bytes": 1290127
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "requests": 8142,
+      "bytes": 1300292
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "requests": 5106,
+      "bytes": 1551049
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "requests": 5196,
+      "bytes": 1561214
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "requests": 5858,
+      "bytes": 2257065
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "requests": 5948,
+      "bytes": 2267230
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "requests": 6388,
+      "bytes": 1724621
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "requests": 6478,
+      "bytes": 1734786
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "requests": 8436,
+      "bytes": 2606813
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "requests": 8526,
+      "bytes": 2616978
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "requests": 10870,
+      "bytes": 12211010
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "requests": 10960,
+      "bytes": 12221175
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "requests": 11622,
+      "bytes": 22317346
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "requests": 11712,
+      "bytes": 22327511
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "requests": 12152,
+      "bytes": 12384582
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "requests": 12242,
+      "bytes": 12394747
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "requests": 14200,
+      "bytes": 22667094
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "requests": 14290,
+      "bytes": 22677259
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "requests": 4860,
+      "bytes": 855644
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "requests": 4950,
+      "bytes": 865809
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "requests": 5708,
+      "bytes": 946924
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "requests": 5798,
+      "bytes": 957089
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "requests": 6174,
+      "bytes": 1030048
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "requests": 6264,
+      "bytes": 1040213
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "requests": 8350,
+      "bytes": 1298336
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "requests": 8440,
+      "bytes": 1308501
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "requests": 6504,
+      "bytes": 1591966
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "requests": 6594,
+      "bytes": 1602131
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "requests": 7352,
+      "bytes": 2300142
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "requests": 7442,
+      "bytes": 2310307
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "requests": 7818,
+      "bytes": 1766370
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "requests": 7908,
+      "bytes": 1776535
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "requests": 9994,
+      "bytes": 2651554
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "requests": 10084,
+      "bytes": 2661719
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "requests": 31468,
+      "bytes": 12811695
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "requests": 31558,
+      "bytes": 12821860
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "requests": 32316,
+      "bytes": 22920191
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "requests": 32406,
+      "bytes": 22930356
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "requests": 32782,
+      "bytes": 12986099
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "requests": 32872,
+      "bytes": 12996264
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "requests": 34958,
+      "bytes": 23271603
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "requests": 35048,
+      "bytes": 23281768
+    }
+  ],
+  "semantics": [
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1",
+      "module_sha256": "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21",
+      "module_sha256": "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a",
+      "module_sha256": "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16",
+      "module_sha256": "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0",
+      "module_sha256": "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5",
+      "module_sha256": "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d",
+      "mode": "jit",
+      "exit": 0
+    }
+  ],
+  "sources": {
+    "2f461fcd601dbe0f790205dd025c54c2e6d55b9651e79bb399f9760a85a1a5e0": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[k] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][0] += 1\nreturn state[\"row\"][0] }\n",
+    "f880844cdff4b0f9e0d07009126031dee7ace0422fe39b2392e03596ff761223": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][0], 0)\nassert_equal(original[\"row\"][1], 1)\nassert_equal(final[\"row\"][0], 16 * 1)\nassert_equal(final[\"row\"][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "a32e89124d6d1643eedeb539c7b343c8f81c608266d439fbec6f060d5ef72cf7": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][0], 0)\nassert_equal(original[\"row\"][1], 1)\nassert_equal(final[\"row\"][0], 32 * 1)\nassert_equal(final[\"row\"][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "38bdab9d7557a59a217375ab585a8691a59dd537911ed1ff701ac3cac1872bba": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[\"row\"][0], i * 1)\nassert_equal(saved[\"row\"][1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][0], 0)\nassert_equal(original[\"row\"][1], 1)\nassert_equal(final[\"row\"][0], 16 * 1)\nassert_equal(final[\"row\"][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "d77bade584167e8a4a6c00051a1968ef224e71af1f872d692386f1321181e4a1": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[\"row\"][0], i * 1)\nassert_equal(saved[\"row\"][1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][0], 0)\nassert_equal(original[\"row\"][1], 1)\nassert_equal(final[\"row\"][0], 32 * 1)\nassert_equal(final[\"row\"][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "7f7b3ff6aa712bfecb16d0ad7c98725afec542d1edeb1e4546f758a038edb2c7": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[k] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][0] += 1\nreturn state[\"row\"][0] }\n",
+    "cab89795d5a828a2dd498d9c74a4fd7e523f642694705113f9de67977125f498": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[k] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][0] += 1\nreturn state[\"row\"][0] }\n",
+    "f02303e3948b5ee00f4e412b3650cd8324a699d6321e1cda09e554daf71491d1": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][\"item0\"] += 1\nreturn state[\"row\"][\"item0\"] }\n",
+    "1af4e11dba1024b03bc8a57520598a5b86b7872c80e77fe3d03285bc0e1a2994": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][\"item0\"], 0)\nassert_equal(original[\"row\"][\"item1\"], 1)\nassert_equal(final[\"row\"][\"item0\"], 16 * 1)\nassert_equal(final[\"row\"][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "b2b9fee7cca5c0a8a2bc46f6af36b3219d8ffeb2b7605d5532f3ad38789f1e1b": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][\"item0\"], 0)\nassert_equal(original[\"row\"][\"item1\"], 1)\nassert_equal(final[\"row\"][\"item0\"], 32 * 1)\nassert_equal(final[\"row\"][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "e033378f6b26bd6ff731c744647ae7115cc965b3662f7a899eea59d85364080b": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[\"row\"][\"item0\"], i * 1)\nassert_equal(saved[\"row\"][\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][\"item0\"], 0)\nassert_equal(original[\"row\"][\"item1\"], 1)\nassert_equal(final[\"row\"][\"item0\"], 16 * 1)\nassert_equal(final[\"row\"][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "3e1d5ad9bcacedcdd7b2a3788267d7e3ebe2564686d0ff258493b14e0e040d21": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[\"row\"][\"item0\"], i * 1)\nassert_equal(saved[\"row\"][\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[\"row\"][\"item0\"], 0)\nassert_equal(original[\"row\"][\"item1\"], 1)\nassert_equal(final[\"row\"][\"item0\"], 32 * 1)\nassert_equal(final[\"row\"][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "8dcafc7b485b51b590e1c82f575a82bce7bc3f18e201ff34fbfc1db8a4616a5b": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][\"item0\"] += 1\nreturn state[\"row\"][\"item0\"] }\n",
+    "b842aa6e6a6fc553dad0b885e26187382f6ff181a5fe98597ba1abc2ba5530ed": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := {\"row\": seed}\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[\"row\"][\"item0\"] += 1\nreturn state[\"row\"][\"item0\"] }\n",
+    "e212b7e48f7f48e6958165fb8cda233c7536ea53fec17063238df130c7c56bc1": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[k] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[0] += 1\nreturn state.row[0] }\n",
+    "b90f9a91d9bd670d17c920de28986e3b076a3875fa8fb6dbe01e3591762c0d3e": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[0], 0)\nassert_equal(original.row[1], 1)\nassert_equal(final.row[0], 16 * 1)\nassert_equal(final.row[1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "a70f66e272d882d12857e26886bbd6db42884e97d1948ee226b4293493f90c51": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[0], 0)\nassert_equal(original.row[1], 1)\nassert_equal(final.row[0], 32 * 1)\nassert_equal(final.row[1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "9e3271e55ba802ff1c0aa223f959b7bfad6973413196a3e4c6f9ee28be771b72": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved.row[0], i * 1)\nassert_equal(saved.row[1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[0], 0)\nassert_equal(original.row[1], 1)\nassert_equal(final.row[0], 16 * 1)\nassert_equal(final.row[1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "d31c9299289ab01de9f86ee28e20a7c639971068921da7c47bd988ec1c53d22a": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved.row[0], i * 1)\nassert_equal(saved.row[1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[0], 0)\nassert_equal(original.row[1], 1)\nassert_equal(final.row[0], 32 * 1)\nassert_equal(final.row[1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "c052b239a0f556aa67fca46430182fd6d0c1f8452a363d919ec3a897e4a6cc9c": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[k] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[0] += 1\nreturn state.row[0] }\n",
+    "e1ed608694f4514832a08a59177384dd8b252dce563c68a5b6bc59a8b0223d49": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[k] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[0] += 1\nreturn state.row[0] }\n",
+    "3aa192fc8b102767dba9da983f45b0205d037e5604da020eee2617f30650c9a8": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[\"item\" + str(k)] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[\"item0\"] += 1\nreturn state.row[\"item0\"] }\n",
+    "f133c79f35c6f1eec315b6113a2ff0b1a822ce7130a846ef274cb54719da7b0d": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[\"item0\"], 0)\nassert_equal(original.row[\"item1\"], 1)\nassert_equal(final.row[\"item0\"], 16 * 1)\nassert_equal(final.row[\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "0f3a6dfaf3745d544b230b20869e5b1927f7a2f4bb1021d47d582dba15e88a41": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[\"item0\"], 0)\nassert_equal(original.row[\"item1\"], 1)\nassert_equal(final.row[\"item0\"], 32 * 1)\nassert_equal(final.row[\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "652185d7e3ed64131fef4570f4b8776458c688efa61085deb5fc53ded036ffeb": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved.row[\"item0\"], i * 1)\nassert_equal(saved.row[\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[\"item0\"], 0)\nassert_equal(original.row[\"item1\"], 1)\nassert_equal(final.row[\"item0\"], 16 * 1)\nassert_equal(final.row[\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "92ddab2475b77e7aa9a6d254ebfa03bcf28aaa96310c18c3984d5156a43f4c16": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved.row[\"item0\"], i * 1)\nassert_equal(saved.row[\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original.row[\"item0\"], 0)\nassert_equal(original.row[\"item1\"], 1)\nassert_equal(final.row[\"item0\"], 32 * 1)\nassert_equal(final.row[\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "850386a3a4404f9cebd39b840bd611db4f10b0a020c97f6b91523e1a50354ae1": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[\"item\" + str(k)] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[\"item0\"] += 1\nreturn state.row[\"item0\"] }\n",
+    "68cdeb2ca37d04caea3637e8e155ce507bc9a4534553a3f284c0971ef8189b30": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[\"item\" + str(k)] = k k += 1 }\nstruct State { row: dict }\nmut state := State { row: seed }\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state.row[\"item0\"] += 1\nreturn state.row[\"item0\"] }\n",
+    "45882d35fd11474f9abb44f9747acf0d2106f7ee90a7762650aecf0e10531585": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[k] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][0] += 1\nreturn state[0][0] }\n",
+    "01265bd3dc15a3d79db2261333304180fd5985fb572334ccccf931c1a65ec147": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][0], 0)\nassert_equal(original[0][1], 1)\nassert_equal(final[0][0], 16 * 1)\nassert_equal(final[0][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "5acb729e7d14d50cbd701b716632b307b6476bd1cf35e2d038da81eac5ccdfc5": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][0], 0)\nassert_equal(original[0][1], 1)\nassert_equal(final[0][0], 32 * 1)\nassert_equal(final[0][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "39b7589c1345a3c05cf012816162b169829a2c617932b502fe9b43c5b0c48137": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[0][0], i * 1)\nassert_equal(saved[0][1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][0], 0)\nassert_equal(original[0][1], 1)\nassert_equal(final[0][0], 16 * 1)\nassert_equal(final[0][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "2e124cc33f59b162c2f054ccbf5387cb9efa27c6025f92dc14cf0e06e6be61a0": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[0][0], i * 1)\nassert_equal(saved[0][1], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][0], 0)\nassert_equal(original[0][1], 1)\nassert_equal(final[0][0], 32 * 1)\nassert_equal(final[0][1], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "f8aca278dad197fb315d5c2c6ca5b6b216ce5bd0caee518154a7552289fc9829": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[k] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][0] += 1\nreturn state[0][0] }\n",
+    "d976f09bc53f5e43a91aebcac903840a3b743929ffeef5925f9dd64b6fe81963": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[k] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][0] += 1\nreturn state[0][0] }\n",
+    "087c9c3c99dd17dc924e531c7652f7deba24e8d4ef1091f073fd8154f6a5e4a2": "mut seed := {}\nmut k := 0\nwhile k < 2 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][\"item0\"] += 1\nreturn state[0][\"item0\"] }\n",
+    "8120779dc43779d5b2135085632af6909d0d2e21f46ceb55fcd325b920de35e2": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][\"item0\"], 0)\nassert_equal(original[0][\"item1\"], 1)\nassert_equal(final[0][\"item0\"], 16 * 1)\nassert_equal(final[0][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "8a6b54a92de751926080de34b0976251b95b73db9ca3b83c970ebfc409926786": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { assert_equal(edit(), (i + 1) * 1)\n\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][\"item0\"], 0)\nassert_equal(original[0][\"item1\"], 1)\nassert_equal(final[0][\"item0\"], 32 * 1)\nassert_equal(final[0][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "4f0bd79eba18edce0522756db90d17c8649bcf33fef750cca879cbceca009caf": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 16 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[0][\"item0\"], i * 1)\nassert_equal(saved[0][\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][\"item0\"], 0)\nassert_equal(original[0][\"item1\"], 1)\nassert_equal(final[0][\"item0\"], 16 * 1)\nassert_equal(final[0][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "e03282648c328c953d252223520493c630b63f50134f281631ba15afc79f30a5": "from owner import edit, snapshot\nlet original := snapshot()\nmut i := 0\nwhile i < 32 { let saved := snapshot()\nassert_equal(edit(), (i + 1) * 1)\nassert_equal(saved[0][\"item0\"], i * 1)\nassert_equal(saved[0][\"item1\"], 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(original[0][\"item0\"], 0)\nassert_equal(original[0][\"item1\"], 1)\nassert_equal(final[0][\"item0\"], 32 * 1)\nassert_equal(final[0][\"item1\"], 1)\nprint(\"NESTED DICTIONARY PASS\")\n",
+    "520349b365b6073c649d7b57705cccd9e2f740ad353c20b606e1a31d62646282": "mut seed := {}\nmut k := 0\nwhile k < 128 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][\"item0\"] += 1\nreturn state[0][\"item0\"] }\n",
+    "21d77e58b2ddd85b4e99d1ae0cbdfbc6ff903bb2ddbc869744a855234792065d": "mut seed := {}\nmut k := 0\nwhile k < 2048 { seed[\"item\" + str(k)] = k k += 1 }\nmut state := [seed]\nseed = null\nexport func snapshot() { return state }\nexport func edit() { state[0][\"item0\"] += 1\nreturn state[0][\"item0\"] }\n"
+  },
+  "deltas": [
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 6199.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 6199.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 17296.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 17296.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 44755.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 44755.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 55852.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 55852.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 632275.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 632275.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 643372.0
+    },
+    {
+      "shape": "dict_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 138.0,
+      "bytes_per_added_call": 643372.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 6334.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 6334.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 17483.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 17483.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 44890.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 44890.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 56039.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 56039.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 632410.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 59.0,
+      "bytes_per_added_call": 632410.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 643559.0
+    },
+    {
+      "shape": "dict_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 146.0,
+      "bytes_per_added_call": 643559.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 6204.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 6204.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 17286.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 17286.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 44760.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 44760.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 55842.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 55842.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 632280.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 57.0,
+      "bytes_per_added_call": 632280.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 643362.0
+    },
+    {
+      "shape": "struct_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 153.0,
+      "bytes_per_added_call": 643362.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 6339.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 6339.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 17473.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 17473.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 44895.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 44895.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 56029.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 56029.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 632415.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 63.0,
+      "bytes_per_added_call": 632415.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 643549.0
+    },
+    {
+      "shape": "struct_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 161.0,
+      "bytes_per_added_call": 643549.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 5570.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 5570.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 16581.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 16581.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 44126.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 44126.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 55137.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 55137.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 631646.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 47.0,
+      "bytes_per_added_call": 631646.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 642657.0
+    },
+    {
+      "shape": "array_numeric",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 128.0,
+      "bytes_per_added_call": 642657.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 5705.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 5705.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 16768.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 16768.0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 44261.0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 44261.0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 55324.0
+    },
+    {
+      "shape": "array_string",
+      "width": 128,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 55324.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "vm",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 631781.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "once",
+      "mode": "jit",
+      "requests_per_added_call": 53.0,
+      "bytes_per_added_call": 631781.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "vm",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 642844.0
+    },
+    {
+      "shape": "array_string",
+      "width": 2048,
+      "snapshot": "fresh",
+      "mode": "jit",
+      "requests_per_added_call": 136.0,
+      "bytes_per_added_call": 642844.0
+    }
+  ],
+  "runtime_commit": "924e949",
+  "runtime_evidence": "dictionary-pair-publication-2026-10-28.json",
+  "runtime_evidence_sha256": "9dd4d3e74ddc4e4740b69f42c04c0c34b3f5b8e3a8f35e6dab260fe48a1856dc",
+  "verification_source": "require 'json'\nrequire 'digest'\nd=File.dirname(__FILE__)\nr=JSON.parse(File.read(d+'/verified-results/report.json'))\nraise 'Incomplete' unless r['status']=='characterized'\nshapes=%w[dict_numeric dict_string struct_numeric struct_string array_numeric array_string]\ncases=shapes.product([2,128,2048],%w[once fresh],[16,32])\nkeys=%w[shape width snapshot calls mode]\nraise 'Allocation coverage' unless r['rows'].map{|x|x.values_at(*keys)}.sort==cases.flat_map{|x|%w[vm jit].map{|m|x+[m]}}.sort\nraise 'Semantic coverage' unless r['semantics'].map{|x|x.values_at(*keys)}.sort==cases.flat_map{|x|%w[vm interpreter jit].map{|m|x+[m]}}.sort\nbase='.audit-evidence/dictionary-pair-v1-2026-10-28/'\n{'runner_sha256'=>'benchmarks/langarena/probes/nested-dictionary-isolation.rb','probe_sha256'=>base+'task-allocation-probe','binary_sha256'=>base+'candidate-kujo'}.each{|key,path|raise \"Identity #{key}\" unless r[key]==Digest::SHA256.file(path).hexdigest}\nr['sources'].each{|h,s|raise 'Source hash' unless Digest::SHA256.hexdigest(s)==h}\n(r['rows']+r['semantics']).each do |x|\n folder=d+'/verified-results/'+x.values_at('shape','width','snapshot').join('-')\n {'module_sha256'=>folder+'/owner.kujo','source_sha256'=>folder+\"/calls-#{x['calls']}.kujo\"}.each{|key,path|raise 'Fixture identity' unless x[key]==Digest::SHA256.file(path).hexdigest&&r['sources'].key?(x[key])}\n raise 'Runtime failed' if x.key?('exit')&&x['exit']!=0\nend\ncomputed=r['rows'].group_by{|x|x.values_at('shape','width','snapshot','mode')}.map do |key,rows|\n a,b=rows.sort_by{|x|x['calls']}\n {'shape'=>key[0],'width'=>key[1],'snapshot'=>key[2],'mode'=>key[3], 'requests_per_added_call'=>(b['requests']-a['requests'])/16.0,'bytes_per_added_call'=>(b['bytes']-a['bytes'])/16.0}\nend\nraise 'Delta mismatch' unless computed==r['deltas']\nputs 'Verified exact144 allocation measurements/216 semantic cases, fixture/artifact identities and deltas'\nr['deltas'].select{|x|x['mode']=='vm'&&x['snapshot']=='once'}.each{|x|puts x.values_at('shape','width','requests_per_added_call','bytes_per_added_call').join(' ')}\n",
+  "runner_source": "# Isolate nested dictionary leaf-width costs across owner and key forms.\n# Allocation characterization only; snapshots remain semantic controls.\nrequire 'json'\nrequire 'digest'\nrequire 'fileutils'\nrequire 'open3'\nabort 'Expected ACCEPTED_PROBE ACCEPTED_BINARY NEW_OUTPUT_DIR' unless ARGV.size == 3\nprobe, binary, output = ARGV.map { |p| File.expand_path(p) }\nraise 'Output exists' if File.exist?(output)\n[probe, binary].each { |p| raise 'Missing executable ' + p unless File.executable?(p) }\nFileUtils.mkdir_p(output)\nshapes = %w[dict_numeric dict_string struct_numeric struct_string array_numeric array_string]\nr = { status: 'running', scope: 'Added-call allocation characterization on accepted runtime; no candidate acceptance',\n      runner_sha256: Digest::SHA256.file(__FILE__).hexdigest, probe_sha256: Digest::SHA256.file(probe).hexdigest,\n      binary_sha256: Digest::SHA256.file(binary).hexdigest, rows: [], semantics: [], sources: {} }\nsave = -> { File.write(output + '/report.json', JSON.pretty_generate(r) + \"\\n\") }\nsave.call\nbegin\n  shapes.product([2, 128, 2048], %w[once fresh]).each do |shape, width, snapshot|\n    dir = \"#{output}/#{shape}-#{width}-#{snapshot}\"\n    FileUtils.mkdir_p(dir)\n    owner, key_kind = shape.split('_')\n    numeric = key_kind == 'numeric'\n    seed_key = numeric ? 'k' : '\"item\" + str(k)'\n    dictionary = \"mut seed := {}\\nmut k := 0\\nwhile k < #{width} { seed[#{seed_key}] = k k += 1 }\\n\"\n    root, row = case owner\n      when 'dict' then [dictionary + 'mut state := {\"row\": seed}', 'state[\"row\"]']\n      when 'struct' then [dictionary + \"struct State { row: dict }\\nmut state := State { row: seed }\", 'state.row']\n      when 'array' then [dictionary + 'mut state := [seed]', 'state[0]']\n    end\n    root += \"\\nseed = null\"\n    first = row + (numeric ? '[0]' : '[\"item0\"]')\n    second = row + (numeric ? '[1]' : '[\"item1\"]')\n    float = false\n    two = false\n    increment = '1'\n    mod = \"#{root}\\nexport func snapshot() { return state }\\nexport func edit() { #{first} += 1\\nreturn #{first} }\\n\"\n    File.write(dir + '/owner.kujo', mod)\n    module_hash = Digest::SHA256.hexdigest(mod)\n    r[:sources][module_hash] = mod\n    [16, 32].each do |calls|\n      expression = ->(name, value) { value.sub('state', name) }\n      initial = float ? '0.0' : '0'\n      saved = snapshot == 'fresh' ? \"let saved := snapshot()\\n\" : ''\n      saved_check = snapshot == 'fresh' ? \"assert_equal(#{expression.call('saved', first)}, i * #{increment})\\nassert_equal(#{expression.call('saved', second)}, #{two ? 'i + 1' : '1'})\" : ''\n      source = \"from owner import edit, snapshot\\nlet original := snapshot()\\nmut i := 0\\nwhile i < #{calls} { #{saved}assert_equal(edit(), (i + 1) * #{increment})\\n#{saved_check}\\ni += 1 }\\nlet final := snapshot()\\nassert_equal(#{expression.call('original', first)}, #{initial})\\nassert_equal(#{expression.call('original', second)}, 1)\\nassert_equal(#{expression.call('final', first)}, #{calls} * #{increment})\\nassert_equal(#{expression.call('final', second)}, #{two ? calls + 1 : 1})\\nprint(\\\"NESTED DICTIONARY PASS\\\")\\n\"\n      path = dir + \"/calls-#{calls}.kujo\"\n      File.write(path, source)\n      source_hash = Digest::SHA256.hexdigest(source)\n      r[:sources][source_hash] = source\n      metadata = { shape: shape, width: width, snapshot: snapshot, calls: calls,\n                   source_sha256: source_hash, module_sha256: module_hash }\n      %w[vm jit].each do |mode|\n        stdout, stderr, status = Open3.capture3(probe, mode, path)\n        raise \"#{path} #{mode}: #{stdout}#{stderr}\" unless status.success? && stdout == \"NESTED DICTIONARY PASS\\n\"\n        counts = stderr.match(/ALLOCATION_AUDIT requests=(\\d+) requested_bytes=(\\d+)/)\n        raise stderr unless counts\n        r[:rows] << metadata.merge(mode: mode, requests: counts[1].to_i, bytes: counts[2].to_i)\n        save.call\n      end\n      %w[vm interpreter jit].each do |mode|\n        args = [binary, 'run', path, '--untrusted']\n        args << '--' + mode unless mode == 'vm'\n        stdout, stderr, status = Open3.capture3(*args)\n        raise \"#{path} #{mode}: #{stdout}#{stderr}\" unless status.success? && stdout == \"NESTED DICTIONARY PASS\\n\"\n        r[:semantics] << metadata.merge(mode: mode, exit: status.exitstatus)\n        save.call\n      end\n    end\n  end\n  raise 'Coverage' unless r[:rows].size == 144 && r[:semantics].size == 216\n  r[:deltas] = r[:rows].group_by { |x| x.values_at(:shape, :width, :snapshot, :mode) }.map do |key, rows|\n    first, last = rows.sort_by { |x| x[:calls] }\n    { shape: key[0], width: key[1], snapshot: key[2], mode: key[3],\n      requests_per_added_call: (last[:requests] - first[:requests]) / 16.0,\n      bytes_per_added_call: (last[:bytes] - first[:bytes]) / 16.0 }\n  end\n  r[:status] = 'characterized'\n  save.call\nrescue => error\n  r[:status] = 'failed'; r[:error] = error.message; save.call; raise\nend\n",
+  "limitations": [
+    "Allocation characterization only, not optimization acceptance or speed evidence",
+    "One scalar leaf update; broader paths/batches and callback boundary tests needed for implementation acceptance",
+    "Initial and fresh snapshots are separate; required snapshot copying must remain"
+  ]
+}

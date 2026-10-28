@@ -227,6 +227,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   drafts and exact diagnostic/ownership evidence are preserved. Compound indexed
   updates, nested dictionaries, deeper/larger rows and general captures remain open;
   fresh snapshots retain required copying. No elapsed-speed claim follows.
+- [x] Isolate nested dictionary leaf costs on `924e949` across dictionary, struct
+  and array owners with numeric/string keys: 144 allocation measurements and
+  216 semantic checks pass. [Baseline and next acceptance gates](NESTED_DICTIONARY_ISOLATION_2026_10_28.md).
+  This confirms remaining work; it does not mark the runtime optimization complete.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
