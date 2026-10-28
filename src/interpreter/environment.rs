@@ -4,7 +4,7 @@
 // Implements a stack of scopes where inner scopes shadow outer scopes.
 
 use super::dictionary_publication::{
-    DictionaryManyPublication, DictionaryPublication, DictionaryScalar,
+    DictionaryManyPublication, DictionaryPairPublication, DictionaryPublication, DictionaryScalar,
 };
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
@@ -61,6 +61,7 @@ enum CaptureWrites {
     DictionaryBool(DictionaryPublication<bool>),
     DictionaryNull(DictionaryPublication<()>),
     DictionaryMany(Box<DictionaryManyPublication>),
+    DictionaryPair(DictionaryPairPublication),
     Nested(super::nested_publication::NestedPublication),
 }
 
@@ -106,26 +107,36 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => pending.get(key),
             Self::DictionaryBool(pending) => pending.get(key),
             Self::DictionaryNull(pending) => pending.get(key),
+            Self::DictionaryPair(pending) => pending.get(key),
             Self::DictionaryMany(pending) => pending.get(key),
             _ => None,
         }
     }
 
-    fn dictionary_can_record(&self, key: &str, allow_many: bool) -> bool {
+    fn dictionary_can_record(&self, key: &str, value: &Value, allow_many: bool) -> bool {
         match self {
             Self::Dictionary(pending) => {
-                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+                pending.matches_key(key)
+                    || pending.can_pair(key, value)
+                    || (allow_many && pending.contains_key(key))
             }
             Self::DictionaryFloat(pending) => {
-                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+                pending.matches_key(key)
+                    || pending.can_pair(key, value)
+                    || (allow_many && pending.contains_key(key))
             }
             Self::DictionaryBool(pending) => {
-                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+                pending.matches_key(key)
+                    || pending.can_pair(key, value)
+                    || (allow_many && pending.contains_key(key))
             }
             Self::DictionaryNull(pending) => {
-                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+                pending.matches_key(key)
+                    || pending.can_pair(key, value)
+                    || (allow_many && pending.contains_key(key))
             }
             Self::DictionaryMany(_) => allow_many,
+            Self::DictionaryPair(pending) => pending.can_record(key, value) || allow_many,
             _ => false,
         }
     }
@@ -169,6 +180,8 @@ impl CaptureWrites {
             Self::Dictionary(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if pending.can_pair(key, value) {
+                    Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
                     Self::DictionaryMany(Box::new(pending.into_many(key, value)))
                 }
@@ -176,6 +189,8 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if pending.can_pair(key, value) {
+                    Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
                     Self::DictionaryMany(Box::new(pending.into_many(key, value)))
                 }
@@ -183,6 +198,8 @@ impl CaptureWrites {
             Self::DictionaryBool(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if pending.can_pair(key, value) {
+                    Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
                     Self::DictionaryMany(Box::new(pending.into_many(key, value)))
                 }
@@ -190,8 +207,20 @@ impl CaptureWrites {
             Self::DictionaryNull(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if pending.can_pair(key, value) {
+                    Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
                     Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryPair(mut pending) => {
+                if pending.can_record(key, value) {
+                    pending.record(key, value);
+                    Self::DictionaryPair(pending)
+                } else {
+                    let mut pending = pending.into_many();
+                    pending.record(key, value);
+                    Self::DictionaryMany(Box::new(pending))
                 }
             }
             Self::DictionaryMany(mut pending) => {
@@ -224,6 +253,7 @@ impl CaptureWrites {
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
+            | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
             | Self::Nested(_) => {
@@ -239,6 +269,7 @@ impl CaptureWrites {
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
+            | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
             | Self::Nested(_) => (None, None),
@@ -261,6 +292,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.name()),
             Self::DictionaryBool(pending) => Some(pending.name()),
             Self::DictionaryNull(pending) => Some(pending.name()),
+            Self::DictionaryPair(pending) => Some(pending.name()),
             Self::DictionaryMany(pending) => Some(pending.name()),
             Self::Nested(pending) => Some(pending.name()),
             _ => None,
@@ -274,6 +306,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.snapshot_value()),
             Self::DictionaryBool(pending) => Some(pending.snapshot_value()),
             Self::DictionaryNull(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryPair(pending) => Some(pending.snapshot_value()),
             Self::DictionaryMany(pending) => Some(pending.snapshot_value()),
             Self::Nested(pending) => Some(pending.snapshot_value()),
             _ => None,
@@ -287,6 +320,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.publish(owner)),
             Self::DictionaryBool(pending) => Some(pending.publish(owner)),
             Self::DictionaryNull(pending) => Some(pending.publish(owner)),
+            Self::DictionaryPair(pending) => Some(pending.publish(owner)),
             Self::DictionaryMany(pending) => Some(pending.publish(owner)),
             Self::Nested(pending) => Some(pending.publish(owner)),
             _ => None,
@@ -300,6 +334,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.discard()),
             Self::DictionaryBool(pending) => Some(pending.discard()),
             Self::DictionaryNull(pending) => Some(pending.discard()),
+            Self::DictionaryPair(pending) => Some(pending.discard()),
             Self::DictionaryMany(pending) => Some(pending.discard()),
             Self::Nested(pending) => Some(pending.discard()),
             _ => None,
@@ -531,7 +566,8 @@ impl Environment {
                 | CaptureWrites::DictionaryFloat(_)
                 | CaptureWrites::DictionaryBool(_)
                 | CaptureWrites::DictionaryNull(_)
-                | CaptureWrites::DictionaryMany(_)),
+                | CaptureWrites::DictionaryMany(_)
+                | CaptureWrites::DictionaryPair(_)),
             )) => Some(pending),
             _ => None,
         }
@@ -699,7 +735,13 @@ impl Environment {
             || !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
                 || (allow_many
                     && matches!(value, Value::Str(_) | Value::Bytes(_))
-                    && matches!(self.capture_writes, Some((0, CaptureWrites::DictionaryMany(_))))))
+                    && matches!(
+                        self.capture_writes,
+                        Some((
+                            0,
+                            CaptureWrites::DictionaryMany(_) | CaptureWrites::DictionaryPair(_)
+                        ))
+                    )))
             || self.has_local_binding(name)
             || self.binding_kinds[0].contains_key(name)
             || self.pending_name().is_some_and(|pending| pending != name)
@@ -772,7 +814,10 @@ impl Environment {
         if !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
             || (allow_many
                 && matches!(value, Value::Str(_) | Value::Bytes(_))
-                && matches!(self.capture_writes, Some((0, CaptureWrites::DictionaryMany(_))))))
+                && matches!(
+                    self.capture_writes,
+                    Some((0, CaptureWrites::DictionaryMany(_) | CaptureWrites::DictionaryPair(_)))
+                )))
         {
             return false;
         }
@@ -799,7 +844,7 @@ impl Environment {
         allow_many: bool,
     ) -> bool {
         if let Some(pending) = self.pending_dictionary() {
-            if !pending.dictionary_can_record(key, allow_many) {
+            if !pending.dictionary_can_record(key, value, allow_many) {
                 return false;
             }
             let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };

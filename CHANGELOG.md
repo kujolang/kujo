@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep two existing canonical numeric dictionary keys inline during captured
+  scalar updates, including compound assignments. Avoid repeated dictionary
+  copies while preserving snapshots, callbacks, errors and fallback behavior.
+
 - Avoid full captured-dictionary copies for proven synchronous helpers updating
   multiple keys. Preserve snapshots, public-owner publication, operator callbacks,
   errors and root/index evaluation order. Active batches also retain string and

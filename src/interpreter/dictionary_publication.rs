@@ -104,6 +104,25 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
         key == self.key.as_ref()
     }
 
+    pub(super) fn can_pair(&self, key: &str, value: &Value) -> bool {
+        self.base.contains_key(key)
+            && DictionaryPairPublication::encode(&self.key, &self.value.into_value()).is_some()
+            && DictionaryPairPublication::encode(key, value).is_some()
+    }
+
+    pub(super) fn into_pair(self, key: &str, value: &Value) -> DictionaryPairPublication {
+        let first = DictionaryPairPublication::encode(&self.key, &self.value.into_value())
+            .expect("admitted first numeric dictionary key");
+        let second = DictionaryPairPublication::encode(key, value)
+            .expect("admitted second numeric dictionary key");
+        DictionaryPairPublication {
+            name: self.name,
+            base: self.base,
+            entries: [first.0, second.0],
+            words: [first.1, second.1],
+        }
+    }
+
     pub(super) fn with_value<U: DictionaryScalar>(self, value: U) -> DictionaryPublication<U> {
         DictionaryPublication { name: self.name, base: self.base, key: self.key, value }
     }
@@ -304,6 +323,201 @@ impl ScalarValue {
 }
 type ScalarWrites =
     std::collections::HashMap<Arc<str>, ScalarValue, std::hash::BuildHasherDefault<ahash::AHasher>>;
+
+#[cfg(test)]
+mod pair_tests {
+    use super::*;
+
+    #[test]
+    fn pair_fits_existing_payload_and_preserves_canonical_signed_keys() {
+        assert_eq!(
+            std::mem::size_of::<DictionaryPairPublication>(),
+            std::mem::size_of::<DictionaryPublication>()
+        );
+        for key in [-(1i64 << 28), -1, 0, (1 << 28) - 1] {
+            let text = key.to_string();
+            let (entry, word) =
+                DictionaryPairPublication::encode(&text, &Value::Int(i64::MIN)).unwrap();
+            assert_eq!(DictionaryPairPublication::key(entry), key);
+            assert!(matches!(DictionaryPairPublication::value(entry, word), Value::Int(i64::MIN)));
+        }
+        for key in ["01", "+1", "-0", "268435456", "-268435457", "x"] {
+            assert!(DictionaryPairPublication::encode(key, &Value::Null).is_none(), "{key}");
+        }
+    }
+
+    #[test]
+    fn pair_publication_keeps_snapshot_and_float_identity_without_owner_detachment() {
+        let base = Arc::new(DictMap::from_iter([
+            (Arc::from("-1"), Value::Int(0)),
+            (Arc::from("2"), Value::Int(2)),
+            (Arc::from("02"), Value::Int(99)),
+        ]));
+        let pointer = Arc::as_ptr(&base);
+        let mut owner = Value::Dict(base.clone());
+        let first = DictionaryPublication::prepare("state".into(), base, "-1", 7).unwrap();
+        let bits = 0xfff8_0000_0000_0042;
+        assert!(first.can_pair("2", &Value::Float(f64::from_bits(bits))));
+        let mut pair = first.into_pair("2", &Value::Float(f64::from_bits(bits)));
+        let snapshot = pair.snapshot_value();
+        pair.record("-1", &Value::Bool(false));
+        pair.record("2", &Value::Null);
+        assert!(!pair.can_record("02", &Value::Int(3)));
+        assert!(matches!(pair.get("02"), Some(Value::Int(99))));
+        assert!(matches!(owner.dictionary_get("-1"), Some(Value::Int(0))));
+        let (_, updated) = pair.publish(Some(&mut owner));
+        assert!(matches!(updated, Value::Dict(ref map) if Arc::as_ptr(map)==pointer));
+        assert!(matches!(owner.dictionary_get("-1"), Some(Value::Bool(false))));
+        assert!(matches!(snapshot.dictionary_get("2"), Some(Value::Float(v)) if v.to_bits()==bits));
+    }
+
+    #[test]
+    fn pair_promotion_and_discard_do_not_change_original_values() {
+        let base = Arc::new(DictMap::from_iter([
+            (Arc::from("0"), Value::Int(0)),
+            (Arc::from("1"), Value::Int(1)),
+        ]));
+        let pair = DictionaryPublication::prepare("state".into(), base.clone(), "0", 4)
+            .unwrap()
+            .into_pair("1", &Value::Bool(true));
+        let (_, discarded) = pair.clone().discard();
+        assert!(matches!(discarded.dictionary_get("0"), Some(Value::Int(0))));
+        let mut table = pair.into_many();
+        table.record("new", &Value::Bytes(Arc::new(vec![1, 2])));
+        let (_, updated) = table.publish(None);
+        assert!(matches!(updated.dictionary_get("0"), Some(Value::Int(4))));
+        assert!(matches!(updated.dictionary_get("1"), Some(Value::Bool(true))));
+        assert!(
+            matches!(updated.dictionary_get("new"), Some(Value::Bytes(v)) if v.as_slice()==[1,2])
+        );
+        assert!(matches!(base["0"], Value::Int(0)));
+    }
+}
+
+/// Two canonical numeric keys fit in the existing capture payload without a
+/// table allocation. The signed 29-bit key range is an optimization boundary;
+/// all other keys keep ordinary dictionary behavior.
+#[derive(Clone, Debug)]
+pub(super) struct DictionaryPairPublication {
+    name: Box<str>,
+    base: Arc<DictMap>,
+    words: [u64; 2],
+    entries: [u32; 2],
+}
+
+impl DictionaryPairPublication {
+    const KEY_BITS: u32 = 29;
+    const KEY_MASK: u32 = (1 << Self::KEY_BITS) - 1;
+
+    fn numeric_key(key: &str) -> Option<i64> {
+        let number = key.parse::<i64>().ok()?;
+        if !(-(1 << 28)..(1 << 28)).contains(&number)
+            || !with_integer_key(number, |canonical| canonical == key)
+        {
+            return None;
+        }
+        Some(number)
+    }
+
+    fn encode(key: &str, value: &Value) -> Option<(u32, u64)> {
+        let key = Self::numeric_key(key)?;
+        let (kind, word) = match value {
+            Value::Int(value) => (1, *value as u64),
+            Value::Float(value) => (2, value.to_bits()),
+            Value::Bool(value) => (3, u64::from(*value)),
+            Value::Null => (4, 0),
+            _ => return None,
+        };
+        Some(((kind << Self::KEY_BITS) | ((key as u32) & Self::KEY_MASK), word))
+    }
+
+    fn key(entry: u32) -> i64 {
+        ((entry << (32 - Self::KEY_BITS)) as i32 >> (32 - Self::KEY_BITS)) as i64
+    }
+
+    fn value(entry: u32, word: u64) -> Value {
+        match entry >> Self::KEY_BITS {
+            1 => Value::Int(word as i64),
+            2 => Value::Float(f64::from_bits(word)),
+            3 => Value::Bool(word != 0),
+            4 => Value::Null,
+            _ => unreachable!("admitted dictionary pair scalar"),
+        }
+    }
+
+    pub(super) fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub(super) fn get(&self, key: &str) -> Option<Value> {
+        if let Some(number) = Self::numeric_key(key) {
+            if let Some(slot) = self.entries.iter().position(|entry| Self::key(*entry) == number) {
+                return Some(Self::value(self.entries[slot], self.words[slot]));
+            }
+        }
+        self.base.get(key).cloned()
+    }
+
+    pub(super) fn can_record(&self, key: &str, value: &Value) -> bool {
+        Self::encode(key, value).is_some_and(|(entry, _)| {
+            self.entries.iter().any(|old| Self::key(*old) == Self::key(entry))
+        })
+    }
+
+    pub(super) fn record(&mut self, key: &str, value: &Value) {
+        let (entry, word) = Self::encode(key, value).expect("admitted pair update");
+        let slot = self
+            .entries
+            .iter()
+            .position(|old| Self::key(*old) == Self::key(entry))
+            .expect("existing pair key");
+        self.entries[slot] = entry;
+        self.words[slot] = word;
+    }
+
+    pub(super) fn into_many(self) -> DictionaryManyPublication {
+        let mut writes = ScalarWrites::default();
+        for (entry, word) in self.entries.into_iter().zip(self.words) {
+            with_integer_key(Self::key(entry), |key| {
+                let key = self.base.get_key_value(key).expect("existing pair key").0.clone();
+                writes.insert(key, ScalarValue::from_value(&Self::value(entry, word)));
+            });
+        }
+        DictionaryManyPublication { name: self.name, base: self.base, writes }
+    }
+
+    fn apply(base: &mut Arc<DictMap>, entries: [u32; 2], words: [u64; 2]) {
+        let target = Arc::make_mut(base);
+        for (entry, word) in entries.into_iter().zip(words) {
+            with_integer_key(Self::key(entry), |key| {
+                *target.get_mut(key).expect("existing pair key") = Self::value(entry, word);
+            });
+        }
+    }
+
+    pub(super) fn snapshot_value(&self) -> Value {
+        let mut base = self.base.clone();
+        Self::apply(&mut base, self.entries, self.words);
+        Value::Dict(base)
+    }
+
+    pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {
+        let Self { name, mut base, entries, words } = self;
+        if let Some(Value::Dict(public)) = owner {
+            if Arc::ptr_eq(&base, public) {
+                drop(base);
+                Self::apply(public, entries, words);
+                return (name.into_string(), Value::Dict(public.clone()));
+            }
+        }
+        Self::apply(&mut base, entries, words);
+        (name.into_string(), Value::Dict(base))
+    }
+
+    pub(super) fn discard(self) -> (String, Value) {
+        (self.name.into_string(), Value::Dict(self.base))
+    }
+}
 
 /// Promote only when a helper updates a second existing key. Single-key calls
 /// retain their inline journal; this table scales with writes, not owner width.
