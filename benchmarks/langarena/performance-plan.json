@@ -5212,5 +5212,16 @@
     "allocation_measurements": 384,
     "semantic_cases": 576,
     "next": "Preserve four-key inline storage and measure a sparse overflow journal; no runtime fix accepted"
+  },
+  "nested_dictionary_spill_rejection_2026_10_28": {
+    "status": "rejected_allocation_regression",
+    "accepted_runtime_commit": "21a0907",
+    "report": "NESTED_DICTIONARY_SPILL_REJECTION_2026_10_28.md",
+    "evidence": "nested-dictionary-spill-rejection-2026-10-28.json",
+    "regressed_allocation_pairs": 80,
+    "allocation_pairs": 240,
+    "semantic_cases": 360,
+    "unchanged_control_pairs": 240,
+    "next": "Investigate proof-gated overflow while preserving uncertain/escaping fallback; no runtime fix accepted"
   }
 }

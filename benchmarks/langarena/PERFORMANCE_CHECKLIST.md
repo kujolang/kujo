@@ -248,6 +248,10 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   measurements and 576 semantic cases cover 4/5/16/64 writes across owners, key
   forms and snapshot policies. [Baseline and spill acceptance gates](NESTED_DICTIONARY_WIDE_ISOLATION_2026_10_28.md)
   confirm a width-dependent copy at the fifth key; the runtime fix remains open.
+  The [first sparse overflow candidate was rejected](NESTED_DICTIONARY_SPILL_REJECTION_2026_10_28.md):
+  80 escape/fallback allocation pairs regress by 280 bytes per warmed call.
+  Runtime changes are reverted; full-key snapshot tests and the five-write
+  fallback gate are retained. Overflow optimization remains open.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The
