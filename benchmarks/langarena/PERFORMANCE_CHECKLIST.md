@@ -213,6 +213,14 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   allocation measurements and 360 semantic checks on this runtime: array-owned
   rows are flat; multiple dictionary keys, deeper rows and nested dictionaries
   remain width-dependent.
+- [x] Defer eligible multiple-key captured dictionary writes (`19a1736`), including
+  strings, bytes and new keys after promotion. [Verified results](DICTIONARY_MANY_PUBLICATION_2026_10_28.md)
+  reduce two-write traffic at 2,048 keys from 634,379 to 7,788 bytes per added call.
+  All 160 target pairs, 856 supplemental pairs, historical controls, 1,200 library
+  tests, 376 release integrations and 150 test-size checksums pass. Four rejected
+  drafts and exact diagnostic/ownership evidence are preserved. Compound indexed
+  updates, nested dictionaries, deeper/larger rows and general captures remain open;
+  fresh snapshots retain required copying. No elapsed-speed claim follows.
 - [ ] Reduce remaining module-width copying for broader nested paths, dictionary
   value/multiple-key paths and dense/escaping update patterns. The bounded sparse
   publication paths above do not close these costs. The

@@ -5128,5 +5128,22 @@
     "rejected_regression_cases": 8,
     "scope": "Bounded scalar writes to array-owned rows; selector aliases, snapshots and fallback preserved.",
     "remaining": "Multiple-key/nested dictionaries, deeper/larger collections, general captures and later full-plan gates remain open; no clean-host speed claim."
+  },
+  "dictionary_many_publication_verification_2026_10_28": {
+    "runtime_commit": "19a1736e7e081231fe2b3bb9fa1cd60c37cabaa4",
+    "status": "verified",
+    "report": "DICTIONARY_MANY_PUBLICATION_2026_10_28.md",
+    "evidence": "dictionary-many-publication-2026-10-28.json",
+    "library_passes": 1200,
+    "integration_passes": 376,
+    "test_size_checksums": 150,
+    "target_allocation_pairs": 160,
+    "target_semantic_cases": 240,
+    "supplemental_allocation_pairs": 856,
+    "supplemental_semantic_cases": 1284,
+    "diagnostic_pairs": 48,
+    "rejected_drafts": 4,
+    "scope": "Proven synchronous multiple-key dictionary publication with unchanged snapshots and public-owner boundaries",
+    "remaining": "Compound indexed updates, nested dictionaries, deeper/larger rows, general captures and later full-plan gates; no clean-host speed claim."
   }
 }
