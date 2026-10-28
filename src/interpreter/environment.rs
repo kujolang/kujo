@@ -599,6 +599,19 @@ impl Environment {
         pending.read(key, index)
     }
 
+    pub(crate) fn nested_dictionary_publication_read(
+        &self,
+        name: &str,
+        owner: super::nested_publication::RowKey<'_>,
+        key: &str,
+    ) -> Option<Value> {
+        if !self.pending_visible(name) {
+            return None;
+        }
+        let Some((0, CaptureWrites::Nested(pending))) = &self.capture_writes else { return None };
+        pending.read_string(owner, key)
+    }
+
     pub(crate) fn try_defer_nested_write(
         &mut self,
         name: &str,

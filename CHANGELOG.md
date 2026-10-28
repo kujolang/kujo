@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid repeated copies when captured helpers update one scalar key in a nested
+  dictionary under dictionary, struct or array owners. Preserve snapshots, numeric
+  and string key behavior, callbacks, errors and replacement-root assignment order.
+
 - Keep two existing canonical numeric dictionary keys inline during captured
   scalar updates, including compound assignments. Avoid repeated dictionary
   copies while preserving snapshots, callbacks, errors and fallback behavior.

@@ -4170,11 +4170,17 @@ impl Interpreter {
         // Only lookup/literal indices (including checked integer negation)
         // can bypass the ordinary root snapshot.
         // Calls and other expressions retain their original evaluation order.
+        if let Expr::String(key) = index {
+            return self.read_nested_at(object, name, RowKey::String(key));
+        }
         let index = match index {
             Expr::Int(index) => *index,
             Expr::Identifier(index) if index == name => return None,
             Expr::Identifier(index) => match self.env.get(index) {
                 Some(Value::Int(index)) => index,
+                Some(Value::Str(key)) => {
+                    return self.read_nested_at(object, name, RowKey::String(&key))
+                }
                 _ => return None,
             },
             Expr::UnaryOp { op, operand } if op == "-" => {
@@ -4196,17 +4202,26 @@ impl Interpreter {
             }
             _ => return None,
         };
+        self.read_nested_at(object, name, RowKey::Integer(index))
+    }
+
+    fn read_nested_at(
+        &self,
+        object: &Expr,
+        name: &str,
+        leaf: nested_publication::RowKey<'_>,
+    ) -> Option<Value> {
+        use nested_publication::RowKey;
+        let read = |owner| match leaf {
+            RowKey::Integer(index) => self.env.nested_publication_read(name, owner, index),
+            RowKey::String(key) => self.env.nested_dictionary_publication_read(name, owner, key),
+            RowKey::Field(_) => None,
+        };
         match object {
-            Expr::FieldAccess { field, .. } => {
-                self.env.nested_publication_read(name, RowKey::Field(field), index)
-            }
+            Expr::FieldAccess { field, .. } => read(RowKey::Field(field)),
             Expr::IndexAccess { index: key, .. } => match key.as_ref() {
-                Expr::String(key) => {
-                    self.env.nested_publication_read(name, RowKey::String(key), index)
-                }
-                Expr::Int(key) => {
-                    self.env.nested_publication_read(name, RowKey::Integer(*key), index)
-                }
+                Expr::String(key) => read(RowKey::String(key)),
+                Expr::Int(key) => read(RowKey::Integer(*key)),
                 Expr::UnaryOp { op, operand } if op == "-" => {
                     let key = match operand.as_ref() {
                         Expr::Int(key) => *key,
@@ -4217,22 +4232,14 @@ impl Interpreter {
                         },
                         _ => return None,
                     };
-                    self.env.nested_publication_read(
-                        name,
-                        RowKey::Integer(key.checked_neg()?),
-                        index,
-                    )
+                    read(RowKey::Integer(key.checked_neg()?))
                 }
                 // A pending collection cannot be a scalar row selector.
                 // Leave its materialization to the ordinary evaluator.
                 Expr::Identifier(key) if key == name => None,
                 Expr::Identifier(key) => match self.env.get(key) {
-                    Some(Value::Str(key)) => {
-                        self.env.nested_publication_read(name, RowKey::String(&key), index)
-                    }
-                    Some(Value::Int(key)) => {
-                        self.env.nested_publication_read(name, RowKey::Integer(key), index)
-                    }
+                    Some(Value::Str(key)) => read(RowKey::String(&key)),
+                    Some(Value::Int(key)) => read(RowKey::Integer(key)),
                     _ => None,
                 },
                 _ => None,
