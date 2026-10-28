@@ -233,7 +233,13 @@ impl FunctionBodyRef {
             return 0;
         };
         if proof.nested_spill_region {
-            super::nested_spill_proof::eligible(&self.storage.body, params, args, env)
+            let dictionary =
+                super::nested_spill_proof::eligible(&self.storage.body, params, args, env);
+            if dictionary != 0 {
+                dictionary
+            } else {
+                super::row_spill_proof::eligible(&self.storage.body, params, args, env)
+            }
         } else {
             0
         }

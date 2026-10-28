@@ -144,6 +144,49 @@ impl RowWrite {
     }
 }
 
+/// Allocate only after the inline journal fills in a proven scalar region.
+/// Keys are resolved indices, so negative aliases coalesce before storage.
+#[derive(Clone, Debug)]
+pub(crate) struct RowManyWrite {
+    selector: Selector,
+    writes: std::collections::HashMap<usize, Scalar, std::hash::BuildHasherDefault<ahash::AHasher>>,
+}
+
+impl RowManyWrite {
+    fn from_inline(write: RowWrite, hint: u16) -> Self {
+        let mut writes = std::collections::HashMap::with_capacity_and_hasher(
+            usize::from(hint).max(5),
+            Default::default(),
+        );
+        for entry in write.entries.into_iter().flatten() {
+            writes.insert(entry.index, entry.value);
+        }
+        Self { selector: write.selector, writes }
+    }
+
+    fn apply(&self, root: &mut Value) {
+        let leaf = match (&self.selector, root) {
+            (Selector::Field(field), Value::Struct { fields, .. }) => {
+                Arc::make_mut(fields).get_mut(field)
+            }
+            (Selector::String(key), Value::Dict(map)) => Arc::make_mut(map).get_mut(key.as_str()),
+            (Selector::Integer(key), Value::Dict(map)) => {
+                with_integer_key(*key, |key| Arc::make_mut(map).get_mut(key))
+            }
+            (Selector::Integer(key), Value::Array(rows)) => {
+                let index = NestedPublication::resolve(*key, rows.len()).expect("validated owner");
+                Arc::make_mut(rows).get_mut(index)
+            }
+            _ => unreachable!("validated row owner"),
+        };
+        let Some(Value::Array(row)) = leaf else { unreachable!("validated row") };
+        let row = Arc::make_mut(row);
+        for (index, value) in &self.writes {
+            row[*index] = value.value();
+        }
+    }
+}
+
 /// Up to four scalar dictionary leaf writes reuse assignment path storage.
 /// The canonical key is shared with the map; admission never copies key bytes.
 #[derive(Clone, Debug)]
@@ -456,6 +499,19 @@ impl NestedPublication {
                     None => Value::Error(format!("Index out of bounds: {index}")),
                 })
             }
+            Access::DeferredRowMany(write) => {
+                let RowKey::Integer(index) = key else { return None };
+                if !write.selector.key().same(owner, root) {
+                    return None;
+                }
+                let row = write.selector.key().row(root).expect("validated row");
+                Some(match Self::resolve(index, row.len()) {
+                    Some(index) => {
+                        write.writes.get(&index).map_or_else(|| row[index].clone(), |v| v.value())
+                    }
+                    None => Value::Error(format!("Index out of bounds: {index}")),
+                })
+            }
             _ => unreachable!(),
         }
     }
@@ -590,21 +646,40 @@ impl NestedPublication {
         let [first, Access::Index(Value::Int(index))] = path else { return false };
         let Some(key) = RowKey::from_access(first) else { return false };
         let Some(value) = Scalar::from_value(value) else { return false };
-        let Access::DeferredRow(write) = write else { unreachable!() };
-        let row = write.selector.key().row(root).expect("validated row");
-        if !write.selector.key().same(key, root) {
+        let selector = match write {
+            Access::DeferredRow(write) => &write.selector,
+            Access::DeferredRowMany(write) => &write.selector,
+            _ => unreachable!(),
+        };
+        let row = selector.key().row(root).expect("validated row");
+        if !selector.key().same(key, root) {
             return false;
         }
         let Some(index) = Self::resolve(*index, row.len()) else { return false };
         // Coalesce aliases before looking for an unused slot. A full journal
         // must still accept repeated writes; rejection leaves it untouched.
-        let slot = write
-            .entries
-            .iter()
-            .position(|entry| entry.is_some_and(|entry| entry.index == index))
-            .or_else(|| write.entries.iter().position(Option::is_none));
-        let Some(slot) = slot else { return false };
-        write.entries[slot] = Some(RowEntry { index, value });
+        if let Access::DeferredRow(inline) = write {
+            let slot = inline
+                .entries
+                .iter()
+                .position(|entry| entry.is_some_and(|entry| entry.index == index))
+                .or_else(|| inline.entries.iter().position(Option::is_none));
+            if let Some(slot) = slot {
+                inline.entries[slot] = Some(RowEntry { index, value });
+                return true;
+            }
+            if spill_hint == 0 {
+                return false;
+            }
+            let Access::DeferredRow(inline) =
+                std::mem::replace(write, Access::Field(String::new()))
+            else {
+                unreachable!()
+            };
+            *write = Access::DeferredRowMany(RowManyWrite::from_inline(inline, spill_hint));
+        }
+        let Access::DeferredRowMany(many) = write else { unreachable!() };
+        many.writes.insert(index, value);
         true
     }
 
@@ -632,6 +707,7 @@ impl NestedPublication {
         }
         match write {
             Access::DeferredRow(write) => write.apply(root),
+            Access::DeferredRowMany(write) => write.apply(root),
             Access::DeferredDictionary(write) => write.apply(root),
             Access::DeferredDictionaryMany(write) => write.apply(root),
             _ => unreachable!("nested publication write"),
@@ -1497,5 +1573,43 @@ mod deep_tests {
         let (_, unchanged) = pending.discard();
         assert_eq!(pointer(&unchanged), pointer(&owner));
         assert!(matches!(value(&unchanged, 0), Value::Int(0)));
+    }
+}
+
+#[cfg(test)]
+mod row_spill_tests {
+    use super::*;
+    fn path(i: i64) -> Vec<Access> {
+        vec![Access::Index(Value::Int(0)), Access::Index(Value::Int(i))]
+    }
+    #[test]
+    fn row_overflow_coalesces_aliases_preserves_snapshots_and_reuses_leaf() {
+        let mut owner = Value::array(vec![Value::array((0..128).map(Value::Int).collect())]);
+        let before = RowKey::Integer(0).row(&owner).unwrap().as_ptr();
+        let mut pending =
+            NestedPublication::prepare("state".into(), owner.clone(), path(0), &Value::Int(42))
+                .unwrap();
+        for i in 1..64 {
+            assert!(pending.try_record_with_batching(&path(i), &Value::Int(i + 42), 64));
+        }
+        let snapshot = pending.snapshot_value();
+        assert!(pending.try_record_with_batching(
+            &path(-128),
+            &Value::Float(f64::from_bits(0x7ff8000000000042)),
+            64
+        ));
+        assert!(!pending.try_record_with_batching(&path(128), &Value::Int(9), 64));
+        assert!(!pending.try_record_with_batching(&path(1), &Value::array(vec![]), 64));
+        assert!(matches!(pending.read(RowKey::Integer(0), 63), Some(Value::Int(105))));
+        pending.publish(Some(&mut owner));
+        let row = RowKey::Integer(0).row(&owner).unwrap();
+        assert_eq!(row.as_ptr(), before);
+        assert!(matches!(row[0], Value::Float(v) if v.to_bits() == 0x7ff8000000000042));
+        assert!(matches!(RowKey::Integer(0).row(&snapshot).unwrap()[0], Value::Int(42)));
+        for i in 1..128 {
+            assert!(
+                matches!(row[i], Value::Int(n) if n == if i < 64 {i as i64+42} else {i as i64})
+            );
+        }
     }
 }

@@ -29,12 +29,13 @@ export func edit() {{ {edits} return {row}[0] }}
 func observe() {{ let saved := state {row}[0] += 9 return saved }}
 export func callback() {{ {edits} return observe() }}
 export func fail() {{ {edits} {row}[128] = 1 }}
+export func fail_math(zero) {{ {edits} {row}[0] = 1 / zero }}
 func replace_index() {{ state = replacement return 0 }}
 export func replace() {{ {edits} {row}[replace_index()] = 42 }}
 "#
                 );
                 let main = r#"
-from owner import snapshot, leaf, edit, callback, fail, replace
+from owner import snapshot, leaf, edit, callback, fail, fail_math, replace
 let original := snapshot()
 let alias := leaf()
 mut i := 0
@@ -61,6 +62,10 @@ mut caught := false
 try { fail() } except e { caught = true }
 assert(caught)
 let after_fail := snapshot()
+caught = false
+try { fail_math(0) } except e { caught = true }
+assert(caught)
+let after_math := snapshot()
 replace()
 let final := snapshot()
 mut j := 0
@@ -72,6 +77,8 @@ while j < 128 {
  assert_equal(AFTER_CALLBACK[j], expected)
  if j < COUNT { expected += 1 }
  assert_equal(AFTER_FAIL[j], expected)
+ if j < COUNT { expected += 1 }
+ assert_equal(AFTER_MATH[j], expected)
  assert_equal(ORIGINAL[j], j)
  assert_equal(alias[j], j)
  mut final_expected := j
@@ -85,6 +92,7 @@ print("ROW OVERFLOW PASS")
                 for (token, name) in [
                     ("AFTER_CALLBACK", "after_callback"),
                     ("AFTER_FAIL", "after_fail"),
+                    ("AFTER_MATH", "after_math"),
                     ("ORIGINAL", "original"),
                     ("OBSERVED", "observed"),
                     ("BEFORE", "before"),

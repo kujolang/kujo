@@ -40,7 +40,8 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
     Some(Proof {
         whole_value_mask: region.whole_value_mask,
         sparse_write_region,
-        nested_spill_region: super::nested_spill_proof::shape(body),
+        nested_spill_region: super::nested_spill_proof::shape(body)
+            || super::row_spill_proof::shape(body),
         required_parameters,
         primitive_arguments: analyzer.primitive_arguments,
         read_only: analyzer.read_only,

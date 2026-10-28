@@ -34,6 +34,7 @@ mod nested_publication;
 mod nested_spill_proof;
 pub mod persistent_queue;
 pub mod promise;
+mod row_spill_proof;
 pub(crate) mod string_access;
 pub mod tasks;
 mod test_runner;

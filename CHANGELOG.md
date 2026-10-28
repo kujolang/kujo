@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain larger scalar row-update batches in private overflow storage for
+  admitted explicit assignments and bounded counted loops, preserving snapshots,
+  aliases, callback visibility and partial writes before errors.
+
 - Avoid repeated wide-leaf copies in captured scalar updates through unique
   deeper collection paths. Reuse assignment-path storage while preserving
   snapshots, shared-alias fallback, callbacks, errors and index/root evaluation

@@ -35,6 +35,7 @@ pub(crate) enum Access {
     Index(Value),
     Field(String),
     DeferredRow(super::nested_publication::RowWrite),
+    DeferredRowMany(super::nested_publication::RowManyWrite),
     DeferredDictionary(super::nested_publication::DictionaryWrite),
     DeferredDictionaryMany(super::nested_publication::DictionaryManyWrite),
 }
