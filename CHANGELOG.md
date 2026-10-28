@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid full captured-dictionary copies for proven synchronous helpers updating
+  multiple keys. Preserve snapshots, public-owner publication, operator callbacks,
+  errors and root/index evaluation order. Active batches also retain string and
+  byte values and new keys; uncertain or escaping bodies keep ordinary fallback.
+
 - Extend bounded captured-row updates to array-owned rows, preserving positive
   and negative selector aliases, snapshots, shared rows and larger-batch fallback.
   Invalid root-as-index reads avoid speculative snapshots while retaining their

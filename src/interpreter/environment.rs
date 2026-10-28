@@ -3,7 +3,9 @@
 // Lexical scoping environment for variable management in the Kujo interpreter.
 // Implements a stack of scopes where inner scopes shadow outer scopes.
 
-use super::dictionary_publication::{DictionaryPublication, DictionaryScalar};
+use super::dictionary_publication::{
+    DictionaryManyPublication, DictionaryPublication, DictionaryScalar,
+};
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, Weak};
@@ -58,6 +60,7 @@ enum CaptureWrites {
     DictionaryFloat(DictionaryPublication<f64>),
     DictionaryBool(DictionaryPublication<bool>),
     DictionaryNull(DictionaryPublication<()>),
+    DictionaryMany(Box<DictionaryManyPublication>),
     Nested(super::nested_publication::NestedPublication),
 }
 
@@ -103,16 +106,26 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => pending.get(key),
             Self::DictionaryBool(pending) => pending.get(key),
             Self::DictionaryNull(pending) => pending.get(key),
+            Self::DictionaryMany(pending) => pending.get(key),
             _ => None,
         }
     }
 
-    fn dictionary_matches_key(&self, key: &str) -> bool {
+    fn dictionary_can_record(&self, key: &str, allow_many: bool) -> bool {
         match self {
-            Self::Dictionary(pending) => pending.matches_key(key),
-            Self::DictionaryFloat(pending) => pending.matches_key(key),
-            Self::DictionaryBool(pending) => pending.matches_key(key),
-            Self::DictionaryNull(pending) => pending.matches_key(key),
+            Self::Dictionary(pending) => {
+                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+            }
+            Self::DictionaryFloat(pending) => {
+                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+            }
+            Self::DictionaryBool(pending) => {
+                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+            }
+            Self::DictionaryNull(pending) => {
+                pending.matches_key(key) || (allow_many && pending.contains_key(key))
+            }
+            Self::DictionaryMany(_) => allow_many,
             _ => false,
         }
     }
@@ -151,12 +164,40 @@ impl CaptureWrites {
         }
     }
 
-    fn with_dictionary_value(self, value: &Value) -> Self {
+    fn with_dictionary_value(self, key: &str, value: &Value) -> Self {
         match self {
-            Self::Dictionary(pending) => Self::replace_dictionary_value(pending, value),
-            Self::DictionaryFloat(pending) => Self::replace_dictionary_value(pending, value),
-            Self::DictionaryBool(pending) => Self::replace_dictionary_value(pending, value),
-            Self::DictionaryNull(pending) => Self::replace_dictionary_value(pending, value),
+            Self::Dictionary(pending) => {
+                if pending.matches_key(key) {
+                    Self::replace_dictionary_value(pending, value)
+                } else {
+                    Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryFloat(pending) => {
+                if pending.matches_key(key) {
+                    Self::replace_dictionary_value(pending, value)
+                } else {
+                    Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryBool(pending) => {
+                if pending.matches_key(key) {
+                    Self::replace_dictionary_value(pending, value)
+                } else {
+                    Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryNull(pending) => {
+                if pending.matches_key(key) {
+                    Self::replace_dictionary_value(pending, value)
+                } else {
+                    Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryMany(mut pending) => {
+                pending.record(key, value);
+                Self::DictionaryMany(pending)
+            }
             _ => unreachable!("admitted dictionary journal"),
         }
     }
@@ -183,6 +224,7 @@ impl CaptureWrites {
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
+            | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
             | Self::Nested(_) => {
                 unreachable!("private publication is not a task write journal")
@@ -197,6 +239,7 @@ impl CaptureWrites {
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
+            | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
             | Self::Nested(_) => (None, None),
             Self::One(write) => (Some(write), None),
@@ -218,6 +261,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.name()),
             Self::DictionaryBool(pending) => Some(pending.name()),
             Self::DictionaryNull(pending) => Some(pending.name()),
+            Self::DictionaryMany(pending) => Some(pending.name()),
             Self::Nested(pending) => Some(pending.name()),
             _ => None,
         }
@@ -230,6 +274,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.snapshot_value()),
             Self::DictionaryBool(pending) => Some(pending.snapshot_value()),
             Self::DictionaryNull(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryMany(pending) => Some(pending.snapshot_value()),
             Self::Nested(pending) => Some(pending.snapshot_value()),
             _ => None,
         }
@@ -242,6 +287,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.publish(owner)),
             Self::DictionaryBool(pending) => Some(pending.publish(owner)),
             Self::DictionaryNull(pending) => Some(pending.publish(owner)),
+            Self::DictionaryMany(pending) => Some(pending.publish(owner)),
             Self::Nested(pending) => Some(pending.publish(owner)),
             _ => None,
         }
@@ -254,6 +300,7 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.discard()),
             Self::DictionaryBool(pending) => Some(pending.discard()),
             Self::DictionaryNull(pending) => Some(pending.discard()),
+            Self::DictionaryMany(pending) => Some(pending.discard()),
             Self::Nested(pending) => Some(pending.discard()),
             _ => None,
         }
@@ -483,7 +530,8 @@ impl Environment {
                 pending @ (CaptureWrites::Dictionary(_)
                 | CaptureWrites::DictionaryFloat(_)
                 | CaptureWrites::DictionaryBool(_)
-                | CaptureWrites::DictionaryNull(_)),
+                | CaptureWrites::DictionaryNull(_)
+                | CaptureWrites::DictionaryMany(_)),
             )) => Some(pending),
             _ => None,
         }
@@ -491,6 +539,10 @@ impl Environment {
 
     pub(crate) fn pending_visible(&self, name: &str) -> bool {
         self.pending_name() == Some(name) && !self.has_local_binding(name)
+    }
+
+    pub(crate) fn pending_dictionary_visible(&self, name: &str) -> bool {
+        self.pending_visible(name) && self.pending_dictionary().is_some()
     }
 
     pub(crate) fn pending_nested_visible(&self, name: &str) -> bool {
@@ -610,11 +662,22 @@ impl Environment {
         })
     }
 
+    #[cfg(test)]
     pub(crate) fn try_defer_index_write(
         &mut self,
         name: &str,
         index: &Value,
         value: &Value,
+    ) -> bool {
+        self.try_defer_index_write_with_batching(name, index, value, true)
+    }
+
+    pub(crate) fn try_defer_index_write_with_batching(
+        &mut self,
+        name: &str,
+        index: &Value,
+        value: &Value,
+        allow_many: bool,
     ) -> bool {
         // A new nested optimization must not displace an already eligible
         // direct-array/dictionary optimization on another binding. Try the
@@ -623,7 +686,7 @@ impl Environment {
         if matches!(&self.capture_writes, Some((0, CaptureWrites::Nested(pending))) if pending.name() != name)
         {
             let previous = self.capture_writes.replace((0, CaptureWrites::Empty));
-            if self.try_defer_index_write(name, index, value) {
+            if self.try_defer_index_write_with_batching(name, index, value, allow_many) {
                 let Some((0, pending)) = previous else { unreachable!() };
                 let Some((name, value)) = pending.publish(None) else { unreachable!() };
                 self.scopes[0].insert(name, value);
@@ -633,7 +696,10 @@ impl Environment {
             return false;
         }
         if !matches!(self.capture_writes, Some((0, _)))
-            || !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+            || !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+                || (allow_many
+                    && matches!(value, Value::Str(_) | Value::Bytes(_))
+                    && matches!(self.capture_writes, Some((0, CaptureWrites::DictionaryMany(_))))))
             || self.has_local_binding(name)
             || self.binding_kinds[0].contains_key(name)
             || self.pending_name().is_some_and(|pending| pending != name)
@@ -643,7 +709,7 @@ impl Environment {
         if self.pending_dictionary().is_some()
             || matches!(self.scopes[0].get(name), Some(Value::Dict(_)))
         {
-            return self.try_defer_dictionary_write(name, index, value);
+            return self.try_defer_dictionary_write(name, index, value, allow_many);
         }
         let Value::Int(index) = index else { return false };
         let length = if let Some(pending) = self.pending_indexed() {
@@ -696,8 +762,18 @@ impl Environment {
         )
     }
 
-    fn try_defer_dictionary_write(&mut self, name: &str, index: &Value, value: &Value) -> bool {
-        if !matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null) {
+    fn try_defer_dictionary_write(
+        &mut self,
+        name: &str,
+        index: &Value,
+        value: &Value,
+        allow_many: bool,
+    ) -> bool {
+        if !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+            || (allow_many
+                && matches!(value, Value::Str(_) | Value::Bytes(_))
+                && matches!(self.capture_writes, Some((0, CaptureWrites::DictionaryMany(_))))))
+        {
             return false;
         }
         if self.pending_dictionary().is_none()
@@ -707,21 +783,27 @@ impl Environment {
             return false;
         }
         match index {
-            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, value),
+            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, value, allow_many),
             Value::Int(index) => super::dictionary_publication::with_integer_key(*index, |key| {
-                self.try_defer_dictionary_key_write(name, key, value)
+                self.try_defer_dictionary_key_write(name, key, value, allow_many)
             }),
             _ => false,
         }
     }
 
-    fn try_defer_dictionary_key_write(&mut self, name: &str, key: &str, value: &Value) -> bool {
+    fn try_defer_dictionary_key_write(
+        &mut self,
+        name: &str,
+        key: &str,
+        value: &Value,
+        allow_many: bool,
+    ) -> bool {
         if let Some(pending) = self.pending_dictionary() {
-            if !pending.dictionary_matches_key(key) {
+            if !pending.dictionary_can_record(key, allow_many) {
                 return false;
             }
             let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
-            self.capture_writes = Some((0, pending.with_dictionary_value(value)));
+            self.capture_writes = Some((0, pending.with_dictionary_value(key, value)));
         } else {
             if !matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
                 return false;
@@ -2471,9 +2553,10 @@ mod dictionary_scalar_publication_tests {
                 assert!(active.try_defer_index_write("map", &Value::Int(1), first));
                 exact(&active.indexed_publication_read("map", 1).unwrap(), first);
                 let snapshot = active.get("map").unwrap();
-                // A different key or unsupported value must not consume the journal.
+                // Missing keys and unsupported values preserve the journal.
+                // A distinct existing key now promotes without publishing it.
                 assert!(!active.try_defer_index_write("map", &Value::Int(2), second));
-                assert!(!active.try_defer_index_write(
+                assert!(active.try_defer_index_write(
                     "map",
                     &Value::Str(Arc::new("01".into())),
                     second
@@ -2491,10 +2574,8 @@ mod dictionary_scalar_publication_tests {
                 ));
                 exact(&active.dictionary_publication_read("map", "1").unwrap(), second);
                 exact(&snapshot.dictionary_get("1").unwrap(), first);
-                assert!(matches!(
-                    active.dictionary_publication_read("map", "01"),
-                    Some(Value::Int(2))
-                ));
+                exact(&active.dictionary_publication_read("map", "01").unwrap(), second);
+                assert!(matches!(snapshot.dictionary_get("01"), Some(Value::Int(2))));
                 assert!(matches!(
                     active.dictionary_publication_read("map", "missing"),
                     Some(Value::Error(_))
@@ -2509,6 +2590,7 @@ mod dictionary_scalar_publication_tests {
                 let Value::Dict(base) = &guard.scopes[0]["map"] else { unreachable!() };
                 assert_eq!(Arc::as_ptr(base), pointer);
                 exact(&base["1"], second);
+                exact(&base["01"], second);
                 exact(&snapshot.dictionary_get("1").unwrap(), first);
             }
         }

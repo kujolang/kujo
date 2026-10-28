@@ -1,5 +1,5 @@
-//! One existing dictionary key updated without copying its captured public owner.
-//! The key is an existing Arc, so overflow/fallback adds no journal allocation.
+//! Existing dictionary keys updated without copying their captured public owner.
+//! The first key stays inline; a second key promotes to a sparse write table.
 use super::value::DictMap;
 use super::Value;
 use std::sync::Arc;
@@ -86,6 +86,18 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
         } else {
             self.base.get(key).cloned()
         }
+    }
+
+    pub(super) fn contains_key(&self, key: &str) -> bool {
+        self.base.contains_key(key)
+    }
+
+    pub(super) fn into_many(self, key: &str, value: &Value) -> DictionaryManyPublication {
+        let mut writes = ScalarWrites::default();
+        writes.insert(self.key, ScalarValue::from_value(&self.value.into_value()));
+        let stored = self.base.get_key_value(key).expect("admitted dictionary key").0.clone();
+        writes.insert(stored, ScalarValue::from_value(value));
+        DictionaryManyPublication { name: self.name, base: self.base, writes }
     }
 
     pub(super) fn matches_key(&self, key: &str) -> bool {
@@ -253,5 +265,214 @@ mod tests {
         let (name, _) = DictionaryPublication::prepare(name, returned, "key", 9).unwrap_err();
         assert_eq!(name.as_ptr(), pointer);
         assert_eq!(name.capacity(), capacity);
+    }
+}
+
+// Pending writes are admitted only for scalar values. Keeping a full Value in
+// each hash bucket wastes space proportional to the number of updated keys.
+#[derive(Clone, Debug)]
+enum ScalarValue {
+    String(Arc<String>),
+    Bytes(Arc<Vec<u8>>),
+    Int(i64),
+    Float(f64),
+    Bool(bool),
+    Null,
+}
+impl ScalarValue {
+    fn from_value(value: &Value) -> Self {
+        match value {
+            Value::Str(value) => Self::String(value.clone()),
+            Value::Bytes(value) => Self::Bytes(value.clone()),
+            Value::Int(value) => Self::Int(*value),
+            Value::Float(value) => Self::Float(*value),
+            Value::Bool(value) => Self::Bool(*value),
+            Value::Null => Self::Null,
+            _ => unreachable!("admitted scalar dictionary write"),
+        }
+    }
+    fn into_value(&self) -> Value {
+        match self {
+            Self::String(value) => Value::Str(value.clone()),
+            Self::Bytes(value) => Value::Bytes(value.clone()),
+            Self::Int(value) => Value::Int(*value),
+            Self::Float(value) => Value::Float(*value),
+            Self::Bool(value) => Value::Bool(*value),
+            Self::Null => Value::Null,
+        }
+    }
+}
+type ScalarWrites =
+    std::collections::HashMap<Arc<str>, ScalarValue, std::hash::BuildHasherDefault<ahash::AHasher>>;
+
+/// Promote only when a helper updates a second existing key. Single-key calls
+/// retain their inline journal; this table scales with writes, not owner width.
+#[derive(Clone, Debug)]
+pub(super) struct DictionaryManyPublication {
+    name: Box<str>,
+    base: Arc<DictMap>,
+    writes: ScalarWrites,
+}
+
+impl DictionaryManyPublication {
+    pub(super) fn name(&self) -> &str {
+        &self.name
+    }
+    pub(super) fn contains_key(&self, key: &str) -> bool {
+        self.base.contains_key(key)
+    }
+    pub(super) fn get(&self, key: &str) -> Option<Value> {
+        self.writes.get(key).map(|value| value.into_value()).or_else(|| self.base.get(key).cloned())
+    }
+    pub(super) fn record(&mut self, key: &str, value: &Value) {
+        if let Some(previous) = self.writes.get_mut(key) {
+            *previous = ScalarValue::from_value(value);
+        } else {
+            let stored = self
+                .base
+                .get_key_value(key)
+                .map(|(key, _)| key.clone())
+                .unwrap_or_else(|| Arc::from(key));
+            self.writes.insert(stored, ScalarValue::from_value(value));
+        }
+    }
+    fn apply(writes: &ScalarWrites, base: &mut Arc<DictMap>) {
+        let target = Arc::make_mut(base);
+        for (key, value) in writes {
+            if let Some(entry) = target.get_mut(key) {
+                *entry = value.into_value();
+            } else {
+                target.insert(key.clone(), value.into_value());
+            }
+        }
+    }
+    pub(super) fn snapshot_value(&self) -> Value {
+        let mut base = self.base.clone();
+        Self::apply(&self.writes, &mut base);
+        Value::Dict(base)
+    }
+    pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {
+        let Self { name, mut base, writes } = self;
+        if let Some(Value::Dict(public)) = owner {
+            if Arc::ptr_eq(&base, public) {
+                drop(base);
+                Self::apply(&writes, public);
+                return (name.into_string(), Value::Dict(public.clone()));
+            }
+        }
+        Self::apply(&writes, &mut base);
+        (name.into_string(), Value::Dict(base))
+    }
+    pub(super) fn discard(self) -> (String, Value) {
+        (self.name.into_string(), Value::Dict(self.base))
+    }
+}
+
+#[cfg(test)]
+mod many_tests {
+    use super::*;
+
+    #[test]
+    fn journal_strings_and_insertions_preserve_snapshots_and_owner_visibility() {
+        let mut owner = Value::Dict(Arc::new(DictMap::from_iter([
+            (Arc::from("a"), Value::Int(1)),
+            (Arc::from("b"), Value::Int(2)),
+        ])));
+        let Value::Dict(base) = &owner else { unreachable!() };
+        let mut pending = DictionaryPublication::prepare("state".into(), base.clone(), "a", 10)
+            .unwrap()
+            .into_many("b", &Value::Int(20));
+        let text = Arc::new("retained string".to_owned());
+        pending.record("a", &Value::Str(text.clone()));
+        pending.record("new", &Value::Str(text.clone()));
+        assert!(matches!(owner.dictionary_get("a"), Some(Value::Int(1))));
+        assert!(owner.dictionary_get("new").is_none());
+        let saved = pending.snapshot_value();
+        pending.record("new", &Value::Null);
+        assert!(matches!(pending.get("new"), Some(Value::Null)));
+        pending.publish(Some(&mut owner));
+        assert!(
+            matches!(owner.dictionary_get("a"), Some(Value::Str(value)) if Arc::ptr_eq(&value, &text))
+        );
+        assert!(matches!(owner.dictionary_get("new"), Some(Value::Null)));
+        assert!(
+            matches!(saved.dictionary_get("new"), Some(Value::Str(value)) if Arc::ptr_eq(&value, &text))
+        );
+    }
+
+    #[test]
+    fn compact_journal_scalars_preserve_exact_values() {
+        assert!(std::mem::size_of::<ScalarValue>() <= 16);
+        for value in [
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Float(-0.0),
+            Value::Float(f64::from_bits(0xfff8_0000_0000_0042)),
+            Value::Bool(false),
+            Value::Bool(true),
+            Value::Null,
+            Value::Bytes(Arc::new(vec![0, 1, 255])),
+        ] {
+            let restored = ScalarValue::from_value(&value).into_value();
+            match (value, restored) {
+                (Value::Int(a), Value::Int(b)) => assert_eq!(a, b),
+                (Value::Float(a), Value::Float(b)) => assert_eq!(a.to_bits(), b.to_bits()),
+                (Value::Bool(a), Value::Bool(b)) => assert_eq!(a, b),
+                (Value::Null, Value::Null) => {}
+                (Value::Bytes(a), Value::Bytes(b)) => assert!(Arc::ptr_eq(&a, &b)),
+                _ => panic!("scalar kind changed"),
+            }
+        }
+    }
+
+    #[test]
+    fn multiple_keys_preserve_aliases_snapshots_and_owner_storage() {
+        let mut map = DictMap::default();
+        for i in 0..128 {
+            map.insert(Arc::from(i.to_string()), Value::Int(i));
+        }
+        map.insert(Arc::from("01"), Value::Int(999));
+        let mut owner = Value::Dict(Arc::new(map));
+        let Value::Dict(base) = &owner else { unreachable!() };
+        let pointer = Arc::as_ptr(base);
+        let first =
+            DictionaryPublication::prepare("state".into(), base.clone(), "0", 1000).unwrap();
+        let mut pending = first.into_many("1", &Value::Float(-0.0));
+        let saved = pending.snapshot_value();
+        for i in 2..128 {
+            pending.record(&i.to_string(), &Value::Bool(true));
+        }
+        pending.record("0", &Value::Null);
+        assert!(!pending.contains_key("missing"));
+        assert!(matches!(pending.get("01"), Some(Value::Int(999))));
+        let (_, current) = pending.publish(Some(&mut owner));
+        let Value::Dict(current) = current else { unreachable!() };
+        assert_eq!(Arc::as_ptr(&current), pointer);
+        assert!(matches!(current["0"], Value::Null));
+        assert!(matches!(current["127"], Value::Bool(true)));
+        assert!(matches!(current["1"], Value::Float(v) if v.to_bits() == (-0.0_f64).to_bits()));
+        let Value::Dict(saved) = saved else { unreachable!() };
+        assert!(matches!(saved["0"], Value::Int(1000)));
+        assert!(matches!(saved["127"], Value::Int(127)));
+    }
+
+    #[test]
+    fn multiple_key_discard_and_replaced_owner_preserve_originals() {
+        let base = Arc::new(DictMap::from_iter([
+            (Arc::from("a"), Value::Int(1)),
+            (Arc::from("b"), Value::Int(2)),
+        ]));
+        let pending = DictionaryPublication::prepare("state".into(), base.clone(), "a", 10)
+            .unwrap()
+            .into_many("b", &Value::Null);
+        let (_, discarded) = pending.clone().discard();
+        assert!(matches!(discarded, Value::Dict(ref map) if matches!(map["a"],Value::Int(1))));
+        let mut other = Value::Dict(Arc::new(DictMap::default()));
+        let (_, updated) = pending.publish(Some(&mut other));
+        assert!(matches!(other, Value::Dict(ref map) if map.is_empty()));
+        assert!(
+            matches!(updated, Value::Dict(ref map) if matches!(map["a"],Value::Int(10)) && matches!(map["b"],Value::Null))
+        );
+        assert!(matches!(base["a"], Value::Int(1)));
     }
 }

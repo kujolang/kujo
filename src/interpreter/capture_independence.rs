@@ -11,6 +11,8 @@ pub(super) struct Proof {
     pub required_parameters: Vec<String>,
     pub primitive_arguments: bool,
     pub read_only: bool,
+    pub whole_value_mask: u32,
+    pub sparse_write_region: bool,
 }
 
 struct Analyzer<'a> {
@@ -27,11 +29,100 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
         primitive_arguments: false,
         read_only: true,
     };
-    analyzer.statements(body, 0).then(|| Proof {
-        required_parameters: analyzer.required.into_iter().map(str::to_owned).collect(),
+    if !analyzer.statements(body, 0) {
+        return None;
+    }
+    let required_parameters: Vec<String> =
+        analyzer.required.into_iter().map(str::to_owned).collect();
+    let mut region = SparseRegion { names: &required_parameters, whole_value_mask: 0 };
+    let sparse_write_region = required_parameters.len() <= 32 && region.statements(body, 0);
+    Some(Proof {
+        whole_value_mask: region.whole_value_mask,
+        sparse_write_region,
+        required_parameters,
         primitive_arguments: analyzer.primitive_arguments,
         read_only: analyzer.read_only,
     })
+}
+
+// This is a profitability guard, not permission to change publication order.
+// Reuse the existing proof's padding and names; no per-body allocation is added.
+// Whole captured-value reads and opaque operations keep the single-key path.
+struct SparseRegion<'a> {
+    names: &'a [String],
+    whole_value_mask: u32,
+}
+
+impl SparseRegion<'_> {
+    fn expression(&mut self, expr: &Expr, depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        match expr {
+            // The evaluator treats this spelling as a literal before lexical lookup.
+            Expr::Identifier(name) if name == "null" => true,
+            Expr::Identifier(name) => {
+                if let Some(index) = self.names.iter().position(|value| value == name) {
+                    let Some(bit) = 1u32.checked_shl(index as u32) else { return false };
+                    self.whole_value_mask |= bit;
+                }
+                true
+            }
+            Expr::Int(_) | Expr::Float(_) | Expr::String(_) | Expr::Bool(_) => true,
+            Expr::UnaryOp { operand, .. } => self.expression(operand, depth + 1),
+            Expr::BinaryOp { left, right, .. } => {
+                self.expression(left, depth + 1) && self.expression(right, depth + 1)
+            }
+            _ => false,
+        }
+    }
+
+    // Indexed values have unknown runtime types and can invoke struct operators.
+    // Permit an indexed destination or direct return, but do not feed such a
+    // value into arithmetic or a local later used by arithmetic.
+    fn indexed_access(&mut self, expr: &Expr, depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        match expr {
+            Expr::IndexAccess { object, index }
+                if matches!(object.as_ref(), Expr::Identifier(_)) =>
+            {
+                self.expression(index, depth + 1)
+            }
+            _ => self.expression(expr, depth + 1),
+        }
+    }
+
+    fn statements(&mut self, stmts: &[Stmt], depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        stmts.iter().all(|stmt| match stmt {
+            Stmt::Let { value, type_annotation: None, .. }
+            | Stmt::Const { value, type_annotation: None, .. } => self.expression(value, depth + 1),
+            Stmt::Assign { target, value } => {
+                self.indexed_access(target, depth + 1) && self.expression(value, depth + 1)
+            }
+            Stmt::ExprStmt(expr) => self.expression(expr, depth + 1),
+            Stmt::Return(Some(expr)) => self.indexed_access(expr, depth + 1),
+            Stmt::Return(None) | Stmt::Break | Stmt::Continue => true,
+            Stmt::If { condition, then_branch, else_branch } => {
+                self.expression(condition, depth + 1)
+                    && self.statements(then_branch, depth + 1)
+                    && else_branch.as_ref().is_none_or(|body| self.statements(body, depth + 1))
+            }
+            Stmt::While { condition, body } => {
+                self.expression(condition, depth + 1) && self.statements(body, depth + 1)
+            }
+            Stmt::Loop { condition, body } => {
+                condition.as_ref().is_none_or(|value| self.expression(value, depth + 1))
+                    && self.statements(body, depth + 1)
+            }
+            Stmt::Block(body) => self.statements(body, depth + 1),
+            _ => false,
+        })
+    }
 }
 
 impl<'a> Analyzer<'a> {
@@ -295,5 +386,76 @@ mod read_projection_tests {
         assert_eq!(p.required_parameters, vec!["index", "state"]);
         assert!(!p.primitive_arguments);
         assert!(proof("return state + index").unwrap().primitive_arguments);
+    }
+}
+
+#[cfg(test)]
+mod sparse_region_tests {
+    use super::Proof;
+    use crate::interpreter::value::{LeakyFunctionBody, Value};
+    use std::sync::OnceLock;
+
+    fn eligible(source: &str, params: &[&str], args: &[Value]) -> bool {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        LeakyFunctionBody::new(parsed.stmts).get().can_batch_dictionary_writes(
+            &params.iter().map(|name| (*name).to_owned()).collect::<Vec<_>>(),
+            args,
+        )
+    }
+
+    #[test]
+    fn sparse_region_keeps_existing_cached_proof_layout() {
+        #[allow(dead_code)]
+        struct Previous {
+            required_parameters: Vec<String>,
+            primitive_arguments: bool,
+            read_only: bool,
+        }
+        assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<Proof>());
+        assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<Proof>());
+        assert_eq!(
+            std::mem::size_of::<OnceLock<Option<Previous>>>(),
+            std::mem::size_of::<OnceLock<Option<Proof>>>()
+        );
+    }
+
+    #[test]
+    fn sparse_region_accepts_entry_updates_and_checks_actual_arguments() {
+        let source = "mut key := 0 while key < n { state[key] = n + key key += 1 } return state[0]";
+        assert!(eligible(source, &["n"], &[Value::Int(16)]));
+        assert!(!eligible(source, &[], &[]));
+        assert!(!eligible(source, &["n"], &[Value::array(vec![])]));
+        assert!(eligible(
+            "state[0] = n if n > 0 { state[1] = false } else { state[1] = null } return state[0]",
+            &["n"],
+            &[Value::Int(1)]
+        ));
+    }
+
+    #[test]
+    fn sparse_region_rejects_observation_and_opaque_boundaries() {
+        for tail in [
+            "return state",
+            "let saved := state state[0] = n return saved",
+            "return [state[0]]",
+            "opaque() return state[0]",
+            "return state[state]",
+            "return state.row",
+            "state[2] = None return state[0]",
+            "return state[2] + n",
+            "let value := state[2] return value + n",
+            "state[2] += n return state[0]",
+            "return -state[2]",
+            "if false { let saved := state } return state[0]",
+        ] {
+            assert!(
+                !eligible(&format!("state[0] = n state[1] = n {tail}"), &["n"], &[Value::Int(1)]),
+                "{tail}"
+            );
+        }
+        let many = (0..40).map(|i| format!("x{i}")).collect::<Vec<_>>().join(" + ");
+        assert!(!eligible(&format!("state[0] = 1 state[1] = 2 return {many}"), &[], &[]));
     }
 }

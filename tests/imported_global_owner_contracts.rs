@@ -15,6 +15,10 @@ fn verify(runtime: &str, recursive: bool) {
 }
 
 fn verify_route(runtime: &str, recursive: bool, foreign: bool) {
+    verify_shape(runtime, recursive, foreign, false);
+}
+
+fn verify_shape(runtime: &str, recursive: bool, foreign: bool, dictionary: bool) {
     let directory = tempfile::tempdir().unwrap();
     let source = if recursive {
         r#"
@@ -56,6 +60,14 @@ fn verify_route(runtime: &str, recursive: bool, foreign: bool) {
     } else {
         source.to_owned()
     };
+    let source = if dictionary {
+        source.replace("mut state := [0]", "mut state := {\"0\": 0, \"1\": 0}").replace(
+            "state[0] = 9",
+            "state[0] = 9 state[1] = 8 let saved := state state[1] = 7 assert_equal(saved[1], 8)",
+        )
+    } else {
+        source
+    };
     std::fs::write(directory.path().join("owner_state.kujo"), source).unwrap();
     let mut loader = ModuleLoader::new();
     loader.add_search_path(directory.path());
@@ -93,7 +105,14 @@ fn verify_route(runtime: &str, recursive: bool, foreign: bool) {
         // callback must fail this test without deadlocking the resume channel.
         let observed = match inspected.try_lock() {
             Ok(environment) => match environment.scopes[0].get("state") {
-                Some(Value::Array(values)) => match values.first() {
+                Some(Value::Dict(values)) if dictionary => {
+                    match (values.get("0"), values.get("1")) {
+                        (Some(Value::Int(first)), Some(Value::Int(0))) => Ok(*first),
+                        _ => Err("module owner dictionary was published before the call boundary"
+                            .to_owned()),
+                    }
+                }
+                Some(Value::Array(values)) if !dictionary => match values.first() {
                     Some(Value::Int(value)) => Ok(*value),
                     _ => Err("module owner array lost its integer value".to_owned()),
                 },
@@ -150,10 +169,15 @@ fn verify_route(runtime: &str, recursive: bool, foreign: bool) {
     );
     execution.unwrap();
     let environment = owner.lock().unwrap();
-    assert!(matches!(
-        environment.scopes[0].get("state"),
-        Some(Value::Array(values)) if matches!(values.first(), Some(Value::Int(value)) if *value == if recursive { 10 } else { 9 })
-    ));
+    if dictionary {
+        assert!(
+            matches!(environment.scopes[0].get("state"), Some(Value::Dict(values)) if matches!(values.get("0"), Some(Value::Int(9))) && matches!(values.get("1"), Some(Value::Int(7))))
+        );
+    } else {
+        assert!(
+            matches!(environment.scopes[0].get("state"), Some(Value::Array(values)) if matches!(values.first(), Some(Value::Int(value)) if *value == if recursive { 10 } else { 9 }))
+        );
+    }
 }
 
 #[test]
@@ -199,4 +223,17 @@ fn interpreter_foreign_recursive_return_preserves_publication_and_namespaces() {
 #[test]
 fn jit_foreign_recursive_return_preserves_publication_and_namespaces() {
     verify_route("jit", true, true);
+}
+
+#[test]
+fn vm_multiple_dictionary_keys_preserve_public_owner_boundary() {
+    verify_shape("vm", false, false, true);
+}
+#[test]
+fn interpreter_multiple_dictionary_keys_preserve_public_owner_boundary() {
+    verify_shape("interpreter", false, false, true);
+}
+#[test]
+fn jit_multiple_dictionary_keys_preserve_public_owner_boundary() {
+    verify_shape("jit", false, false, true);
 }

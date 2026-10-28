@@ -219,6 +219,22 @@ pub(super) fn is_capture_primitive(value: &Value) -> bool {
 }
 
 impl FunctionBodyRef {
+    pub(super) fn can_batch_dictionary_writes(&self, params: &[String], args: &[Value]) -> bool {
+        let Some(proof) = self
+            .storage
+            .capture_independence
+            .get_or_init(|| super::capture_independence::analyze(&self.storage.body))
+        else {
+            return false;
+        };
+        !proof.read_only
+            && proof.sparse_write_region
+            && args.iter().all(is_capture_primitive)
+            && proof.required_parameters.iter().enumerate().all(|(index, name)| {
+                proof.whole_value_mask & (1u32 << index) == 0 || params.contains(name)
+            })
+    }
+
     pub(super) fn read_capture_proof(
         &self,
         args: &[Value],

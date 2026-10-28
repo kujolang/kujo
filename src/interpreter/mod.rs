@@ -387,6 +387,7 @@ enum CapturedGlobals {
 pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Environment)>>>;
 
 struct EnvironmentActivation {
+    allow_multi_key: bool,
     globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
     caller: Environment,
@@ -2484,6 +2485,7 @@ impl Interpreter {
                     let count = environment.scopes.len();
                     let caller = std::mem::replace(&mut self.env, environment);
                     self.environment_activations.push(EnvironmentActivation {
+                        allow_multi_key: false,
                         capture: Some((captured.clone(), count)),
                         caller,
                         globals: CapturedGlobals::Snapshot,
@@ -2492,7 +2494,13 @@ impl Interpreter {
                 }
             }
         }
+        let allow_multi_key = self.task_cancellation.is_none()
+            && self.active_capture_index(captured).is_none()
+            && body.can_batch_dictionary_writes(params, args);
         self.enter_captured_environment(captured);
+        if let Some(frame) = self.environment_activations.last_mut() {
+            frame.allow_multi_key = allow_multi_key && frame.globals == CapturedGlobals::Snapshot;
+        }
     }
 
     fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) {
@@ -2514,6 +2522,7 @@ impl Interpreter {
             environment.observe_capture_writes(true);
             let caller = std::mem::replace(&mut self.env, environment);
             self.environment_activations.push(EnvironmentActivation {
+                allow_multi_key: false,
                 capture: Some((captured.clone(), count)),
                 caller,
                 globals: CapturedGlobals::RecursiveCaller,
@@ -2542,6 +2551,7 @@ impl Interpreter {
                         environment.observe_capture_writes(true);
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
+                            allow_multi_key: false,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveOwner,
@@ -2561,6 +2571,7 @@ impl Interpreter {
                         environment.observe_capture_writes(true);
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
+                            allow_multi_key: false,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveSplitOwner,
@@ -2610,6 +2621,7 @@ impl Interpreter {
         let count = environment.scopes.len();
         let caller = std::mem::replace(&mut self.env, environment);
         self.environment_activations.push(EnvironmentActivation {
+            allow_multi_key: false,
             capture: Some((captured.clone(), count)),
             caller,
             globals,
@@ -2718,6 +2730,7 @@ impl Interpreter {
             SuspendedEnvironment::Untracked(caller)
         } else {
             self.environment_activations.push(EnvironmentActivation {
+                allow_multi_key: false,
                 capture: None,
                 caller,
                 globals: CapturedGlobals::Snapshot,
@@ -3881,7 +3894,23 @@ impl Interpreter {
             _ => return Value::Error("Complex index assignment not yet supported".to_string()),
         };
 
-        if self.env.try_defer_index_write(container_name, &index_value, value) {
+        // Index evaluation has completed. A visible pending dictionary already
+        // proves the target's type and writable binding; rejecting its key does
+        // not require materializing the pending updates.
+        if self.env.pending_dictionary_visible(container_name)
+            && !matches!(index_value, Value::Int(_) | Value::Str(_))
+        {
+            return Value::Error("Invalid index assignment: unsupported map key type".into());
+        }
+
+        let allow_multi_key =
+            self.environment_activations.last().is_some_and(|frame| frame.allow_multi_key);
+        if self.env.try_defer_index_write_with_batching(
+            container_name,
+            &index_value,
+            value,
+            allow_multi_key,
+        ) {
             return Value::Null;
         }
 
@@ -7036,6 +7065,32 @@ impl Interpreter {
                     if let Some(value) = pending {
                         return value;
                     }
+                    // The admitted body contains only primitive operations here:
+                    // no operator callback or call can replace the root while
+                    // evaluating this selector. Outside this proof, retain the
+                    // ordinary object-before-index snapshot order below.
+                    if self
+                        .environment_activations
+                        .last()
+                        .is_some_and(|frame| frame.allow_multi_key)
+                        && self.env.pending_dictionary_visible(name)
+                    {
+                        let index = self.eval_expr(index);
+                        if Self::is_error_value(&index) {
+                            return index;
+                        }
+                        return match index {
+                            Value::Int(index) => self
+                                .env
+                                .indexed_publication_read(name, index)
+                                .expect("visible pending dictionary"),
+                            Value::Str(key) => self
+                                .env
+                                .dictionary_publication_read(name, &key)
+                                .expect("visible pending dictionary"),
+                            _ => Value::Error("Invalid index operation".into()),
+                        };
+                    }
                 }
                 let obj_val = self.eval_expr(object);
                 if Self::is_error_value(&obj_val) {
@@ -8817,5 +8872,22 @@ mod boundary_dictionary_tests {
         assert!(
             matches!(Interpreter::index_value(&map, &Value::Float(1.0)), Value::Error(e) if e == "Invalid index operation")
         );
+    }
+}
+
+#[cfg(test)]
+mod sparse_activation_layout_tests {
+    use super::{CapturedGlobals, Environment, EnvironmentActivation};
+    use std::sync::{Arc, Mutex};
+    #[test]
+    fn batching_flag_preserves_activation_layout() {
+        #[allow(dead_code)]
+        struct Previous {
+            globals: CapturedGlobals,
+            capture: Option<(Arc<Mutex<Environment>>, usize)>,
+            caller: Environment,
+        }
+        assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<EnvironmentActivation>());
+        assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<EnvironmentActivation>());
     }
 }
