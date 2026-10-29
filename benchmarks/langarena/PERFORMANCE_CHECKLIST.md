@@ -183,6 +183,12 @@ Work still needed, in priority order:
    and 24 cold slopes. Isolated default hash initialization reproduces one
    request / 64 bytes. A correction is building; acceptance and broader
    verification remain pending. Fresh snapshots remain separately covered.
+   The corrected general batch is now accepted in `268add2`: [verified results](ARRAY_COLLECTION_BATCHES_2026_10_29.md)
+   record 1,261 library passes, 411 integrations, all 150 test-size checksums,
+   2,960 allocation pairs / 5,304 semantic checks without regressions, 15 extra
+   contracts and 108 reviewed memory pairs. All 18 target groups have flat width
+   scaling. Small and retained-snapshot peak-memory increases remain documented.
+   Initial scalar-first journals and unsupported shapes retain fallback.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
@@ -190,7 +196,7 @@ Work still needed, in priority order:
    control stays flat; 128 allocation observations and 192 semantic checks pass.
    The [latest accepted-runtime refresh](compound-capture-e445-refresh-2026-10-29.json)
    on `e445f4a` passes the same 128/192 controls with unchanged slopes; the
-   array-batch candidate remains separate and unaccepted.
+   general array-batch fix is accepted separately in `268add2`.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
 4. Collection representation review and final combined-candidate verification,
@@ -198,8 +204,8 @@ Work still needed, in priority order:
 
 The nested-insertion, root replacement and eligible nested replacement cutoffs are
 complete. Struct-literal construction and eligible direct root-array replacement
-are also verified. The **next cutoff** is broader multiple-index collection
-replacement and compound/captured-scalar batching. Preserve snapshots,
+are also verified. The eligible general multiple-index batch cutoff is complete. The **next cutoff**
+is compound/captured-scalar batching. Preserve snapshots,
 callbacks and error ordering and repeat the applicable regression and 150-checksum
 gates. Sections 3 and 4 remain open.
 

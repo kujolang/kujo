@@ -5568,7 +5568,8 @@
     "total_regressions": 72,
     "cold_slope_regressions": 24,
     "cause": "First default AHasher initialization adds one allocation / 64 bytes; explicit seeds allocate nothing in isolation.",
-    "remaining": "Corrected runtime must repeat all target, boundary, historical, broad, checksum and memory gates. Sections 3/4 remain open."
+    "remaining": "Corrected runtime must repeat all target, boundary, historical, broad, checksum and memory gates. Sections 3/4 remain open.",
+    "follow_up": "Corrected candidate accepted in 268add2; historical rejection preserved."
   },
   "compound_capture_e445_refresh_2026_10_29": {
     "status": "confirmed_remaining_costs",
@@ -5578,6 +5579,23 @@
     "allocation_observations": 128,
     "semantic_checks": 192,
     "unchanged_slopes": true,
-    "remaining": "Seven compound/captured-scalar cases retain 587520 requested bytes per added call across widths 128/2048. Separate array batch candidate remains unaccepted."
+    "remaining": "Seven compound/captured-scalar cases retain 587520 requested bytes per added call across widths 128/2048 on e445. General array batches accepted separately in 268add2; refresh this exact fixture matrix for the next fix."
+  },
+  "array_collection_batches_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "268add22782e09a05217400ed73b2a5f72e3e98c",
+    "baseline_runtime_commit": "e445f4a8e045cd067aaea99f6c79eebffca32a04",
+    "report": "ARRAY_COLLECTION_BATCHES_2026_10_29.md",
+    "evidence": "array-collection-batches-2026-10-29.json",
+    "allocation_pairs": 2960,
+    "semantic_checks": 5304,
+    "library_passes": 1261,
+    "library_ignored": 8,
+    "integration_passes": 411,
+    "integration_ignored": 1,
+    "test_size_checksums": 150,
+    "additional_compound_contracts": 15,
+    "memory_pairs": 108,
+    "limits": "Accepts this bounded array-batch change only; sections3/4 remain open. No production-size, platform, leak or competitive timing claim."
   }
 }
