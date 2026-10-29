@@ -1,0 +1,1640 @@
+{
+  "status": "characterized",
+  "pid": 61937,
+  "scope": "Direct root-array struct replacement; baseline 2a5ffbc versus unaccepted struct-v2; allocation evidence only",
+  "identities": {
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo": "57e5e1727be30e49ece56d01a45d52f96feba0c43145d4db71f6390b61f9f662",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe": "067def8f1f1fd841c0d53051ce7d9d45ebce30d746564f04ce7a4f507d0c2b4c",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo": "2c9acfed28364ec68767045345a27c4d1a88eac95ae27e6d1e82d6234609f40c",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe": "40c7639105691f4709a9f0b02e03deb03161432a9a23bb92aeb7013c5b7425c5"
+  },
+  "sources": {
+    "4b5af63c0f05a102de926585336920a8df3996d69592b17a9c5e61fff823cd3d": "struct Item { value: int }\nmut seed := [] mut j := 0 while j < 2 { seed = push(seed, Item { value: 0 }) j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[0] = Item { value: n } return n }\n",
+    "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "58dd72ba4b50320acec92babc154427a490492853fa19cc3ee6e3c7ed78fa796": "struct Item { value: int }\nmut seed := [] mut j := 0 while j < 2048 { seed = push(seed, Item { value: 0 }) j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[0] = Item { value: n } return n }\n",
+    "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n"
+  },
+  "rows": [
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo"
+      ],
+      "requests": 5160,
+      "bytes": 853354
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo"
+      ],
+      "requests": 5250,
+      "bytes": 863519
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo"
+      ],
+      "requests": 5160,
+      "bytes": 853354
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo"
+      ],
+      "requests": 5250,
+      "bytes": 863519
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo"
+      ],
+      "requests": 6248,
+      "bytes": 945194
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo"
+      ],
+      "requests": 6338,
+      "bytes": 955359
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo"
+      ],
+      "requests": 6248,
+      "bytes": 945194
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo"
+      ],
+      "requests": 6338,
+      "bytes": 955359
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo"
+      ],
+      "requests": 7305,
+      "bytes": 1101570
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo"
+      ],
+      "requests": 7395,
+      "bytes": 1111735
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo"
+      ],
+      "requests": 7305,
+      "bytes": 1101570
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo"
+      ],
+      "requests": 7395,
+      "bytes": 1111735
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo"
+      ],
+      "requests": 10553,
+      "bytes": 1445522
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo"
+      ],
+      "requests": 10643,
+      "bytes": 1455687
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo"
+      ],
+      "requests": 10553,
+      "bytes": 1445522
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo"
+      ],
+      "requests": 10643,
+      "bytes": 1455687
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo"
+      ],
+      "requests": 170895,
+      "bytes": 21932947
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo"
+      ],
+      "requests": 170986,
+      "bytes": 21943164
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo"
+      ],
+      "requests": 170895,
+      "bytes": 21932947
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo"
+      ],
+      "requests": 170986,
+      "bytes": 21943164
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo"
+      ],
+      "requests": 204719,
+      "bytes": 26607827
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo"
+      ],
+      "requests": 204810,
+      "bytes": 26618044
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo"
+      ],
+      "requests": 204719,
+      "bytes": 26607827
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo"
+      ],
+      "requests": 204810,
+      "bytes": 26618044
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+      ],
+      "requests": 1253328,
+      "bytes": 161718363
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+      ],
+      "requests": 1253420,
+      "bytes": 161738900
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+      ],
+      "requests": 1253328,
+      "bytes": 161718363
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+      ],
+      "requests": 1253419,
+      "bytes": 161728580
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+      ],
+      "requests": 2369600,
+      "bytes": 308817803
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+      ],
+      "requests": 2369691,
+      "bytes": 308828020
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+      ],
+      "requests": 2369600,
+      "bytes": 308817803
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+      ],
+      "requests": 2369691,
+      "bytes": 308828020
+    }
+  ],
+  "semantics": [
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-once-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2-fresh-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-once-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "baseline",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted",
+        "--interpreter"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": ""
+    },
+    {
+      "kind": "candidate",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo",
+        "--untrusted",
+        "--jit"
+      ],
+      "exit": 0,
+      "stdout": "STRUCT REPLACEMENT PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n"
+    }
+  ],
+  "verification": {
+    "status": "characterized",
+    "allocation_observations": 32,
+    "semantic_checks": 48,
+    "slopes": [
+      {
+        "group": [
+          "baseline",
+          2,
+          "once",
+          "vm"
+        ],
+        "bytes_per_added_call": 5740.0,
+        "requests_per_added_call": 68.0
+      },
+      {
+        "group": [
+          "baseline",
+          2,
+          "once",
+          "jit"
+        ],
+        "bytes_per_added_call": 5740.0,
+        "requests_per_added_call": 68.0
+      },
+      {
+        "group": [
+          "candidate",
+          2,
+          "once",
+          "vm"
+        ],
+        "bytes_per_added_call": 5740.0,
+        "requests_per_added_call": 68.0
+      },
+      {
+        "group": [
+          "candidate",
+          2,
+          "once",
+          "jit"
+        ],
+        "bytes_per_added_call": 5740.0,
+        "requests_per_added_call": 68.0
+      },
+      {
+        "group": [
+          "baseline",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "bytes_per_added_call": 21497.0,
+        "requests_per_added_call": 203.0
+      },
+      {
+        "group": [
+          "baseline",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "bytes_per_added_call": 21497.0,
+        "requests_per_added_call": 203.0
+      },
+      {
+        "group": [
+          "candidate",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "bytes_per_added_call": 21497.0,
+        "requests_per_added_call": 203.0
+      },
+      {
+        "group": [
+          "candidate",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "bytes_per_added_call": 21497.0,
+        "requests_per_added_call": 203.0
+      },
+      {
+        "group": [
+          "baseline",
+          2048,
+          "once",
+          "vm"
+        ],
+        "bytes_per_added_call": 292180.0,
+        "requests_per_added_call": 2114.0
+      },
+      {
+        "group": [
+          "baseline",
+          2048,
+          "once",
+          "jit"
+        ],
+        "bytes_per_added_call": 292180.0,
+        "requests_per_added_call": 2114.0
+      },
+      {
+        "group": [
+          "candidate",
+          2048,
+          "once",
+          "vm"
+        ],
+        "bytes_per_added_call": 292180.0,
+        "requests_per_added_call": 2114.0
+      },
+      {
+        "group": [
+          "candidate",
+          2048,
+          "once",
+          "jit"
+        ],
+        "bytes_per_added_call": 292180.0,
+        "requests_per_added_call": 2114.0
+      },
+      {
+        "group": [
+          "baseline",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "bytes_per_added_call": 9193715.0,
+        "requests_per_added_call": 69767.0
+      },
+      {
+        "group": [
+          "baseline",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "bytes_per_added_call": 9193070.0,
+        "requests_per_added_call": 69766.9375
+      },
+      {
+        "group": [
+          "candidate",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "bytes_per_added_call": 9193715.0,
+        "requests_per_added_call": 69767.0
+      },
+      {
+        "group": [
+          "candidate",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "bytes_per_added_call": 9193715.0,
+        "requests_per_added_call": 69767.0
+      }
+    ],
+    "report_sha256": "fea20588d79934d981542feb224a75ed2e9787961cc1910592c95784fbcafa95",
+    "runner_sha256": "bdeab6db89236ea607bf0fea4d7ea8a6355e925560d179f9f4fd61030694dbc2",
+    "verifier_sha256": "7b705c15b8982a8be2dbc3516446eaeeb7c9493097a4f45e91a14d7dbde29c56",
+    "limits": "Root array and struct payload only. Candidate unaccepted. Fresh-snapshot allocation offsets retained; this is baseline characterization, not fix acceptance or speed evidence."
+  },
+  "runner_source": "require 'json';require 'digest';require 'open3';require 'fileutils'\no=File.expand_path(__dir__);out=o+'/report.json';raise 'Existing evidence' if File.exist?(out)\nbase=File.expand_path('../struct-replacement-2026-10-29/baseline',o)\nartifacts={'baseline'=>File.expand_path('../nested-collection-v1-2026-10-29',o),'candidate'=>File.expand_path('../struct-literal-v2-2026-10-29',o)}\nr={status:'running',pid:Process.pid,scope:'Direct root-array struct replacement; baseline 2a5ffbc versus unaccepted struct-v2; allocation evidence only',identities:{},sources:{},rows:[],semantics:[]};save=->{File.write(out,JSON.pretty_generate(r)+\"\\n\")}\nartifacts.each{|k,d|%w[candidate-kujo task-allocation-probe].each{|f|r[:identities][d+'/'+f]=Digest::SHA256.file(d+'/'+f).hexdigest}}\nbegin\n [2,2048].product(%w[once fresh],[16,32]).each do |width,snapshot,calls|\n  name=['root','literal',width,snapshot,calls].join('-');d=o+'/'+name;FileUtils.mkdir_p(d)\n  owner=File.read(base+'/'+name+'/owner.kujo').sub('mut seed := {}','mut seed := []').sub('seed[j] = Item { value: 0 }','seed = push(seed, Item { value: 0 })')\n  main=File.read(base+'/'+name+'/main.kujo');File.write(d+'/owner.kujo',owner);File.write(d+'/main.kujo',main)\n  [owner,main].each{|s|r[:sources][Digest::SHA256.hexdigest(s)]=s}\n  artifacts.each do |kind,a|\n   %w[vm interpreter jit].each do |mode|\n    args=[a+'/candidate-kujo','run',d+'/main.kujo','--untrusted'];args<<'--'+mode unless mode=='vm';stdout,stderr,s=Open3.capture3(*args)\n    raise stdout+stderr unless s.success?&&stdout==\"STRUCT REPLACEMENT PASS\\n\"\n    r[:semantics]<<{kind:kind,width:width,snapshot:snapshot,calls:calls,mode:mode,argv:args,exit:s.exitstatus,stdout:stdout,stderr:stderr};save.call\n   end\n   %w[vm jit].each do |mode|\n    args=[a+'/task-allocation-probe',mode,d+'/main.kujo'];stdout,stderr,s=Open3.capture3(*args);m=stderr.match(/ALLOCATION_AUDIT requests=(\\d+) requested_bytes=(\\d+)/)\n    raise stdout+stderr unless s.success?&&stdout==\"STRUCT REPLACEMENT PASS\\n\"&&m\n    r[:rows]<<{kind:kind,width:width,snapshot:snapshot,calls:calls,mode:mode,argv:args,requests:m[1].to_i,bytes:m[2].to_i};save.call\n   end\n  end\n end\n r[:identities].each{|p,h|raise 'Artifact drift' unless Digest::SHA256.file(p).hexdigest==h}\n r[:status]='characterized';save.call\nrescue=>e;r[:status]='failed';r[:error]=e.message;save.call;raise\nend\nputs 'Root-array characterization complete'\n",
+  "verifier_source": "require 'json';require 'digest'\no=File.expand_path(__dir__);p=o+'/report.json';r=JSON.parse(File.read(p));raise 'Incomplete' unless r['status']=='characterized'\nkeys=%w[kind width snapshot calls mode]\nexpected=%w[baseline candidate].product([2,2048],%w[once fresh],[16,32],%w[vm jit]);raise 'Allocation coverage' unless r['rows'].map{|x|x.values_at(*keys)}.sort==expected.sort\nexpected=%w[baseline candidate].product([2,2048],%w[once fresh],[16,32],%w[vm interpreter jit]);raise 'Semantic coverage' unless r['semantics'].map{|x|x.values_at(*keys)}.sort==expected.sort\nr['identities'].each{|p,h|raise 'Artifact drift' unless Digest::SHA256.file(p).hexdigest==h}\nr['sources'].each{|h,s|raise 'Embedded source drift' unless Digest::SHA256.hexdigest(s)==h}\nr['semantics'].each do |x|\n raise 'Output' unless x['exit']==0&&x['stdout']==\"STRUCT REPLACEMENT PASS\\n\"\n d=o+'/root-literal-'+x.values_at('width','snapshot','calls').join('-');%w[main owner].each{|n|s=File.read(d+'/'+n+'.kujo');raise 'Source drift' unless r['sources'][Digest::SHA256.hexdigest(s)]==s}\n owner=File.read(d+'/owner.kujo');raise 'Wrong collection' unless owner.include?('mut seed := []')&&owner.include?('seed = push(seed, Item { value: 0 })')&&owner.include?('state[0] = Item { value: n }')\nend\nslopes=r['rows'].group_by{|x|x.values_at('kind','width','snapshot','mode')}.map do |group,rows|\n a,b=rows.sort_by{|x|x['calls']};{group:group,bytes_per_added_call:(b['bytes']-a['bytes'])/16.0,requests_per_added_call:(b['requests']-a['requests'])/16.0}\nend\nv={status:'characterized',allocation_observations:32,semantic_checks:48,slopes:slopes,report_sha256:Digest::SHA256.file(p).hexdigest,runner_sha256:Digest::SHA256.file(o+'/measure.rb').hexdigest,verifier_sha256:Digest::SHA256.file(__FILE__).hexdigest,limits:'Root array and struct payload only. Candidate unaccepted. Fresh-snapshot allocation offsets retained; this is baseline characterization, not fix acceptance or speed evidence.'}\nFile.write(o+'/verification.json',JSON.pretty_generate(v)+\"\\n\");puts '32 allocation observations and 48 semantic checks verified'\n",
+  "accepted_candidate_commit": "3ac637ed84040ada71c11a012e6642bd9c0fab26",
+  "jit_offset_followup": {
+    "status": "characterized",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo": "57e5e1727be30e49ece56d01a45d52f96feba0c43145d4db71f6390b61f9f662",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe": "067def8f1f1fd841c0d53051ce7d9d45ebce30d746564f04ce7a4f507d0c2b4c",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/candidate-kujo": "2c9acfed28364ec68767045345a27c4d1a88eac95ae27e6d1e82d6234609f40c",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe": "40c7639105691f4709a9f0b02e03deb03161432a9a23bb92aeb7013c5b7425c5"
+    },
+    "rows": [
+      {
+        "round": 0,
+        "kind": "baseline",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 0,
+        "kind": "candidate",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 0,
+        "kind": "baseline",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      },
+      {
+        "round": 0,
+        "kind": "candidate",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      },
+      {
+        "round": 1,
+        "kind": "candidate",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      },
+      {
+        "round": 1,
+        "kind": "baseline",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      },
+      {
+        "round": 1,
+        "kind": "candidate",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 1,
+        "kind": "baseline",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 2,
+        "kind": "baseline",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 2,
+        "kind": "candidate",
+        "calls": 16,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-16/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=1253419 requested_bytes=161728580\n",
+        "exit": 0,
+        "requests": 1253419,
+        "bytes": 161728580
+      },
+      {
+        "round": 2,
+        "kind": "baseline",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      },
+      {
+        "round": 2,
+        "kind": "candidate",
+        "calls": 32,
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v2-2026-10-29/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/root-array-replacement-2026-10-29/root-literal-2048-fresh-32/main.kujo"
+        ],
+        "stdout": "STRUCT REPLACEMENT PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=2369691 requested_bytes=308828020\n",
+        "exit": 0,
+        "requests": 2369691,
+        "bytes": 308828020
+      }
+    ]
+  }
+}

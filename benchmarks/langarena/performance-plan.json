@@ -5464,5 +5464,29 @@
       "Capture traversal/materialization and oversized fallback",
       "Collection representation review and final combined verification"
     ]
+  },
+  "struct_literal_publication_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "3ac637ed84040ada71c11a012e6642bd9c0fab26",
+    "report": "STRUCT_LITERAL_PUBLICATION_2026_10_29.md",
+    "evidence": "struct-literal-publication-2026-10-29.json",
+    "library_passes": 1249,
+    "integration_passes": 408,
+    "test_size_checksums": 150,
+    "allocation_pairs": 864,
+    "allocation_semantic_checks": 1296,
+    "memory_pairs": 72,
+    "remaining": "Direct root-array collection replacement, compound/captured-scalar batching, broader capture costs and representation review remain open; clean-host speed comparisons deferred."
+  },
+  "direct_root_array_replacement_2026_10_29": {
+    "status": "confirmed_remaining_cost",
+    "baseline_runtime_commit": "2a5ffbc",
+    "candidate_runtime_commit": "3ac637e",
+    "report": "ROOT_ARRAY_REPLACEMENT_2026_10_29.md",
+    "evidence": "root-array-replacement-2026-10-29.json",
+    "allocation_observations": 32,
+    "semantic_checks": 48,
+    "initial_snapshot_width_penalty_bytes_per_added_call": 286440,
+    "limits": "Root-array struct payload only; fresh-snapshot JIT allocation offset retained. Not speed or fix acceptance."
   }
 }

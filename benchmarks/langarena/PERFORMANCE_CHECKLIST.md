@@ -137,8 +137,15 @@ Work still needed, in priority order:
    cover field ordering, callbacks, snapshots and errors for the next fix.
    The [first struct-literal candidate](STRUCT_LITERAL_REJECTION_2026_10_29.md)
    removes target width costs but is rejected for 128 fallback allocation totals
-   and 64 slopes (+2 requests/+8 bytes per affected call). Correction and full
-   verification remain required.
+   and 64 slopes (+2 requests/+8 bytes per affected call). The ownership correction
+   is accepted in `3ac637e`: [verified results](STRUCT_LITERAL_PUBLICATION_2026_10_29.md)
+   record 1,249 library passes, 408 integrations, all 150 test-size checksums,
+   864 allocation pairs / 1,296 semantic checks and 72 reviewed memory pairs.
+   Struct field ordering, callbacks, errors and snapshots remain covered.
+   [Direct root-array isolation](ROOT_ARRAY_REPLACEMENT_2026_10_29.md) confirms
+   a remaining 286,440-byte width penalty per added call for struct replacements;
+   32 allocation observations and 48 semantic checks pass. This unsupported direct
+   array path remains open; the accepted correction does not optimize it.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
@@ -150,10 +157,11 @@ Work still needed, in priority order:
    including dense updates and fresh snapshots.
 
 The nested-insertion, root replacement and eligible nested replacement cutoffs are
-complete. The **next cutoff** is struct-literal construction and remaining collection
-replacement costs: refresh against `2a5ffbc`, fix confirmed avoidable copying,
-preserve field evaluation and snapshots, and complete the applicable regression
-and 150-checksum gates. Sections 3 and 4 remain open.
+complete, and struct-literal construction is now verified. The **next cutoff** is
+remaining collection replacement, starting with the measured direct root-array
+path on `3ac637e`, then compound/captured-scalar batching. Preserve snapshots,
+callbacks and error ordering and repeat the applicable regression and 150-checksum
+gates. Sections 3 and 4 remain open.
 
 The [first nested candidate](nested-insertion-rejection-2026-10-29.json) remains
 rejected for 36 small-map allocation regressions. The subsequent
