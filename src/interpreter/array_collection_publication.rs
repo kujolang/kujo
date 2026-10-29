@@ -1,4 +1,4 @@
-//! A bounded collection-valued replacement in a captured array. Payloads stay
+//! Bounded collection-valued replacements in a captured array. Payloads stay
 //! private until publication; snapshots and replaced owners retain their values.
 use super::dictionary_publication::CollectionPayload;
 use super::Value;
@@ -8,8 +8,9 @@ use std::sync::Arc;
 pub(super) struct ArrayCollectionPublication<T> {
     name: Box<str>,
     base: Arc<Vec<Value>>,
-    index: usize,
+    indices: [u32; 2],
     value: T,
+    second: Option<T>,
 }
 
 impl<T: CollectionPayload> ArrayCollectionPublication<T> {
@@ -18,7 +19,8 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
         // a payload or taking the private environment's entry.
         debug_assert_eq!(name.len(), name.capacity());
         debug_assert!(index < base.len());
-        Self { name: name.into_boxed_str(), base, index, value }
+        debug_assert!(index <= u32::MAX as usize);
+        Self { name: name.into_boxed_str(), base, indices: [index as u32, 0], value, second: None }
     }
 
     pub(super) fn name(&self) -> &str {
@@ -30,7 +32,28 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
     }
 
     pub(super) fn matches_index(&self, index: usize) -> bool {
-        self.index == index
+        self.indices[0] as usize == index
+    }
+
+    pub(super) fn is_single(&self) -> bool {
+        self.second.is_none()
+    }
+
+    /// Two same-kind handles fit the existing journal payload. Reject a third
+    /// distinct index atomically so ordinary mutation can publish both writes.
+    pub(super) fn try_record(&mut self, index: usize, value: T) -> bool {
+        if index >= self.base.len() || index > u32::MAX as usize {
+            return false;
+        }
+        if self.matches_index(index) {
+            self.value = value;
+        } else if self.second.is_none() || self.indices[1] as usize == index {
+            self.indices[1] = index as u32;
+            self.second = Some(value);
+        } else {
+            return false;
+        }
+        true
     }
 
     pub(super) fn payload_mut(&mut self) -> &mut T {
@@ -46,12 +69,21 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
         self,
         value: U,
     ) -> ArrayCollectionPublication<U> {
-        ArrayCollectionPublication { name: self.name, base: self.base, index: self.index, value }
+        assert!(self.is_single(), "payload-kind conversion requires a single pending write");
+        ArrayCollectionPublication {
+            name: self.name,
+            base: self.base,
+            indices: self.indices,
+            value,
+            second: None,
+        }
     }
 
     pub(super) fn get(&self, index: usize) -> Option<Value> {
-        if self.index == index {
+        if self.matches_index(index) {
             Some(self.value.value())
+        } else if self.indices[1] as usize == index && self.second.is_some() {
+            Some(self.second.as_ref().unwrap().value())
         } else {
             self.base.get(index).cloned()
         }
@@ -59,20 +91,32 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
 
     pub(super) fn snapshot_value(&self) -> Value {
         let mut base = self.base.clone();
-        Arc::make_mut(&mut base)[self.index] = self.value.value();
+        let values = Arc::make_mut(&mut base);
+        values[self.indices[0] as usize] = self.value.value();
+        if let Some(second) = &self.second {
+            values[self.indices[1] as usize] = second.value();
+        }
         Value::Array(base)
     }
 
     pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {
-        let Self { name, mut base, index, value } = self;
+        let Self { name, mut base, indices, value, second } = self;
         if let Some(Value::Array(public)) = owner {
             if Arc::ptr_eq(&base, public) {
                 drop(base);
-                Arc::make_mut(public)[index] = value.into_value();
+                let values = Arc::make_mut(public);
+                values[indices[0] as usize] = value.into_value();
+                if let Some(second) = second {
+                    values[indices[1] as usize] = second.into_value();
+                }
                 return (name.into_string(), Value::Array(public.clone()));
             }
         }
-        Arc::make_mut(&mut base)[index] = value.into_value();
+        let values = Arc::make_mut(&mut base);
+        values[indices[0] as usize] = value.into_value();
+        if let Some(second) = second {
+            values[indices[1] as usize] = second.into_value();
+        }
         (name.into_string(), Value::Array(base))
     }
 
@@ -85,6 +129,56 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
 mod tests {
     use super::super::dictionary_publication::CollectionValue;
     use super::*;
+
+    #[test]
+    fn pair_storage_fits_existing_capture_payload() {
+        let limit = std::mem::size_of::<std::collections::HashSet<(usize, String)>>();
+        assert!(std::mem::size_of::<ArrayCollectionPublication<Arc<Vec<Value>>>>() <= limit);
+        assert!(
+            std::mem::size_of::<ArrayCollectionPublication<Arc<super::super::value::DictMap>>>()
+                <= limit
+        );
+        assert!(std::mem::size_of::<ArrayCollectionPublication<Box<CollectionValue>>>() <= limit);
+    }
+
+    #[test]
+    fn paired_updates_preserve_snapshots_and_reject_overflow_atomically() {
+        let mut owner = Value::array(vec![Value::Null; 3]);
+        let Value::Array(base) = &owner else { unreachable!() };
+        let pointer = Arc::as_ptr(base);
+        let payload = |n| Arc::new(vec![Value::Int(n)]);
+        let mut pending =
+            ArrayCollectionPublication::prepare("state".into(), base.clone(), 0, payload(1));
+        assert!(pending.try_record(1, payload(2)));
+        assert!(!pending.is_single());
+        let saved = pending.snapshot_value();
+        assert!(pending.try_record(0, payload(3)));
+        assert!(pending.try_record(1, payload(4)));
+        assert!(!pending.try_record(2, payload(5)));
+        assert!(!pending.try_record(usize::MAX, payload(6)));
+        assert!(Value::equals(&pending.get(0).unwrap(), &Value::array(vec![Value::Int(3)])));
+        assert!(Value::equals(&pending.get(1).unwrap(), &Value::array(vec![Value::Int(4)])));
+        assert!(matches!(pending.get(2), Some(Value::Null)));
+        let (_, result) = pending.publish(Some(&mut owner));
+        let Value::Array(values) = &result else { unreachable!() };
+        assert_eq!(Arc::as_ptr(values), pointer);
+        assert!(Value::equals(
+            &result,
+            &Value::array(vec![
+                Value::array(vec![Value::Int(3)]),
+                Value::array(vec![Value::Int(4)]),
+                Value::Null
+            ])
+        ));
+        assert!(Value::equals(
+            &saved,
+            &Value::array(vec![
+                Value::array(vec![Value::Int(1)]),
+                Value::array(vec![Value::Int(2)]),
+                Value::Null
+            ])
+        ));
+    }
 
     #[test]
     fn collection_publication_preserves_snapshots_replacements_and_unique_storage() {

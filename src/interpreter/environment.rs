@@ -121,9 +121,9 @@ impl CaptureWrites {
 
     fn array_collection_matches(&self, index: usize) -> bool {
         match self {
-            Self::ArrayCollection(p) => p.matches_index(index),
-            Self::ArrayArray(p) => p.matches_index(index),
-            Self::ArrayMap(p) => p.matches_index(index),
+            Self::ArrayCollection(p) => p.is_single() && p.matches_index(index),
+            Self::ArrayArray(p) => p.is_single() && p.matches_index(index),
+            Self::ArrayMap(p) => p.is_single() && p.matches_index(index),
             _ => false,
         }
     }
@@ -1136,6 +1136,22 @@ impl Environment {
             return false;
         }
         let index = resolved as usize;
+        if index > u32::MAX as usize {
+            return false;
+        }
+        let recorded = match (&mut self.capture_writes, value) {
+            (Some((0, CaptureWrites::ArrayArray(p))), Value::Array(v)) => {
+                p.try_record(index, v.clone())
+            }
+            (Some((0, CaptureWrites::ArrayMap(p))), Value::Dict(v)) => {
+                p.try_record(index, v.clone())
+            }
+            _ => false,
+        };
+        if recorded {
+            self.invalidate_capture_observation();
+            return true;
+        }
         if let Some(pending) = self.pending_array_collection() {
             if !pending.array_collection_matches(index) {
                 return false;

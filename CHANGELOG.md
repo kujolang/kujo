@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep two eligible array or dictionary payload replacements in bounded captured
+  array storage, preserving snapshots and ordinary fallback at observation,
+  mixed-payload and additional-index boundaries.
+
 - Reuse capture-map storage after singleton read projections without growing the
   table for deleted buckets; retain the surviving owned key and value.
 
