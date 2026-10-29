@@ -1,0 +1,33 @@
+from owner import snapshot, install_trigger, edit
+let original := snapshot()
+edit()
+let numeric := snapshot()
+install_trigger()
+let with_trigger := snapshot()
+edit()
+let after_callback := snapshot()
+edit()
+let final := snapshot()
+mut j := 0
+while j < 16 {
+ assert_equal(original[j], 0)
+ if j < 8 {
+  assert_equal(numeric[j], 1)
+  if j == 3 { assert_equal(with_trigger[j].value, 1) }
+  else { assert_equal(with_trigger[j], 1) }
+  assert_equal(after_callback[j], 2)
+  assert_equal(final[j], 3)
+ } else {
+  assert_equal(numeric[j], 0)
+  assert_equal(with_trigger[j], 0)
+  if j == 9 {
+   assert_equal(after_callback[j], 99)
+   assert_equal(final[j], 99)
+  } else {
+   assert_equal(after_callback[j], 0)
+   assert_equal(final[j], 0)
+  }
+ }
+ j += 1
+}
+print("COMPOUND TYPE TRANSITION PASS")
