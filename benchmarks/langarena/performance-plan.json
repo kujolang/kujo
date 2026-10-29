@@ -5424,5 +5424,25 @@
       "Collection representation review and combined verification"
     ],
     "next_cutoff": "Nested initial insertion accepted, rejected, or justified as necessary copying; sections3/4 remain open"
+  },
+  "root_collection_replacement_2026_10_29": {
+    "status": "verified_bounded_optimization",
+    "runtime_commit": "d853be4d59ff5c1c038d6a7a24bcdae50beb0038",
+    "report": "COLLECTION_REPLACEMENT_2026_10_29.md",
+    "evidence": "collection-replacement-2026-10-29.json",
+    "library_passes": 1244,
+    "integration_passes": 406,
+    "test_size_checksums": 150,
+    "allocation_pairs": 3760,
+    "semantic_checks": 5640,
+    "memory_pairs": 54,
+    "remaining": [
+      "Nested/deep/array-leaf replacement costs unchanged",
+      "Struct-literal replacement allocation costs unchanged",
+      "Compound indexed arithmetic and captured-scalar batching",
+      "Capture traversal/materialization and oversized fallback",
+      "Collection representation review and final combined verification"
+    ],
+    "limits": "Allocation improvement, not elapsed-speed claim. Local memory differences retained; clean-host acceptance and later stages remain open."
   }
 }

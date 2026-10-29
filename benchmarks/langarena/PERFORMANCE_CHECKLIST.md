@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `4cd3bf1`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`dictionary-insertion-2026-10-28.json`).
-- [x] Latest relevant gate: 1,236 library passes, eight ignored; 404 distinct
-  integration passes, one manual profiling test ignored (`dictionary-insertion-2026-10-28.json`).
+- [x] Latest verified runtime `d853be4`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`collection-replacement-2026-10-29.json`).
+- [x] Latest relevant gate: 1,244 library passes, eight ignored; 406 distinct
+  integration passes, one manual profiling test ignored (`collection-replacement-2026-10-29.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -110,8 +110,12 @@ Work still needed, in priority order:
    must repeat both target and fallback gates before acceptance.
    The [second replacement candidate](COLLECTION_REPLACEMENT_FALLBACK_REJECTION_2026_10_29.md)
    removes the target width penalty but is rejected for 48 two-key fallback
-   allocation regressions. Compact payload storage and expanded struct controls
-   are under verification; no replacement runtime fix is accepted yet.
+   allocation regressions. The compact-payload replacement is now accepted in
+   `d853be4`: [verified results](COLLECTION_REPLACEMENT_2026_10_29.md) show flat
+   root array/dictionary replacement costs, 1,244 library passes, 406 integrations,
+   150 checksums, 3,760 allocation pairs and 5,640 semantic checks. All 54 memory
+   pairs are preserved with their limitations. Struct-literal replacement costs
+   remain unchanged; this does not close collection replacement as a whole.
    [Nested replacement isolation](NESTED_COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md)
    also confirms the same 587,520-byte width penalty under dictionary, struct and
    array roots: 96 allocation observations and 144 semantic checks. Root-only
@@ -130,8 +134,9 @@ Work still needed, in priority order:
 4. Collection representation review and final combined-candidate verification,
    including dense updates and fresh snapshots.
 
-The nested-insertion review cutoff is complete. The **next cutoff** is measured
-collection-valued replacement: refresh against the accepted runtime, fix confirmed
+The nested-insertion and root array/dictionary replacement cutoffs are complete.
+The **next cutoff** remains nested and remaining collection-valued replacement:
+refresh against the accepted runtime, fix confirmed
 avoidable copying, preserve snapshots, and complete the applicable regression and
 150-checksum gates. Sections 3 and 4 remain open.
 
