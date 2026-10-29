@@ -62,6 +62,7 @@ enum CaptureWrites {
     ArrayCollection(ArrayCollectionPublication<Box<CollectionValue>>),
     ArrayArray(ArrayCollectionPublication<Arc<Vec<Value>>>),
     ArrayMap(ArrayCollectionPublication<Arc<super::value::DictMap>>),
+    ArrayBatch(Box<super::array_batch_publication::ArrayBatchPublication>),
     Dictionary(DictionaryPublication),
     DictionaryFloat(DictionaryPublication<f64>),
     DictionaryBool(DictionaryPublication<bool>),
@@ -115,6 +116,7 @@ impl CaptureWrites {
             Self::ArrayCollection(p) => Some(p.len()),
             Self::ArrayArray(p) => Some(p.len()),
             Self::ArrayMap(p) => Some(p.len()),
+            Self::ArrayBatch(p) => Some(p.len()),
             _ => None,
         }
     }
@@ -133,6 +135,7 @@ impl CaptureWrites {
             Self::ArrayCollection(p) => p.get(index),
             Self::ArrayArray(p) => p.get(index),
             Self::ArrayMap(p) => p.get(index),
+            Self::ArrayBatch(p) => p.get(index),
             _ => None,
         }
     }
@@ -399,6 +402,7 @@ impl CaptureWrites {
             | Self::ArrayCollection(_)
             | Self::ArrayArray(_)
             | Self::ArrayMap(_)
+            | Self::ArrayBatch(_)
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
@@ -421,6 +425,7 @@ impl CaptureWrites {
             | Self::ArrayCollection(_)
             | Self::ArrayArray(_)
             | Self::ArrayMap(_)
+            | Self::ArrayBatch(_)
             | Self::Dictionary(_)
             | Self::DictionaryFloat(_)
             | Self::DictionaryBool(_)
@@ -449,6 +454,7 @@ impl CaptureWrites {
             Self::ArrayCollection(pending) => Some(pending.name()),
             Self::ArrayArray(pending) => Some(pending.name()),
             Self::ArrayMap(pending) => Some(pending.name()),
+            Self::ArrayBatch(pending) => Some(pending.name()),
             Self::Dictionary(pending) => Some(pending.name()),
             Self::DictionaryFloat(pending) => Some(pending.name()),
             Self::DictionaryBool(pending) => Some(pending.name()),
@@ -469,6 +475,7 @@ impl CaptureWrites {
             Self::ArrayCollection(pending) => Some(pending.snapshot_value()),
             Self::ArrayArray(pending) => Some(pending.snapshot_value()),
             Self::ArrayMap(pending) => Some(pending.snapshot_value()),
+            Self::ArrayBatch(pending) => Some(pending.snapshot_value()),
             Self::Dictionary(pending) => Some(pending.snapshot_value()),
             Self::DictionaryFloat(pending) => Some(pending.snapshot_value()),
             Self::DictionaryBool(pending) => Some(pending.snapshot_value()),
@@ -489,6 +496,7 @@ impl CaptureWrites {
             Self::ArrayCollection(pending) => Some(pending.publish(owner)),
             Self::ArrayArray(pending) => Some(pending.publish(owner)),
             Self::ArrayMap(pending) => Some(pending.publish(owner)),
+            Self::ArrayBatch(pending) => Some(pending.publish(owner)),
             Self::Dictionary(pending) => Some(pending.publish(owner)),
             Self::DictionaryFloat(pending) => Some(pending.publish(owner)),
             Self::DictionaryBool(pending) => Some(pending.publish(owner)),
@@ -509,6 +517,7 @@ impl CaptureWrites {
             Self::ArrayCollection(pending) => Some(pending.discard()),
             Self::ArrayArray(pending) => Some(pending.discard()),
             Self::ArrayMap(pending) => Some(pending.discard()),
+            Self::ArrayBatch(pending) => Some(pending.discard()),
             Self::Dictionary(pending) => Some(pending.discard()),
             Self::DictionaryFloat(pending) => Some(pending.discard()),
             Self::DictionaryBool(pending) => Some(pending.discard()),
@@ -751,7 +760,8 @@ impl Environment {
                 0,
                 p @ (CaptureWrites::ArrayCollection(_)
                 | CaptureWrites::ArrayArray(_)
-                | CaptureWrites::ArrayMap(_)),
+                | CaptureWrites::ArrayMap(_)
+                | CaptureWrites::ArrayBatch(_)),
             )) => Some(p),
             _ => None,
         }
@@ -1000,6 +1010,7 @@ impl Environment {
             allow_many,
             insertion_bound,
             false,
+            0,
         )
     }
 
@@ -1011,6 +1022,7 @@ impl Environment {
         allow_many: bool,
         insertion_bound: u16,
         allow_boxed_array: bool,
+        array_batch_capacity: u16,
     ) -> bool {
         // A new nested optimization must not displace an already eligible
         // direct-array/dictionary optimization on another binding. Try the
@@ -1026,6 +1038,7 @@ impl Environment {
                 allow_many,
                 insertion_bound,
                 allow_boxed_array,
+                array_batch_capacity,
             ) {
                 let Some((0, pending)) = previous else { unreachable!() };
                 let Some((name, value)) = pending.publish(None) else { unreachable!() };
@@ -1038,6 +1051,8 @@ impl Environment {
         if !matches!(self.capture_writes, Some((0, _)))
             || !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
                 || DictionaryCollectionPublication::supports(value)
+                || (array_batch_capacity > 2
+                    && super::array_batch_publication::BatchValue::supports(value))
                 || (allow_many
                     && matches!(value, Value::Str(_) | Value::Bytes(_))
                     && matches!(
@@ -1064,9 +1079,20 @@ impl Environment {
                 insertion_bound,
             );
         }
-        if DictionaryCollectionPublication::supports(value) {
-            return self.try_defer_array_collection_write(name, index, value, allow_boxed_array);
+        if DictionaryCollectionPublication::supports(value)
+            || (array_batch_capacity > 2
+                && self.pending_array_collection().is_some()
+                && super::array_batch_publication::BatchValue::supports(value))
+        {
+            return self.try_defer_array_collection_write(
+                name,
+                index,
+                value,
+                allow_boxed_array,
+                array_batch_capacity,
+            );
         }
+
         let Value::Int(index) = index else { return false };
         let length = if let Some(pending) = self.pending_indexed() {
             if pending.name() != name {
@@ -1113,8 +1139,13 @@ impl Environment {
         index: &Value,
         value: &Value,
         allow_boxed_array: bool,
+        batch_capacity: u16,
     ) -> bool {
-        if !allow_boxed_array && !matches!(value, Value::Array(_) | Value::Dict(_)) {
+        use super::array_batch_publication::{ArrayBatchPublication, BatchValue};
+        if batch_capacity <= 2
+            && !allow_boxed_array
+            && !matches!(value, Value::Array(_) | Value::Dict(_))
+        {
             return false;
         }
         let Value::Int(index) = index else { return false };
@@ -1139,6 +1170,14 @@ impl Environment {
         if index > u32::MAX as usize {
             return false;
         }
+        if let Some((0, CaptureWrites::ArrayBatch(batch))) = &mut self.capture_writes {
+            if !batch.can_record(index) {
+                return false;
+            }
+            assert!(batch.record(index, BatchValue::from_owned(value.clone())));
+            self.invalidate_capture_observation();
+            return true;
+        }
         let recorded = match (&mut self.capture_writes, value) {
             (Some((0, CaptureWrites::ArrayArray(p))), Value::Array(v)) => {
                 p.try_record(index, v.clone())
@@ -1153,9 +1192,25 @@ impl Environment {
             return true;
         }
         if let Some(pending) = self.pending_array_collection() {
-            if !pending.array_collection_matches(index) {
-                return false;
+            if !pending.array_collection_matches(index)
+                || !DictionaryCollectionPublication::supports(value)
+            {
+                if batch_capacity <= 2 {
+                    return false;
+                }
+                let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
+                let mut batch = match pending {
+                    CaptureWrites::ArrayArray(p) => p.into_batch(batch_capacity),
+                    CaptureWrites::ArrayMap(p) => p.into_batch(batch_capacity),
+                    CaptureWrites::ArrayCollection(p) => p.into_batch(batch_capacity),
+                    _ => unreachable!(),
+                };
+                assert!(batch.record(index, BatchValue::from_owned(value.clone())));
+                self.capture_writes = Some((0, CaptureWrites::ArrayBatch(Box::new(batch))));
+                self.invalidate_capture_observation();
+                return true;
             }
+
             let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
             self.capture_writes = Some((0, pending.with_array_collection(value)));
         } else {
@@ -1164,6 +1219,14 @@ impl Environment {
             else {
                 unreachable!()
             };
+            if batch_capacity > 2 && !matches!(value, Value::Array(_) | Value::Dict(_)) {
+                let mut batch =
+                    ArrayBatchPublication::new(key.into_boxed_str(), base, batch_capacity);
+                assert!(batch.record(index, BatchValue::from_owned(value.clone())));
+                self.capture_writes = Some((0, CaptureWrites::ArrayBatch(Box::new(batch))));
+                self.invalidate_capture_observation();
+                return true;
+            }
             let pending =
                 match value {
                     Value::Array(v) => CaptureWrites::ArrayArray(

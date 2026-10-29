@@ -17,6 +17,8 @@
 // or error values for exception handling.
 
 // Module structure
+mod array_batch_proof;
+mod array_batch_publication;
 mod array_collection_publication;
 pub(crate) mod assignment;
 mod async_runtime;
@@ -408,6 +410,14 @@ impl EnvironmentActivation {
 
     fn allow_boxed_array(&self) -> bool {
         self.publication_policy & 2 != 0
+    }
+
+    fn array_batch_capacity(&self) -> u16 {
+        if self.publication_policy & 4 != 0 {
+            self.insertion_bound
+        } else {
+            0
+        }
     }
 }
 
@@ -2533,12 +2543,27 @@ impl Interpreter {
         } else {
             Default::default()
         };
+        let array_batch_capacity = if may_check_nested
+            && self
+                .environment_activations
+                .last()
+                .is_some_and(|frame| frame.globals == CapturedGlobals::Snapshot)
+        {
+            array_batch_proof::eligible(body, params, args, &self.env)
+        } else {
+            0
+        };
         if let Some(frame) = self.environment_activations.last_mut() {
             frame.nested_spill_hint = nested_spill_hint;
-            frame.insertion_bound =
-                if frame.globals == CapturedGlobals::Snapshot { insertion_bound } else { 0 };
+            frame.insertion_bound = if frame.globals == CapturedGlobals::Snapshot {
+                insertion_bound.max(array_batch_capacity)
+            } else {
+                0
+            };
             frame.publication_policy = if frame.globals == CapturedGlobals::Snapshot {
-                u8::from(allow_multi_key) | (u8::from(allow_boxed_array) << 1)
+                u8::from(allow_multi_key)
+                    | (u8::from(allow_boxed_array) << 1)
+                    | (u8::from(array_batch_capacity > 0) << 2)
             } else {
                 0
             };
@@ -3964,6 +3989,7 @@ impl Interpreter {
             allow_multi_key,
             self.environment_activations.last().map_or(0, |frame| frame.insertion_bound),
             self.environment_activations.last().is_some_and(|frame| frame.allow_boxed_array()),
+            self.environment_activations.last().map_or(0, |frame| frame.array_batch_capacity()),
         ) {
             return Value::Null;
         }

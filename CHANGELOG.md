@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain eligible counted collection batches in sparse captured-array storage,
+  validating bounds and publication boundaries without growing the write table.
+
 - Keep two eligible array or dictionary payload replacements in bounded captured
   array storage, preserving snapshots and ordinary fallback at observation,
   mixed-payload and additional-index boundaries.

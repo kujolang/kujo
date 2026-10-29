@@ -39,6 +39,20 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
         self.second.is_none()
     }
 
+    pub(super) fn into_batch(
+        self,
+        capacity: u16,
+    ) -> super::array_batch_publication::ArrayBatchPublication {
+        use super::array_batch_publication::{ArrayBatchPublication, BatchValue};
+        let Self { name, base, indices, value, second } = self;
+        let mut batch = ArrayBatchPublication::new(name, base, capacity);
+        assert!(batch.record(indices[0] as usize, BatchValue::from_owned(value.into_value())));
+        if let Some(value) = second {
+            assert!(batch.record(indices[1] as usize, BatchValue::from_owned(value.into_value())));
+        }
+        batch
+    }
+
     /// Two same-kind handles fit the existing journal payload. Reject a third
     /// distinct index atomically so ordinary mutation can publish both writes.
     pub(super) fn try_record(&mut self, index: usize, value: T) -> bool {
