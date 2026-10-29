@@ -117,6 +117,10 @@ Work still needed, in priority order:
    array roots: 96 allocation observations and 144 semantic checks. Root-only
    optimization does not close the nested portion of this item.
 2. Broader compound indexed arithmetic and captured-scalar batching.
+   [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
+   captured reads, captured assignments and indexed arithmetic: each independently
+   restores a 587,520-byte width penalty. The parameter-only direct-assignment
+   control stays flat; 128 allocation observations and 192 semantic checks pass.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
 4. Collection representation review and final combined-candidate verification,
