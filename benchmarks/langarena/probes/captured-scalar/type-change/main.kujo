@@ -1,0 +1,24 @@
+from owner import snapshot, set_number, set_trigger, edit
+let original := snapshot()
+assert_equal(edit(1), 1)
+let before := snapshot()
+set_trigger()
+assert_equal(edit(2), 102)
+assert_equal(snapshot()[9], 999)
+assert_equal(before[9], 0)
+set_number(7)
+assert_equal(edit(3), 10)
+let final := snapshot()
+mut j := 0
+while j < 16 {
+    assert_equal(original[j], 0)
+    if j < 8 {
+        assert_equal(before[j], 1)
+        assert_equal(final[j], 3)
+    } else {
+        assert_equal(before[j], 0)
+        if j == 9 { assert_equal(final[j], 999) } else { assert_equal(final[j], 0) }
+    }
+    j += 1
+}
+print("CAPTURE TYPE CHANGE PASS")

@@ -1,0 +1,14 @@
+from owner import snapshot, counter_value, edit
+let original := snapshot()
+mut caught := false
+try { edit(7) } except e { caught = true }
+assert(caught)
+assert_equal(counter_value(), 0)
+let after := snapshot()
+mut j := 0
+while j < 16 {
+    assert_equal(original[j], 0)
+    if j < 8 { assert_equal(after[j], 7) } else { assert_equal(after[j], 0) }
+    j += 1
+}
+print("CAPTURE IMMUTABLE WRITE PASS")

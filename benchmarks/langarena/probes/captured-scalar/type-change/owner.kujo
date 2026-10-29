@@ -1,0 +1,23 @@
+struct Trigger {
+    value: int,
+    func op_add(other) {
+        let saved := state
+        assert_equal(saved[0], other)
+        assert_equal(saved[7], other)
+        state[9] = 999
+        assert_equal(saved[9], 0)
+        return other + value
+    }
+}
+mut state := {}
+mut j := 0
+while j < 16 { state[j] = 0 j += 1 }
+mut counter := 0
+export func snapshot() { return state }
+export func set_number(n) { counter = n }
+export func set_trigger() { counter = Trigger { value: 100 } }
+export func edit(n) {
+    mut j := 0
+    while j < 8 { state[j] = n j += 1 }
+    return counter + n
+}

@@ -1,0 +1,12 @@
+mut state := {}
+mut j := 0
+while j < 16 { state[j] = 0 j += 1 }
+const counter := 0
+export func snapshot() { return state }
+export func counter_value() { return counter }
+export func edit(n) {
+    mut j := 0
+    while j < 8 { state[j] = n j += 1 }
+    counter = n
+    return n
+}
