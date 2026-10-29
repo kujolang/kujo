@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain eligible collection-valued dictionary replacements in compact private entries,
+  preserving snapshots and scalar/collection transitions without copying the owner map.
+
 - Retain eligible initial scalar writes to nested dictionaries without detaching
   the captured owner, preserving observable snapshots and publication boundaries.
   Existing nested-key replacements avoid unnecessary full-table growth.

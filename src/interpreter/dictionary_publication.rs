@@ -23,6 +23,185 @@ pub(super) struct DictionaryPublication<T = i64> {
     value: T,
 }
 
+/// Array and dictionary entries retain their existing Arc directly. Larger
+/// Value variants use a Box so every capture payload remains pointer-sized.
+/// Borrowed reads never allocate a replacement Box.
+#[derive(Clone, Debug)]
+pub(super) struct DictionaryCollectionPublication<T = Box<CollectionValue>> {
+    name: Box<str>,
+    base: Arc<DictMap>,
+    key: Arc<str>,
+    value: T,
+}
+
+// Keep the boxed fallback proportional to a collection handle, not the largest
+// runtime Value variant. Struct names retain their text without spare capacity.
+#[derive(Clone, Debug)]
+pub(super) enum CollectionValue {
+    Array(Arc<Vec<Value>>),
+    Dict(Arc<DictMap>),
+    Struct { name: Box<str>, fields: Arc<std::collections::HashMap<String, Value>> },
+    FixedDict { keys: Arc<Vec<Arc<str>>>, values: Arc<Vec<Value>> },
+    IntDict(Arc<super::value::IntDictMap>),
+    DenseIntDict(Arc<super::value::DenseIntDict>),
+    DenseIntDictInt(Arc<super::value::DenseIntDictInt>),
+    DenseIntDictIntFull(Arc<super::value::DenseIntDictIntFull>),
+}
+
+impl CollectionValue {
+    fn from_value(value: &Value) -> Self {
+        match value {
+            Value::Array(v) => Self::Array(v.clone()),
+            Value::Dict(v) => Self::Dict(v.clone()),
+            Value::Struct { name, fields } => {
+                Self::Struct { name: name.clone().into_boxed_str(), fields: fields.clone() }
+            }
+            Value::FixedDict { keys, values } => {
+                Self::FixedDict { keys: keys.clone(), values: values.clone() }
+            }
+            Value::IntDict(v) => Self::IntDict(v.clone()),
+            Value::DenseIntDict(v) => Self::DenseIntDict(v.clone()),
+            Value::DenseIntDictInt(v) => Self::DenseIntDictInt(v.clone()),
+            Value::DenseIntDictIntFull(v) => Self::DenseIntDictIntFull(v.clone()),
+            _ => unreachable!("admitted collection payload"),
+        }
+    }
+    fn into_value(self) -> Value {
+        match self {
+            Self::Array(v) => Value::Array(v),
+            Self::Dict(v) => Value::Dict(v),
+            Self::Struct { name, fields } => Value::Struct { name: name.into_string(), fields },
+            Self::FixedDict { keys, values } => Value::FixedDict { keys, values },
+            Self::IntDict(v) => Value::IntDict(v),
+            Self::DenseIntDict(v) => Value::DenseIntDict(v),
+            Self::DenseIntDictInt(v) => Value::DenseIntDictInt(v),
+            Self::DenseIntDictIntFull(v) => Value::DenseIntDictIntFull(v),
+        }
+    }
+}
+
+pub(super) trait CollectionPayload: Clone + std::fmt::Debug {
+    fn into_value(self) -> Value;
+    fn value(&self) -> Value {
+        self.clone().into_value()
+    }
+}
+
+impl CollectionPayload for Arc<Vec<Value>> {
+    fn into_value(self) -> Value {
+        Value::Array(self)
+    }
+}
+
+impl CollectionPayload for Arc<DictMap> {
+    fn into_value(self) -> Value {
+        Value::Dict(self)
+    }
+}
+
+impl CollectionPayload for Box<CollectionValue> {
+    fn into_value(self) -> Value {
+        (*self).into_value()
+    }
+    fn value(&self) -> Value {
+        self.as_ref().clone().into_value()
+    }
+}
+
+impl DictionaryCollectionPublication {
+    pub(super) fn supports(value: &Value) -> bool {
+        matches!(value, Value::Array(_) | Value::Struct { .. }) || value.dictionary_len().is_some()
+    }
+
+    pub(super) fn prepare(
+        name: String,
+        base: Arc<DictMap>,
+        key: &str,
+        value: &Value,
+    ) -> Result<Self, (String, Arc<DictMap>)> {
+        // Do not allocate payload storage on a rejected admission path.
+        if name.capacity() != name.len() || !Self::supports(value) {
+            return Err((name, base));
+        }
+        Self::prepare_payload(name, base, key, Box::new(CollectionValue::from_value(value)))
+    }
+
+    pub(super) fn replace(&mut self, value: &Value) {
+        debug_assert!(Self::supports(value));
+        *self.value = CollectionValue::from_value(value);
+    }
+}
+
+impl<T: CollectionPayload> DictionaryCollectionPublication<T> {
+    pub(super) fn with_collection(self, value: &Value) -> DictionaryCollectionPublication {
+        self.with_payload(Box::new(CollectionValue::from_value(value)))
+    }
+    pub(super) fn prepare_payload(
+        name: String,
+        base: Arc<DictMap>,
+        key: &str,
+        value: T,
+    ) -> Result<Self, (String, Arc<DictMap>)> {
+        if name.capacity() != name.len() {
+            return Err((name, base));
+        }
+        let key = base.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone());
+        Ok(Self { name: name.into_boxed_str(), base, key, value })
+    }
+
+    pub(super) fn with_payload<U: CollectionPayload>(
+        self,
+        value: U,
+    ) -> DictionaryCollectionPublication<U> {
+        DictionaryCollectionPublication { name: self.name, base: self.base, key: self.key, value }
+    }
+
+    pub(super) fn name(&self) -> &str {
+        &self.name
+    }
+    pub(super) fn matches_key(&self, key: &str) -> bool {
+        self.key.as_ref() == key
+    }
+    pub(super) fn get(&self, key: &str) -> Option<Value> {
+        if self.matches_key(key) {
+            Some(self.value.value())
+        } else {
+            self.base.get(key).cloned()
+        }
+    }
+    pub(super) fn with_scalar<U: DictionaryScalar>(self, value: U) -> DictionaryPublication<U> {
+        DictionaryPublication { name: self.name, base: self.base, key: self.key, value }
+    }
+    fn apply(base: &mut Arc<DictMap>, key: &Arc<str>, value: Value) {
+        let map = Arc::make_mut(base);
+        if let Some(slot) = map.get_mut(key.as_ref()) {
+            *slot = value;
+        } else {
+            map.insert(key.clone(), value);
+        }
+    }
+    pub(super) fn snapshot_value(&self) -> Value {
+        let mut base = self.base.clone();
+        Self::apply(&mut base, &self.key, self.value.value());
+        Value::Dict(base)
+    }
+    pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {
+        let Self { name, mut base, key, value } = self;
+        if let Some(Value::Dict(public)) = owner {
+            if Arc::ptr_eq(&base, public) {
+                drop(base);
+                Self::apply(public, &key, value.into_value());
+                return (name.into_string(), Value::Dict(public.clone()));
+            }
+        }
+        Self::apply(&mut base, &key, value.into_value());
+        (name.into_string(), Value::Dict(base))
+    }
+    pub(super) fn discard(self) -> (String, Value) {
+        (self.name.into_string(), Value::Dict(self.base))
+    }
+}
+
 // The kind belongs to CaptureWrites' existing discriminant, not this payload.
 // Keeping each value concrete avoids growing every captured call frame.
 pub(super) trait DictionaryScalar: Copy + std::fmt::Debug {
@@ -128,6 +307,18 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
             entries: [first.0, second.0],
             words: [first.1, second.1],
         }
+    }
+
+    pub(super) fn with_collection(self, value: &Value) -> DictionaryCollectionPublication {
+        debug_assert!(DictionaryCollectionPublication::supports(value));
+        self.with_collection_payload(Box::new(CollectionValue::from_value(value)))
+    }
+
+    pub(super) fn with_collection_payload<U: CollectionPayload>(
+        self,
+        value: U,
+    ) -> DictionaryCollectionPublication<U> {
+        DictionaryCollectionPublication { name: self.name, base: self.base, key: self.key, value }
     }
 
     pub(super) fn with_value<U: DictionaryScalar>(self, value: U) -> DictionaryPublication<U> {
@@ -764,5 +955,142 @@ mod insertion_budget_tests {
             assert_eq!(insertion_can_pay(&base, 2), width != 0);
             assert_eq!(insertion_can_pay(&base, 64), width >= 128);
         }
+    }
+}
+
+#[cfg(test)]
+mod collection_entry_tests {
+    use super::*;
+
+    #[test]
+    fn compact_collection_payloads_preserve_every_supported_representation() {
+        assert!(std::mem::size_of::<CollectionValue>() <= 4 * std::mem::size_of::<usize>());
+        let values = [
+            Value::Struct {
+                name: "Item".into(),
+                fields: Arc::new([("value".into(), Value::Int(3))].into_iter().collect()),
+            },
+            Value::FixedDict {
+                keys: Arc::new(vec![Arc::from("value")]),
+                values: Arc::new(vec![Value::Int(3)]),
+            },
+            Value::IntDict(Arc::new([(0, Value::Int(3))].into_iter().collect())),
+            Value::DenseIntDict(Arc::new(vec![Value::Int(3)])),
+            Value::DenseIntDictInt(Arc::new(vec![Some(3)])),
+            Value::DenseIntDictIntFull(Arc::new(vec![3])),
+        ];
+        for expected in values {
+            let pending =
+                DictionaryCollectionPublication::prepare("state".into(), base(), "key", &expected)
+                    .unwrap();
+            let read = pending.get("key").unwrap();
+            assert_eq!(std::mem::discriminant(&read), std::mem::discriminant(&expected));
+            assert!(Value::equals(&read, &expected));
+            let snapshot = pending.snapshot_value();
+            let (_, published) = pending.publish(None);
+            for container in [snapshot, published] {
+                let actual = container.dictionary_get("key").unwrap();
+                assert_eq!(std::mem::discriminant(&actual), std::mem::discriminant(&expected));
+                assert!(Value::equals(&actual, &expected));
+            }
+        }
+    }
+
+    #[test]
+    fn typed_collection_payloads_reuse_storage_and_preserve_snapshots() {
+        let array = Arc::new(vec![Value::Int(7)]);
+        let root = base();
+        let mut owner = Value::Dict(root.clone());
+        let pending = DictionaryCollectionPublication::prepare_payload(
+            "state".into(),
+            root,
+            "key",
+            array.clone(),
+        )
+        .unwrap();
+        let Some(Value::Array(read)) = pending.get("key") else { panic!() };
+        assert!(Arc::ptr_eq(&read, &array));
+        let snapshot = pending.snapshot_value();
+        let map = Arc::new([(Arc::from("nested"), Value::Int(8))].into_iter().collect::<DictMap>());
+        let pending = pending.with_payload(map.clone());
+        let Some(Value::Dict(read)) = pending.get("key") else { panic!() };
+        assert!(Arc::ptr_eq(&read, &map));
+        let Value::Array(saved) = snapshot.dictionary_get("key").unwrap() else { panic!() };
+        assert!(Arc::ptr_eq(&saved, &array));
+        let (_, published) = pending.publish(Some(&mut owner));
+        for value in [owner, published] {
+            let Value::Dict(current) = value.dictionary_get("key").unwrap() else { panic!() };
+            assert!(Arc::ptr_eq(&current, &map));
+        }
+        assert!(matches!(array[0], Value::Int(7)));
+    }
+
+    fn base() -> Arc<DictMap> {
+        Arc::new([(Arc::from("key"), Value::array(vec![Value::Int(1)]))].into_iter().collect())
+    }
+
+    #[test]
+    fn collection_entry_preserves_snapshots_discard_and_type_transitions() {
+        let original = base();
+        let mut owner = Value::Dict(original.clone());
+        let mut pending = DictionaryCollectionPublication::prepare(
+            "state".into(),
+            original,
+            "key",
+            &Value::array(vec![Value::Int(2)]),
+        )
+        .unwrap();
+        let payload = pending.value.as_ref() as *const CollectionValue;
+        let saved = pending.snapshot_value();
+        pending.replace(&Value::dict([(Arc::from("nested"), Value::Int(3))].into_iter().collect()));
+        assert_eq!(payload, pending.value.as_ref() as *const CollectionValue);
+        let Value::Array(old) = saved.dictionary_get("key").unwrap() else { panic!() };
+        assert!(matches!(old[0], Value::Int(2)));
+        let (_, discarded) = pending.clone().discard();
+        let Value::Array(old) = discarded.dictionary_get("key").unwrap() else { panic!() };
+        assert!(matches!(old[0], Value::Int(1)));
+        let pending = pending.with_scalar(-0.0_f64);
+        assert!(
+            matches!(pending.get("key"), Some(Value::Float(v)) if v.to_bits()==(-0.0_f64).to_bits())
+        );
+        let pending = pending.with_collection(&Value::array(vec![Value::Int(4)]));
+        let (_, result) = pending.publish(Some(&mut owner));
+        for current in [owner, result] {
+            let Value::Array(items) = current.dictionary_get("key").unwrap() else { panic!() };
+            assert!(matches!(items[0], Value::Int(4)));
+        }
+        assert!(matches!(old[0], Value::Int(1)));
+    }
+
+    #[test]
+    fn collection_entry_keeps_replacement_owners_and_external_aliases() {
+        let original = base();
+        let retained = Value::Dict(original.clone());
+        let pending = DictionaryCollectionPublication::prepare(
+            "state".into(),
+            original,
+            "key",
+            &Value::array(vec![retained.clone()]),
+        )
+        .unwrap();
+        let mut replacement =
+            Value::dict([(Arc::from("replacement"), Value::Bool(true))].into_iter().collect());
+        let (_, result) = pending.publish(Some(&mut replacement));
+        assert!(matches!(replacement.dictionary_get("replacement"), Some(Value::Bool(true))));
+        assert!(replacement.dictionary_get("key").is_none());
+        let Value::Array(items) = result.dictionary_get("key").unwrap() else { panic!() };
+        let Value::Array(old) = items[0].dictionary_get("key").unwrap() else { panic!() };
+        assert!(matches!(old[0], Value::Int(1)));
+        let Value::Array(old) = retained.dictionary_get("key").unwrap() else { panic!() };
+        assert!(matches!(old[0], Value::Int(1)));
+        let mut name = String::with_capacity(128);
+        name.push_str("state");
+        assert!(DictionaryCollectionPublication::prepare(
+            name,
+            base(),
+            "key",
+            &Value::array(vec![])
+        )
+        .is_err());
     }
 }

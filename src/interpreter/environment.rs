@@ -5,7 +5,8 @@
 
 use super::binding_map::BindingMap;
 use super::dictionary_publication::{
-    DictionaryManyPublication, DictionaryPairPublication, DictionaryPublication, DictionaryScalar,
+    CollectionPayload, DictionaryCollectionPublication, DictionaryManyPublication,
+    DictionaryPairPublication, DictionaryPublication, DictionaryScalar,
 };
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
@@ -61,6 +62,9 @@ enum CaptureWrites {
     DictionaryFloat(DictionaryPublication<f64>),
     DictionaryBool(DictionaryPublication<bool>),
     DictionaryNull(DictionaryPublication<()>),
+    DictionaryCollection(DictionaryCollectionPublication),
+    DictionaryArray(DictionaryCollectionPublication<Arc<Vec<Value>>>),
+    DictionaryMap(DictionaryCollectionPublication<Arc<super::value::DictMap>>),
     DictionaryMany(Box<DictionaryManyPublication>),
     DictionaryPair(DictionaryPairPublication),
     Nested(super::nested_publication::NestedPublication),
@@ -108,6 +112,9 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => pending.get(key),
             Self::DictionaryBool(pending) => pending.get(key),
             Self::DictionaryNull(pending) => pending.get(key),
+            Self::DictionaryCollection(pending) => pending.get(key),
+            Self::DictionaryArray(pending) => pending.get(key),
+            Self::DictionaryMap(pending) => pending.get(key),
             Self::DictionaryPair(pending) => pending.get(key),
             Self::DictionaryMany(pending) => pending.get(key),
             _ => None,
@@ -121,6 +128,18 @@ impl CaptureWrites {
         allow_many: bool,
         insertion_bound: u16,
     ) -> bool {
+        if DictionaryCollectionPublication::supports(value) {
+            return match self {
+                Self::Dictionary(pending) => pending.matches_key(key),
+                Self::DictionaryFloat(pending) => pending.matches_key(key),
+                Self::DictionaryBool(pending) => pending.matches_key(key),
+                Self::DictionaryNull(pending) => pending.matches_key(key),
+                Self::DictionaryCollection(pending) => pending.matches_key(key),
+                Self::DictionaryArray(pending) => pending.matches_key(key),
+                Self::DictionaryMap(pending) => pending.matches_key(key),
+                _ => false,
+            };
+        }
         match self {
             Self::Dictionary(pending) => {
                 pending.matches_key(key)
@@ -146,6 +165,9 @@ impl CaptureWrites {
                     || (allow_many
                         && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
+            Self::DictionaryCollection(pending) => pending.matches_key(key),
+            Self::DictionaryArray(pending) => pending.matches_key(key),
+            Self::DictionaryMap(pending) => pending.matches_key(key),
             Self::DictionaryMany(_) => allow_many,
             Self::DictionaryPair(pending) => pending.can_record(key, value) || allow_many,
             _ => false,
@@ -169,6 +191,18 @@ impl CaptureWrites {
             Value::Null => {
                 DictionaryPublication::prepare_scalar(name, base, key, ()).map(Self::DictionaryNull)
             }
+            Value::Array(values) => {
+                DictionaryCollectionPublication::prepare_payload(name, base, key, values.clone())
+                    .map(Self::DictionaryArray)
+            }
+            Value::Dict(values) => {
+                DictionaryCollectionPublication::prepare_payload(name, base, key, values.clone())
+                    .map(Self::DictionaryMap)
+            }
+            value if DictionaryCollectionPublication::supports(value) => {
+                DictionaryCollectionPublication::prepare(name, base, key, value)
+                    .map(Self::DictionaryCollection)
+            }
             _ => Err((name, base)),
         }
     }
@@ -182,7 +216,34 @@ impl CaptureWrites {
             Value::Float(value) => Self::DictionaryFloat(pending.with_value(*value)),
             Value::Bool(value) => Self::DictionaryBool(pending.with_value(*value)),
             Value::Null => Self::DictionaryNull(pending.with_value(())),
-            _ => unreachable!("admitted scalar dictionary value"),
+            Value::Array(values) => {
+                Self::DictionaryArray(pending.with_collection_payload(values.clone()))
+            }
+            Value::Dict(values) => {
+                Self::DictionaryMap(pending.with_collection_payload(values.clone()))
+            }
+            value if DictionaryCollectionPublication::supports(value) => {
+                Self::DictionaryCollection(pending.with_collection(value))
+            }
+            _ => unreachable!("admitted dictionary value"),
+        }
+    }
+
+    fn replace_collection_value<T: CollectionPayload>(
+        pending: DictionaryCollectionPublication<T>,
+        value: &Value,
+    ) -> Self {
+        match value {
+            Value::Int(value) => Self::Dictionary(pending.with_scalar(*value)),
+            Value::Float(value) => Self::DictionaryFloat(pending.with_scalar(*value)),
+            Value::Bool(value) => Self::DictionaryBool(pending.with_scalar(*value)),
+            Value::Null => Self::DictionaryNull(pending.with_scalar(())),
+            Value::Array(values) => Self::DictionaryArray(pending.with_payload(values.clone())),
+            Value::Dict(values) => Self::DictionaryMap(pending.with_payload(values.clone())),
+            value if DictionaryCollectionPublication::supports(value) => {
+                Self::DictionaryCollection(pending.with_collection(value))
+            }
+            _ => unreachable!("admitted dictionary collection replacement"),
         }
     }
 
@@ -222,6 +283,25 @@ impl CaptureWrites {
                     Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
                     Self::DictionaryMany(Box::new(pending.into_many(key, value)))
+                }
+            }
+            Self::DictionaryArray(pending) => {
+                debug_assert!(pending.matches_key(key));
+                Self::replace_collection_value(pending, value)
+            }
+            Self::DictionaryMap(pending) => {
+                debug_assert!(pending.matches_key(key));
+                Self::replace_collection_value(pending, value)
+            }
+            Self::DictionaryCollection(mut pending) => {
+                debug_assert!(pending.matches_key(key));
+                if DictionaryCollectionPublication::supports(value)
+                    && !matches!(value, Value::Array(_) | Value::Dict(_))
+                {
+                    pending.replace(value);
+                    Self::DictionaryCollection(pending)
+                } else {
+                    Self::replace_collection_value(pending, value)
                 }
             }
             Self::DictionaryPair(mut pending) => {
@@ -267,6 +347,9 @@ impl CaptureWrites {
             | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
+            | Self::DictionaryCollection(_)
+            | Self::DictionaryArray(_)
+            | Self::DictionaryMap(_)
             | Self::Nested(_) => {
                 unreachable!("private publication is not a task write journal")
             }
@@ -283,6 +366,9 @@ impl CaptureWrites {
             | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
             | Self::DictionaryNull(_)
+            | Self::DictionaryCollection(_)
+            | Self::DictionaryArray(_)
+            | Self::DictionaryMap(_)
             | Self::Nested(_) => (None, None),
             Self::One(write) => (Some(write), None),
             Self::Many(writes) => (None, Some(writes)),
@@ -303,6 +389,9 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.name()),
             Self::DictionaryBool(pending) => Some(pending.name()),
             Self::DictionaryNull(pending) => Some(pending.name()),
+            Self::DictionaryCollection(pending) => Some(pending.name()),
+            Self::DictionaryArray(pending) => Some(pending.name()),
+            Self::DictionaryMap(pending) => Some(pending.name()),
             Self::DictionaryPair(pending) => Some(pending.name()),
             Self::DictionaryMany(pending) => Some(pending.name()),
             Self::Nested(pending) => Some(pending.name()),
@@ -317,6 +406,9 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.snapshot_value()),
             Self::DictionaryBool(pending) => Some(pending.snapshot_value()),
             Self::DictionaryNull(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryCollection(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryArray(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryMap(pending) => Some(pending.snapshot_value()),
             Self::DictionaryPair(pending) => Some(pending.snapshot_value()),
             Self::DictionaryMany(pending) => Some(pending.snapshot_value()),
             Self::Nested(pending) => Some(pending.snapshot_value()),
@@ -331,6 +423,9 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.publish(owner)),
             Self::DictionaryBool(pending) => Some(pending.publish(owner)),
             Self::DictionaryNull(pending) => Some(pending.publish(owner)),
+            Self::DictionaryCollection(pending) => Some(pending.publish(owner)),
+            Self::DictionaryArray(pending) => Some(pending.publish(owner)),
+            Self::DictionaryMap(pending) => Some(pending.publish(owner)),
             Self::DictionaryPair(pending) => Some(pending.publish(owner)),
             Self::DictionaryMany(pending) => Some(pending.publish(owner)),
             Self::Nested(pending) => Some(pending.publish(owner)),
@@ -345,6 +440,9 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => Some(pending.discard()),
             Self::DictionaryBool(pending) => Some(pending.discard()),
             Self::DictionaryNull(pending) => Some(pending.discard()),
+            Self::DictionaryCollection(pending) => Some(pending.discard()),
+            Self::DictionaryArray(pending) => Some(pending.discard()),
+            Self::DictionaryMap(pending) => Some(pending.discard()),
             Self::DictionaryPair(pending) => Some(pending.discard()),
             Self::DictionaryMany(pending) => Some(pending.discard()),
             Self::Nested(pending) => Some(pending.discard()),
@@ -586,6 +684,9 @@ impl Environment {
                 | CaptureWrites::DictionaryFloat(_)
                 | CaptureWrites::DictionaryBool(_)
                 | CaptureWrites::DictionaryNull(_)
+                | CaptureWrites::DictionaryCollection(_)
+                | CaptureWrites::DictionaryArray(_)
+                | CaptureWrites::DictionaryMap(_)
                 | CaptureWrites::DictionaryMany(_)
                 | CaptureWrites::DictionaryPair(_)),
             )) => Some(pending),
@@ -803,6 +904,7 @@ impl Environment {
         }
         if !matches!(self.capture_writes, Some((0, _)))
             || !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+                || DictionaryCollectionPublication::supports(value)
                 || (allow_many
                     && matches!(value, Value::Str(_) | Value::Bytes(_))
                     && matches!(
@@ -889,6 +991,7 @@ impl Environment {
         insertion_bound: u16,
     ) -> bool {
         if !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
+            || DictionaryCollectionPublication::supports(value)
             || (allow_many
                 && matches!(value, Value::Str(_) | Value::Bytes(_))
                 && matches!(
@@ -2804,7 +2907,7 @@ mod dictionary_scalar_publication_tests {
                 assert!(!active.try_defer_index_write(
                     "map",
                     &Value::Int(1),
-                    &Value::array(vec![])
+                    &Value::Option { is_some: false, value: Box::new(Value::Null) }
                 ));
                 exact(&active.dictionary_publication_read("map", "1").unwrap(), first);
                 assert!(active.try_defer_index_write(

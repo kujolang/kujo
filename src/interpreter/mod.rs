@@ -6082,7 +6082,11 @@ impl Interpreter {
     /// Evaluates an expression to produce a value
     fn eval_expr(&mut self, expr: &Expr) -> Value {
         // Unknown operations can expose values or enter user/native code. Keep
-        // the journal confined to ordinary scalar evaluation between boundaries.
+        // the journal confined to ordinary evaluation between boundaries.
+        // Collection literals only assemble their evaluated operands. Each
+        // operand still applies its own publication boundary, including captured
+        // value reads and calls; the literal itself must not disable admission
+        // before a collection-valued assignment can record its write.
         if !matches!(
             expr,
             Expr::Identifier(_)
@@ -6094,6 +6098,8 @@ impl Interpreter {
                 | Expr::UnaryOp { .. }
                 | Expr::BinaryOp { .. }
                 | Expr::IndexAccess { .. }
+                | Expr::ArrayLiteral(_)
+                | Expr::DictLiteral(_)
         ) {
             if matches!(expr, Expr::FieldAccess { object, .. } if matches!(object.as_ref(), Expr::Identifier(_)))
             {
@@ -8991,4 +8997,39 @@ fn nested_spill_policy_keeps_activation_layout() {
     }
     assert_eq!(std::mem::size_of::<Previous>(), std::mem::size_of::<EnvironmentActivation>());
     assert_eq!(std::mem::align_of::<Previous>(), std::mem::align_of::<EnvironmentActivation>());
+}
+
+#[cfg(test)]
+#[test]
+fn collection_literal_assignment_reuses_unaliased_captured_dictionary() {
+    for literal in ["[42]", "{\"value\": 42}"] {
+        let mut owner = Environment::new();
+        owner.set(
+            "state".into(),
+            Value::dict([(Arc::from("0"), Value::Int(0))].into_iter().collect()),
+        );
+        let original = match &owner.scopes[0]["state"] {
+            Value::Dict(map) => Arc::as_ptr(map),
+            _ => unreachable!(),
+        };
+        let owner = Arc::new(Mutex::new(owner));
+        let mut interpreter = Interpreter::new();
+        interpreter.env = Environment::capture_activation(&owner);
+        interpreter.env.enable_indexed_publication();
+        let source = format!("state[0] = {literal}");
+        let statements =
+            crate::parser::Parser::new(crate::lexer::tokenize(&source).unwrap()).parse();
+        assert_eq!(statements.len(), 1);
+        interpreter.eval_stmt(&statements[0]);
+        assert!(interpreter.return_value.is_none());
+        let mut owner = owner.lock().unwrap();
+        interpreter.env.publish_indexed_to(&mut owner);
+        let Value::Dict(map) = &owner.scopes[0]["state"] else { unreachable!() };
+        assert_eq!(Arc::as_ptr(map), original, "literal {literal} detached an unaliased owner");
+        match &map["0"] {
+            Value::Array(items) => assert!(matches!(items[0], Value::Int(42))),
+            Value::Dict(items) => assert!(matches!(items["value"], Value::Int(42))),
+            other => panic!("unexpected replacement: {other:?}"),
+        }
+    }
 }
