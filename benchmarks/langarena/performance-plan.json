@@ -5558,5 +5558,16 @@
     "struct_width_penalty_bytes_per_call": 277760,
     "cold_vm_jit_differences": "Three width64/fresh/64-write groups have +1 request/+52 bytes in JIT per added call; retained without causal attribution.",
     "remaining": "Implement general batch storage and admission while preserving snapshots, callbacks, errors, aliases and mixed values. No runtime fix or elapsed-speed claim from this baseline."
+  },
+  "array_batch_rejection_2026_10_29": {
+    "status": "rejected_correction_pending",
+    "report": "ARRAY_BATCH_REJECTION_2026_10_29.md",
+    "evidence": "array-batch-rejection-2026-10-29.json",
+    "allocation_pairs": 720,
+    "semantic_checks": 1728,
+    "total_regressions": 72,
+    "cold_slope_regressions": 24,
+    "cause": "First default AHasher initialization adds one allocation / 64 bytes; explicit seeds allocate nothing in isolation.",
+    "remaining": "Corrected runtime must repeat all target, boundary, historical, broad, checksum and memory gates. Sections 3/4 remain open."
   }
 }

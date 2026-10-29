@@ -176,8 +176,13 @@ Work still needed, in priority order:
    array/mixed or 277,760-byte struct owner-width penalty per added call across
    widths 64/2,048. All 288 allocation observations and 432 semantic checks pass;
    hot VM/JIT slopes agree. Three small cold JIT offsets are preserved separately.
-   General batch storage and admission remain to implement; fresh snapshots still
-   require isolation.
+   The [first general-batch candidate](ARRAY_BATCH_REJECTION_2026_10_29.md)
+   removes the hot width penalty in all 18 target groups but is rejected for
+   one first-use allocation in array-only cases. All 720 paired allocation
+   observations and 1,728 semantic checks are retained; gates reject 72 totals
+   and 24 cold slopes. Isolated default hash initialization reproduces one
+   request / 64 bytes. A correction is building; acceptance and broader
+   verification remain pending. Fresh snapshots remain separately covered.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
