@@ -116,6 +116,10 @@ Work still needed, in priority order:
    also confirms the same 587,520-byte width penalty under dictionary, struct and
    array roots: 96 allocation observations and 144 semantic checks. Root-only
    optimization does not close the nested portion of this item.
+   [Deep/small-container baseline](NESTED_COLLECTION_DEEP_BASELINE_2026_10_29.md)
+   adds 192 allocation observations and 288 semantic checks across deep dictionary,
+   mixed struct/array paths and array leaves, including 1/2-call controls. VM/JIT
+   slopes agree; fixed total-allocation offsets are retained separately.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
