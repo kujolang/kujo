@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `d853be4`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`collection-replacement-2026-10-29.json`).
-- [x] Latest relevant gate: 1,244 library passes, eight ignored; 406 distinct
-  integration passes, one manual profiling test ignored (`collection-replacement-2026-10-29.json`).
+- [x] Latest verified runtime `f415211`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`root-array-collection-publication-2026-10-29.json`).
+- [x] Latest relevant gate: 1,254 library passes, eight ignored; 409 distinct
+  integration passes, one manual profiling test ignored (`root-array-collection-publication-2026-10-29.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -156,6 +156,13 @@ Work still needed, in priority order:
    A standalone deterministic map-churn control reproduces the growth mechanism;
    the exact runtime key transition and a safe correction remain under investigation.
    Broad candidate verification has not run past this failed allocation gate.
+   The singleton capture-map correction is now accepted in `6ee5277`, and eligible
+   direct-array replacements in `f415211`: [verified results](ROOT_ARRAY_COLLECTION_PUBLICATION_2026_10_29.md)
+   record 1,254 library passes, 409 integrations, all 150 test-size checksums,
+   1,232 allocation pairs / 1,848 semantic checks with no regressions, 15 additional
+   scalar/compound contracts and 54 reviewed memory pairs. All 18 target groups
+   have flat width scaling. Multiple-index updates and broader boxed-payload
+   helper bodies still require work; this does not close collection replacement.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
@@ -167,9 +174,9 @@ Work still needed, in priority order:
    including dense updates and fresh snapshots.
 
 The nested-insertion, root replacement and eligible nested replacement cutoffs are
-complete, and struct-literal construction is now verified. The **next cutoff** is
-remaining collection replacement, starting with the measured direct root-array
-path on `3ac637e`, then compound/captured-scalar batching. Preserve snapshots,
+complete. Struct-literal construction and eligible direct root-array replacement
+are also verified. The **next cutoff** is broader multiple-index collection
+replacement and compound/captured-scalar batching. Preserve snapshots,
 callbacks and error ordering and repeat the applicable regression and 150-checksum
 gates. Sections 3 and 4 remain open.
 

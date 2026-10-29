@@ -5499,5 +5499,23 @@
     "slope_regressions": 32,
     "extra_bytes_per_call": 28,
     "remaining": "Avoid boxed struct storage overhead on fallback paths and repeat acceptance."
+  },
+  "direct_root_array_publication_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "f4152110cb26d5f163dd2e58158ba828803e2ce5",
+    "capture_map_commit": "6ee52778d973a6af4dc406f8f9cf213a2784fd35",
+    "report": "ROOT_ARRAY_COLLECTION_PUBLICATION_2026_10_29.md",
+    "evidence": "root-array-collection-publication-2026-10-29.json",
+    "library_passes": 1254,
+    "library_ignored": 8,
+    "integration_passes": 409,
+    "integration_ignored": 1,
+    "test_size_checksums": 150,
+    "allocation_pairs": 1232,
+    "allocation_semantic_checks": 1848,
+    "additional_scalar_compound_contracts": 15,
+    "memory_pairs": 54,
+    "hot_target_groups": 18,
+    "remaining": "Multiple-index collection updates, broader boxed-payload helper bodies, compound/captured-scalar batching, capture traversal/materialization and representation review remain open. Sections3/4 are not complete. Clean-host speed comparisons remain pending."
   }
 }
