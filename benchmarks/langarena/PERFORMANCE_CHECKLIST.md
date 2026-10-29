@@ -111,7 +111,11 @@ Any runtime change requires the relevant regression and 150-checksum gates.
 The first nested-insertion candidate passed the computed-index matrix but was
 [rejected by literal/parameter batching controls](nested-insertion-rejection-2026-10-29.json):
 36 small-map allocation regressions, up to 32,788 extra requested bytes. A bounded
-replacement is under verification; no nested runtime fix is accepted yet.
+replacement remains under verification; no nested runtime fix is accepted yet.
+The subsequent [conditional-path candidate](NESTED_CONDITIONAL_REJECTION_2026_10_29.md)
+was also rejected: 12 small-map total-allocation regressions despite all 288
+semantic checks passing. First-write admission is being separated from the
+reserve hint to preserve existing-key branches.
 
 V1's [rejection evidence](DICTIONARY_INSERTION_REJECTION_2026_10_28.md) remains valid;
 V2 missed the captured-counter target. Neither is substituted for accepted V3.
