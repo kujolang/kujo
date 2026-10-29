@@ -146,6 +146,10 @@ Work still needed, in priority order:
    a remaining 286,440-byte width penalty per added call for struct replacements;
    32 allocation observations and 48 semantic checks pass. This unsupported direct
    array path remains open; the accepted correction does not optimize it.
+   The [first direct-array candidate](ROOT_ARRAY_REJECTION_2026_10_29.md) is rejected:
+   64 allocation totals / 32 slopes add 28 bytes per call on boxed struct fallback
+   paths despite all 648 semantic checks passing. Profitability correction and
+   full verification remain required.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently

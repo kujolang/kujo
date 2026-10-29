@@ -5488,5 +5488,16 @@
     "semantic_checks": 48,
     "initial_snapshot_width_penalty_bytes_per_added_call": 286440,
     "limits": "Root-array struct payload only; fresh-snapshot JIT allocation offset retained. Not speed or fix acceptance."
+  },
+  "direct_root_array_rejection_2026_10_29": {
+    "status": "rejected",
+    "report": "ROOT_ARRAY_REJECTION_2026_10_29.md",
+    "evidence": "root-array-rejection-2026-10-29.json",
+    "allocation_pairs": 432,
+    "semantic_checks": 648,
+    "total_regressions": 64,
+    "slope_regressions": 32,
+    "extra_bytes_per_call": 28,
+    "remaining": "Avoid boxed struct storage overhead on fallback paths and repeat acceptance."
   }
 }
