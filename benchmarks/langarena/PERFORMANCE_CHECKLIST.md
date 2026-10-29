@@ -14,10 +14,10 @@ now authorized sections 3 and 4; section 5 has not been restarted.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `6d28861`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`shared-capture-metadata-2026-10-28.json`).
-- [x] Latest relevant gate: 1,229 library passes, eight ignored; 403 distinct
-  integration passes, one manual profiling test ignored (`shared-capture-metadata-2026-10-28.json`).
+- [x] Latest verified runtime `4cd3bf1`: 150/150 test-size checksums across VM,
+  interpreter and JIT (`dictionary-insertion-2026-10-28.json`).
+- [x] Latest relevant gate: 1,236 library passes, eight ignored; 404 distinct
+  integration passes, one manual profiling test ignored (`dictionary-insertion-2026-10-28.json`).
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -88,50 +88,34 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-28)
 
-Sections 3 and 4 have 62 checked items and three broad unchecked items. This is
-not an effort percentage: the unchecked items contain several independent costs,
-and many checked items are diagnosis or verification rather than runtime fixes.
+The bounded primitive **root dictionary insertion fix is accepted** in `4cd3bf1`.
+[Results and limits](DICTIONARY_INSERTION_2026_10_28.md) record 1,236 library passes,
+404 integrations, 150 test-size checksums and 2,172 paired allocation controls.
+The original counter helper falls from 634,840 to 8,069 requested bytes per added
+call at width 2,048 in VM/JIT. This is not an overall elapsed-time speedup.
 
 Work still needed, in priority order:
 
-1. Initial dictionary insertion: support new-key publication without whole-map
-   copying, preserving immediate reads, snapshots, callbacks, errors, canonical
-   key aliases and root replacement. Review promotion and small-map costs too.
-2. Collection-valued replacement: avoid unnecessary owner-map detachment while
-   retaining independently observable old arrays/dictionaries and depth checks.
-3. Broader batching: separately address compound indexed arithmetic and captured
-   scalar state; retain conservative fallback for callbacks and escaping values.
-4. Remaining capture traversal/materialization and oversized fallback: distinguish
-   necessary work from avoidable costs on the accepted runtime before changing it.
-5. Close the collection representation review and verify the final combined
-   candidate, including dense updates and fresh-snapshot controls. Necessary
-   copying must be documented rather than removed to obtain a better measurement.
+1. Nested initial insertion, preserving snapshots, callbacks, errors and owners.
+2. Collection-valued replacement without unnecessary owner-map detachment.
+3. Broader compound indexed arithmetic and captured-scalar batching.
+4. Remaining capture traversal/materialization and oversized fallback; distinguish
+   necessary work from avoidable costs before changing it.
+5. Collection representation review and final combined-candidate verification,
+   including dense updates and fresh snapshots.
 
-The next review cutoff is **initial dictionary insertion accepted or rejected**
-with same-path before/after allocation evidence, VM/interpreter/JIT semantics,
-small/cold/fallback controls, and the relevant regression and 150-checksum gates.
-It does not close sections 3 and 4. Current insertion contract fixtures cover
-snapshots, callbacks, errors and root replacement before implementation.
-The [first insertion candidate was rejected](DICTIONARY_INSERTION_REJECTION_2026_10_28.md):
-eight cold allocation pairs regress without an initial saved snapshot, despite
-passing the correctness gates. Its runtime edits are restored to the accepted
-source. A permanent 160-pair/240-semantic-case cold gate now rejects that candidate
-and passes the baseline self-comparison. Initial insertion remains open.
-Regression commit `2366e82` also covers canonical/noncanonical key separation,
-scalar insertion and numeric keys outside inline-pair encoding. All four tests in
-`tests/dictionary_scalar_publication.rs` pass against the frozen `6d28861` CLI
-using a directly compiled release test harness, including VM/interpreter/JIT
-invocations. JIT mode retains supported-region VM fallback; this is not evidence
-that every instruction runs natively. Formatting and diff checks pass. The initial
-Cargo test invocation was deliberately stopped during a redundant runtime rebuild;
-the completed harness uses the already frozen, unchanged runtime instead.
+The current root-insertion review cutoff is complete. The **next cutoff** is
+nested initial insertion accepted, rejected, or documented as necessary copying,
+with before/after scaling, three-runtime semantics and cold/fallback controls.
+Any runtime change requires the relevant regression and 150-checksum gates.
+V1's [rejection evidence](DICTIONARY_INSERTION_REJECTION_2026_10_28.md) remains valid;
+V2 missed the captured-counter target. Neither is substituted for accepted V3.
 
-Planning estimate: several implementation/verification cycles, likely days rather
-than an hour or two; this is a rough estimate, not measured remaining duration.
-Rejected candidates and verification on the loaded laptop make a precise ETA
-unreliable. Clean-host speed comparisons remain pending separately. Section 5
-is outside this round. Latest accepted runtime verification remains the evidence
-listed above; new fixture coverage alone is not optimization acceptance.
+Planning estimate: several more implementation/verification cycles, likely days
+rather than hours; this is not measured remaining duration. Broad unchecked items
+are not comparable in effort to individual checked tests or fixes. No defensible
+percentage or remaining-versus-elapsed time ratio is available. Clean-host speed
+comparisons remain pending separately; section 5 is outside this round.
 
 Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.md),
 `allocation-collection-2026-10-25.json`; runtime commits `e1ac6ba`, `787498d`.

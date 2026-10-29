@@ -5406,5 +5406,23 @@
     "baseline_control_semantic_checks": 240,
     "result": "Initial saved snapshots had hidden first-call admission. Empty/tiny dictionaries without an initial snapshot regress by118/6576/7204requestedbytes for2/64newkeys, despite fewer requests. Candidate source restored; correctness passes do not override rejection.",
     "remaining": "Design and measure profitable new-key batch admission; retain nested insertion, nonscalar, broader loops and capture materialization in sections3/4."
+  },
+  "dictionary_insertion_verification_2026_10_28": {
+    "status": "accepted_local_correctness_and_allocation",
+    "runtime_commit": "4cd3bf1f2b998a80db15c749571e30f60d759564",
+    "report": "DICTIONARY_INSERTION_2026_10_28.md",
+    "evidence": "dictionary-insertion-2026-10-28.json",
+    "library_passes": 1236,
+    "integration_passes": 404,
+    "test_size_checksums": 150,
+    "allocation_pairs": 2172,
+    "remaining": [
+      "Nested initial insertion",
+      "Collection-valued replacement",
+      "Broader compound-index/captured-scalar batching",
+      "Capture traversal/materialization and oversized fallback",
+      "Collection representation review and combined verification"
+    ],
+    "next_cutoff": "Nested initial insertion accepted, rejected, or justified as necessary copying; sections3/4 remain open"
   }
 }
