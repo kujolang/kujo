@@ -1,0 +1,3068 @@
+{
+  "status": "characterized",
+  "runtime_commit": "2c91c49",
+  "scope": "Root dictionary collection-valued replacement; captured versus argument counters; old-value snapshots. Allocation characterization, not elapsed-speed acceptance.",
+  "report": {
+    "status": "characterized",
+    "scope": "Root dictionary collection-valued replacement; captured versus argument counters; old-value snapshots. Allocation characterization, not elapsed-speed acceptance.",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-insertion-v4-2026-10-29/task-allocation-probe": "6d43a11f73178dbda4624874d3d3b9843fa20dbb9ab2532e956d7a06dc9b86f6",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-insertion-v4-2026-10-29/candidate-kujo": "b71d8c253604b65945d603dab366fe7f58a8897c2489b17dc45f1b57495fc747",
+      "benchmarks/langarena/probes/collection-replacement-isolation.rb": "552cb96f836fb8e6ed9ca66aef3a8fe962193f86a8f7fe813e49370c5d11a950"
+    },
+    "sources": {
+      "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 16) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = [0] key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  counter += 1\n  state[0] = [counter]\n  return counter\n}\n",
+      "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 32) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][0], i) assert_equal(len(saved), 128)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 16) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][0], i) assert_equal(len(saved), 128)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 32) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 16) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = [0] key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  counter += 1\n  state[0] = [counter]\n  return counter\n}\n",
+      "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 32) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][0], i) assert_equal(len(saved), 2048)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 16) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][0], i) assert_equal(len(saved), 2048)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][0], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][0], 32) }\n  else { assert_equal(final[key][0], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = [0] key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  \n  state[0] = [amount]\n  return amount\n}\n",
+      "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = [0] key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  \n  state[0] = [amount]\n  return amount\n}\n",
+      "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 16) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = {\"value\": 0} key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  counter += 1\n  state[0] = {\"value\": counter}\n  return counter\n}\n",
+      "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 32) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][\"value\"], i) assert_equal(len(saved), 128)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 16) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][\"value\"], i) assert_equal(len(saved), 128)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nmut key := 0\nwhile key < 128 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 32) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 16) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = {\"value\": 0} key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  counter += 1\n  state[0] = {\"value\": counter}\n  return counter\n}\n",
+      "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 32) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][\"value\"], i) assert_equal(len(saved), 2048)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 16) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(saved[0][\"value\"], i) assert_equal(len(saved), 2048)\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(len(original[key]), 1)\n  assert_equal(original[key][\"value\"], 0)\n  assert_equal(len(final[key]), 1)\n  if key == 0 { assert_equal(final[key][\"value\"], 32) }\n  else { assert_equal(final[key][\"value\"], 0) }\n  key += 1\n}\nprint(\"COLLECTION REPLACEMENT PASS\")\n",
+      "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = {\"value\": 0} key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  \n  state[0] = {\"value\": amount}\n  return amount\n}\n",
+      "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = {\"value\": 0} key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func edit(amount) {\n  \n  state[0] = {\"value\": amount}\n  return amount\n}\n"
+    },
+    "rows": [
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "requests": 21182,
+        "bytes": 3390267
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "requests": 21273,
+        "bytes": 3400484
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "requests": 22174,
+        "bytes": 4103019
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "requests": 22265,
+        "bytes": 4113236
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "requests": 22624,
+        "bytes": 3567402
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "requests": 22715,
+        "bytes": 3577619
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "requests": 25072,
+        "bytes": 4459898
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "requests": 25163,
+        "bytes": 4470115
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "requests": 265026,
+        "bytes": 41863348
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "requests": 265117,
+        "bytes": 41873565
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "requests": 266018,
+        "bytes": 51976420
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "requests": 266109,
+        "bytes": 51986637
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "requests": 266468,
+        "bytes": 42040483
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "requests": 266559,
+        "bytes": 42050700
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "requests": 268916,
+        "bytes": 52333299
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "requests": 269007,
+        "bytes": 52343516
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "requests": 21147,
+        "bytes": 3389145
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "requests": 21238,
+        "bytes": 3399362
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "requests": 22123,
+        "bytes": 4101785
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "requests": 22214,
+        "bytes": 4112002
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "requests": 22589,
+        "bytes": 3566280
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "requests": 22680,
+        "bytes": 3576497
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "requests": 25021,
+        "bytes": 4458664
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "requests": 25112,
+        "bytes": 4468881
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "requests": 264991,
+        "bytes": 41862226
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "requests": 265082,
+        "bytes": 41872443
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "requests": 265967,
+        "bytes": 51975186
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "requests": 266058,
+        "bytes": 51985403
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "requests": 266433,
+        "bytes": 42039361
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "requests": 266524,
+        "bytes": 42049578
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "requests": 268865,
+        "bytes": 52332065
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "requests": 268956,
+        "bytes": 52342282
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "requests": 22280,
+        "bytes": 3434634
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "requests": 22371,
+        "bytes": 3444851
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "requests": 23336,
+        "bytes": 4150042
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "requests": 23427,
+        "bytes": 4160259
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "requests": 23754,
+        "bytes": 3612489
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "requests": 23845,
+        "bytes": 3622706
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "requests": 26298,
+        "bytes": 4508361
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "requests": 26389,
+        "bytes": 4518578
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "requests": 281484,
+        "bytes": 42399235
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "requests": 281575,
+        "bytes": 42409452
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "requests": 282540,
+        "bytes": 52514963
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "requests": 282631,
+        "bytes": 52525180
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "requests": 282958,
+        "bytes": 42577090
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "requests": 283049,
+        "bytes": 42587307
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "requests": 285502,
+        "bytes": 52873282
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "requests": 285593,
+        "bytes": 52883499
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "requests": 22244,
+        "bytes": 3426316
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "requests": 22335,
+        "bytes": 3436533
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "requests": 23284,
+        "bytes": 4141612
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "requests": 23375,
+        "bytes": 4151829
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "requests": 23718,
+        "bytes": 3604171
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "requests": 23809,
+        "bytes": 3614388
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "requests": 26246,
+        "bytes": 4499931
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "requests": 26337,
+        "bytes": 4510148
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "requests": 281448,
+        "bytes": 42390917
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "requests": 281539,
+        "bytes": 42401134
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "requests": 282488,
+        "bytes": 52506533
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "requests": 282579,
+        "bytes": 52516750
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "requests": 282922,
+        "bytes": 42568772
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "requests": 283013,
+        "bytes": 42578989
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "requests": 285450,
+        "bytes": 52864852
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "requests": 285541,
+        "bytes": 52875069
+      }
+    ],
+    "semantics": [
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "26cfdca2bc68c910a5c3e67d17881d3c6d4a507b038d246e65203ab27a456594",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "d50497b8cc9530e9fe3cd0c53c8ac96cc079c70d7762344766cc3721542bdb04",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b897bf2adcbf601aed8a5322bde3dd0f32a82ba6bb540ef109837291a2adacea",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a2d112ed4177f67b4eac73384a3af93026019546d0faa8cd3524eed087becba4",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "fe8e265f522db4490974c3225321be0f7e769aafef8143b9003da1fec9ac92d5",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "916ee0bd985f66cb9ed7dea411ac898a91d38e4a9ebf53021b50e2d3cf27951e",
+        "module_sha256": "7483f2a6f90f67aceb5a67a4f6aeecc033a17aa1747adcae911d44f69b6c8b61",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "ad4b179f131b17fc6d38d64f82f5a2abd0870f0d3d246fde8ae75e2f0510191b",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "ef22eb414be5a304663b4bfbb5947a33f24ff7a5f4bad7f1de4992430a2bd4f2",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "f274bb0780fb7bf79a49994799419d07c0005a1eaa878342de339de267305b6c",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "array",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "d822eefabe97e636c11cf1e007a9b59af17d6782047a8ea2ede50119e03b8755",
+        "module_sha256": "dd8b298cb8eaa53998ccd51bd48f0af11702e994bf6cc0f34b3416ecd3b561d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "efd29325944201fb65ff2c24fb3ca67372a54664ad1f5d6a295a572a0d458968",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "captured",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "059e34950202e250e002e2202ce428909ec3a942852adf9f4ea9680a5fda9763",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "44eeaf01f73da54c3d483d6479ea1e50a421e4bd11fba5ff8d080645e88098f4",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "a9b825a2e2113d15f75aeb05fa49d03eb68b0381b69b43eec8f80e0d5dfbb851",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "b95054bf9239aec92888932f1e4c7f7910ecaa6f1fa146ed45d0b094b105f1b5",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "8ddccaf8f589c754e7ce042fc0ea1f73395090085e72337891b1aed23e4f2b73",
+        "module_sha256": "2a861e888a29c514192599233e8e080c75712a25f769d364f580dbdfe47ad766",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a638be793013f7180493bb9c1bfc778bb3be7c69c74a3a1dabe9432446f138be",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "58535cd6632ea186116b8fc9e12ef1768415983c92edd6d2874108b1f332f595",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "52e981f3a3d9a43163db7f5f3ae8ce09490a5535858bdcaa121193da587e625f",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "kind": "dictionary",
+        "counter": "argument",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "fb127953a3bd667b13cdbceeb22c247560eb8dd664e473858afe22a070690e24",
+        "module_sha256": "5a0b7fd1bcd79e2dead0f920c6447d21f4809536799e90d3667be1984e69fe99",
+        "mode": "jit",
+        "exit": 0
+      }
+    ],
+    "slopes": [
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 44547.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 44547.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 55781.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 55781.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 632067.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 632067.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 643301.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 643301.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 44540.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 44540.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 55774.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 55774.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 632060.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 632060.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 643294.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 643294.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 44713.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 44713.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 55992.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 55992.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 632233.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 632233.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 643512.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 643512.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 44706.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 44706.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 55985.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 55985.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 632226.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 632226.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 643505.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 643505.0
+      }
+    ]
+  },
+  "verification": {
+    "status": "characterized",
+    "allocation_observations": 64,
+    "semantic_checks": 96,
+    "slopes": [
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 44547.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 44547.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 55781.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 55781.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 632067.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 62.0,
+        "bytes": 632067.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 643301.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 153.0,
+        "bytes": 643301.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 44540.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 44540.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 55774.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 55774.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 632060.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 61.0,
+        "bytes": 632060.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 643294.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 152.0,
+        "bytes": 643294.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 44713.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 44713.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 55992.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 55992.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 632233.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 66.0,
+        "bytes": 632233.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 643512.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 159.0,
+        "bytes": 643512.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 44706.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 44706.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 55985.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 55985.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 632226.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 65.0,
+        "bytes": 632226.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 643505.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 158.0,
+        "bytes": 643505.0
+      }
+    ],
+    "width_penalties": [
+      {
+        "group": [
+          "array",
+          "captured",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "captured",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "array",
+          "argument",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "captured",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "dictionary",
+          "argument",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      }
+    ],
+    "report_sha256": "e2af835038556e9f54068bd7e7174b5f0f525ce617e82a69a90f07bd7abf941e",
+    "verifier_sha256": "aa10dddb077274e3215183c22b099eea28f9e0652edbce215f5766c307d9582a",
+    "limits": "Baseline allocation characterization; no candidate speed or regression acceptance."
+  },
+  "verifier_source": "require 'json'\nrequire 'digest'\no=File.expand_path(ARGV.fetch(0))\nr=JSON.parse(File.read(o+'/report.json'))\nraise 'Incomplete' unless r['status']=='characterized'\nkeys=%w[kind counter width snapshot calls mode]\ncases=%w[array dictionary].product(%w[captured argument],[128,2048],%w[once fresh],[16,32])\nraise 'Allocation coverage' unless r['rows'].map{|x|x.values_at(*keys)}.sort==cases.product(%w[vm jit]).map{|a,b|a+[b]}.sort\nraise 'Semantic coverage' unless r['semantics'].map{|x|x.values_at(*keys)}.sort==cases.product(%w[vm interpreter jit]).map{|a,b|a+[b]}.sort\nr['identities'].each{|p,h|raise 'Identity drift' unless Digest::SHA256.file(p).hexdigest==h}\nr['sources'].each{|h,s|raise 'Embedded source hash' unless Digest::SHA256.hexdigest(s)==h}\n(r['rows']+r['semantics']).each do |x|\n dir=o+'/'+x.values_at(*keys.first(5)).join('-')\n {'source_sha256'=>'main.kujo','module_sha256'=>'owner.kujo'}.each{|k,p|raise 'Actual fixture drift' unless r['sources'].key?(x[k])&&Digest::SHA256.file(dir+'/'+p).hexdigest==x[k]}\n raise 'Semantic failure' if x.key?('exit')&&x['exit']!=0\nend\nslopes=r['rows'].group_by{|x|x.values_at('kind','counter','width','snapshot','mode')}.map do |group,rows|\n a,b=rows.sort_by{|x|x['calls']}\n {'group'=>group,'calls'=>[a['calls'],b['calls']],'requests'=>(b['requests']-a['requests']).fdiv(b['calls']-a['calls']),'bytes'=>(b['bytes']-a['bytes']).fdiv(b['calls']-a['calls'])}\nend\nraise 'Slope arithmetic' unless slopes==r['slopes']\npenalties=slopes.group_by{|x|g=x['group'];[g[0],g[1],g[3],g[4]]}.map do |group,rows|\n a,b=rows.sort_by{|x|x['group'][2]}\n {group:group,widths:[a['group'][2],b['group'][2]],extra_requests_per_call:b['requests']-a['requests'],extra_bytes_per_call:b['bytes']-a['bytes']}\nend\nreceipt={status:'characterized',allocation_observations:64,semantic_checks:96,slopes:slopes,width_penalties:penalties,report_sha256:Digest::SHA256.file(o+'/report.json').hexdigest,verifier_sha256:Digest::SHA256.file(__FILE__).hexdigest,limits:'Baseline allocation characterization; no candidate speed or regression acceptance.'}\nFile.write(o+'/verified.json',JSON.pretty_generate(receipt)+\"\\n\")\nputs JSON.pretty_generate(receipt)\n",
+  "limits": "Current accepted runtime baseline, not candidate acceptance or clean-host speed evidence."
+}

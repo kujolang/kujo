@@ -101,6 +101,9 @@ call at width 2,048 in VM/JIT. This is not an elapsed-time speedup.
 Work still needed, in priority order:
 
 1. Collection-valued replacement without unnecessary owner-map detachment.
+   [Accepted-runtime baseline](COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md) confirms
+   a 587,520-byte width penalty per added call for both array/dictionary values,
+   with captured or argument counters; 64 allocation and 96 semantic checks pass.
 2. Broader compound indexed arithmetic and captured-scalar batching.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
