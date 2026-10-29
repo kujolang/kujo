@@ -299,6 +299,13 @@ Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.
   unchanged. All 288 target pairs, 832 larger escape pairs, 1,222 library tests,
   397 release integrations and 150 test-size checksums pass. General/deeper loops
   and broader capture/collection costs remain open.
+- [x] Isolate insertion, nonscalar replacement and loop admission factors on
+  `6d28861`. [Verified characterization](COLLECTION_FACTOR_ISOLATION_2026_10_28.md)
+  covers 192 allocation observations and 288 semantic checks. Insertion,
+  nonscalar and compound/captured-counter loops retain a 587,520-byte width
+  penalty; direct parameter-only eight-key assignments are already flat at
+  7,307 bytes per added call. All 192 same-path comparisons match `4d11952`.
+  The broader costs below remain open; dynamic bounds alone are not the cause.
 - [ ] Reduce remaining module-width copying for insertion, nonscalar updates,
   general/deeper loops and dense/escaping update patterns. The [current refresh](OWNERSHIP_COST_REFRESH_2026_10_28.md)
   on `4d11952` verifies flat initial-snapshot added-call costs for all ten historical
