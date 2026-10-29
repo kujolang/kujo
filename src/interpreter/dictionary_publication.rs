@@ -49,7 +49,7 @@ pub(super) enum CollectionValue {
 }
 
 impl CollectionValue {
-    fn from_value(value: &Value) -> Self {
+    pub(super) fn from_value(value: &Value) -> Self {
         match value {
             Value::Array(v) => Self::Array(v.clone()),
             Value::Dict(v) => Self::Dict(v.clone()),
@@ -66,7 +66,7 @@ impl CollectionValue {
             _ => unreachable!("admitted collection payload"),
         }
     }
-    fn into_value(self) -> Value {
+    pub(super) fn into_value(self) -> Value {
         match self {
             Self::Array(v) => Value::Array(v),
             Self::Dict(v) => Value::Dict(v),

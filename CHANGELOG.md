@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain eligible nested collection replacements in existing assignment-path storage,
+  preserving snapshots, aliases and fallback publication boundaries.
+
 - Retain eligible collection-valued dictionary replacements in compact private entries,
   preserving snapshots and scalar/collection transitions without copying the owner map.
 

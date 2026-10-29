@@ -38,6 +38,7 @@ pub(crate) enum Access {
     DeferredRowMany(super::nested_publication::RowManyWrite),
     DeferredDictionary(super::nested_publication::DictionaryWrite),
     DeferredDictionaryMany(super::nested_publication::DictionaryManyWrite),
+    DeferredCollection(super::nested_publication::CollectionWrite),
 }
 
 /// Operation-local resolved operands. Keep common paths off the heap without
