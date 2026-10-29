@@ -104,6 +104,10 @@ Work still needed, in priority order:
    [Accepted-runtime baseline](COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md) confirms
    a 587,520-byte width penalty per added call for both array/dictionary values,
    with captured or argument counters; 64 allocation and 96 semantic checks pass.
+   The [first replacement candidate](COLLECTION_REPLACEMENT_REJECTION_2026_10_29.md)
+   is rejected: all target allocation totals and slopes remained unchanged.
+   Literal evaluation cleared admission before assignment; the corrected candidate
+   must repeat both target and fallback gates before acceptance.
 2. Broader compound indexed arithmetic and captured-scalar batching.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
