@@ -1,0 +1,208 @@
+{
+  "status": "passed",
+  "probe_sha256": "722fd35da25f211fe0dd640736de5ad50d7c050d7a61bb8300945fa587dac394",
+  "reports": {
+    "accepted-baseline": {
+      "binary": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+      "binary_sha256": "8b02dbfd1d97d753b252e3ad954dd2e6705bf5412852ae0f804bcab268890342",
+      "rows": [
+        {
+          "shape": "root",
+          "mode": "vm",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/root/main.kujo",
+            "--untrusted"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "root",
+          "mode": "interpreter",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/root/main.kujo",
+            "--untrusted",
+            "--interpreter"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "root",
+          "mode": "jit",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/root/main.kujo",
+            "--untrusted",
+            "--jit"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "vm",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/nested/main.kujo",
+            "--untrusted"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "interpreter",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/nested/main.kujo",
+            "--untrusted",
+            "--interpreter"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "jit",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/accepted-baseline/nested/main.kujo",
+            "--untrusted",
+            "--jit"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        }
+      ],
+      "status": "passed"
+    },
+    "nested-candidate": {
+      "binary": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+      "binary_sha256": "57e5e1727be30e49ece56d01a45d52f96feba0c43145d4db71f6390b61f9f662",
+      "rows": [
+        {
+          "shape": "root",
+          "mode": "vm",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/root/main.kujo",
+            "--untrusted"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "root",
+          "mode": "interpreter",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/root/main.kujo",
+            "--untrusted",
+            "--interpreter"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "root",
+          "mode": "jit",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/root/main.kujo",
+            "--untrusted",
+            "--jit"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+          "owner_sha256": "303f7e9309c392a841545bc2a635c725a7802be95148136d9f7d8c6ce6b3a8af",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "vm",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/nested/main.kujo",
+            "--untrusted"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "interpreter",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/nested/main.kujo",
+            "--untrusted",
+            "--interpreter"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        },
+        {
+          "shape": "nested",
+          "mode": "jit",
+          "argv": [
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-collection-v1-2026-10-29/candidate-kujo",
+            "run",
+            "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-boundaries-2026-10-29/nested-candidate/nested/main.kujo",
+            "--untrusted",
+            "--jit"
+          ],
+          "exit": 0,
+          "stdout": "STRUCT BOUNDARIES PASS\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+          "owner_sha256": "7847e34a4ea746e5ffe6658b558a17d67546ec1dded63c5eb9d97ee9e88ce74b",
+          "main_sha256": "d93ce3f21136bef9a63ea07796da272e94f9a38cb2f3cd73e7e73bf59f671d04"
+        }
+      ],
+      "status": "passed"
+    }
+  }
+}
