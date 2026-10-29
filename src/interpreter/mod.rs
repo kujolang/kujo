@@ -25,6 +25,7 @@ mod capture_independence;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
+mod dictionary_insertion_proof;
 mod dictionary_publication;
 mod environment;
 pub mod generator;
@@ -392,6 +393,7 @@ pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Env
 struct EnvironmentActivation {
     allow_multi_key: bool,
     nested_spill_hint: u16,
+    insertion_bound: u16,
     globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
     caller: Environment,
@@ -2491,6 +2493,7 @@ impl Interpreter {
                     self.environment_activations.push(EnvironmentActivation {
                         allow_multi_key: false,
                         nested_spill_hint: 0,
+                        insertion_bound: 0,
                         capture: Some((captured.clone(), count)),
                         caller,
                         globals: CapturedGlobals::Snapshot,
@@ -2504,6 +2507,8 @@ impl Interpreter {
         let allow_multi_key = self.task_cancellation.is_none()
             && self.active_capture_index(captured).is_none()
             && body.can_batch_dictionary_writes(params, args);
+        let insertion_bound =
+            if allow_multi_key { body.dictionary_insertion_bound(params, args) } else { 0 };
         self.enter_captured_environment(captured);
         let nested_spill_hint = if may_check_nested
             && self
@@ -2517,6 +2522,8 @@ impl Interpreter {
         };
         if let Some(frame) = self.environment_activations.last_mut() {
             frame.nested_spill_hint = nested_spill_hint;
+            frame.insertion_bound =
+                if frame.globals == CapturedGlobals::Snapshot { insertion_bound } else { 0 };
             frame.allow_multi_key = allow_multi_key && frame.globals == CapturedGlobals::Snapshot;
         }
     }
@@ -2542,6 +2549,7 @@ impl Interpreter {
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
                 nested_spill_hint: 0,
+                insertion_bound: 0,
                 capture: Some((captured.clone(), count)),
                 caller,
                 globals: CapturedGlobals::RecursiveCaller,
@@ -2572,6 +2580,7 @@ impl Interpreter {
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
                             nested_spill_hint: 0,
+                            insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveOwner,
@@ -2593,6 +2602,7 @@ impl Interpreter {
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
                             nested_spill_hint: 0,
+                            insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
                             globals: CapturedGlobals::RecursiveSplitOwner,
@@ -2644,6 +2654,7 @@ impl Interpreter {
         self.environment_activations.push(EnvironmentActivation {
             allow_multi_key: false,
             nested_spill_hint: 0,
+            insertion_bound: 0,
             capture: Some((captured.clone(), count)),
             caller,
             globals,
@@ -2754,6 +2765,7 @@ impl Interpreter {
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
                 nested_spill_hint: 0,
+                insertion_bound: 0,
                 capture: None,
                 caller,
                 globals: CapturedGlobals::Snapshot,
@@ -3933,6 +3945,7 @@ impl Interpreter {
             &index_value,
             value,
             allow_multi_key,
+            self.environment_activations.last().map_or(0, |frame| frame.insertion_bound),
         ) {
             return Value::Null;
         }

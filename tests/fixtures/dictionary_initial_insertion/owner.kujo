@@ -7,6 +7,12 @@ export func insert_named(key, value) {
     return data[key]
 }
 
+export func insert_pair(key, first, second) {
+    data[key] = first
+    data[key + 1] = second
+    return first
+}
+
 func callback(x) {
     assert_equal(data[0], 11)
     data[1] = false

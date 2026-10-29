@@ -232,7 +232,7 @@ impl FunctionBodyRef {
         else {
             return 0;
         };
-        if proof.nested_spill_region {
+        if proof.nested_spill_region() {
             let dictionary =
                 super::nested_spill_proof::eligible(&self.storage.body, params, args, env);
             if dictionary != 0 {
@@ -254,11 +254,21 @@ impl FunctionBodyRef {
             return false;
         };
         !proof.read_only
-            && proof.sparse_write_region
+            && proof.sparse_write_region()
             && args.iter().all(is_capture_primitive)
             && proof.required_parameters.iter().enumerate().all(|(index, name)| {
                 proof.whole_value_mask & (1u32 << index) == 0 || params.contains(name)
             })
+    }
+
+    pub(super) fn dictionary_insertion_bound(&self, params: &[String], args: &[Value]) -> u16 {
+        let Some(Some(proof)) = self.storage.capture_independence.get() else { return 0 };
+        match proof.insertion_bound {
+            u8::MAX => {
+                super::dictionary_insertion_proof::runtime_bound(&self.storage.body, params, args)
+            }
+            n => u16::from(n),
+        }
     }
 
     pub(super) fn read_capture_proof(

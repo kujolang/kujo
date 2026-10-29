@@ -114,27 +114,37 @@ impl CaptureWrites {
         }
     }
 
-    fn dictionary_can_record(&self, key: &str, value: &Value, allow_many: bool) -> bool {
+    fn dictionary_can_record(
+        &self,
+        key: &str,
+        value: &Value,
+        allow_many: bool,
+        insertion_bound: u16,
+    ) -> bool {
         match self {
             Self::Dictionary(pending) => {
                 pending.matches_key(key)
                     || pending.can_pair(key, value)
-                    || (allow_many && pending.contains_key(key))
+                    || (allow_many
+                        && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
             Self::DictionaryFloat(pending) => {
                 pending.matches_key(key)
                     || pending.can_pair(key, value)
-                    || (allow_many && pending.contains_key(key))
+                    || (allow_many
+                        && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
             Self::DictionaryBool(pending) => {
                 pending.matches_key(key)
                     || pending.can_pair(key, value)
-                    || (allow_many && pending.contains_key(key))
+                    || (allow_many
+                        && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
             Self::DictionaryNull(pending) => {
                 pending.matches_key(key)
                     || pending.can_pair(key, value)
-                    || (allow_many && pending.contains_key(key))
+                    || (allow_many
+                        && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
             Self::DictionaryMany(_) => allow_many,
             Self::DictionaryPair(pending) => pending.can_record(key, value) || allow_many,
@@ -753,7 +763,7 @@ impl Environment {
         index: &Value,
         value: &Value,
     ) -> bool {
-        self.try_defer_index_write_with_batching(name, index, value, true)
+        self.try_defer_index_write_with_batching(name, index, value, true, 0)
     }
 
     pub(crate) fn try_defer_index_write_with_batching(
@@ -762,6 +772,7 @@ impl Environment {
         index: &Value,
         value: &Value,
         allow_many: bool,
+        insertion_bound: u16,
     ) -> bool {
         // A new nested optimization must not displace an already eligible
         // direct-array/dictionary optimization on another binding. Try the
@@ -770,7 +781,13 @@ impl Environment {
         if matches!(&self.capture_writes, Some((0, CaptureWrites::Nested(pending))) if pending.name() != name)
         {
             let previous = self.capture_writes.replace((0, CaptureWrites::Empty));
-            if self.try_defer_index_write_with_batching(name, index, value, allow_many) {
+            if self.try_defer_index_write_with_batching(
+                name,
+                index,
+                value,
+                allow_many,
+                insertion_bound,
+            ) {
                 let Some((0, pending)) = previous else { unreachable!() };
                 let Some((name, value)) = pending.publish(None) else { unreachable!() };
                 self.scopes[0].insert(name, value);
@@ -799,7 +816,13 @@ impl Environment {
         if self.pending_dictionary().is_some()
             || matches!(self.scopes[0].get(name), Some(Value::Dict(_)))
         {
-            return self.try_defer_dictionary_write(name, index, value, allow_many);
+            return self.try_defer_dictionary_write(
+                name,
+                index,
+                value,
+                allow_many,
+                insertion_bound,
+            );
         }
         let Value::Int(index) = index else { return false };
         let length = if let Some(pending) = self.pending_indexed() {
@@ -858,6 +881,7 @@ impl Environment {
         index: &Value,
         value: &Value,
         allow_many: bool,
+        insertion_bound: u16,
     ) -> bool {
         if !(matches!(value, Value::Int(_) | Value::Float(_) | Value::Bool(_) | Value::Null)
             || (allow_many
@@ -876,9 +900,11 @@ impl Environment {
             return false;
         }
         match index {
-            Value::Str(key) => self.try_defer_dictionary_key_write(name, key, value, allow_many),
+            Value::Str(key) => {
+                self.try_defer_dictionary_key_write(name, key, value, allow_many, insertion_bound)
+            }
             Value::Int(index) => super::dictionary_publication::with_integer_key(*index, |key| {
-                self.try_defer_dictionary_key_write(name, key, value, allow_many)
+                self.try_defer_dictionary_key_write(name, key, value, allow_many, insertion_bound)
             }),
             _ => false,
         }
@@ -890,9 +916,10 @@ impl Environment {
         key: &str,
         value: &Value,
         allow_many: bool,
+        insertion_bound: u16,
     ) -> bool {
         if let Some(pending) = self.pending_dictionary() {
-            if !pending.dictionary_can_record(key, value, allow_many) {
+            if !pending.dictionary_can_record(key, value, allow_many, insertion_bound) {
                 return false;
             }
             let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
@@ -902,7 +929,16 @@ impl Environment {
                 return false;
             }
             let Some(Value::Dict(base)) = self.scopes[0].get(name) else { return false };
-            if Arc::strong_count(base) != 2 || !base.contains_key(key) {
+            if Arc::strong_count(base) != 2
+                || (!base.contains_key(key)
+                    && !super::dictionary_publication::insertion_can_pay(
+                        base,
+                        // Non-batched helpers cannot spill an inserted key into
+                        // a table: a different key forces ordinary publication.
+                        // Their first write therefore needs only the inline slot.
+                        if allow_many { insertion_bound } else { 1 },
+                    ))
+            {
                 return false;
             }
             let (name, Value::Dict(base)) = self.scopes[0].remove_entry(name).unwrap() else {
@@ -2651,6 +2687,52 @@ mod dictionary_scalar_publication_tests {
             (Value::Null, Value::Null) => {}
             _ => panic!("scalar type changed: {actual:?} versus {expected:?}"),
         }
+    }
+
+    #[test]
+    fn single_insertion_without_batching_preserves_owner_and_rejects_spill() {
+        let mut environment = Environment::new();
+        environment.define(
+            "map".into(),
+            Value::dict([(Arc::from("0"), Value::Int(0))].into_iter().collect()),
+        );
+        let owner = Arc::new(Mutex::new(environment));
+        let mut active = Environment::capture_activation(&owner);
+        active.enable_indexed_publication();
+        active.push_scope();
+        assert!(active.try_defer_index_write_with_batching(
+            "map",
+            &Value::Int(1),
+            &Value::Int(7),
+            false,
+            0
+        ));
+        assert!(owner.lock().unwrap().get("map").unwrap().dictionary_get("1").is_none());
+        let saved = active.get("map").unwrap();
+        for key in [0, 2] {
+            assert!(!active.try_defer_index_write_with_batching(
+                "map",
+                &Value::Int(key),
+                &Value::Int(9),
+                false,
+                0
+            ));
+        }
+        assert!(active.try_defer_index_write_with_batching(
+            "map",
+            &Value::Int(1),
+            &Value::Bool(false),
+            false,
+            0
+        ));
+        assert!(matches!(saved.dictionary_get("1"), Some(Value::Int(7))));
+        assert!(matches!(active.dictionary_publication_read("map", "1"), Some(Value::Bool(false))));
+        active.pop_scope();
+        owner.lock().unwrap().publish_global_scope_from(&mut active);
+        let current = owner.lock().unwrap().get("map").unwrap();
+        assert!(matches!(current.dictionary_get("1"), Some(Value::Bool(false))));
+        assert!(matches!(current.dictionary_get("0"), Some(Value::Int(0))));
+        assert!(current.dictionary_get("2").is_none());
     }
 
     #[test]

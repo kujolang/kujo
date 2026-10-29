@@ -1,0 +1,20 @@
+mut data := {}
+mut counter := 0
+export func cold_reset(width) {
+    data = {}
+    counter = width
+    mut j := 0
+    while j < width { data[j] = 0 j += 1 }
+}
+export func cold_fill(start, count) {
+    mut j := 0
+    while j < count { data[start + j] = start + j j += 1 }
+    return start
+}
+export func cold_snapshot() { return data }
+
+export func cold_step() {
+    data[counter] = counter
+    counter += 1
+    return counter
+}

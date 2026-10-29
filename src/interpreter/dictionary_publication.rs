@@ -1,4 +1,4 @@
-//! Existing dictionary keys updated without copying their captured public owner.
+//! Dictionary keys updated without copying their captured public owner.
 //! The first key stays inline; a second key promotes to a sparse write table.
 use super::value::DictMap;
 use super::Value;
@@ -71,8 +71,7 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
         if name.capacity() != name.len() {
             return Err((name, base));
         }
-        let Some((key, _)) = base.get_key_value(key) else { return Err((name, base)) };
-        let key = key.clone();
+        let key = base.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone());
         Ok(Self { name: name.into_boxed_str(), base, key, value })
     }
 
@@ -92,10 +91,15 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
         self.base.contains_key(key)
     }
 
+    pub(super) fn can_insert(&self, writes: u16) -> bool {
+        insertion_can_pay(&self.base, writes)
+    }
+
     pub(super) fn into_many(self, key: &str, value: &Value) -> DictionaryManyPublication {
         let mut writes = ScalarWrites::default();
         writes.insert(self.key, ScalarValue::from_value(&self.value.into_value()));
-        let stored = self.base.get_key_value(key).expect("admitted dictionary key").0.clone();
+        let stored =
+            self.base.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone());
         writes.insert(stored, ScalarValue::from_value(value));
         DictionaryManyPublication { name: self.name, base: self.base, writes }
     }
@@ -105,7 +109,10 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
     }
 
     pub(super) fn can_pair(&self, key: &str, value: &Value) -> bool {
-        self.base.contains_key(key)
+        // The pair borrows canonical keys from the base at publication. Keep an
+        // inserted key's owned allocation in the scalar or sparse journal.
+        self.base.contains_key(self.key.as_ref())
+            && self.base.contains_key(key)
             && DictionaryPairPublication::encode(&self.key, &self.value.into_value()).is_some()
             && DictionaryPairPublication::encode(key, value).is_some()
     }
@@ -136,9 +143,13 @@ impl<T: DictionaryScalar> DictionaryPublication<T> {
         true
     }
 
-    fn apply(base: &mut Arc<DictMap>, key: &str, value: T) {
-        *Arc::make_mut(base).get_mut(key).expect("admitted existing dictionary key") =
-            value.into_value();
+    fn apply(base: &mut Arc<DictMap>, key: &Arc<str>, value: T) {
+        let target = Arc::make_mut(base);
+        if let Some(slot) = target.get_mut(key.as_ref()) {
+            *slot = value.into_value();
+        } else {
+            target.insert(key.clone(), value.into_value());
+        }
     }
 
     pub(super) fn snapshot_value(&self) -> Value {
@@ -225,6 +236,27 @@ mod tests {
     }
 
     #[test]
+    fn inserted_key_keeps_owner_snapshots_and_promotion_independent() {
+        let base = original();
+        let mut owner = Value::Dict(base.clone());
+        let pending = DictionaryPublication::prepare("state".into(), base, "0", 9).unwrap();
+        assert!(owner.dictionary_get("0").is_none());
+        assert!(matches!(pending.get("0"), Some(Value::Int(9))));
+        assert!(!pending.can_pair("1", &Value::Int(10)));
+        let snapshot = pending.snapshot_value();
+        let discarded = pending.clone().discard().1;
+        assert!(discarded.dictionary_get("0").is_none());
+        let mut many = pending.into_many("1", &Value::Bool(false));
+        many.record("0", &Value::Null);
+        let (_, published) = many.publish(Some(&mut owner));
+        assert!(matches!(snapshot.dictionary_get("0"), Some(Value::Int(9))));
+        assert!(snapshot.dictionary_get("1").is_none());
+        assert!(matches!(published.dictionary_get("0"), Some(Value::Null)));
+        assert!(matches!(owner.dictionary_get("1"), Some(Value::Bool(false))));
+        assert!(matches!(discarded.dictionary_get("key"), Some(Value::Int(1))));
+    }
+
+    #[test]
     fn reuses_key_and_unique_owner_without_early_publication() {
         let base = original();
         let pointer = Arc::as_ptr(&base);
@@ -272,16 +304,13 @@ mod tests {
                 <= std::mem::size_of::<std::collections::HashSet<(usize, String)>>()
         );
         let base = original();
-        let pointer = Arc::as_ptr(&base);
-        let (name, returned) =
-            DictionaryPublication::prepare("state".into(), base, "missing", 9).unwrap_err();
-        assert_eq!(name, "state");
-        assert_eq!(Arc::as_ptr(&returned), pointer);
         let mut name = String::with_capacity(64);
         name.push_str("state");
         let pointer = name.as_ptr();
         let capacity = name.capacity();
-        let (name, _) = DictionaryPublication::prepare(name, returned, "key", 9).unwrap_err();
+        let base_pointer = Arc::as_ptr(&base);
+        let (name, returned) = DictionaryPublication::prepare(name, base, "key", 9).unwrap_err();
+        assert_eq!(Arc::as_ptr(&returned), base_pointer);
         assert_eq!(name.as_ptr(), pointer);
         assert_eq!(name.capacity(), capacity);
     }
@@ -519,7 +548,7 @@ impl DictionaryPairPublication {
     }
 }
 
-/// Promote only when a helper updates a second existing key. Single-key calls
+/// Promote only when a helper admits a second key. Single-key calls
 /// retain their inline journal; this table scales with writes, not owner width.
 #[derive(Clone, Debug)]
 pub(super) struct DictionaryManyPublication {
@@ -688,5 +717,52 @@ mod many_tests {
             matches!(updated, Value::Dict(ref map) if matches!(map["a"],Value::Int(10)) && matches!(map["b"],Value::Null))
         );
         assert!(matches!(base["a"], Value::Int(1)));
+    }
+}
+
+/// Bound temporary table allocation traffic before admitting the first new key.
+/// A sparse table grows geometrically at 7/8 load, starting at four buckets.
+/// Sum every possible allocation, including control bytes, rather than comparing
+/// only the final table with the owner. Use the full Value storage avoided by a
+/// map clone as a conservative budget; shared key and Arc overhead are excluded.
+/// The caller supplies a proven upper bound on writes for this activation.
+pub(super) fn insertion_can_pay(base: &DictMap, writes: u16) -> bool {
+    if writes == 0 || base.is_empty() {
+        return false;
+    }
+    if writes == 1 {
+        return true; // The one-key journal stays inline.
+    }
+    let bucket_bytes = std::mem::size_of::<(Arc<str>, ScalarValue)>() + 1;
+    let mut buckets = 4usize;
+    let mut traffic = 0usize;
+    loop {
+        // Sixteen trailing control bytes also cover the smaller scalar group
+        // implementations; overestimating only retains ordinary fallback.
+        traffic = traffic.saturating_add(buckets.saturating_mul(bucket_bytes) + 16);
+        if buckets - buckets / 8 >= usize::from(writes) && buckets > 4 {
+            break;
+        }
+        if buckets == 4 && writes <= 3 {
+            break;
+        }
+        buckets *= 2;
+    }
+    traffic <= base.capacity().saturating_mul(std::mem::size_of::<Value>())
+}
+
+#[cfg(test)]
+mod insertion_budget_tests {
+    use super::*;
+    #[test]
+    fn dense_small_owners_fall_back_and_sparse_large_owners_pay() {
+        for width in [0, 1, 2, 128, 2048] {
+            let base: DictMap =
+                (0..width).map(|k| (Arc::from(k.to_string()), Value::Int(k))).collect();
+            assert!(!insertion_can_pay(&base, 0));
+            assert_eq!(insertion_can_pay(&base, 1), width != 0);
+            assert_eq!(insertion_can_pay(&base, 2), width != 0);
+            assert_eq!(insertion_can_pay(&base, 64), width >= 128);
+        }
     }
 }

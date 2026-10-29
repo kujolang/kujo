@@ -1,4 +1,5 @@
-from owner import snapshot, edit, edit_then_error, replace_root, insert_named
+from cold import cold_reset, cold_fill, cold_snapshot, cold_step
+from owner import snapshot, edit, edit_then_error, replace_root, insert_named, insert_pair
 
 let original := snapshot()
 let first := edit()
@@ -27,4 +28,28 @@ assert_equal(has_key(before_named, -268435457), 0)
 assert_equal(has_key(before_named, 268435456), 0)
 assert_equal(snapshot()["-268435457"], false)
 assert_equal(snapshot()["268435456"], 2.5)
+let before_pair := snapshot()
+assert_equal(insert_pair(1000, 47, null), 47)
+assert_equal(insert_pair(1002, false, 3.5), false)
+assert_equal(has_key(before_pair, 1000), 0)
+assert_equal(snapshot()[1000], 47)
+assert_equal(snapshot()[1001], null)
+assert_equal(snapshot()[1002], false)
+assert_equal(snapshot()[1003], 3.5)
+// The first insertion has no saved owner alias. Dynamic loop bounds exercise
+// both ordinary small-map mutation and profitable sparse publication.
+for width in [0, 1, 2, 128, 2048] {
+    cold_reset(width)
+    assert_equal(cold_step(), width + 1)
+    assert_equal(cold_fill(width, 64), width)
+    let saved := cold_snapshot()
+    assert_equal(cold_fill(width + 64, 257), width + 64)
+    assert_equal(len(saved), width + 64)
+    assert_equal(has_key(saved, width + 64), 0)
+    let current := cold_snapshot()
+    assert_equal(len(current), width + 321)
+    mut j := 0
+    while j < width { assert_equal(current[j], 0) j += 1 }
+    while j < width + 321 { assert_equal(current[j], j) j += 1 }
+}
 print("INITIAL INSERTION CONTRACT PASS")

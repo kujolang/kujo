@@ -11,6 +11,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Defer eligible scalar insertion into captured root dictionaries without copying
+  the entire owner on each call, preserving snapshots, callbacks, errors and key aliases.
 - Reuse validated oversized captured binding metadata with copy-on-write kind snapshots,
   preserving host membership edits and immutable binding rules.
 - Resolve nested writes from borrowed VM opcode metadata and bounded VM/JIT path storage,

@@ -12,8 +12,33 @@ pub(super) struct Proof {
     pub primitive_arguments: bool,
     pub read_only: bool,
     pub whole_value_mask: u32,
-    pub sparse_write_region: bool,
-    pub nested_spill_region: bool,
+    region_flags: u8,
+    pub insertion_bound: u8,
+}
+
+impl Proof {
+    pub(super) fn sparse_write_region(&self) -> bool {
+        self.region_flags & 1 != 0
+    }
+    pub(super) fn nested_spill_region(&self) -> bool {
+        self.region_flags & 2 != 0
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn insertion_bound_preserves_cached_proof_layout() {
+    #[allow(dead_code)]
+    struct Previous {
+        required_parameters: Vec<String>,
+        primitive_arguments: bool,
+        read_only: bool,
+        whole_value_mask: u32,
+        sparse_write_region: bool,
+        nested_spill_region: bool,
+    }
+    assert_eq!(std::mem::size_of::<Proof>(), std::mem::size_of::<Previous>());
+    assert_eq!(std::mem::align_of::<Proof>(), std::mem::align_of::<Previous>());
 }
 
 struct Analyzer<'a> {
@@ -39,9 +64,15 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
     let sparse_write_region = required_parameters.len() <= 32 && region.statements(body, 0);
     Some(Proof {
         whole_value_mask: region.whole_value_mask,
-        sparse_write_region,
-        nested_spill_region: super::nested_spill_proof::shape(body)
-            || super::row_spill_proof::shape(body),
+        region_flags: u8::from(sparse_write_region)
+            | (u8::from(
+                super::nested_spill_proof::shape(body) || super::row_spill_proof::shape(body),
+            ) << 1),
+        insertion_bound: if sparse_write_region {
+            super::dictionary_insertion_proof::cached_bound(body)
+        } else {
+            0
+        },
         required_parameters,
         primitive_arguments: analyzer.primitive_arguments,
         read_only: analyzer.read_only,
