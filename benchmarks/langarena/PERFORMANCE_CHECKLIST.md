@@ -150,6 +150,12 @@ Work still needed, in priority order:
    64 allocation totals / 32 slopes add 28 bytes per call on boxed struct fallback
    paths despite all 648 semantic checks passing. Profitability correction and
    full verification remain required.
+   The V2 profitability correction passes all 648 targeted semantic checks and
+   removes all 64 earlier allocation regressions, but remains unaccepted: one
+   intermittent 10,320-byte allocation was traced to capture-map rehashing.
+   A standalone deterministic map-churn control reproduces the growth mechanism;
+   the exact runtime key transition and a safe correction remain under investigation.
+   Broad candidate verification has not run past this failed allocation gate.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
