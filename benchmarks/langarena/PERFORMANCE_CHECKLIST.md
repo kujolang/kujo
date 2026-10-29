@@ -86,39 +86,39 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ## 3. Allocation and call-frame fixes (verified fixes; remaining work explicit)
 
-### Current round: remaining work and next review cutoff (2026-10-28)
+### Current round: remaining work and next review cutoff (2026-10-29)
 
-The bounded primitive **root dictionary insertion fix is accepted** in `4cd3bf1`.
-[Results and limits](DICTIONARY_INSERTION_2026_10_28.md) record 1,236 library passes,
-404 integrations, 150 test-size checksums and 2,172 paired allocation controls.
-The original counter helper falls from 634,840 to 8,069 requested bytes per added
-call at width 2,048 in VM/JIT. This is not an overall elapsed-time speedup.
+Bounded root dictionary insertion is accepted in `4cd3bf1`; eligible nested initial
+insertion is now accepted in `2c91c49`. [Nested results and limits](NESTED_DICTIONARY_INSERTION_2026_10_29.md)
+record 1,239 library passes, 405 integrations, all 150 test-size checksums,
+3,360 allocation pairs and 5,040 semantic checks. Both activation-layout tests pass.
+The nested dictionary control falls from 634,405 to 6,977 requested bytes per added
+call at width 2,048 in VM/JIT. This is not an elapsed-time speedup.
+
+- [x] Nested initial scalar insertion, preserving snapshots, callbacks, errors and
+  owners, with cold/fallback and conditional-batching regression coverage.
 
 Work still needed, in priority order:
 
-1. Nested initial insertion, preserving snapshots, callbacks, errors and owners.
-2. Collection-valued replacement without unnecessary owner-map detachment.
-3. Broader compound indexed arithmetic and captured-scalar batching.
-4. Remaining capture traversal/materialization and oversized fallback; distinguish
+1. Collection-valued replacement without unnecessary owner-map detachment.
+2. Broader compound indexed arithmetic and captured-scalar batching.
+3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
-5. Collection representation review and final combined-candidate verification,
+4. Collection representation review and final combined-candidate verification,
    including dense updates and fresh snapshots.
 
-The current root-insertion review cutoff is complete. The **next cutoff** is
-nested initial insertion accepted, rejected, or documented as necessary copying,
-with before/after scaling, three-runtime semantics and cold/fallback controls.
-Any runtime change requires the relevant regression and 150-checksum gates.
-The first nested-insertion candidate passed the computed-index matrix but was
-[rejected by literal/parameter batching controls](nested-insertion-rejection-2026-10-29.json):
-36 small-map allocation regressions, up to 32,788 extra requested bytes. A bounded
-replacement remains under verification; no nested runtime fix is accepted yet.
-The subsequent [conditional-path candidate](NESTED_CONDITIONAL_REJECTION_2026_10_29.md)
-was also rejected: 12 small-map total-allocation regressions despite all 288
-semantic checks passing. First-write admission is being separated from the
-reserve hint to preserve existing-key branches.
+The nested-insertion review cutoff is complete. The **next cutoff** is measured
+collection-valued replacement: refresh against the accepted runtime, fix confirmed
+avoidable copying, preserve snapshots, and complete the applicable regression and
+150-checksum gates. Sections 3 and 4 remain open.
 
-V1's [rejection evidence](DICTIONARY_INSERTION_REJECTION_2026_10_28.md) remains valid;
-V2 missed the captured-counter target. Neither is substituted for accepted V3.
+The [first nested candidate](nested-insertion-rejection-2026-10-29.json) remains
+rejected for 36 small-map allocation regressions. The subsequent
+[conditional-path candidate](NESTED_CONDITIONAL_REJECTION_2026_10_29.md) remains
+rejected for 12 total-allocation regressions. The accepted version checks actual
+first-key admission separately from its reserve hint; it passes those controls
+without relaxing comparison bounds. Root-insertion and nested-insertion candidate
+numbers refer to separate experiments; their rejection evidence is not interchangeable.
 
 Planning estimate: several more implementation/verification cycles, likely days
 rather than hours; this is not measured remaining duration. Broad unchecked items
