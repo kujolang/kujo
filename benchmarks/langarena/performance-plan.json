@@ -5444,5 +5444,25 @@
       "Collection representation review and final combined verification"
     ],
     "limits": "Allocation improvement, not elapsed-speed claim. Local memory differences retained; clean-host acceptance and later stages remain open."
+  },
+  "nested_collection_replacement_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "2a5ffbca1f28ebc0ff5b0aea5401bc30761aa40e",
+    "report": "NESTED_COLLECTION_REPLACEMENT_2026_10_29.md",
+    "evidence": "nested-collection-replacement-2026-10-29.json",
+    "library_passes": 1247,
+    "integration_passes": 407,
+    "test_size_checksums": 150,
+    "allocation_pairs": 3968,
+    "semantic_checks": 5952,
+    "memory_pairs": 108,
+    "result": "Eligible existing-key nested replacements have flat tested width slopes; snapshots and fallback semantics preserved.",
+    "remaining": [
+      "Struct-literal construction",
+      "Unsupported collection replacement paths",
+      "Compound indexed arithmetic and captured-scalar batching",
+      "Capture traversal/materialization and oversized fallback",
+      "Collection representation review and final combined verification"
+    ]
   }
 }

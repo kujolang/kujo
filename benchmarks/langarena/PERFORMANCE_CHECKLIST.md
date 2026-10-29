@@ -128,6 +128,13 @@ Work still needed, in priority order:
    adds 192 allocation observations and 288 semantic checks across deep dictionary,
    mixed struct/array paths and array leaves, including 1/2-call controls. VM/JIT
    slopes agree; fixed total-allocation offsets are retained separately.
+   Eligible nested replacements are now accepted in `2a5ffbc`: [verified results](NESTED_COLLECTION_REPLACEMENT_2026_10_29.md)
+   show flat target width slopes, 1,247 library passes, 407 integrations, all 150
+   test-size checksums, 3,968 allocation pairs and 5,952 semantic checks. All 108
+   memory pairs were reviewed, including small increases and local-measurement limits.
+   Existing-key replacements are covered; struct-literal construction and unsupported
+   collection paths remain open. [Struct boundary contracts](STRUCT_LITERAL_BOUNDARIES_2026_10_29.md)
+   cover field ordering, callbacks, snapshots and errors for the next fix.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
@@ -138,11 +145,11 @@ Work still needed, in priority order:
 4. Collection representation review and final combined-candidate verification,
    including dense updates and fresh snapshots.
 
-The nested-insertion and root array/dictionary replacement cutoffs are complete.
-The **next cutoff** remains nested and remaining collection-valued replacement:
-refresh against the accepted runtime, fix confirmed
-avoidable copying, preserve snapshots, and complete the applicable regression and
-150-checksum gates. Sections 3 and 4 remain open.
+The nested-insertion, root replacement and eligible nested replacement cutoffs are
+complete. The **next cutoff** is struct-literal construction and remaining collection
+replacement costs: refresh against `2a5ffbc`, fix confirmed avoidable copying,
+preserve field evaluation and snapshots, and complete the applicable regression
+and 150-checksum gates. Sections 3 and 4 remain open.
 
 The [first nested candidate](nested-insertion-rejection-2026-10-29.json) remains
 rejected for 36 small-map allocation regressions. The subsequent
