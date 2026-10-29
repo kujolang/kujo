@@ -1,0 +1,532 @@
+{
+  "status": "baseline_verified_candidate_pending",
+  "baseline_runtime_commit": "4cd3bf1",
+  "audit_root": ".audit-evidence/nested-insertion-v1-2026-10-28",
+  "verification": {
+    "status": "passed",
+    "pairs": 768,
+    "semantics": 1152,
+    "report_sha256": "2dae47e2443bf7a2f2acd6862a4c928f044d38c82cee44b8599a04d3be8c3a82",
+    "verifier_sha256": "03828c814ef655e305d9ba7172d612b3a480552b9ab9f5445fc7539f9d135318"
+  },
+  "identities": {
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/task-allocation-probe": "c3ef2571efa1ee1982bd35cb672b97ca8b105e05a68eb39f29f63c2c91f02b44",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/candidate-kujo": "e6edabeb6bc801c8aa86a134a0265d97850b8bb68c707e66109eaab40a174c51"
+  },
+  "runner_sha256": "297203813c2aa94dc3edcfb865a32c0e435844e14176a6f933e0c040114b5b5e",
+  "semantics": "New contract test passes dictionary/struct/array owners in VM/interpreter/JIT (9 invocations); cold initial key, immediate reads, snapshots, callback changes, errors, alias separation and leaf replacement.",
+  "contract_sha256": "879920cbec677de7656b2405e4be72fef18f5e536d692b99d7c53005f7a990b8",
+  "contract_log_sha256": "cb8627d4c2e817673b080de5735cf703f240b815ac4085f077470305db15dd8d",
+  "baseline_slopes": [
+    {
+      "group": [
+        "dict",
+        1,
+        0,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0625,
+        "bytes": 14144.0
+      },
+      "candidate": {
+        "requests": 91.0625,
+        "bytes": 14144.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        0,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0625,
+        "bytes": 14144.0
+      },
+      "candidate": {
+        "requests": 91.0625,
+        "bytes": 14144.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        2,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0625,
+        "bytes": 14756.0
+      },
+      "candidate": {
+        "requests": 91.0625,
+        "bytes": 14756.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        2,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0625,
+        "bytes": 14756.0
+      },
+      "candidate": {
+        "requests": 91.0625,
+        "bytes": 14756.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        128,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0,
+        "bytes": 46885.0
+      },
+      "candidate": {
+        "requests": 91.0,
+        "bytes": 46885.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        128,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0,
+        "bytes": 46885.0
+      },
+      "candidate": {
+        "requests": 91.0,
+        "bytes": 46885.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        2048,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0,
+        "bytes": 634405.0
+      },
+      "candidate": {
+        "requests": 91.0,
+        "bytes": 634405.0
+      }
+    },
+    {
+      "group": [
+        "dict",
+        1,
+        2048,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 91.0,
+        "bytes": 634405.0
+      },
+      "candidate": {
+        "requests": 91.0,
+        "bytes": 634405.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        0,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0625,
+        "bytes": 14190.0
+      },
+      "candidate": {
+        "requests": 97.0625,
+        "bytes": 14190.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        0,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0625,
+        "bytes": 14190.0
+      },
+      "candidate": {
+        "requests": 97.0625,
+        "bytes": 14190.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        2,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0625,
+        "bytes": 14802.0
+      },
+      "candidate": {
+        "requests": 97.0625,
+        "bytes": 14802.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        2,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0625,
+        "bytes": 14802.0
+      },
+      "candidate": {
+        "requests": 97.0625,
+        "bytes": 14802.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        128,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0,
+        "bytes": 46931.0
+      },
+      "candidate": {
+        "requests": 97.0,
+        "bytes": 46931.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        128,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0,
+        "bytes": 46931.0
+      },
+      "candidate": {
+        "requests": 97.0,
+        "bytes": 46931.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        2048,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0,
+        "bytes": 634451.0
+      },
+      "candidate": {
+        "requests": 97.0,
+        "bytes": 634451.0
+      }
+    },
+    {
+      "group": [
+        "struct",
+        1,
+        2048,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 97.0,
+        "bytes": 634451.0
+      },
+      "candidate": {
+        "requests": 97.0,
+        "bytes": 634451.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        0,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0625,
+        "bytes": 13558.0
+      },
+      "candidate": {
+        "requests": 87.0625,
+        "bytes": 13558.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        0,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0625,
+        "bytes": 13558.0
+      },
+      "candidate": {
+        "requests": 87.0625,
+        "bytes": 13558.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        2,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0625,
+        "bytes": 14170.0
+      },
+      "candidate": {
+        "requests": 87.0625,
+        "bytes": 14170.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        2,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0625,
+        "bytes": 14170.0
+      },
+      "candidate": {
+        "requests": 87.0625,
+        "bytes": 14170.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        128,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0,
+        "bytes": 46299.0
+      },
+      "candidate": {
+        "requests": 87.0,
+        "bytes": 46299.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        128,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0,
+        "bytes": 46299.0
+      },
+      "candidate": {
+        "requests": 87.0,
+        "bytes": 46299.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        2048,
+        "none",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0,
+        "bytes": 633819.0
+      },
+      "candidate": {
+        "requests": 87.0,
+        "bytes": 633819.0
+      }
+    },
+    {
+      "group": [
+        "array",
+        1,
+        2048,
+        "none",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "baseline": {
+        "requests": 87.0,
+        "bytes": 633819.0
+      },
+      "candidate": {
+        "requests": 87.0,
+        "bytes": 633819.0
+      }
+    }
+  ],
+  "limits": [
+    "Baseline self-comparison is a measurement/control gate, not candidate acceptance",
+    "Generated k+offset writes exercise inline overflow/fallback; literal/parameter spill admission needs separate controls before acceptance",
+    "No timing, production or clean-host comparison",
+    "Candidate runtime is still uncommitted and building"
+  ]
+}
