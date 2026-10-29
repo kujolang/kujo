@@ -108,6 +108,10 @@ Work still needed, in priority order:
    is rejected: all target allocation totals and slopes remained unchanged.
    Literal evaluation cleared admission before assignment; the corrected candidate
    must repeat both target and fallback gates before acceptance.
+   The [second replacement candidate](COLLECTION_REPLACEMENT_FALLBACK_REJECTION_2026_10_29.md)
+   removes the target width penalty but is rejected for 48 two-key fallback
+   allocation regressions. Compact payload storage and expanded struct controls
+   are under verification; no replacement runtime fix is accepted yet.
    [Nested replacement isolation](NESTED_COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md)
    also confirms the same 587,520-byte width penalty under dictionary, struct and
    array roots: 96 allocation observations and 144 semantic checks. Root-only
