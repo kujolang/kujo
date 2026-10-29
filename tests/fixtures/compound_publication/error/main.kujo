@@ -1,0 +1,18 @@
+from owner import snapshot, edit
+let original := snapshot()
+mut caught := false
+try { edit() } except err { caught = true }
+assert_equal(caught, true)
+let final := snapshot()
+mut j := 0 while j < 16 {
+ if j == 3 {
+  assert_equal(original[j].value, 0)
+  assert_equal(final[j].value, 0)
+ } else {
+  assert_equal(original[j], 0)
+  if j == 9 { assert_equal(final[j], 99) }
+  else { if j < 3 { assert_equal(final[j], 1) } else { assert_equal(final[j], 0) } }
+ }
+ j += 1
+}
+print("COMPOUND CALLBACK PASS")

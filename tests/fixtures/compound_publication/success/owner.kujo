@@ -1,0 +1,19 @@
+struct Trigger {
+ value: int,
+ func op_add(other) {
+  let saved := state
+  assert_equal(saved[0], 1)
+  assert_equal(saved[2], 1)
+  assert_equal(saved[3].value, 0)
+  state[9] = 99
+  assert_equal(saved[9], 0)
+  return value + other
+ }
+}
+mut state := {}
+mut j := 0 while j < 16 { state[j] = 0 j += 1 }
+state[3] = Trigger { value: 0 }
+export func snapshot() { return state }
+export func edit() {
+ mut j := 0 while j < 8 { state[j] = state[j] + 1 j += 1 }
+}

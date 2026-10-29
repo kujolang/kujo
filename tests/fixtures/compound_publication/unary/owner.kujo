@@ -1,0 +1,19 @@
+struct Trigger {
+ value: int,
+ func op_neg() {
+  let saved := state
+  assert_equal(saved[0], 7)
+  assert_equal(saved[1], 8)
+  state[9] = 99
+  assert_equal(saved[9], 0)
+  return -value
+ }
+}
+mut state := {0: 0, 1: 0, 2: Trigger { value: 3 }, 9: 0}
+export func snapshot() { return state }
+export func edit() {
+ state[0] = 7
+ state[1] = 8
+ state[2] = -state[2]
+ return state[2]
+}

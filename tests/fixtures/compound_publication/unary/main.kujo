@@ -1,0 +1,12 @@
+from owner import edit, snapshot
+let original := snapshot()
+assert_equal(edit(), -3)
+assert_equal(original[0], 0)
+assert_equal(original[1], 0)
+assert_equal(original[2].value, 3)
+assert_equal(original[9], 0)
+assert_equal(snapshot()[0], 7)
+assert_equal(snapshot()[1], 8)
+assert_equal(snapshot()[2], -3)
+assert_equal(snapshot()[9], 99)
+print("COMPOUND UNARY PASS")
