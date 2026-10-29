@@ -5579,7 +5579,8 @@
     "allocation_observations": 128,
     "semantic_checks": 192,
     "unchanged_slopes": true,
-    "remaining": "Seven compound/captured-scalar cases retain 587520 requested bytes per added call across widths 128/2048 on e445. General array batches accepted separately in 268add2; refresh this exact fixture matrix for the next fix."
+    "remaining": "Seven compound/captured-scalar cases retain 587520 requested bytes per added call across widths 128/2048 on e445. General array batches accepted separately in 268add2; refresh this exact fixture matrix for the next fix.",
+    "follow_up": "Matched refresh on 268add2 preserved all 128 allocation totals; primitive captured dependencies fixed in 30e1511. All four compound-indexed variants remain unchanged."
   },
   "array_collection_batches_2026_10_29": {
     "status": "verified",
@@ -5597,5 +5598,24 @@
     "additional_compound_contracts": 15,
     "memory_pairs": 108,
     "limits": "Accepts this bounded array-batch change only; sections3/4 remain open. No production-size, platform, leak or competitive timing claim."
+  },
+  "captured_scalar_batches_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "30e151106e857abaca1e9446d337e19eb7a063e9",
+    "baseline_runtime_commit": "268add22782e09a05217400ed73b2a5f72e3e98c",
+    "report": "CAPTURED_SCALAR_BATCHES_2026_10_29.md",
+    "evidence": "captured-scalar-batches-2026-10-29.json",
+    "target_groups": 6,
+    "remaining": "Compound indexed arithmetic retains its width penalty in four counter variants. Broader capture materialization, unsupported collection paths and representation review remain open; sections 3/4 are not complete.",
+    "allocation_pairs": 576,
+    "semantic_checks": 864,
+    "library_passes": 1262,
+    "library_ignored": 8,
+    "integration_passes": 412,
+    "integration_ignored": 1,
+    "test_size_checksums": 150,
+    "additional_compound_contracts": 15,
+    "memory_pairs": 72,
+    "limits": "Captured-scalar admission only; compound indexed arithmetic, broader capture materialization and representation work remain open. No production-size or clean-host performance claim."
   }
 }

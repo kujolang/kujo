@@ -189,14 +189,21 @@ Work still needed, in priority order:
    contracts and 108 reviewed memory pairs. All 18 target groups have flat width
    scaling. Small and retained-snapshot peak-memory increases remain documented.
    Initial scalar-first journals and unsupported shapes retain fallback.
-2. Broader compound indexed arithmetic and captured-scalar batching.
-   [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
+2. Compound indexed arithmetic; primitive captured dependencies are now verified.
+   [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
    restores a 587,520-byte width penalty. The parameter-only direct-assignment
    control stays flat; 128 allocation observations and 192 semantic checks pass.
-   The [latest accepted-runtime refresh](compound-capture-e445-refresh-2026-10-29.json)
+   The [earlier accepted-runtime refresh](compound-capture-e445-refresh-2026-10-29.json)
    on `e445f4a` passes the same 128/192 controls with unchanged slopes; the
    general array-batch fix is accepted separately in `268add2`.
+   Primitive captured read/write/increment admission is now accepted in `30e1511`.
+   [Verified results](CAPTURED_SCALAR_BATCHES_2026_10_29.md) record 1,262 library
+   passes, 412 integrations, all 150 checksums, 576 allocation pairs / 864 semantic
+   checks without regressions, 15 additional contracts and 72 reviewed memory pairs.
+   All six target groups are flat; width-2,048 requested bytes per call fall from
+   about 633 KB to 7 KB. The four compound-indexed variants retain their measured
+   587,520-byte width penalty and remain the next fix. This is not an elapsed-speed claim.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
 4. Collection representation review and final combined-candidate verification,
@@ -205,7 +212,7 @@ Work still needed, in priority order:
 The nested-insertion, root replacement and eligible nested replacement cutoffs are
 complete. Struct-literal construction and eligible direct root-array replacement
 are also verified. The eligible general multiple-index batch cutoff is complete. The **next cutoff**
-is compound/captured-scalar batching. Preserve snapshots,
+is compound indexed arithmetic. Primitive captured-scalar admission is verified. Preserve snapshots,
 callbacks and error ordering and repeat the applicable regression and 150-checksum
 gates. Sections 3 and 4 remain open.
 
