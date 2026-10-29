@@ -86,6 +86,48 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ## 3. Allocation and call-frame fixes (verified fixes; remaining work explicit)
 
+### Current round: remaining work and next review cutoff (2026-10-28)
+
+Sections 3 and 4 have 62 checked items and three broad unchecked items. This is
+not an effort percentage: the unchecked items contain several independent costs,
+and many checked items are diagnosis or verification rather than runtime fixes.
+
+Work still needed, in priority order:
+
+1. Initial dictionary insertion: support new-key publication without whole-map
+   copying, preserving immediate reads, snapshots, callbacks, errors, canonical
+   key aliases and root replacement. Review promotion and small-map costs too.
+2. Collection-valued replacement: avoid unnecessary owner-map detachment while
+   retaining independently observable old arrays/dictionaries and depth checks.
+3. Broader batching: separately address compound indexed arithmetic and captured
+   scalar state; retain conservative fallback for callbacks and escaping values.
+4. Remaining capture traversal/materialization and oversized fallback: distinguish
+   necessary work from avoidable costs on the accepted runtime before changing it.
+5. Close the collection representation review and verify the final combined
+   candidate, including dense updates and fresh-snapshot controls. Necessary
+   copying must be documented rather than removed to obtain a better measurement.
+
+The next review cutoff is **initial dictionary insertion accepted or rejected**
+with same-path before/after allocation evidence, VM/interpreter/JIT semantics,
+small/cold/fallback controls, and the relevant regression and 150-checksum gates.
+It does not close sections 3 and 4. Current insertion contract fixtures cover
+snapshots, callbacks, errors and root replacement before implementation.
+Regression commit `2366e82` also covers canonical/noncanonical key separation,
+scalar insertion and numeric keys outside inline-pair encoding. All four tests in
+`tests/dictionary_scalar_publication.rs` pass against the frozen `6d28861` CLI
+using a directly compiled release test harness, including VM/interpreter/JIT
+invocations. JIT mode retains supported-region VM fallback; this is not evidence
+that every instruction runs natively. Formatting and diff checks pass. The initial
+Cargo test invocation was deliberately stopped during a redundant runtime rebuild;
+the completed harness uses the already frozen, unchanged runtime instead.
+
+Planning estimate: several implementation/verification cycles, likely days rather
+than an hour or two; this is a rough estimate, not measured remaining duration.
+Rejected candidates and verification on the loaded laptop make a precise ETA
+unreliable. Clean-host speed comparisons remain pending separately. Section 5
+is outside this round. Latest accepted runtime verification remains the evidence
+listed above; new fixture coverage alone is not optimization acceptance.
+
 Evidence: [allocation/collection report](ALLOCATION_COLLECTION_FIXES_2026_10_25.md),
 `allocation-collection-2026-10-25.json`; runtime commits `e1ac6ba`, `787498d`.
 
