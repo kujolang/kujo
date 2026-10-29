@@ -53,3 +53,13 @@ collection replacement fixes have not removed the separate compound-update and
 captured-scalar costs. The direct-array candidate remains unaccepted and was not
 used as this baseline. Concurrent release compilation does not support elapsed
 speed comparisons; this refresh reports requested allocation traffic only.
+
+## Refresh after paired array publication
+
+The [latest accepted-runtime refresh](compound-capture-e445-refresh-2026-10-29.json)
+uses `e445f4a` and repeats 128 allocation observations and 192 semantic checks.
+Independent verification passes; every slope is unchanged from the previous
+refresh, including all seven 587,520-byte owner-width penalties. VM/JIT agree.
+The general array batch candidate is still unaccepted and was not used here.
+Future comparisons should reuse the exact fixtures in
+`.audit-evidence/compound-capture-e445-2026-10-29/`. No elapsed-speed claim.

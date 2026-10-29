@@ -188,6 +188,9 @@ Work still needed, in priority order:
    captured reads, captured assignments and indexed arithmetic: each independently
    restores a 587,520-byte width penalty. The parameter-only direct-assignment
    control stays flat; 128 allocation observations and 192 semantic checks pass.
+   The [latest accepted-runtime refresh](compound-capture-e445-refresh-2026-10-29.json)
+   on `e445f4a` passes the same 128/192 controls with unchanged slopes; the
+   array-batch candidate remains separate and unaccepted.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
 4. Collection representation review and final combined-candidate verification,

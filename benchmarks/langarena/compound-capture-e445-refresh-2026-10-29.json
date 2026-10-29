@@ -1,0 +1,6089 @@
+{
+  "runtime_commit": "e445f4a8e045cd067aaea99f6c79eebffca32a04",
+  "scope": "Refresh on latest accepted runtime; general array batch candidate remains unaccepted.",
+  "observations": {
+    "status": "characterized",
+    "scope": "Eight indexed writes with independent scalar capture effects; allocation characterization only.",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/array-pairs-2026-10-29/task-allocation-probe": "0890cbf2785c1f2b8eea08975920fc472fac253d916185c215e2ee430600192f",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/array-pairs-2026-10-29/candidate-kujo": "dfa83c0372ef697442a735ebf6be64428c2f9dd5d5fccc8234b7825ca37ea717",
+      "benchmarks/langarena/probes/compound-capture-isolation.rb": "2217e16b68bfdbd5686940457a2f0366a0e66365adae60d01f3a401081a5c7b2"
+    },
+    "sources": {
+      "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return amount\n}\n",
+      "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return amount\n}\n",
+      "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), 0)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return counter\n}\n",
+      "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), 0)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), 0)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), 0)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), 0)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return counter\n}\n",
+      "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), 0)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), 0)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), 0)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 0)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 16)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter = amount\n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return amount\n}\n",
+      "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 32)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 16)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 128) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 128)\nassert_equal(len(final), 128)\nassert_equal(counter_value(), 32)\nmut key := 0\nwhile key < 128 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 16)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter = amount\n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return amount\n}\n",
+      "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  \n  assert_equal(edit(i + 1), i + 1)\n  \n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 32)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 16 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 16)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 16) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6": "from owner import snapshot, counter_value, edit\nlet original := snapshot()\nmut i := 0\nwhile i < 32 {\n  let saved := snapshot()\n  assert_equal(edit(i + 1), i + 1)\n  assert_equal(len(saved), 2048) mut j := 0 while j < 8 { assert_equal(saved[j], i) j += 1 }\n  i += 1\n}\nlet final := snapshot()\nassert_equal(len(original), 2048)\nassert_equal(len(final), 2048)\nassert_equal(counter_value(), 32)\nmut key := 0\nwhile key < 2048 {\n  assert_equal(original[key], 0)\n  if key < 8 { assert_equal(final[key], 32) }\n  else { assert_equal(final[key], 0) }\n  key += 1\n}\nprint(\"COMPOUND CAPTURE PASS\")\n",
+      "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter += 1\n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return counter\n}\n",
+      "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter += 1\n  mut j := 0\n  while j < 8 { state[j] = amount j += 1 }\n  return counter\n}\n",
+      "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return amount\n}\n",
+      "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return amount\n}\n",
+      "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return counter\n}\n",
+      "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  \n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return counter\n}\n",
+      "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter = amount\n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return amount\n}\n",
+      "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter = amount\n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return amount\n}\n",
+      "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f": "mut state := {}\nmut key := 0\nwhile key < 128 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter += 1\n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return counter\n}\n",
+      "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502": "mut state := {}\nmut key := 0\nwhile key < 2048 { state[key] = 0 key += 1 }\nmut counter := 0\nexport func snapshot() { return state }\nexport func counter_value() { return counter }\nexport func edit(amount) {\n  counter += 1\n  mut j := 0\n  while j < 8 { state[j] = state[j] + 1 j += 1 }\n  return counter\n}\n"
+    },
+    "rows": [
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "requests": 13329,
+        "bytes": 1881567
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "requests": 13420,
+        "bytes": 1891784
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "requests": 14497,
+        "bytes": 1994559
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "requests": 14588,
+        "bytes": 2004776
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "requests": 18996,
+        "bytes": 3122457
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "requests": 19087,
+        "bytes": 3132674
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "requests": 25860,
+        "bytes": 4514921
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "requests": 25951,
+        "bytes": 4525138
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "requests": 134293,
+        "bytes": 16940288
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "requests": 134384,
+        "bytes": 16950505
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "requests": 135461,
+        "bytes": 17053280
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "requests": 135552,
+        "bytes": 17063497
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "requests": 139960,
+        "bytes": 26993978
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "requests": 140051,
+        "bytes": 27004195
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "requests": 146824,
+        "bytes": 37786762
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "requests": 146915,
+        "bytes": 37796979
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "requests": 13464,
+        "bytes": 2458552
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "requests": 13555,
+        "bytes": 2468769
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "requests": 14776,
+        "bytes": 3186920
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "requests": 14867,
+        "bytes": 3197137
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "requests": 18981,
+        "bytes": 3122512
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "requests": 19072,
+        "bytes": 3132729
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "requests": 25829,
+        "bytes": 4514960
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "requests": 25920,
+        "bytes": 4525177
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "requests": 134428,
+        "bytes": 26330045
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "requests": 134519,
+        "bytes": 26340262
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "requests": 135740,
+        "bytes": 36458733
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "requests": 135831,
+        "bytes": 36468950
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "requests": 139945,
+        "bytes": 26994005
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "requests": 140036,
+        "bytes": 27004222
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "requests": 146793,
+        "bytes": 37786773
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "requests": 146884,
+        "bytes": 37796990
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "requests": 13508,
+        "bytes": 2459241
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "requests": 13599,
+        "bytes": 2469458
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "requests": 14852,
+        "bytes": 3187737
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "requests": 14943,
+        "bytes": 3197954
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "requests": 19025,
+        "bytes": 3123201
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "requests": 19116,
+        "bytes": 3133418
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "requests": 25905,
+        "bytes": 4515777
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "requests": 25996,
+        "bytes": 4525994
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "requests": 134472,
+        "bytes": 26330762
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "requests": 134563,
+        "bytes": 26340979
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "requests": 135816,
+        "bytes": 36459578
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "requests": 135907,
+        "bytes": 36469795
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "requests": 139989,
+        "bytes": 26994722
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "requests": 140080,
+        "bytes": 27004939
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "requests": 146869,
+        "bytes": 37787618
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "requests": 146960,
+        "bytes": 37797835
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "requests": 13515,
+        "bytes": 2460086
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "requests": 13606,
+        "bytes": 2470303
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "requests": 14859,
+        "bytes": 3188582
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "requests": 14950,
+        "bytes": 3198799
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "requests": 19032,
+        "bytes": 3124046
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "requests": 19123,
+        "bytes": 3134263
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "requests": 25912,
+        "bytes": 4516622
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "requests": 26003,
+        "bytes": 4526839
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "requests": 134479,
+        "bytes": 26331579
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "requests": 134570,
+        "bytes": 26341796
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "requests": 135823,
+        "bytes": 36460395
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "requests": 135914,
+        "bytes": 36470612
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "requests": 139996,
+        "bytes": 26995539
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "requests": 140087,
+        "bytes": 27005756
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "requests": 146876,
+        "bytes": 37788435
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "requests": 146967,
+        "bytes": 37798652
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "requests": 13498,
+        "bytes": 2459682
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "requests": 13589,
+        "bytes": 2469899
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "requests": 14826,
+        "bytes": 3188066
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "requests": 14917,
+        "bytes": 3198283
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "requests": 19015,
+        "bytes": 3123642
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "requests": 19106,
+        "bytes": 3133859
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "requests": 25879,
+        "bytes": 4516106
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "requests": 25970,
+        "bytes": 4526323
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "requests": 134462,
+        "bytes": 26331175
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "requests": 134553,
+        "bytes": 26341392
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "requests": 135790,
+        "bytes": 36459879
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "requests": 135881,
+        "bytes": 36470096
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "requests": 139979,
+        "bytes": 26995135
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "requests": 140070,
+        "bytes": 27005352
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "requests": 146843,
+        "bytes": 37787919
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "requests": 146934,
+        "bytes": 37798136
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "requests": 13482,
+        "bytes": 2459679
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "requests": 13573,
+        "bytes": 2469896
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "requests": 14794,
+        "bytes": 3188047
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "requests": 14885,
+        "bytes": 3198264
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "requests": 18999,
+        "bytes": 3123639
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "requests": 19090,
+        "bytes": 3133856
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "requests": 25847,
+        "bytes": 4516087
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "requests": 25938,
+        "bytes": 4526304
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "requests": 134446,
+        "bytes": 26331172
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "requests": 134537,
+        "bytes": 26341389
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "requests": 135758,
+        "bytes": 36459860
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "requests": 135849,
+        "bytes": 36470077
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "requests": 139963,
+        "bytes": 26995132
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "requests": 140054,
+        "bytes": 27005349
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "requests": 146811,
+        "bytes": 37787900
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "requests": 146902,
+        "bytes": 37798117
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "requests": 13527,
+        "bytes": 2460426
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "requests": 13618,
+        "bytes": 2470643
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "requests": 14871,
+        "bytes": 3188922
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "requests": 14962,
+        "bytes": 3199139
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "requests": 19044,
+        "bytes": 3124386
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "requests": 19135,
+        "bytes": 3134603
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "requests": 25924,
+        "bytes": 4516962
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "requests": 26015,
+        "bytes": 4527179
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "requests": 134491,
+        "bytes": 26331919
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "requests": 134582,
+        "bytes": 26342136
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "requests": 135835,
+        "bytes": 36460735
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "requests": 135926,
+        "bytes": 36470952
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "requests": 140008,
+        "bytes": 26995879
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "requests": 140099,
+        "bytes": 27006096
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "requests": 146888,
+        "bytes": 37788775
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "requests": 146979,
+        "bytes": 37798992
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "requests": 13533,
+        "bytes": 2461213
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "requests": 13624,
+        "bytes": 2471430
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "requests": 14877,
+        "bytes": 3189709
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "requests": 14968,
+        "bytes": 3199926
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "requests": 19050,
+        "bytes": 3125173
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "requests": 19141,
+        "bytes": 3135390
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "requests": 25930,
+        "bytes": 4517749
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "requests": 26021,
+        "bytes": 4527966
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "requests": 134497,
+        "bytes": 26332706
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "requests": 134588,
+        "bytes": 26342923
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "requests": 135841,
+        "bytes": 36461522
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "requests": 135932,
+        "bytes": 36471739
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "requests": 140014,
+        "bytes": 26996666
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "requests": 140105,
+        "bytes": 27006883
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "requests": 146894,
+        "bytes": 37789562
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "requests": 146985,
+        "bytes": 37799779
+      }
+    ],
+    "semantics": [
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "742d6e8c707be5967c2667ab93dfbf7f9b94ab82da521d540070707e23a49e2a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "5722c98b78e2f9aa7e4767366f375dee029ea85b965b3a3bc3ee2c61db36f8c8",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "3ac75849830c79e4b787d0f9eb222f243ddf3b2b50b255a91249544c126c22ba",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "f3ec8bc2f47adcb24813e240347a60204637e86429dd2df7a2c0e1303a006f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "31978e3a608f16cdf4cd963ef9a72a34ad657876197f18b007086b9162de677a",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "90af5736afdcb5b31e9206c017c1a178ab5ec685263253b8b778dbcf4879aeb7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "97877aed10adf60dd00b4d0b1f0ff9d74f4a003aa472cfe4a4613b3d4b9c87e7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "direct",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "19787eb41b27021aef5d30395e94a719d1ea2a5eba4f733ff8753546be79d0d6",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cf2b0809890aca8c5ac9513e1e197adf79bba5f484c1800f86063ea9009650a2",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "86495f292a7b5416d20c806f58b60a010162272d957124f6896e792e0ba1349b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "2cb3111045670e0c4a25abd2ac6f0e7b71e67a40fde040fc6dce3f5b7598ce5b",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "94fc75230704356c84ca7c83d1db48f5b06241437409177215038a0570b3c182",
+        "module_sha256": "f7e71d28384765154d38dc296260e54eb0b805ad7b1c61f7656fca64099377d7",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "a5d053564b5ca4fc37be019822589bd233a05037bf17c92d080eae751d0a7cd9",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "f477b7c8816488e08b6f4bc3f61e1e070ba4c5b59de7fa1796e6535d580c5c6e",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "3370062eba4825e97bfe4be761fb1386fbf85c8e2ccdd31286d65513e5c191a4",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "parameter",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "c303743a7d17a5749b58f486f2921e1163db632e729dc5631ba9dd6788f5312c",
+        "module_sha256": "867d259d9d0c292b503e5e8e2c1669570088ae9ad2d1a68b83c471717c18c14d",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "835051806fd8dbc6a80a00b621f7cfbc983609866cd505151e7392cbda784d14",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "b56b4e88f249f672b8d008771dd8f3ddf0d3ea4c0212a7683f25f5ac4f540d26",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "6ed74b893a63867cee3f8460f35e08e2321b0d6104c73867d66df601c9115d1b",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "85026bd633494c33114c941ff6d51c4ca9642346594580aeaa9cfc39b976a927",
+        "module_sha256": "c83e044918dd85c3380ac991f04d69629c3146a7b5abeb87b71f73169e6c0579",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "cfc89632b06d7a0db53e874e3a09007ee49c5387385e42dca85ee6ea5ede12b4",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "12bb490d49fe708c52244a30985d90f73e38578fd0f4ef945db9f2ef7ffc31b6",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "ca5efebb62de779368b0f03c93220ef42a19638289b7a94ac01c99ee82d7dc50",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "read_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "23686c99dd13f41ccdb19a6528028d968b2ea881174e15f73c368aca38b0cc1c",
+        "module_sha256": "8ef096e6a4a77e323f1e61a2f501645caa9d97da7a03ae8f5e2d52bbc86e8018",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "9cd13f92fa72202e851a5410bc62c2836c1d62803697e7c54b9db5a545100f70",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "write_only",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "6eb1df54b152a3e19120594ca39325b8f84e282c54b8812d2e27e2c43326e0b5",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "b7ec31af4f6c7ce7bfea0fb96ac968690df4a181655ac764430c37e41d298c64",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "0995ccd878160b6cfc0d3b1a5114dddab8a1761048bc2c0cbc604317fb4ce018",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "0487b8eeccfda716bc9669480a1463bcfde3e058c3644acc0e65b362c51f52ef",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 128,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "9068e90f814007f3c4171de58cabdac42b28efd65a47a49024979bed6ea14086",
+        "module_sha256": "77e63480256315a100297fbdec32ae7d6a194a49bcbae725d532167f9adb0f7f",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 16,
+        "source_sha256": "c2ace195a37250190d49561b398ceb61753f977bf7b47db0d81dad0b0e314c88",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "once",
+        "calls": 32,
+        "source_sha256": "5bbb97bfaf0b2da00b2f07234236506f271a6d3b746ec04f676b5f194cc9ea10",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 16,
+        "source_sha256": "7fe272af45fd092f0c26dbac8c3db397c6f865d75c910b27061f1786ab5234d3",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "vm",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "interpreter",
+        "exit": 0
+      },
+      {
+        "operation": "compound",
+        "counter": "increment_return",
+        "width": 2048,
+        "snapshot": "fresh",
+        "calls": 32,
+        "source_sha256": "6e8ba248a4b4c4e973d540b7c5436cd9513ecc4025df2a32d3014efe8f6132d6",
+        "module_sha256": "d957e1abbe5a874036cd01f0fecc729765df44fcbee7edb0ba803563ae9b3502",
+        "mode": "jit",
+        "exit": 0
+      }
+    ],
+    "slopes": [
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 45524.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 45524.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 633044.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 633044.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      }
+    ]
+  },
+  "verification": {
+    "status": "characterized",
+    "allocation_observations": 128,
+    "semantic_checks": 192,
+    "slopes": [
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73.0,
+        "bytes": 7062.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 45524.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 45524.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 87029.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 633044.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 83.0,
+        "bytes": 633044.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 429.0,
+        "bytes": 674549.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 45523.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 87028.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82.0,
+        "bytes": 633043.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 428.0,
+        "bytes": 674548.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 45531.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          128,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 87036.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 84.0,
+        "bytes": 633051.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 430.0,
+        "bytes": 674556.0
+      }
+    ],
+    "width_penalties": [
+      {
+        "group": [
+          "direct",
+          "parameter",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 0.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 0.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "parameter",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "read_only",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "write_only",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "direct",
+          "increment_return",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "parameter",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "read_only",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "write_only",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      },
+      {
+        "group": [
+          "compound",
+          "increment_return",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          128,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 587520.0
+      }
+    ],
+    "report_sha256": "cc349f29cf35ba43f2eeb9e6468c01433dbbf3c0fce741dcf60f1684cefd7522",
+    "verifier_sha256": "01383cfdc2a82fdedcc5adfdc771821bfffa7116d93562df665701a77c40cd7b",
+    "limits": "Baseline allocation characterization; no candidate speed or regression acceptance."
+  }
+}

@@ -5569,5 +5569,15 @@
     "cold_slope_regressions": 24,
     "cause": "First default AHasher initialization adds one allocation / 64 bytes; explicit seeds allocate nothing in isolation.",
     "remaining": "Corrected runtime must repeat all target, boundary, historical, broad, checksum and memory gates. Sections 3/4 remain open."
+  },
+  "compound_capture_e445_refresh_2026_10_29": {
+    "status": "confirmed_remaining_costs",
+    "runtime_commit": "e445f4a8e045cd067aaea99f6c79eebffca32a04",
+    "report": "COMPOUND_CAPTURE_BASELINE_2026_10_29.md",
+    "evidence": "compound-capture-e445-refresh-2026-10-29.json",
+    "allocation_observations": 128,
+    "semantic_checks": 192,
+    "unchanged_slopes": true,
+    "remaining": "Seven compound/captured-scalar cases retain 587520 requested bytes per added call across widths 128/2048. Separate array batch candidate remains unaccepted."
   }
 }
