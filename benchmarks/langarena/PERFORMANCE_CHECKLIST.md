@@ -108,6 +108,11 @@ The current root-insertion review cutoff is complete. The **next cutoff** is
 nested initial insertion accepted, rejected, or documented as necessary copying,
 with before/after scaling, three-runtime semantics and cold/fallback controls.
 Any runtime change requires the relevant regression and 150-checksum gates.
+The first nested-insertion candidate passed the computed-index matrix but was
+[rejected by literal/parameter batching controls](nested-insertion-rejection-2026-10-29.json):
+36 small-map allocation regressions, up to 32,788 extra requested bytes. A bounded
+replacement is under verification; no nested runtime fix is accepted yet.
+
 V1's [rejection evidence](DICTIONARY_INSERTION_REJECTION_2026_10_28.md) remains valid;
 V2 missed the captured-counter target. Neither is substituted for accepted V3.
 
