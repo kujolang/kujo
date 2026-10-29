@@ -81,7 +81,8 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
 
 // This is a profitability guard, not permission to change publication order.
 // Reuse the existing proof's padding and names; no per-body allocation is added.
-// Whole captured-value reads and opaque operations keep the single-key path.
+// Whole captured-value reads require per-invocation primitive validation;
+// opaque operations keep the single-key path.
 struct SparseRegion<'a> {
     names: &'a [String],
     whole_value_mask: u32,
@@ -436,7 +437,35 @@ mod sparse_region_tests {
         LeakyFunctionBody::new(parsed.stmts).get().can_batch_dictionary_writes(
             &params.iter().map(|name| (*name).to_owned()).collect::<Vec<_>>(),
             args,
+            &crate::interpreter::environment::Environment::new(),
         )
+    }
+
+    #[test]
+    fn sparse_region_rechecks_captured_scalar_types_without_caching_values() {
+        use crate::interpreter::environment::Environment;
+        let source = "state[0] = n state[1] = n counter += 1 return counter";
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        let body = LeakyFunctionBody::new(parsed.stmts).get();
+        let params = vec!["n".to_owned()];
+        let args = vec![Value::Int(7)];
+        let mut env = Environment::new();
+        assert!(!body.can_batch_dictionary_writes(&params, &args, &env));
+        env.define("counter".into(), Value::Int(0));
+        assert!(body.can_batch_dictionary_writes(&params, &args, &env));
+        env.set("counter".into(), Value::array(vec![]));
+        assert!(!body.can_batch_dictionary_writes(&params, &args, &env));
+        env.set("counter".into(), Value::Float(1.5));
+        assert!(body.can_batch_dictionary_writes(&params, &args, &env));
+        // Innermost lexical bindings, rather than a same-named outer value,
+        // determine admission. An unknown local must retain ordinary fallback.
+        env.push_scope();
+        env.define("counter".into(), Value::array(vec![]));
+        assert!(!body.can_batch_dictionary_writes(&params, &args, &env));
+        env.pop_scope();
+        assert!(body.can_batch_dictionary_writes(&params, &args, &env));
     }
 
     #[test]

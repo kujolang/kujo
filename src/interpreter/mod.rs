@@ -2526,13 +2526,16 @@ impl Interpreter {
         }
         let may_check_nested =
             self.task_cancellation.is_none() && self.active_capture_index(captured).is_none();
-        let allow_multi_key = self.task_cancellation.is_none()
-            && self.active_capture_index(captured).is_none()
-            && body.can_batch_dictionary_writes(params, args);
         let allow_boxed_array = may_check_nested && body.can_defer_boxed_array();
+        self.enter_captured_environment(captured);
+        let allow_multi_key = may_check_nested
+            && self
+                .environment_activations
+                .last()
+                .is_some_and(|frame| frame.globals == CapturedGlobals::Snapshot)
+            && body.can_batch_dictionary_writes(params, args, &self.env);
         let insertion_bound =
             if allow_multi_key { body.dictionary_insertion_bound(params, args) } else { 0 };
-        self.enter_captured_environment(captured);
         let nested_spill_hint = if may_check_nested
             && self
                 .environment_activations

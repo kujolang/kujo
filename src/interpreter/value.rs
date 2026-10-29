@@ -277,7 +277,12 @@ impl FunctionBodyRef {
         }
     }
 
-    pub(super) fn can_batch_dictionary_writes(&self, params: &[String], args: &[Value]) -> bool {
+    pub(super) fn can_batch_dictionary_writes(
+        &self,
+        params: &[String],
+        args: &[Value],
+        env: &super::environment::Environment,
+    ) -> bool {
         let Some(proof) = self
             .storage
             .capture_independence
@@ -289,7 +294,12 @@ impl FunctionBodyRef {
             && proof.sparse_write_region()
             && args.iter().all(is_capture_primitive)
             && proof.required_parameters.iter().enumerate().all(|(index, name)| {
-                proof.whole_value_mask & (1u32 << index) == 0 || params.contains(name)
+                proof.whole_value_mask & (1u32 << index) == 0
+                    || params.contains(name)
+                    // Inspect the entered capture on every invocation. A captured
+                    // primitive can become an operator-bearing value between calls.
+                    // Borrowing also avoids materializing pending/live snapshots.
+                    || env.nested_spill_proof_value(name).is_some_and(is_capture_primitive)
             })
     }
 

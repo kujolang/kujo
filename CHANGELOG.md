@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Admit primitive captured-scalar dependencies to eligible dictionary write
+  batches, rechecking their types in the entered capture on every invocation.
+
 - Retain eligible counted collection batches in sparse captured-array storage,
   validating bounds and publication boundaries without growing the write table.
 
