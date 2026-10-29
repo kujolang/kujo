@@ -1,0 +1,25 @@
+struct Selector {
+ value: int,
+ func op_add(other) {
+  let saved := state
+  assert_equal(saved[0], 7)
+  assert_equal(saved[1], 8)
+  state = {0: 99}
+  assert_equal(saved[0], 7)
+  return value + other
+ }
+}
+struct Trigger {
+ value: int,
+ func op_add(other) {
+  return state[selector + other]
+ }
+}
+mut selector := Selector { value: 0 }
+mut state := {0: 0, 1: 0, 2: Trigger { value: 0 }}
+export func snapshot() { return state }
+export func edit() {
+ state[0] = 7
+ state[1] = 8
+ return state[2] + 0
+}

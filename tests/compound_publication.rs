@@ -11,6 +11,10 @@ fn compound_indexed_writes_preserve_publication_and_selector_order() {
             "SELECTOR SNAPSHOT PASS\n",
         ),
         (
+            "tests/fixtures/compound_publication/callback-selector/main.kujo",
+            "SELECTOR SNAPSHOT PASS\n",
+        ),
+        (
             "benchmarks/langarena/probes/compound-type-transition/main.kujo",
             "COMPOUND TYPE TRANSITION PASS\n",
         ),

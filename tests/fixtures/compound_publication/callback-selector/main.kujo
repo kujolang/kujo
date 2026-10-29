@@ -1,0 +1,8 @@
+from owner import snapshot, edit
+let original := snapshot()
+assert_equal(edit(), 7)
+assert_equal(snapshot()[0], 99)
+assert_equal(len(snapshot()), 1)
+assert_equal(original[0], 0)
+assert_equal(original[1], 0)
+print("SELECTOR SNAPSHOT PASS")
