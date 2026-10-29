@@ -1,0 +1,1314 @@
+{
+  "status": "baseline_variation_reproduced_fix_unverified",
+  "baseline_runtime_commit": "4cd3bf1",
+  "scope": "Existing first-key update followed by insertion batches near full map capacity",
+  "baseline_matrix": {
+    "pairs": 360,
+    "semantics": 540,
+    "total_regressions": 0,
+    "slope_mismatches": 3,
+    "unequal_pairs": [
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "width": 2,
+        "snapshot": "none",
+        "calls": 1,
+        "mode": "vm",
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee",
+        "module_sha256": "e55ed151cc7291359d97cc98f0ae597692cf43f2db681ce93e6c31fd49a7fda0",
+        "baseline": {
+          "requests": 4285,
+          "bytes": 793887
+        },
+        "candidate": {
+          "requests": 4284,
+          "bytes": 791423
+        }
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "width": 2,
+        "snapshot": "none",
+        "calls": 1,
+        "mode": "jit",
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a",
+        "module_sha256": "0acbc7a3730635d666a67a21e656545cfddfa11f44f812874c4fdbf61d7d1ec6",
+        "baseline": {
+          "requests": 4542,
+          "bytes": 810729
+        },
+        "candidate": {
+          "requests": 4541,
+          "bytes": 808265
+        }
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "width": 2,
+        "snapshot": "none",
+        "calls": 1,
+        "mode": "jit",
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f",
+        "module_sha256": "7a7710201a9fd05d0a7ca7a457f1bf16a3301ec7fa4c9195d81d3be5543500f7",
+        "baseline": {
+          "requests": 4494,
+          "bytes": 808358
+        },
+        "candidate": {
+          "requests": 4493,
+          "bytes": 805894
+        }
+      }
+    ],
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/task-allocation-probe": "c3ef2571efa1ee1982bd35cb672b97ca8b105e05a68eb39f29f63c2c91f02b44",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/candidate-kujo": "e6edabeb6bc801c8aa86a134a0265d97850b8bb68c707e66109eaab40a174c51"
+    },
+    "runner_sha256": "90bf2491916893052e7b20d27395f5bb8f0db06b47e186325ca7c97f663a77eb"
+  },
+  "repeats": {
+    "status": "characterized",
+    "pid": 60426,
+    "scope": "Repeated identical accepted baseline to characterize measurement variation; no candidate acceptance",
+    "probe_sha256": "c3ef2571efa1ee1982bd35cb672b97ca8b105e05a68eb39f29f63c2c91f02b44",
+    "rows": [
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 0,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 1,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 2,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 3,
+        "requests": 4285,
+        "bytes": 793887,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 4,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 5,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 6,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 7,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 8,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 9,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 10,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 11,
+        "requests": 4284,
+        "bytes": 791423,
+        "source_sha256": "b97237128ee36e3cd63524f32722183e2bcd6e8986b766f594eed5d7842656ee"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 0,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 1,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 2,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 3,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 4,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 5,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 6,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 7,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 8,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 9,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 10,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 5,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 11,
+        "requests": 4347,
+        "bytes": 799370,
+        "source_sha256": "46db2ef0dd1ddd889df2d45a5670a0d7d33d411c3dbeebcbdf028ad23d02d98b"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 0,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 1,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 2,
+        "requests": 4542,
+        "bytes": 810729,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 3,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 4,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 5,
+        "requests": 4542,
+        "bytes": 810729,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 6,
+        "requests": 4542,
+        "bytes": 810729,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 7,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 8,
+        "requests": 4542,
+        "bytes": 810729,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 9,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 10,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 11,
+        "requests": 4541,
+        "bytes": 808265,
+        "source_sha256": "6087923a2a0f9b18fdc87ccf11c0495462c2c38e705b00a4bfa03616cdaa4e0a"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 0,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 1,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 2,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 3,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 4,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 5,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 6,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 7,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 8,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 9,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 10,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "dict",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 11,
+        "requests": 4646,
+        "bytes": 818866,
+        "source_sha256": "e0d303b47b57843b60150282e7b63f03a63d8791d0dd1b8f14808be70f023ef3"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 0,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 1,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 2,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 3,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 4,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 5,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 6,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 7,
+        "requests": 4494,
+        "bytes": 808358,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 8,
+        "requests": 4494,
+        "bytes": 808358,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 9,
+        "requests": 4494,
+        "bytes": 808358,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 10,
+        "requests": 4494,
+        "bytes": 808358,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 1,
+        "repeat": 11,
+        "requests": 4493,
+        "bytes": 805894,
+        "source_sha256": "6eb3e95d00b75ac1a34ebefdaedd1681015334c4a6b14030f361d6e68e494b8f"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 0,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 1,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 2,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 3,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 4,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 5,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 6,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 7,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 8,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 9,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 10,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "array",
+        "style": "parameters",
+        "writes": 5,
+        "mode": "jit",
+        "calls": 2,
+        "repeat": 11,
+        "requests": 4586,
+        "bytes": 816237,
+        "source_sha256": "5b18862165f26678157be62558e9349570651e870c42e9a285855726cc0d6975"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 0,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 1,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 2,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 3,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 4,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 5,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 6,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 7,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 8,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 9,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 10,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 1,
+        "repeat": 11,
+        "requests": 7843,
+        "bytes": 1409483,
+        "source_sha256": "637b918c6526067fc73a26c12b2f0e778470666daa411f288c414ca56239f614"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 0,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 1,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 2,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 3,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 4,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 5,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 6,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 7,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 8,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 9,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 10,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      },
+      {
+        "shape": "dict",
+        "style": "literal",
+        "writes": 64,
+        "mode": "vm",
+        "calls": 2,
+        "repeat": 11,
+        "requests": 8141,
+        "bytes": 1441287,
+        "source_sha256": "3b3c186e4bc4721c0ff81b07fa0621fb67e4ab7d8616f03cc09de45da2bdcafb"
+      }
+    ],
+    "groups": [
+      {
+        "group": [
+          "dict",
+          "literal",
+          5,
+          "vm",
+          1
+        ],
+        "observations": [
+          {
+            "values": [
+              4284,
+              791423
+            ],
+            "count": 11
+          },
+          {
+            "values": [
+              4285,
+              793887
+            ],
+            "count": 1
+          }
+        ]
+      },
+      {
+        "group": [
+          "dict",
+          "literal",
+          5,
+          "vm",
+          2
+        ],
+        "observations": [
+          {
+            "values": [
+              4347,
+              799370
+            ],
+            "count": 12
+          }
+        ]
+      },
+      {
+        "group": [
+          "dict",
+          "parameters",
+          5,
+          "jit",
+          1
+        ],
+        "observations": [
+          {
+            "values": [
+              4541,
+              808265
+            ],
+            "count": 8
+          },
+          {
+            "values": [
+              4542,
+              810729
+            ],
+            "count": 4
+          }
+        ]
+      },
+      {
+        "group": [
+          "dict",
+          "parameters",
+          5,
+          "jit",
+          2
+        ],
+        "observations": [
+          {
+            "values": [
+              4646,
+              818866
+            ],
+            "count": 12
+          }
+        ]
+      },
+      {
+        "group": [
+          "array",
+          "parameters",
+          5,
+          "jit",
+          1
+        ],
+        "observations": [
+          {
+            "values": [
+              4493,
+              805894
+            ],
+            "count": 8
+          },
+          {
+            "values": [
+              4494,
+              808358
+            ],
+            "count": 4
+          }
+        ]
+      },
+      {
+        "group": [
+          "array",
+          "parameters",
+          5,
+          "jit",
+          2
+        ],
+        "observations": [
+          {
+            "values": [
+              4586,
+              816237
+            ],
+            "count": 12
+          }
+        ]
+      },
+      {
+        "group": [
+          "dict",
+          "literal",
+          64,
+          "vm",
+          1
+        ],
+        "observations": [
+          {
+            "values": [
+              7843,
+              1409483
+            ],
+            "count": 12
+          }
+        ]
+      },
+      {
+        "group": [
+          "dict",
+          "literal",
+          64,
+          "vm",
+          2
+        ],
+        "observations": [
+          {
+            "values": [
+              8141,
+              1441287
+            ],
+            "count": 12
+          }
+        ]
+      }
+    ]
+  },
+  "capacity_control": {
+    "source": "use std::collections::HashMap;\nfn main() {\n    for count in [3,7,14,28] {\n        let mut map=HashMap::with_capacity(count);\n        for i in 0..count {map.insert(i,i);}\n        let before=map.capacity();\n        map.insert(0,999);\n        println!(\"size={count} before={before} after_insert={}\",map.capacity());\n        let mut map=HashMap::with_capacity(count);\n        for i in 0..count {map.insert(i,i);}\n        let before=map.capacity();\n        *map.get_mut(&0).unwrap()=999;\n        println!(\"size={count} before={before} after_replace={}\",map.capacity());\n    }\n}\n",
+    "output": "size=3 before=3 after_insert=7\nsize=3 before=3 after_replace=3\nsize=7 before=7 after_insert=14\nsize=7 before=7 after_replace=7\nsize=14 before=14 after_insert=28\nsize=14 before=14 after_replace=14\nsize=28 before=28 after_insert=56\nsize=28 before=28 after_replace=28\n",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2\n"
+  },
+  "interpretation": "Identical baseline runs vary by one allocation/2464bytes in selected first-call cases. Toolchain HashMap.insert grows full tables even for existing keys; get_mut preserves capacity. Nested publication uses insert for replacements, making this consistent with order-dependent unnecessary growth. Candidate repeats and regression tests are still required for attribution/acceptance.",
+  "audit_root": ".audit-evidence/nested-insertion-v2-2026-10-29",
+  "limits": "No elapsed speed claim and no baseline self-comparison pass. Preserve the rejected strict gate; candidate acceptance needs conservative repeated observations, not ignored failures or a widened tolerance."
+}
