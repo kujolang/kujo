@@ -5391,5 +5391,20 @@
     "result": "Insertion/nonscalar and compound-or-captured-counter loops retain587520-byte width penalty. Direct parameter-only8key assignments are flat at7307bytes peraddedcall. Dynamic bounds alone are not the cause.",
     "measurement_control": "Same-path4d11952/6d28861 observations match; longer refresh directory had added480setupbytes. Use identical paths for comparisons.",
     "remaining": "Fix confirmed insertion/nonscalar/admission costs with snapshot/escape/error controls; dense work must be normalized. Sections3/4 remain open."
+  },
+  "dictionary_insertion_rejection_2026_10_28": {
+    "status": "rejected",
+    "accepted_runtime_unchanged": true,
+    "baseline_runtime": "6d288612375548ae9ca941776d20d37df51c0420",
+    "report": "DICTIONARY_INSERTION_REJECTION_2026_10_28.md",
+    "evidence": "dictionary-insertion-rejection-2026-10-28.json",
+    "gate": "probes/dictionary-insertion-cold-controls.rb",
+    "candidate_allocation_pairs": 160,
+    "candidate_semantic_checks": 240,
+    "rejected_pairs": 8,
+    "baseline_control_pairs": 160,
+    "baseline_control_semantic_checks": 240,
+    "result": "Initial saved snapshots had hidden first-call admission. Empty/tiny dictionaries without an initial snapshot regress by118/6576/7204requestedbytes for2/64newkeys, despite fewer requests. Candidate source restored; correctness passes do not override rejection.",
+    "remaining": "Design and measure profitable new-key batch admission; retain nested insertion, nonscalar, broader loops and capture materialization in sections3/4."
   }
 }

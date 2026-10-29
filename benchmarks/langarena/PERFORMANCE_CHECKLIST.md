@@ -112,6 +112,11 @@ with same-path before/after allocation evidence, VM/interpreter/JIT semantics,
 small/cold/fallback controls, and the relevant regression and 150-checksum gates.
 It does not close sections 3 and 4. Current insertion contract fixtures cover
 snapshots, callbacks, errors and root replacement before implementation.
+The [first insertion candidate was rejected](DICTIONARY_INSERTION_REJECTION_2026_10_28.md):
+eight cold allocation pairs regress without an initial saved snapshot, despite
+passing the correctness gates. Its runtime edits are restored to the accepted
+source. A permanent 160-pair/240-semantic-case cold gate now rejects that candidate
+and passes the baseline self-comparison. Initial insertion remains open.
 Regression commit `2366e82` also covers canonical/noncanonical key separation,
 scalar insertion and numeric keys outside inline-pair encoding. All four tests in
 `tests/dictionary_scalar_publication.rs` pass against the frozen `6d28861` CLI
