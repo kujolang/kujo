@@ -528,5 +528,21 @@
     "Generated k+offset writes exercise inline overflow/fallback; literal/parameter spill admission needs separate controls before acceptance",
     "No timing, production or clean-host comparison",
     "Candidate runtime is still uncommitted and building"
-  ]
+  ],
+  "spill_controls": {
+    "verification": {
+      "status": "passed",
+      "pairs": 480,
+      "semantics": 720,
+      "report_sha256": "73fb97ad3cf8ea450cae8ae6bf3d9cbe22789dd6a11ae29673580e333f39ab43",
+      "verifier_sha256": "c3650f2b039eab85d5877426e10c2f8026f8ee7ee2a819a11bff06e5d2bac178"
+    },
+    "runner_sha256": "e76f7b7d03d0343a69d3014a6e72ab95ed8bc83883e9aa2e699e1280b9a0b773",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/task-allocation-probe": "c3ef2571efa1ee1982bd35cb672b97ca8b105e05a68eb39f29f63c2c91f02b44",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-insertion-v3-2026-10-28/candidate-kujo": "e6edabeb6bc801c8aa86a134a0265d97850b8bb68c707e66109eaab40a174c51"
+    },
+    "scope": "Literal5/64/257 and parameter5/16 key batches;3owners,4widths,no/fresh snapshots,1/2calls;480exact-equal self-comparison pairs and720three-runtime semantics",
+    "candidate_status": "pending"
+  }
 }

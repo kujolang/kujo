@@ -28,3 +28,17 @@ spill-proof path. Before candidate acceptance also run literal/parameter-key spi
 controls, the existing nested fallback/error/deep-owner matrices, full relevant
 regressions and all 150 test-size checksums. Review memory and artifact identities.
 The candidate is not accepted by a baseline-only pass.
+
+## Literal and parameter spill controls
+
+`nested-insertion-spill-controls.rb` accepts the same four arguments. It covers
+literal batches of 5/64/257 keys and parameter batches of 5/16 keys across the
+three owner shapes, four initial widths, no snapshot/fresh snapshots and one/two
+calls. Calls reuse a fixed key set: this isolates first insertion followed by
+existing-key updates, rather than conflating that with growing-key loops.
+
+Expected coverage: 480 paired allocation observations and 720 CLI semantic runs.
+Every total and the 1→2-call slope must avoid regressions. This separately reaches
+the literal/identifier-key proof shapes omitted by the computed-index matrix.
+Baseline `4cd3bf1` self-comparison passes with exact equal allocation values.
+Candidate results remain pending; baseline passes do not accept the optimization.
