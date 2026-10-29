@@ -14,6 +14,11 @@ This file records user-visible changes to Kujo, following
 - Reuse capture-map storage after singleton read projections without growing the
   table for deleted buckets; retain the surviving owned key and value.
 
+- Retain eligible collection-valued array replacements in bounded private storage,
+  preserving snapshots, index evaluation, aliases and fallback mutation boundaries.
+  Boxed payloads require a tail replacement with no later publication boundary,
+  avoiding allocation overhead when ordinary mutation is still required.
+
 - Preserve collection-write admission while constructing struct literals; field
   callbacks, owner reads and errors retain their ordinary evaluation boundaries.
   Transfer owned nested payloads through publication without copying struct names.

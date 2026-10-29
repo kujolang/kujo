@@ -219,6 +219,30 @@ pub(super) fn is_capture_primitive(value: &Value) -> bool {
 }
 
 impl FunctionBodyRef {
+    /// Boxed array payloads are profitable only when no later statement can
+    /// force publication. This allocation-free shape check is independent of
+    /// capture purity: RHS/index callbacks still disable admission normally.
+    pub(super) fn can_defer_boxed_array(&self) -> bool {
+        use crate::ast::Expr;
+        let (assignment, result) = match self.storage.body.as_slice() {
+            [assignment] => (assignment, None),
+            [assignment, Stmt::Return(result)] => (assignment, result.as_ref()),
+            _ => return false,
+        };
+        let Stmt::Assign { target: Expr::IndexAccess { object, .. }, .. } = assignment else {
+            return false;
+        };
+        let Expr::Identifier(root) = object.as_ref() else { return false };
+        match result {
+            None => true,
+            Some(Expr::Identifier(name)) => name != root,
+            Some(Expr::Int(_) | Expr::Float(_) | Expr::String(_) | Expr::Bool(_) | Expr::None) => {
+                true
+            }
+            _ => false,
+        }
+    }
+
     pub(super) fn can_batch_nested_dictionary_writes(
         &self,
         params: &[String],
@@ -2548,5 +2572,49 @@ mod struct_storage_regressions {
         let mut visits = 0;
         assert_eq!(Value::walk_nesting_depth(&alias, || visits += 1), 40);
         assert!(visits <= 81, "shared struct subtree revisited: {visits}");
+    }
+}
+
+#[cfg(test)]
+mod boxed_array_profitability_tests {
+    use super::LeakyFunctionBody;
+
+    fn eligible(source: &str) -> bool {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        LeakyFunctionBody::new(parsed.stmts).get().can_defer_boxed_array()
+    }
+
+    #[test]
+    fn boxed_array_profitability_accepts_unobserved_tail_replacements() {
+        for source in [
+            "state[0] = Item { value: n }",
+            "state[-1] = payload return",
+            "state[0] = Item { value: n } return n",
+            "state[index()] = Item { value: callback() } return n",
+            "state[0] = payload return null",
+            "state[0] = payload return 1",
+        ] {
+            assert!(eligible(source), "{source}");
+        }
+    }
+
+    #[test]
+    fn boxed_array_profitability_rejects_post_write_observation_and_mutation() {
+        for source in [
+            "state[0] = payload return state",
+            "state[0] = payload return state[0]",
+            "state[0] = payload let saved := state return n",
+            "state[0] = payload state[1] = payload return n",
+            "state[0] = payload state[0] = 1 return n",
+            "state[0] = payload return callback()",
+            "state[0] = payload try { callback() } except e {} return n",
+            "let x := n state[0] = payload return x",
+            "state[0][0] = payload return n",
+            "state.row = payload return n",
+        ] {
+            assert!(!eligible(source), "{source}");
+        }
     }
 }

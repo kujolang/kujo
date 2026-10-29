@@ -17,6 +17,7 @@
 // or error values for exception handling.
 
 // Module structure
+mod array_collection_publication;
 pub(crate) mod assignment;
 mod async_runtime;
 mod binding_map;
@@ -391,12 +392,23 @@ enum CapturedGlobals {
 pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Environment)>>>;
 
 struct EnvironmentActivation {
-    allow_multi_key: bool,
+    // Pack publication permissions into the existing one-byte flag storage.
+    publication_policy: u8,
     nested_spill_hint: nested_spill_proof::SpillPolicy,
     insertion_bound: u16,
     globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
     caller: Environment,
+}
+
+impl EnvironmentActivation {
+    fn allow_multi_key(&self) -> bool {
+        self.publication_policy & 1 != 0
+    }
+
+    fn allow_boxed_array(&self) -> bool {
+        self.publication_policy & 2 != 0
+    }
 }
 
 enum SuspendedEnvironment {
@@ -2491,7 +2503,7 @@ impl Interpreter {
                     let count = environment.scopes.len();
                     let caller = std::mem::replace(&mut self.env, environment);
                     self.environment_activations.push(EnvironmentActivation {
-                        allow_multi_key: false,
+                        publication_policy: 0,
                         nested_spill_hint: Default::default(),
                         insertion_bound: 0,
                         capture: Some((captured.clone(), count)),
@@ -2507,6 +2519,7 @@ impl Interpreter {
         let allow_multi_key = self.task_cancellation.is_none()
             && self.active_capture_index(captured).is_none()
             && body.can_batch_dictionary_writes(params, args);
+        let allow_boxed_array = may_check_nested && body.can_defer_boxed_array();
         let insertion_bound =
             if allow_multi_key { body.dictionary_insertion_bound(params, args) } else { 0 };
         self.enter_captured_environment(captured);
@@ -2524,7 +2537,11 @@ impl Interpreter {
             frame.nested_spill_hint = nested_spill_hint;
             frame.insertion_bound =
                 if frame.globals == CapturedGlobals::Snapshot { insertion_bound } else { 0 };
-            frame.allow_multi_key = allow_multi_key && frame.globals == CapturedGlobals::Snapshot;
+            frame.publication_policy = if frame.globals == CapturedGlobals::Snapshot {
+                u8::from(allow_multi_key) | (u8::from(allow_boxed_array) << 1)
+            } else {
+                0
+            };
         }
     }
 
@@ -2547,7 +2564,7 @@ impl Interpreter {
             environment.observe_capture_writes(true);
             let caller = std::mem::replace(&mut self.env, environment);
             self.environment_activations.push(EnvironmentActivation {
-                allow_multi_key: false,
+                publication_policy: 0,
                 nested_spill_hint: Default::default(),
                 insertion_bound: 0,
                 capture: Some((captured.clone(), count)),
@@ -2578,7 +2595,7 @@ impl Interpreter {
                         environment.observe_capture_writes(true);
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
-                            allow_multi_key: false,
+                            publication_policy: 0,
                             nested_spill_hint: Default::default(),
                             insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
@@ -2600,7 +2617,7 @@ impl Interpreter {
                         environment.observe_capture_writes(true);
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
-                            allow_multi_key: false,
+                            publication_policy: 0,
                             nested_spill_hint: Default::default(),
                             insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
@@ -2652,7 +2669,7 @@ impl Interpreter {
         let count = environment.scopes.len();
         let caller = std::mem::replace(&mut self.env, environment);
         self.environment_activations.push(EnvironmentActivation {
-            allow_multi_key: false,
+            publication_policy: 0,
             nested_spill_hint: Default::default(),
             insertion_bound: 0,
             capture: Some((captured.clone(), count)),
@@ -2763,7 +2780,7 @@ impl Interpreter {
             SuspendedEnvironment::Untracked(caller)
         } else {
             self.environment_activations.push(EnvironmentActivation {
-                allow_multi_key: false,
+                publication_policy: 0,
                 nested_spill_hint: Default::default(),
                 insertion_bound: 0,
                 capture: None,
@@ -3939,13 +3956,14 @@ impl Interpreter {
         }
 
         let allow_multi_key =
-            self.environment_activations.last().is_some_and(|frame| frame.allow_multi_key);
-        if self.env.try_defer_index_write_with_batching(
+            self.environment_activations.last().is_some_and(|frame| frame.allow_multi_key());
+        if self.env.try_defer_index_write_with_policy(
             container_name,
             &index_value,
             value,
             allow_multi_key,
             self.environment_activations.last().map_or(0, |frame| frame.insertion_bound),
+            self.environment_activations.last().is_some_and(|frame| frame.allow_boxed_array()),
         ) {
             return Value::Null;
         }
@@ -7170,7 +7188,7 @@ impl Interpreter {
                     if self
                         .environment_activations
                         .last()
-                        .is_some_and(|frame| frame.allow_multi_key)
+                        .is_some_and(|frame| frame.allow_multi_key())
                         && self.env.pending_dictionary_visible(name)
                     {
                         let index = self.eval_expr(index);
