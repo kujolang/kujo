@@ -564,6 +564,14 @@ fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMa
         return;
     }
     target.retain(|name, _| source.contains_key(name));
+    if target.len() == 1 && target.capacity() < source.len() {
+        // Read projections can leave one key and many deleted buckets in a
+        // previously large table. Reserve counts those tombstones as occupied
+        // and may grow a table that already has enough physical storage. Drain
+        // resets the markers while preserving the remaining owned key/value.
+        let entry = target.drain().next().expect("one retained capture entry");
+        target.insert(entry.0, entry.1);
+    }
     target.reserve(source.len().saturating_sub(target.len()));
     for (name, value) in source {
         if let Some(slot) = target.get_mut(name) {
@@ -3345,6 +3353,43 @@ mod live_capture_storage_tests {
 #[cfg(test)]
 mod capture_storage_pool_tests {
     use super::*;
+
+    #[test]
+    fn singleton_projection_refill_reuses_table_and_owned_key() {
+        use std::hash::{BuildHasher, Hash, Hasher};
+
+        let mut source = HashMap::with_capacity(18);
+        // Adapt keys to this map's randomized seed, producing a deterministic
+        // collision cluster rather than hoping a random layout leaves tombstones.
+        for candidate in 0.. {
+            let key = format!("capture_{candidate}");
+            let mut hash = source.hasher().build_hasher();
+            key.hash(&mut hash);
+            if hash.finish() & 31 == 0 {
+                source.insert(key, Value::Int(candidate));
+                if source.len() == 18 {
+                    break;
+                }
+            }
+        }
+        let retained = source.keys().next().unwrap().clone();
+        let original_capacity = source.capacity();
+        let mut target = source.clone();
+        target.retain(|key, _| key == &retained);
+        assert!(target.capacity() < source.len(), "fixture must leave deleted buckets");
+        let key_pointer = target.keys().next().unwrap().as_ptr();
+
+        refill_capture_map(&mut target, &source);
+
+        assert_eq!(target.capacity(), original_capacity, "refill must not grow the table");
+        assert_eq!(target.get_key_value(&retained).unwrap().0.as_ptr(), key_pointer);
+        assert_eq!(target.len(), source.len());
+        for (key, value) in &source {
+            assert!(
+                matches!((target.get(key), value), (Some(Value::Int(actual)), Value::Int(expected)) if actual == expected)
+            );
+        }
+    }
 
     #[test]
     fn recycling_releases_values_and_environment_identities() {

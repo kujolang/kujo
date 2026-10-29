@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse capture-map storage after singleton read projections without growing the
+  table for deleted buckets; retain the surviving owned key and value.
+
 - Preserve collection-write admission while constructing struct literals; field
   callbacks, owner reads and errors retain their ordinary evaluation boundaries.
   Transfer owned nested payloads through publication without copying struct names.
