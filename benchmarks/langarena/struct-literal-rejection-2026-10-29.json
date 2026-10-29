@@ -1,0 +1,656 @@
+{
+  "status": "rejected",
+  "baseline_runtime_commit": "2a5ffbc",
+  "candidate_build": {
+    "status": "built",
+    "pid": 30660,
+    "binary_sha256": "f973799b0e9c6f6fc8aec2f0215e0b52203028711e6d6878b897191f46d8c3fe",
+    "library": "target/release/deps/libkujo-0204a58eed7d01d2.rlib",
+    "library_sha256": "54d1c7193f3562a5d4d9a6f1c50a1fb07728cd91a3c81456128f238979e7bb44"
+  },
+  "target": {
+    "status": "passed",
+    "pairs": 64,
+    "semantics": 96,
+    "total_regressions": 0,
+    "slope_regressions": 0,
+    "initial_slopes_flat": true,
+    "literal_strict_improvement": true,
+    "slopes": [
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 70.0,
+          "bytes": 6147.0
+        },
+        "candidate": {
+          "requests": 64.0,
+          "bytes": 5448.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 70.0,
+          "bytes": 6147.0
+        },
+        "candidate": {
+          "requests": 64.0,
+          "bytes": 5448.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 207.0,
+          "bytes": 21942.0
+        },
+        "candidate": {
+          "requests": 207.0,
+          "bytes": 21942.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 207.0,
+          "bytes": 21942.0
+        },
+        "candidate": {
+          "requests": 207.0,
+          "bytes": 21942.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 2116.0,
+          "bytes": 640407.0
+        },
+        "candidate": {
+          "requests": 64.0,
+          "bytes": 5448.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 2116.0,
+          "bytes": 640407.0
+        },
+        "candidate": {
+          "requests": 64.0,
+          "bytes": 5448.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 71817.0,
+          "bytes": 9580854.0
+        },
+        "candidate": {
+          "requests": 71817.0,
+          "bytes": 9580854.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 71817.0,
+          "bytes": 9580854.0
+        },
+        "candidate": {
+          "requests": 71817.0,
+          "bytes": 9580854.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        },
+        "candidate": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        },
+        "candidate": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 223.0,
+          "bytes": 22506.0
+        },
+        "candidate": {
+          "requests": 223.0,
+          "bytes": 22506.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 223.0,
+          "bytes": 22506.0
+        },
+        "candidate": {
+          "requests": 223.0,
+          "bytes": 22506.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        },
+        "candidate": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        },
+        "candidate": {
+          "requests": 77.0,
+          "bytes": 5919.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 73879.0,
+          "bytes": 9644844.0
+        },
+        "candidate": {
+          "requests": 73879.0,
+          "bytes": 9644844.0
+        }
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 73879.0,
+          "bytes": 9644844.0
+        },
+        "candidate": {
+          "requests": 73879.0,
+          "bytes": 9644844.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 8013.0
+        },
+        "candidate": {
+          "requests": 71.0,
+          "bytes": 5985.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 77.0,
+          "bytes": 8013.0
+        },
+        "candidate": {
+          "requests": 71.0,
+          "bytes": 5985.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 226.0,
+          "bytes": 24075.0
+        },
+        "candidate": {
+          "requests": 226.0,
+          "bytes": 24075.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 226.0,
+          "bytes": 24075.0
+        },
+        "candidate": {
+          "requests": 226.0,
+          "bytes": 24075.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 2123.0,
+          "bytes": 642273.0
+        },
+        "candidate": {
+          "requests": 71.0,
+          "bytes": 5985.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 2123.0,
+          "bytes": 642273.0
+        },
+        "candidate": {
+          "requests": 71.0,
+          "bytes": 5985.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 80020.0,
+          "bytes": 9765081.0
+        },
+        "candidate": {
+          "requests": 80020.0,
+          "bytes": 9765081.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 80020.0,
+          "bytes": 9765081.0
+        },
+        "candidate": {
+          "requests": 80020.0,
+          "bytes": 9765081.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        },
+        "candidate": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        },
+        "candidate": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 242.0,
+          "bytes": 24639.0
+        },
+        "candidate": {
+          "requests": 242.0,
+          "bytes": 24639.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 242.0,
+          "bytes": 24639.0
+        },
+        "candidate": {
+          "requests": 242.0,
+          "bytes": 24639.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        },
+        "candidate": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        },
+        "candidate": {
+          "requests": 84.0,
+          "bytes": 6456.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "baseline": {
+          "requests": 82082.0,
+          "bytes": 9829071.0
+        },
+        "candidate": {
+          "requests": 82082.0,
+          "bytes": 9829071.0
+        }
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "baseline": {
+          "requests": 82082.0,
+          "bytes": 9829071.0
+        },
+        "candidate": {
+          "requests": 82082.0,
+          "bytes": 9829071.0
+        }
+      }
+    ],
+    "candidate_report_sha256": "b3c14d449c6688da885190388b00aafe94415dd27456a6b8cb8271a5f9111adb",
+    "baseline_report_sha256": "38d31e2f6395bba20525955b3e8d50a9144f3ee0bd91134cf71e4645ebc4b457",
+    "verifier_sha256": "95e939f4cfd73a3f6de9f697515a54519cdbfdb2c12a5785b3cb0c1b6fc70f14"
+  },
+  "fallback_total_regressions": 128,
+  "fallback_slope_regressions": 64,
+  "regression_groups": [
+    {
+      "shape": "deep",
+      "form": "other_key",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "deep",
+      "form": "scalar",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "deep",
+      "form": "read_root",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "deep",
+      "form": "error",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "arrayleaf",
+      "form": "other_key",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "arrayleaf",
+      "form": "scalar",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "arrayleaf",
+      "form": "read_root",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    },
+    {
+      "shape": "arrayleaf",
+      "form": "error",
+      "deltas": [
+        {
+          "requests": 2.0,
+          "bytes": 8.0
+        }
+      ]
+    }
+  ],
+  "semantic_checks": 816,
+  "audit_directory": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-literal-v1-2026-10-29",
+  "limits": "No broad test/checksum/memory acceptance; fallback rejection stopped pipeline. Candidate runtime uncommitted."
+}

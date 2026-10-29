@@ -135,6 +135,10 @@ Work still needed, in priority order:
    Existing-key replacements are covered; struct-literal construction and unsupported
    collection paths remain open. [Struct boundary contracts](STRUCT_LITERAL_BOUNDARIES_2026_10_29.md)
    cover field ordering, callbacks, snapshots and errors for the next fix.
+   The [first struct-literal candidate](STRUCT_LITERAL_REJECTION_2026_10_29.md)
+   removes target width costs but is rejected for 128 fallback allocation totals
+   and 64 slopes (+2 requests/+8 bytes per affected call). Correction and full
+   verification remain required.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
