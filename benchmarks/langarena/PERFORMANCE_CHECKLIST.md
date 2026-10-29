@@ -116,6 +116,10 @@ Work still needed, in priority order:
    150 checksums, 3,760 allocation pairs and 5,640 semantic checks. All 54 memory
    pairs are preserved with their limitations. Struct-literal replacement costs
    remain unchanged; this does not close collection replacement as a whole.
+   [Struct construction isolation](STRUCT_REPLACEMENT_BASELINE_2026_10_29.md)
+   confirms that root argument payloads stay flat while in-helper literals add
+   634,260 requested bytes per added call across widths 2/2,048. All 64 allocation
+   observations and 96 semantic checks pass on the accepted runtime.
    [Nested replacement isolation](NESTED_COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md)
    also confirms the same 587,520-byte width penalty under dictionary, struct and
    array roots: 96 allocation observations and 144 semantic checks. Root-only

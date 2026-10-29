@@ -1,0 +1,3080 @@
+{
+  "status": "characterized",
+  "scope": "Struct replacement literal versus argument; independent width/call slopes, not elapsed speed.",
+  "identities": {
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/task-allocation-probe": "3f82d1759579ff1887ee223f25b4030ece96805c41b4ef36061d9e4fdcd4adbf",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/collection-replacement-v3-2026-10-29/candidate-kujo": "8b02dbfd1d97d753b252e3ad954dd2e6705bf5412852ae0f804bcab268890342",
+    "benchmarks/langarena/probes/struct-replacement-isolation.rb": "71de461ea5dd67fa063769feb532882a36abb0047e242c9b39f9b3816bcec487"
+  },
+  "sources": {
+    "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2 { seed[j] = Item { value: 0 } j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[0] = Item { value: n } return n }\n",
+    "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2048 { seed[j] = Item { value: 0 } j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[0] = Item { value: n } return n }\n",
+    "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2 { seed[j] = Item { value: 0 } j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n, payload) { state[0] = payload return n }\n",
+    "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2) assert_equal(len(final), 2)\nmut j := 0 while j < 2 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2048 { seed[j] = Item { value: 0 } j += 1 }\nmut state := seed seed = null\nexport func snapshot() { return state }\nexport func edit(n, payload) { state[0] = payload return n }\n",
+    "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 16) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[j].value, i) } else { assert_equal(saved[j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original), 2048) assert_equal(len(final), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[j].value, 0) if j == 0 { assert_equal(final[j].value, 32) } else { assert_equal(final[j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2 { seed[j] = Item { value: 0 } j += 1 }\nmut state := {\"branch\": {\"row\": seed}} seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[\"branch\"][\"row\"][0] = Item { value: n } return n }\n",
+    "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2048 { seed[j] = Item { value: 0 } j += 1 }\nmut state := {\"branch\": {\"row\": seed}} seed = null\nexport func snapshot() { return state }\nexport func edit(n) { state[\"branch\"][\"row\"][0] = Item { value: n } return n }\n",
+    "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2 { seed[j] = Item { value: 0 } j += 1 }\nmut state := {\"branch\": {\"row\": seed}} seed = null\nexport func snapshot() { return state }\nexport func edit(n, payload) { state[\"branch\"][\"row\"][0] = payload return n }\n",
+    "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2) mut j := 0 while j < 2 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2) assert_equal(len(final[\"branch\"][\"row\"]), 2)\nmut j := 0 while j < 2 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4": "struct Item { value: int }\nmut seed := {} mut j := 0 while j < 2048 { seed[j] = Item { value: 0 } j += 1 }\nmut state := {\"branch\": {\"row\": seed}} seed = null\nexport func snapshot() { return state }\nexport func edit(n, payload) { state[\"branch\"][\"row\"][0] = payload return n }\n",
+    "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 16 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 16) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n",
+    "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d": "from owner import snapshot, edit\nstruct Item { value: int }\nlet original := snapshot()\nmut i := 0 while i < 32 {\nlet saved := snapshot()\nassert_equal(edit(i + 1, Item { value: i + 1 }), i + 1)\nassert_equal(len(saved[\"branch\"][\"row\"]), 2048) mut j := 0 while j < 2048 { if j == 0 { assert_equal(saved[\"branch\"][\"row\"][j].value, i) } else { assert_equal(saved[\"branch\"][\"row\"][j].value, 0) } j += 1 }\ni += 1 }\nlet final := snapshot()\nassert_equal(len(original[\"branch\"][\"row\"]), 2048) assert_equal(len(final[\"branch\"][\"row\"]), 2048)\nmut j := 0 while j < 2048 { assert_equal(original[\"branch\"][\"row\"][j].value, 0) if j == 0 { assert_equal(final[\"branch\"][\"row\"][j].value, 32) } else { assert_equal(final[\"branch\"][\"row\"][j].value, 0) } j += 1 }\nprint(\"STRUCT REPLACEMENT PASS\")\n"
+  },
+  "rows": [
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "requests": 5205,
+      "bytes": 860591
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "requests": 5295,
+      "bytes": 870756
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "requests": 6325,
+      "bytes": 958943
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "requests": 6415,
+      "bytes": 969108
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "requests": 7382,
+      "bytes": 1109415
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "requests": 7472,
+      "bytes": 1119580
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "requests": 10694,
+      "bytes": 1460487
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "requests": 10784,
+      "bytes": 1470652
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "requests": 179125,
+      "bytes": 27819046
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "requests": 179216,
+      "bytes": 27829263
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "requests": 212981,
+      "bytes": 38065558
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "requests": 213072,
+      "bytes": 38075775
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "requests": 1294326,
+      "bytes": 168227054
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "requests": 1294417,
+      "bytes": 168237271
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "requests": 2443398,
+      "bytes": 321520718
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "requests": 2443489,
+      "bytes": 321530935
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "requests": 5334,
+      "bytes": 857533
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "requests": 5424,
+      "bytes": 867698
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "requests": 6566,
+      "bytes": 952237
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "requests": 6656,
+      "bytes": 962402
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "requests": 7649,
+      "bytes": 1118330
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "requests": 7739,
+      "bytes": 1128495
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "requests": 11217,
+      "bytes": 1478426
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "requests": 11307,
+      "bytes": 1488591
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "requests": 152656,
+      "bytes": 18428940
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "requests": 152747,
+      "bytes": 18439157
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "requests": 153888,
+      "bytes": 18523644
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "requests": 153979,
+      "bytes": 18533861
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "requests": 1331421,
+      "bytes": 169377637
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "requests": 1331512,
+      "bytes": 169387854
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "requests": 2513485,
+      "bytes": 323695141
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "requests": 2513576,
+      "bytes": 323705358
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "requests": 5380,
+      "bytes": 903124
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "requests": 5470,
+      "bytes": 913289
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "requests": 6612,
+      "bytes": 1031332
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "requests": 6702,
+      "bytes": 1041497
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "requests": 7749,
+      "bytes": 1156220
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "requests": 7839,
+      "bytes": 1166385
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "requests": 11365,
+      "bytes": 1541420
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "requests": 11455,
+      "bytes": 1551585
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "requests": 195668,
+      "bytes": 28225739
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "requests": 195759,
+      "bytes": 28235956
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "requests": 229636,
+      "bytes": 38502107
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "requests": 229727,
+      "bytes": 38512324
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "requests": 1442005,
+      "bytes": 171551523
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "requests": 1442096,
+      "bytes": 171561740
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "requests": 2722325,
+      "bytes": 327792819
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "requests": 2722416,
+      "bytes": 327803036
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "requests": 5599,
+      "bytes": 910523
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "requests": 5689,
+      "bytes": 920688
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "requests": 7039,
+      "bytes": 1046267
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "requests": 7129,
+      "bytes": 1056432
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "requests": 8016,
+      "bytes": 1165107
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "requests": 8106,
+      "bytes": 1175272
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "requests": 11888,
+      "bytes": 1559331
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "requests": 11978,
+      "bytes": 1569496
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "requests": 199979,
+      "bytes": 28360018
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "requests": 200070,
+      "bytes": 28370235
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "requests": 234155,
+      "bytes": 38643922
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "requests": 234246,
+      "bytes": 38654139
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "requests": 1479100,
+      "bytes": 172702106
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "requests": 1479191,
+      "bytes": 172712323
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "requests": 2792412,
+      "bytes": 329967242
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "requests": 2792503,
+      "bytes": 329977459
+    }
+  ],
+  "semantics": [
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "e52e1289996b49f4754ef49085a2516c1ad594b4f54e5c2fe5b17f1a213e4e35",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "d3236526396e041d4df52fb8538b83afe7e905453ba666c52419651d9835f896",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e06d7b10d179df9c0cbebdc5d3ee4f080508fb8522e8aaf9bcdbd518a03b7d9d",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "eb7030a5a044fb9ca54f1e12729701f0fda8736a16cb01118f617bb4d4da9c3b",
+      "module_sha256": "bbcda9a35782c529e40608ab911cc66fd4dbeb7b18c70add8242b9fa72a7dd4e",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "7f62652d5aec2b1348cfb57ec32891277ce54af132cc1e971d78fe6221c18233",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "c135b8beee14e91289840dca064dd6014fe5b453f9778a1f4c98d139f1d558f1",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "1bb94622564ef60b8ea30ace793164ca6d69e4bc491408eb289f8f601c026c8d",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "b6d18d93149b188225d4112cb90b20a6a59b7b8278d6b110bb25922ac66af4ff",
+      "module_sha256": "b081b99acc6915ff426961b8645936037e5db4cfa5e9f36d07ff35294aba97bd",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "56d02f94b38d0862ee70364efde2b260522c26da3e46aa8397e79b7dc7ad57bd",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "7999f6324be6035973f9076920ecf2f9763a7deceedb01067e6a75048596a4f3",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "199dd87b13aacffb4a9434a0efb4d9f745f14926adee4e5e11220263c3ad5c8c",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "634f74ad4b396450c90f4089b2076bc432f045da3bdd0fd6985740ab89a03260",
+      "module_sha256": "9cd730cd77eba744f97147e9efb41f6c52e4f8cc68ae1b988e51cd1fd4089d4d",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "2b11fae0864b854c17f3bfe8baca3be795fcd119e5f9dde10c887a5c08bb738d",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "f30004c4372a0165ac8630b5eb3e3f4720a0530d0c25c08eca211ca749ffe1f8",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "e3e9b848ce2f90bc4d90d9c6a892897bd403b6c0da38c0c496068cf6ce40f147",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "root",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "cba20516a408b526bfdd4d2c0438f4080b688fa7fa5b9fcffc0c7432ab53906b",
+      "module_sha256": "1dac0b2e0cf55c8e76ea4d0b6f4b37e59bd1c30c8bb33e2be8bcf4a3f69da784",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "c37ef9f34ae9a9bdedba4228c1854cca985e1e8c22102bf93b682838bab37706",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "fedb6fbba5dc113356f0c9905154947d423d37aed7357a5b1788dc56a3497527",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "3e80889c94395cf6fe9c2501ac5f036c1424880cb7189f34bb060ee1d1a765e8",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "914cabf6926a5d52e5a02e9ae581e5bf5869cffbc5e51ae9d775c00503198d02",
+      "module_sha256": "90f600f94a3b2d0877dbc6c19c080448735e8b19f24e4f1c7043f1471f25f102",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "dd8c29aa451b0d36910bdf38a60d743c3994cde9551099b74d2884866165df34",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "68e0b06d944f6fb21b2d1586de715a09fca256e3d0cc6606069794cd63b437ad",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "d921d2e9ae1665b9b288ffc4e26b8212612d94f4a453b3c450f035421c368493",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "literal",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "8a1237683a267df5cb16e27acd6f06bdec7a5d64b811a3de14a66853b362aa82",
+      "module_sha256": "0e1bdbe824d9752bbd3d64301d53ee6b3174458a8a685a074acada3d1e3390a5",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "fbeb0f531781d113df070ac4eee3f64aaec0521cb25fd84a8bfe09ccdf2c32bd",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "35a775984fb630bae890ea99965db98237407de1c1937c71cbefae88e1623051",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "5153deb3c4ee4b579066fa40d4038ee194133bb989b3512cbf09bf0375552852",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "60e206e7d298a04704f004f1819dd85ae79256678ac4d47cd8f594c51b26397a",
+      "module_sha256": "9ab3fd30bbd62b8cd1eaaaced4b3981651adfa8413856284e7753669950af687",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "source_sha256": "d3314ebc2151ca66d92588957337c0c8bbd61451dc9cf5d0486229a552eed350",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "once",
+      "calls": 32,
+      "source_sha256": "abe2801d21b3ddd485ade4c4ec7c50d600a80faac9ffd5d885564f5559dbb529",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "source_sha256": "ff3250a99cbd4c054e66ed6fb18a1cb50565582cd0c4340ab3cf8518dd0bb289",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "vm",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "interpreter",
+      "exit": 0
+    },
+    {
+      "shape": "nested",
+      "form": "parameter",
+      "width": 2048,
+      "snapshot": "fresh",
+      "calls": 32,
+      "source_sha256": "2ed720ae0618368a18098043cd1b6db78012880ffc3bb6cfaaa92e07998add0d",
+      "module_sha256": "0271287d6abb17b38b40ae938611808019ea1e16ba134320e5200a14fb4420d4",
+      "mode": "jit",
+      "exit": 0
+    }
+  ],
+  "slopes": [
+    {
+      "group": [
+        "root",
+        "literal",
+        2,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 70.0,
+      "bytes": 6147.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 70.0,
+      "bytes": 6147.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 207.0,
+      "bytes": 21942.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 207.0,
+      "bytes": 21942.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2048,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2116.0,
+      "bytes": 640407.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2048,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2116.0,
+      "bytes": 640407.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2048,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 71817.0,
+      "bytes": 9580854.0
+    },
+    {
+      "group": [
+        "root",
+        "literal",
+        2048,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 71817.0,
+      "bytes": 9580854.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 5919.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 5919.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 223.0,
+      "bytes": 22506.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 223.0,
+      "bytes": 22506.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2048,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 5919.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2048,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 5919.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2048,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 73879.0,
+      "bytes": 9644844.0
+    },
+    {
+      "group": [
+        "root",
+        "parameter",
+        2048,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 73879.0,
+      "bytes": 9644844.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 8013.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 77.0,
+      "bytes": 8013.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 226.0,
+      "bytes": 24075.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 226.0,
+      "bytes": 24075.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2048,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2123.0,
+      "bytes": 642273.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2048,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2123.0,
+      "bytes": 642273.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2048,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 80020.0,
+      "bytes": 9765081.0
+    },
+    {
+      "group": [
+        "nested",
+        "literal",
+        2048,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 80020.0,
+      "bytes": 9765081.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 90.0,
+      "bytes": 8484.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 90.0,
+      "bytes": 8484.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 242.0,
+      "bytes": 24639.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 242.0,
+      "bytes": 24639.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2048,
+        "once",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2136.0,
+      "bytes": 642744.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2048,
+        "once",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 2136.0,
+      "bytes": 642744.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2048,
+        "fresh",
+        "vm"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 82082.0,
+      "bytes": 9829071.0
+    },
+    {
+      "group": [
+        "nested",
+        "parameter",
+        2048,
+        "fresh",
+        "jit"
+      ],
+      "calls": [
+        16,
+        32
+      ],
+      "requests": 82082.0,
+      "bytes": 9829071.0
+    }
+  ],
+  "verification": {
+    "status": "characterized",
+    "allocation_observations": 64,
+    "semantic_checks": 96,
+    "slopes": [
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 70.0,
+        "bytes": 6147.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 70.0,
+        "bytes": 6147.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 207.0,
+        "bytes": 21942.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 207.0,
+        "bytes": 21942.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2116.0,
+        "bytes": 640407.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2116.0,
+        "bytes": 640407.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 71817.0,
+        "bytes": 9580854.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 71817.0,
+        "bytes": 9580854.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 5919.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 5919.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 223.0,
+        "bytes": 22506.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 223.0,
+        "bytes": 22506.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 5919.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 5919.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73879.0,
+        "bytes": 9644844.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 73879.0,
+        "bytes": 9644844.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 8013.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 77.0,
+        "bytes": 8013.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 226.0,
+        "bytes": 24075.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 226.0,
+        "bytes": 24075.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2123.0,
+        "bytes": 642273.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2123.0,
+        "bytes": 642273.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 80020.0,
+        "bytes": 9765081.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 80020.0,
+        "bytes": 9765081.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 90.0,
+        "bytes": 8484.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 90.0,
+        "bytes": 8484.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 242.0,
+        "bytes": 24639.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 242.0,
+        "bytes": 24639.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "once",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2136.0,
+        "bytes": 642744.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "once",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 2136.0,
+        "bytes": 642744.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82082.0,
+        "bytes": 9829071.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "calls": [
+          16,
+          32
+        ],
+        "requests": 82082.0,
+        "bytes": 9829071.0
+      }
+    ],
+    "width_penalties": [
+      {
+        "group": [
+          "root",
+          "literal",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 71610.0,
+        "extra_bytes_per_call": 9558912.0
+      },
+      {
+        "group": [
+          "root",
+          "literal",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 71610.0,
+        "extra_bytes_per_call": 9558912.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 0.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 0.0,
+        "extra_bytes_per_call": 0.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 73656.0,
+        "extra_bytes_per_call": 9622338.0
+      },
+      {
+        "group": [
+          "root",
+          "parameter",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 73656.0,
+        "extra_bytes_per_call": 9622338.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 79794.0,
+        "extra_bytes_per_call": 9741006.0
+      },
+      {
+        "group": [
+          "nested",
+          "literal",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 79794.0,
+        "extra_bytes_per_call": 9741006.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          "once",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          "once",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 2046.0,
+        "extra_bytes_per_call": 634260.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          "fresh",
+          "vm"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 81840.0,
+        "extra_bytes_per_call": 9804432.0
+      },
+      {
+        "group": [
+          "nested",
+          "parameter",
+          "fresh",
+          "jit"
+        ],
+        "widths": [
+          2,
+          2048
+        ],
+        "extra_requests_per_call": 81840.0,
+        "extra_bytes_per_call": 9804432.0
+      }
+    ],
+    "vm_jit_slopes_agree": true,
+    "report_sha256": "54da4253495130999cbd28d261598a4465972ab0b36af7c3ea85c65baa6e8f1c",
+    "verifier_sha256": "5204b2f0b15101791c3fec2171483e0623e721486fdcc99f9bbc14df04b1f4d2",
+    "limits": "Accepted d853be4 allocation baseline, not nested candidate acceptance or elapsed-speed comparison. Literal and parameter forms have different argument/setup costs; compare each against itself."
+  },
+  "baseline_runtime_commit": "d853be4d59ff5c1c038d6a7a24bcdae50beb0038",
+  "fixture_root": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/struct-replacement-2026-10-29/baseline"
+}
