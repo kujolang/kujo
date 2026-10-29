@@ -108,6 +108,10 @@ Work still needed, in priority order:
    is rejected: all target allocation totals and slopes remained unchanged.
    Literal evaluation cleared admission before assignment; the corrected candidate
    must repeat both target and fallback gates before acceptance.
+   [Nested replacement isolation](NESTED_COLLECTION_REPLACEMENT_BASELINE_2026_10_29.md)
+   also confirms the same 587,520-byte width penalty under dictionary, struct and
+   array roots: 96 allocation observations and 144 semantic checks. Root-only
+   optimization does not close the nested portion of this item.
 2. Broader compound indexed arithmetic and captured-scalar batching.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
