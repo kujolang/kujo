@@ -224,24 +224,32 @@ impl FunctionBodyRef {
         params: &[String],
         args: &[Value],
         env: &super::environment::Environment,
-    ) -> u16 {
+    ) -> super::nested_spill_proof::SpillPolicy {
         let Some(proof) = self
             .storage
             .capture_independence
             .get_or_init(|| super::capture_independence::analyze(&self.storage.body))
         else {
-            return 0;
+            return super::nested_spill_proof::SpillPolicy::default();
         };
         if proof.nested_spill_region() {
             let dictionary =
                 super::nested_spill_proof::eligible(&self.storage.body, params, args, env);
-            if dictionary != 0 {
+            if dictionary.capacity != 0 {
                 dictionary
             } else {
-                super::row_spill_proof::eligible(&self.storage.body, params, args, env)
+                super::nested_spill_proof::SpillPolicy {
+                    capacity: super::row_spill_proof::eligible(
+                        &self.storage.body,
+                        params,
+                        args,
+                        env,
+                    ),
+                    ..Default::default()
+                }
             }
         } else {
-            0
+            super::nested_spill_proof::SpillPolicy::default()
         }
     }
 

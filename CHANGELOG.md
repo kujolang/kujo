@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain eligible initial scalar writes to nested dictionaries without detaching
+  the captured owner, preserving observable snapshots and publication boundaries.
+  Existing nested-key replacements avoid unnecessary full-table growth.
+
 - Defer eligible scalar insertion into captured root dictionaries without copying
   the entire owner on each call, preserving snapshots, callbacks, errors and key aliases.
 - Reuse validated oversized captured binding metadata with copy-on-write kind snapshots,

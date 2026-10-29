@@ -653,7 +653,7 @@ impl Environment {
         path: Vec<super::assignment::Access>,
         value: &Value,
     ) -> Result<(), Vec<super::assignment::Access>> {
-        self.try_defer_nested_write_with_batching(name, path, value, 0)
+        self.try_defer_nested_write_with_batching(name, path, value, Default::default())
     }
 
     pub(crate) fn try_defer_nested_write_with_batching(
@@ -661,7 +661,7 @@ impl Environment {
         name: &str,
         path: Vec<super::assignment::Access>,
         value: &Value,
-        spill_hint: u16,
+        spill_hint: super::nested_spill_proof::SpillPolicy,
     ) -> Result<(), Vec<super::assignment::Access>> {
         if !matches!(
             self.capture_writes,
@@ -674,12 +674,17 @@ impl Environment {
             return Err(path);
         }
         if let Some((0, CaptureWrites::Nested(pending))) = &mut self.capture_writes {
-            if !pending.try_record_with_batching(&path, value, spill_hint) {
+            if !pending.try_record_with_batching(&path, value, spill_hint.capacity) {
                 return Err(path);
             }
         } else {
             if !self.scopes[0].get(name).is_some_and(|root| {
-                super::nested_publication::NestedPublication::can_prepare(root, &path, value)
+                super::nested_publication::NestedPublication::can_prepare(
+                    root,
+                    &path,
+                    value,
+                    spill_hint.allow_initial_insertion,
+                )
             }) {
                 return Err(path);
             }

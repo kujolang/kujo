@@ -188,7 +188,7 @@ impl RowManyWrite {
 }
 
 /// Up to four scalar dictionary leaf writes reuse assignment path storage.
-/// The canonical key is shared with the map; admission never copies key bytes.
+/// Existing canonical keys are shared; an inserted key is allocated once at preparation.
 #[derive(Clone, Debug)]
 pub(crate) struct DictionaryWrite {
     selector: Selector,
@@ -259,7 +259,11 @@ impl DictionaryWrite {
         let map = Arc::make_mut(map);
         for (slot, key) in self.keys.iter().enumerate() {
             if let Some(key) = key {
-                map.insert(key.clone(), self.value(slot));
+                if let Some(existing) = map.get_mut(key.as_ref()) {
+                    *existing = self.value(slot);
+                } else {
+                    map.insert(key.clone(), self.value(slot));
+                }
             }
         }
     }
@@ -339,7 +343,11 @@ impl DictionaryManyWrite {
         let Some(Value::Dict(map)) = leaf else { unreachable!("validated dictionary leaf") };
         let map = Arc::make_mut(map);
         for (key, value) in &self.writes {
-            map.insert(key.clone(), value.value());
+            if let Some(existing) = map.get_mut(key.as_ref()) {
+                *existing = value.value();
+            } else {
+                map.insert(key.clone(), value.value());
+            }
         }
     }
 }
@@ -400,7 +408,7 @@ impl NestedPublication {
         root: &Value,
         path: &[Access],
         value: &Value,
-    ) -> Option<(Arc<str>, Scalar)> {
+    ) -> Option<(Option<Arc<str>>, Scalar)> {
         let (root, path) = Self::admission_owner(root, path)?;
         let [first, Access::Index(index)] = path else { return None };
         let Value::Dict(map) = RowKey::from_access(first)?.value(root)? else { return None };
@@ -413,14 +421,25 @@ impl NestedPublication {
             Value::Int(index) => {
                 with_integer_key(*index, |key| map.get_key_value(key).map(|(key, _)| key.clone()))
             }
-            _ => None,
-        }?;
+            _ => return None,
+        };
+        // Empty leaves retain ordinary mutation. Eligibility checks must not allocate
+        // a missing key: can_prepare and prepare both inspect the same assignment.
+        if key.is_none() && map.is_empty() {
+            return None;
+        }
         Some((key, value))
     }
 
-    pub(super) fn can_prepare(root: &Value, path: &[Access], value: &Value) -> bool {
+    pub(super) fn can_prepare(
+        root: &Value,
+        path: &[Access],
+        value: &Value,
+        allow_initial_insertion: bool,
+    ) -> bool {
         Self::admission(root, path, value).is_some()
-            || Self::dictionary_admission(root, path, value).is_some()
+            || Self::dictionary_admission(root, path, value)
+                .is_some_and(|(key, _)| key.is_some() || allow_initial_insertion)
     }
 
     pub(super) fn prepare(
@@ -434,6 +453,14 @@ impl NestedPublication {
         if dictionary.is_none() && row.is_none() {
             return Err((name, root, path));
         }
+        let dictionary = dictionary.map(|(key, value)| {
+            let key = key.unwrap_or_else(|| match path.last().expect("admitted dictionary key") {
+                Access::Index(Value::Str(key)) => Arc::from(key.as_str()),
+                Access::Index(Value::Int(index)) => with_integer_key(*index, |key| Arc::from(key)),
+                _ => unreachable!("admitted dictionary index"),
+            });
+            (key, value)
+        });
         path.pop(); // Leaf key/index is retained in the write metadata.
         let selector = match path.pop().expect("admitted owner selector") {
             Access::Field(field) => Selector::Field(field),
@@ -1214,6 +1241,100 @@ mod dictionary_tests {
     }
 
     #[test]
+    fn replacing_existing_keys_does_not_grow_full_leaf_tables() {
+        for width in [3, 7, 14, 28] {
+            for batched in [false, true] {
+                if batched && width < 5 {
+                    continue;
+                }
+                let mut map = DictMap::with_capacity_and_hasher(width, Default::default());
+                for i in 0..width {
+                    map.insert(Arc::from(i.to_string()), Value::Int(i as i64));
+                }
+                assert_eq!(map.len(), map.capacity());
+                let capacity = map.capacity();
+                let mut owner = Value::array(vec![Value::dict(map)]);
+                let mut pending = NestedPublication::prepare(
+                    "state".into(),
+                    owner.clone(),
+                    path(Value::Int(0)),
+                    &Value::Int(42),
+                )
+                .unwrap();
+                if batched {
+                    for i in 1..5 {
+                        assert!(pending.try_record_with_batching(
+                            &path(Value::Int(i)),
+                            &Value::Int(42 + i),
+                            5
+                        ));
+                    }
+                }
+                let (_, published) = pending.publish(Some(&mut owner));
+                for value in [owner, published] {
+                    let Value::Array(rows) = value else { unreachable!() };
+                    let Value::Dict(map) = &rows[0] else { unreachable!() };
+                    assert_eq!(map.capacity(), capacity, "width={width} batched={batched}");
+                    assert_eq!(map.len(), width);
+                    assert!(matches!(map.get("0"), Some(Value::Int(42))));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn initial_dictionary_key_preserves_snapshot_discard_and_unique_publication() {
+        let mut owner = Value::array(vec![leaf()]);
+        let captured = owner.clone();
+        assert!(NestedPublication::can_prepare(
+            &captured,
+            &path(Value::Int(0)),
+            &Value::Int(9),
+            false
+        ));
+        assert!(!NestedPublication::can_prepare(
+            &captured,
+            &path(Value::Int(2)),
+            &Value::Int(9),
+            false
+        ));
+        assert!(NestedPublication::can_prepare(
+            &captured,
+            &path(Value::Int(2)),
+            &Value::Int(9),
+            true
+        ));
+        drop(captured);
+        let pending = NestedPublication::prepare(
+            "state".into(),
+            owner.clone(),
+            path(Value::Int(2)),
+            &Value::Bool(false),
+        )
+        .unwrap();
+        assert!(matches!(pending.read(RowKey::Integer(0), 2), Some(Value::Bool(false))));
+        let saved = pending.snapshot_value();
+        let (_, discarded) = pending.clone().discard();
+        let Value::Array(rows) = discarded else { unreachable!() };
+        assert!(rows[0].dictionary_get("2").is_none());
+        drop(rows);
+        let (_, published) = pending.publish(Some(&mut owner));
+        for value in [saved, owner, published] {
+            let Value::Array(rows) = value else { unreachable!() };
+            assert!(matches!(rows[0].dictionary_get("2"), Some(Value::Bool(false))));
+            assert!(matches!(rows[0].dictionary_get("01"), Some(Value::Int(2))));
+        }
+        let empty = Value::array(vec![Value::dict(DictMap::default())]);
+        assert!(NestedPublication::prepare(
+            "state".into(),
+            empty.clone(),
+            path(Value::Int(0)),
+            &Value::Null,
+        )
+        .is_err());
+    }
+
+    #[test]
     fn dictionary_leaf_rejects_shared_roots_leaves_and_preserves_discard() {
         let shared = leaf();
         let owner = Value::array(vec![shared.clone()]);
@@ -1238,13 +1359,6 @@ mod dictionary_tests {
             "state".into(),
             owner.clone(),
             path(Value::Bool(false)),
-            &Value::Int(9)
-        )
-        .is_err());
-        assert!(NestedPublication::prepare(
-            "state".into(),
-            owner.clone(),
-            path(Value::str_ref("missing")),
             &Value::Int(9)
         )
         .is_err());

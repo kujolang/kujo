@@ -392,7 +392,7 @@ pub(crate) type TaskCaptureGlobals = Arc<Mutex<Vec<(Arc<Mutex<Environment>>, Env
 
 struct EnvironmentActivation {
     allow_multi_key: bool,
-    nested_spill_hint: u16,
+    nested_spill_hint: nested_spill_proof::SpillPolicy,
     insertion_bound: u16,
     globals: CapturedGlobals,
     capture: Option<(Arc<Mutex<Environment>>, usize)>,
@@ -2492,7 +2492,7 @@ impl Interpreter {
                     let caller = std::mem::replace(&mut self.env, environment);
                     self.environment_activations.push(EnvironmentActivation {
                         allow_multi_key: false,
-                        nested_spill_hint: 0,
+                        nested_spill_hint: Default::default(),
                         insertion_bound: 0,
                         capture: Some((captured.clone(), count)),
                         caller,
@@ -2518,7 +2518,7 @@ impl Interpreter {
         {
             body.can_batch_nested_dictionary_writes(params, args, &self.env)
         } else {
-            0
+            Default::default()
         };
         if let Some(frame) = self.environment_activations.last_mut() {
             frame.nested_spill_hint = nested_spill_hint;
@@ -2548,7 +2548,7 @@ impl Interpreter {
             let caller = std::mem::replace(&mut self.env, environment);
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
-                nested_spill_hint: 0,
+                nested_spill_hint: Default::default(),
                 insertion_bound: 0,
                 capture: Some((captured.clone(), count)),
                 caller,
@@ -2579,7 +2579,7 @@ impl Interpreter {
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
-                            nested_spill_hint: 0,
+                            nested_spill_hint: Default::default(),
                             insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
@@ -2601,7 +2601,7 @@ impl Interpreter {
                         let caller = std::mem::replace(&mut self.env, environment);
                         self.environment_activations.push(EnvironmentActivation {
                             allow_multi_key: false,
-                            nested_spill_hint: 0,
+                            nested_spill_hint: Default::default(),
                             insertion_bound: 0,
                             capture: Some((captured.clone(), count)),
                             caller,
@@ -2653,7 +2653,7 @@ impl Interpreter {
         let caller = std::mem::replace(&mut self.env, environment);
         self.environment_activations.push(EnvironmentActivation {
             allow_multi_key: false,
-            nested_spill_hint: 0,
+            nested_spill_hint: Default::default(),
             insertion_bound: 0,
             capture: Some((captured.clone(), count)),
             caller,
@@ -2764,7 +2764,7 @@ impl Interpreter {
         } else {
             self.environment_activations.push(EnvironmentActivation {
                 allow_multi_key: false,
-                nested_spill_hint: 0,
+                nested_spill_hint: Default::default(),
                 insertion_bound: 0,
                 capture: None,
                 caller,
@@ -4342,8 +4342,10 @@ impl Interpreter {
                 AccessExpr::Field(field) => Access::Field(field.to_string()),
             });
         }
-        let allow_spill =
-            self.environment_activations.last().map_or(0, |frame| frame.nested_spill_hint);
+        let allow_spill = self
+            .environment_activations
+            .last()
+            .map_or_else(Default::default, |frame| frame.nested_spill_hint);
         let path =
             match self.env.try_defer_nested_write_with_batching(name, path, &value, allow_spill) {
                 Ok(()) => return Value::Null,

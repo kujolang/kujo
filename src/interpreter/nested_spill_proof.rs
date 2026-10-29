@@ -6,7 +6,21 @@ use super::value::DictMap;
 use super::Value;
 use crate::ast::{Expr, Stmt};
 
+/// Reserve hint and admission policy are separate: an unprofitable first insertion
+/// must not disable batching when the executed branch first updates an existing key.
+#[derive(Clone, Copy)]
+pub(crate) struct SpillPolicy {
+    pub(super) capacity: u16,
+    pub(super) allow_initial_insertion: bool,
+}
+impl Default for SpillPolicy {
+    fn default() -> Self {
+        Self { capacity: 0, allow_initial_insertion: true }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
+
 enum Selector<'a> {
     Field(&'a str),
     String(&'a str),
@@ -152,13 +166,20 @@ pub(super) fn shape(body: &[Stmt]) -> bool {
     region.statements(body, 0) && region.writes > 4
 }
 
-pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &Environment) -> u16 {
-    let Some(owner) = first_owner(body, 0) else { return 0 };
+pub(super) fn eligible(
+    body: &[Stmt],
+    params: &[String],
+    args: &[Value],
+    env: &Environment,
+) -> SpillPolicy {
+    let Some(owner) = first_owner(body, 0) else { return SpillPolicy::default() };
     // A parameter can shadow the captured root; do not inspect the wrong value.
     if params.iter().any(|name| name == owner.name) {
-        return 0;
+        return SpillPolicy::default();
     }
-    let Some(root) = env.nested_spill_proof_value(owner.name) else { return 0 };
+    let Some(root) = env.nested_spill_proof_value(owner.name) else {
+        return SpillPolicy::default();
+    };
     let leaf = match (owner.selector, root) {
         (Selector::Field(field), Value::Struct { fields, .. }) => fields.get(field),
         (Selector::String(key), Value::Dict(map)) => map.get(key),
@@ -173,14 +194,20 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         }
         _ => None,
     };
-    let Some(Value::Dict(map)) = leaf else { return 0 };
+    let Some(Value::Dict(map)) = leaf else { return SpillPolicy::default() };
     let mut region = Region { owner, runtime: Some((map, params, args, env)), writes: 0 };
     if region.statements(body, 0) && region.writes > 4 {
         // Bound preallocation by the leaf and source work, not an arbitrary
         // maximum batch size. Further insertions still grow normally.
-        region.writes.min(map.len().max(5)).min(u16::MAX as usize) as u16
+        SpillPolicy {
+            capacity: region.writes.min(map.len().max(5)).min(u16::MAX as usize) as u16,
+            allow_initial_insertion: super::dictionary_publication::insertion_can_pay(
+                map,
+                u16::try_from(region.writes).unwrap_or(0),
+            ),
+        }
     } else {
-        0
+        SpillPolicy::default()
     }
 }
 
@@ -192,7 +219,7 @@ mod tests {
         args: &[super::Value],
         env: &super::Environment,
     ) -> bool {
-        super::eligible(body, params, args, env) != 0
+        super::eligible(body, params, args, env).capacity != 0
     }
 
     use super::*;
@@ -209,6 +236,30 @@ mod tests {
     }
     fn edits(row: &str, count: usize) -> String {
         (0..count).map(|i| format!("{row}[{i}] += n\n")).collect()
+    }
+
+    #[test]
+    fn insertion_batches_respect_owner_budget_without_disabling_existing_key_batches() {
+        for width in [2, 128, 2048] {
+            let mut env = Environment::new();
+            let map = Value::dict(
+                (0..width).map(|i| (Arc::from(i.to_string()), Value::Int(i))).collect(),
+            );
+            env.define("state".into(), Value::array(vec![map]));
+            for prefix in
+                ["", "state[0][0] = n ", "if n > 0 { state[0][0] = n } else { state[0][2] = n }"]
+            {
+                let source = format!(
+                    "{prefix}{} return n",
+                    (0..64).map(|i| format!("state[0][{}] = n ", width + i)).collect::<String>()
+                );
+                let body = parse(&source);
+                assert!(shape(&body));
+                let policy = super::eligible(&body, &["n".into()], &[Value::Int(1)], &env);
+                assert!(policy.capacity > 0, "Existing first writes retain batching");
+                assert_eq!(policy.allow_initial_insertion, width >= 128);
+            }
+        }
     }
 
     #[test]
