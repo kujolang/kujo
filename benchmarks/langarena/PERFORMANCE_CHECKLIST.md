@@ -171,6 +171,13 @@ Work still needed, in priority order:
    Four new hot target groups are flat across widths 3/2,048; all 18 previously
    flat groups remain flat. General multi-index writes, mixed payloads and broader
    boxed-payload helper bodies remain open; real snapshot costs remain separate.
+   [General batch isolation](ARRAY_BATCH_BASELINE_2026_10_29.md) now confirms the
+   remaining cost on `e445f4a`: 3/8/64-entry counted loops retain a 269,824-byte
+   array/mixed or 277,760-byte struct owner-width penalty per added call across
+   widths 64/2,048. All 288 allocation observations and 432 semantic checks pass;
+   hot VM/JIT slopes agree. Three small cold JIT offsets are preserved separately.
+   General batch storage and admission remain to implement; fresh snapshots still
+   require isolation.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently

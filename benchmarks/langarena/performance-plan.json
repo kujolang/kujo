@@ -5536,5 +5536,27 @@
     "new_hot_target_groups": 4,
     "preserved_flat_groups": 18,
     "remaining": "General multi-index and mixed-payload collection updates, broader boxed-payload helper bodies, compound/captured-scalar batching, capture traversal/materialization and representation review remain open. Sections3/4 are not complete; clean-host speed comparisons remain pending."
+  },
+  "array_batch_baseline_2026_10_29": {
+    "status": "confirmed_remaining_costs",
+    "runtime_commit": "e445f4a8e045cd067aaea99f6c79eebffca32a04",
+    "report": "ARRAY_BATCH_BASELINE_2026_10_29.md",
+    "evidence": "array-batch-baseline-2026-10-29.json",
+    "allocation_observations": 288,
+    "semantic_checks": 432,
+    "writes_per_call": [
+      3,
+      8,
+      64
+    ],
+    "widths": [
+      64,
+      2048
+    ],
+    "hot_vm_jit_slopes_agree": true,
+    "array_mixed_width_penalty_bytes_per_call": 269824,
+    "struct_width_penalty_bytes_per_call": 277760,
+    "cold_vm_jit_differences": "Three width64/fresh/64-write groups have +1 request/+52 bytes in JIT per added call; retained without causal attribution.",
+    "remaining": "Implement general batch storage and admission while preserving snapshots, callbacks, errors, aliases and mixed values. No runtime fix or elapsed-speed claim from this baseline."
   }
 }
