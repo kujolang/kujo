@@ -49,6 +49,20 @@ pub(super) enum CollectionValue {
 }
 
 impl CollectionValue {
+    pub(super) fn from_owned_value(value: Value) -> Self {
+        match value {
+            Value::Array(v) => Self::Array(v),
+            Value::Dict(v) => Self::Dict(v),
+            Value::Struct { name, fields } => Self::Struct { name: name.into_boxed_str(), fields },
+            Value::FixedDict { keys, values } => Self::FixedDict { keys, values },
+            Value::IntDict(v) => Self::IntDict(v),
+            Value::DenseIntDict(v) => Self::DenseIntDict(v),
+            Value::DenseIntDictInt(v) => Self::DenseIntDictInt(v),
+            Value::DenseIntDictIntFull(v) => Self::DenseIntDictIntFull(v),
+            _ => unreachable!("admitted collection payload"),
+        }
+    }
+
     pub(super) fn from_value(value: &Value) -> Self {
         match value {
             Value::Array(v) => Self::Array(v.clone()),

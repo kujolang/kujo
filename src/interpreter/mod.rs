@@ -4323,7 +4323,7 @@ impl Interpreter {
         }
     }
 
-    fn assign_path(&mut self, target: &Expr, value: Value) -> Value {
+    fn assign_path(&mut self, target: &Expr, mut value: Value) -> Value {
         use assignment::{split_target, Access, AccessExpr};
         let (name, expressions) = match split_target(target) {
             Ok(path) => path,
@@ -4346,11 +4346,15 @@ impl Interpreter {
             .environment_activations
             .last()
             .map_or_else(Default::default, |frame| frame.nested_spill_hint);
-        let path =
-            match self.env.try_defer_nested_write_with_batching(name, path, &value, allow_spill) {
-                Ok(()) => return Value::Null,
-                Err(path) => path,
-            };
+        let path = match self.env.try_defer_nested_write_with_batching(
+            name,
+            path,
+            &mut value,
+            allow_spill,
+        ) {
+            Ok(()) => return Value::Null,
+            Err(path) => path,
+        };
         let mut error = None;
         let result = self.env.mutate_checked_runtime(name, |root| {
             error = assignment::update_in_place(root, &path, value).err();
@@ -6083,7 +6087,7 @@ impl Interpreter {
     fn eval_expr(&mut self, expr: &Expr) -> Value {
         // Unknown operations can expose values or enter user/native code. Keep
         // the journal confined to ordinary evaluation between boundaries.
-        // Collection literals only assemble their evaluated operands. Each
+        // Collection and struct literals only assemble their evaluated operands. Each
         // operand still applies its own publication boundary, including captured
         // value reads and calls; the literal itself must not disable admission
         // before a collection-valued assignment can record its write.
@@ -6100,6 +6104,7 @@ impl Interpreter {
                 | Expr::IndexAccess { .. }
                 | Expr::ArrayLiteral(_)
                 | Expr::DictLiteral(_)
+                | Expr::StructInstance { .. }
         ) {
             if matches!(expr, Expr::FieldAccess { object, .. } if matches!(object.as_ref(), Expr::Identifier(_)))
             {

@@ -754,14 +754,20 @@ impl Environment {
         path: Vec<super::assignment::Access>,
         value: &Value,
     ) -> Result<(), Vec<super::assignment::Access>> {
-        self.try_defer_nested_write_with_batching(name, path, value, Default::default())
+        self.try_defer_nested_write_with_batching(
+            name,
+            path,
+            &mut value.clone(),
+            Default::default(),
+        )
     }
 
+    /// Successful collection admission takes the payload; rejection preserves it.
     pub(crate) fn try_defer_nested_write_with_batching(
         &mut self,
         name: &str,
         path: Vec<super::assignment::Access>,
-        value: &Value,
+        value: &mut Value,
         spill_hint: super::nested_spill_proof::SpillPolicy,
     ) -> Result<(), Vec<super::assignment::Access>> {
         if !matches!(
@@ -775,7 +781,7 @@ impl Environment {
             return Err(path);
         }
         if let Some((0, CaptureWrites::Nested(pending))) = &mut self.capture_writes {
-            if !pending.try_record_with_batching(&path, value, spill_hint.capacity) {
+            if !pending.try_record_owned_with_batching(&path, value, spill_hint.capacity) {
                 return Err(path);
             }
         } else {
@@ -790,7 +796,9 @@ impl Environment {
                 return Err(path);
             }
             let Some((key, root)) = self.scopes[0].remove_entry(name) else { return Err(path) };
-            match super::nested_publication::NestedPublication::prepare(key, root, path, value) {
+            match super::nested_publication::NestedPublication::prepare_owned(
+                key, root, path, value,
+            ) {
                 Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Nested(pending))),
                 Err((key, root, path)) => {
                     self.scopes[0].insert(key, root);

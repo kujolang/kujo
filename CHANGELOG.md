@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve collection-write admission while constructing struct literals; field
+  callbacks, owner reads and errors retain their ordinary evaluation boundaries.
+  Transfer owned nested payloads through publication without copying struct names.
+
 - Retain eligible nested collection replacements in existing assignment-path storage,
   preserving snapshots, aliases and fallback publication boundaries.
 

@@ -153,7 +153,7 @@ impl CollectionWrite {
         key.value(leaf).cloned()
     }
 
-    fn apply(&self, root: &mut Value) {
+    fn slot<'a>(&self, root: &'a mut Value) -> &'a mut Value {
         let leaf = match (&self.selector, root) {
             (Selector::Field(field), Value::Struct { fields, .. }) => {
                 Arc::make_mut(fields).get_mut(field)
@@ -170,14 +170,22 @@ impl CollectionWrite {
             _ => unreachable!("validated collection owner"),
         }
         .expect("validated collection leaf");
-        let slot = match (&self.key, leaf) {
+        match (&self.key, leaf) {
             (CollectionKey::Array(index), Value::Array(row)) => &mut Arc::make_mut(row)[*index],
             (CollectionKey::Dictionary(key), Value::Dict(map)) => {
                 Arc::make_mut(map).get_mut(key.as_ref()).expect("validated replacement key")
             }
             _ => unreachable!("validated collection replacement"),
-        };
-        *slot = self.value.clone().into_value();
+        }
+    }
+
+    fn apply(&self, root: &mut Value) {
+        *self.slot(root) = self.value.clone().into_value();
+    }
+
+    fn apply_owned(self, root: &mut Value) {
+        let slot = self.slot(root);
+        *slot = self.value.into_value();
     }
 }
 
@@ -529,11 +537,23 @@ impl NestedPublication {
                 .is_some_and(|(key, _)| key.is_some() || allow_initial_insertion)
     }
 
+    #[cfg(test)]
     pub(super) fn prepare(
         name: String,
         root: Value,
-        mut path: Vec<Access>,
+        path: Vec<Access>,
         value: &Value,
+    ) -> Result<Self, (String, Value, Vec<Access>)> {
+        Self::prepare_owned(name, root, path, &mut value.clone())
+    }
+
+    /// Consume an admitted collection only after every owner/path check succeeds.
+    /// Rejection leaves the assignment value available to ordinary mutation.
+    pub(super) fn prepare_owned(
+        name: String,
+        root: Value,
+        mut path: Vec<Access>,
+        value: &mut Value,
     ) -> Result<Self, (String, Value, Vec<Access>)> {
         let collection = Self::collection_admission(&root, &path, value);
         let dictionary = Self::dictionary_admission(&root, &path, value);
@@ -563,7 +583,7 @@ impl NestedPublication {
             Access::DeferredCollection(CollectionWrite {
                 selector,
                 key,
-                value: CollectionValue::from_value(value),
+                value: CollectionValue::from_owned_value(std::mem::replace(value, Value::Null)),
             })
         } else if let Some((key, value)) = dictionary {
             Access::DeferredDictionary(DictionaryWrite::new(selector, key, value))
@@ -700,10 +720,21 @@ impl NestedPublication {
         self.try_record_with_batching(path, value, 0)
     }
 
+    #[cfg(test)]
     pub(super) fn try_record_with_batching(
         &mut self,
         path: &[Access],
         value: &Value,
+        spill_hint: u16,
+    ) -> bool {
+        self.try_record_owned_with_batching(path, &mut value.clone(), spill_hint)
+    }
+
+    /// A failed record must leave both the pending write and input unchanged.
+    pub(super) fn try_record_owned_with_batching(
+        &mut self,
+        path: &[Access],
+        value: &mut Value,
         spill_hint: u16,
     ) -> bool {
         let Some((Access::Index(root), rest)) = self.path.split_first_mut() else { unreachable!() };
@@ -736,7 +767,7 @@ impl NestedPublication {
             if CollectionWrite::key(leaf, key).as_ref() != Some(&write.key) {
                 return false;
             }
-            write.value = CollectionValue::from_value(value);
+            write.value = CollectionValue::from_owned_value(std::mem::replace(value, Value::Null));
             return true;
         }
         if matches!(write, Access::DeferredDictionary(_) | Access::DeferredDictionaryMany(_)) {
@@ -821,9 +852,9 @@ impl NestedPublication {
         true
     }
 
-    fn apply_path(prefix: &[Access], write: &Access, root: &mut Value) {
-        if let Some((first, rest)) = prefix.split_first() {
-            let child = match (first, root) {
+    fn path_owner_mut<'a>(prefix: &[Access], mut root: &'a mut Value) -> &'a mut Value {
+        for first in prefix {
+            root = match (first, root) {
                 (Access::Field(field), Value::Struct { fields, .. }) => {
                     Arc::make_mut(fields).get_mut(field)
                 }
@@ -840,9 +871,12 @@ impl NestedPublication {
                 _ => unreachable!("validated prefix"),
             }
             .expect("validated prefix child");
-            Self::apply_path(rest, write, child);
-            return;
         }
+        root
+    }
+
+    fn apply_path(prefix: &[Access], write: &Access, root: &mut Value) {
+        let root = Self::path_owner_mut(prefix, root);
         match write {
             Access::DeferredCollection(write) => write.apply(root),
             Access::DeferredRow(write) => write.apply(root),
@@ -850,6 +884,15 @@ impl NestedPublication {
             Access::DeferredDictionary(write) => write.apply(root),
             Access::DeferredDictionaryMany(write) => write.apply(root),
             _ => unreachable!("nested publication write"),
+        }
+    }
+
+    fn apply_owned_path(prefix: &[Access], write: Access, root: &mut Value) {
+        match write {
+            Access::DeferredCollection(write) => {
+                write.apply_owned(Self::path_owner_mut(prefix, root));
+            }
+            write => Self::apply_path(prefix, &write, root),
         }
     }
 
@@ -874,11 +917,11 @@ impl NestedPublication {
             };
             if same {
                 drop(root);
-                Self::apply_path(&self.path, &write, owner);
+                Self::apply_owned_path(&self.path, write, owner);
                 return (self.name, owner.clone());
             }
         }
-        Self::apply_path(&self.path, &write, &mut root);
+        Self::apply_owned_path(&self.path, write, &mut root);
         (self.name, root)
     }
 
@@ -1843,6 +1886,80 @@ mod row_spill_tests {
 #[cfg(test)]
 mod collection_tests {
     use super::*;
+
+    fn payload(value: i64) -> Value {
+        Value::Struct {
+            name: Box::<str>::from("Item").into_string(),
+            fields: [("value".to_owned(), Value::Int(value))]
+                .into_iter()
+                .collect::<std::collections::HashMap<_, _>>()
+                .into(),
+        }
+    }
+
+    #[test]
+    fn owned_collection_publication_moves_name_storage_and_preserves_snapshots() {
+        for publish_to_owner in [false, true] {
+            let mut owner = Value::array(vec![Value::array(vec![Value::Null])]);
+            let mut value = payload(7);
+            let Value::Struct { name, .. } = &value else { unreachable!() };
+            assert_eq!(name.len(), name.capacity());
+            let name_pointer = name.as_ptr();
+            let pending =
+                NestedPublication::prepare_owned("state".into(), owner.clone(), path(), &mut value)
+                    .unwrap();
+            assert!(matches!(value, Value::Null));
+            let snapshot = pending.snapshot_value();
+            let (_, published) = pending.publish(publish_to_owner.then_some(&mut owner));
+            let Value::Array(rows) = &published else { unreachable!() };
+            let Value::Array(row) = &rows[0] else { unreachable!() };
+            let Value::Struct { name, .. } = &row[0] else { unreachable!() };
+            assert_eq!(name.as_ptr(), name_pointer);
+            assert!(Value::equals(&snapshot, &published));
+            let Value::Array(rows) = &snapshot else { unreachable!() };
+            let Value::Array(row) = &rows[0] else { unreachable!() };
+            let Value::Struct { name, .. } = &row[0] else { unreachable!() };
+            assert_ne!(name.as_ptr(), name_pointer);
+        }
+    }
+
+    #[test]
+    fn owned_collection_rejections_leave_input_intact_and_success_moves_replacement() {
+        let owner = Value::array(vec![Value::array(vec![Value::Null, Value::Null])]);
+        let mut value = payload(1);
+        let invalid = vec![Access::Index(Value::Int(0)), Access::Index(Value::Bool(true))];
+        assert!(NestedPublication::prepare_owned(
+            "state".into(),
+            owner.clone(),
+            invalid,
+            &mut value
+        )
+        .is_err());
+        assert!(Value::equals(&value, &payload(1)));
+        let mut pending =
+            NestedPublication::prepare_owned("state".into(), owner.clone(), path(), &mut value)
+                .unwrap();
+        let saved = pending.snapshot_value();
+        let mut next = payload(2);
+        let Value::Struct { name, .. } = &next else { unreachable!() };
+        let pointer = name.as_ptr();
+        assert!(!pending.try_record_owned_with_batching(
+            &[Access::Index(Value::Int(0)), Access::Index(Value::Int(1))],
+            &mut next,
+            0
+        ));
+        assert!(Value::equals(&next, &payload(2)));
+        assert!(pending.try_record_owned_with_batching(&path(), &mut next, 0));
+        assert!(matches!(next, Value::Null));
+        let (_, published) = pending.publish(None);
+        let Value::Array(rows) = &published else { unreachable!() };
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        let Value::Struct { name, .. } = &row[0] else { unreachable!() };
+        assert_eq!(name.as_ptr(), pointer);
+        let Value::Array(rows) = &saved else { unreachable!() };
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        assert!(Value::equals(&row[0], &payload(1)));
+    }
 
     fn path() -> Vec<Access> {
         vec![Access::Index(Value::Int(0)), Access::Index(Value::Int(0))]
