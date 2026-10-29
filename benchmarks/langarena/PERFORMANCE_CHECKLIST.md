@@ -163,6 +163,14 @@ Work still needed, in priority order:
    scalar/compound contracts and 54 reviewed memory pairs. All 18 target groups
    have flat width scaling. Multiple-index updates and broader boxed-payload
    helper bodies still require work; this does not close collection replacement.
+   Two same-kind array/dictionary payload replacements are now accepted in
+   `e445f4a`: [paired replacement results](ARRAY_COLLECTION_PAIRS_2026_10_29.md)
+   record 1,256 library passes, 410 integrations, all 150 test-size checksums,
+   1,520 allocation comparisons / 2,280 semantic checks without regressions,
+   15 additional scalar/compound contracts and 54 reviewed memory pairs.
+   Four new hot target groups are flat across widths 3/2,048; all 18 previously
+   flat groups remain flat. General multi-index writes, mixed payloads and broader
+   boxed-payload helper bodies remain open; real snapshot costs remain separate.
 2. Broader compound indexed arithmetic and captured-scalar batching.
    [Current baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently

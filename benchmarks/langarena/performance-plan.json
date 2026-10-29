@@ -5517,5 +5517,24 @@
     "memory_pairs": 54,
     "hot_target_groups": 18,
     "remaining": "Multiple-index collection updates, broader boxed-payload helper bodies, compound/captured-scalar batching, capture traversal/materialization and representation review remain open. Sections3/4 are not complete. Clean-host speed comparisons remain pending."
+  },
+  "array_collection_pairs_2026_10_29": {
+    "status": "verified",
+    "runtime_commit": "e445f4a8e045cd067aaea99f6c79eebffca32a04",
+    "baseline_runtime_commit": "f4152110cb26d5f163dd2e58158ba828803e2ce5",
+    "report": "ARRAY_COLLECTION_PAIRS_2026_10_29.md",
+    "evidence": "array-collection-pairs-2026-10-29.json",
+    "library_passes": 1256,
+    "library_ignored": 8,
+    "integration_passes": 410,
+    "integration_ignored": 1,
+    "test_size_checksums": 150,
+    "allocation_pairs": 1520,
+    "allocation_semantic_checks": 2280,
+    "additional_scalar_compound_contracts": 15,
+    "memory_pairs": 54,
+    "new_hot_target_groups": 4,
+    "preserved_flat_groups": 18,
+    "remaining": "General multi-index and mixed-payload collection updates, broader boxed-payload helper bodies, compound/captured-scalar batching, capture traversal/materialization and representation review remain open. Sections3/4 are not complete; clean-host speed comparisons remain pending."
   }
 }
