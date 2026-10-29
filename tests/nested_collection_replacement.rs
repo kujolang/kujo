@@ -4,6 +4,7 @@ use std::process::Command;
 #[test]
 fn nested_collection_replacements_preserve_callbacks_aliases_errors_and_rebinding() {
     for (declaration, row) in [
+        ("mut root := seed", "root"),
         ("mut root := {\"a\": {\"b\": {\"row\": seed}}}", "root[\"a\"][\"b\"][\"row\"]"),
         (
             "struct State { rows: array } mut root := State { rows: [{\"row\": seed}] }",

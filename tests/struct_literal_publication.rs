@@ -4,6 +4,7 @@ use std::process::Command;
 #[test]
 fn struct_literal_fields_preserve_order_callbacks_snapshots_and_errors() {
     for (declaration, row) in [
+        ("mut state := [Item { value: 0 }, Item { value: 1 }]", "state"),
         (r#"mut state := {"0": Item { value: 0 }, "1": Item { value: 1 }}"#, "state"),
         (
             r#"mut state := {"branch": {"0": Item { value: 0 }, "1": Item { value: 1 }}}"#,
