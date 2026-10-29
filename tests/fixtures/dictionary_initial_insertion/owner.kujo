@@ -1,0 +1,48 @@
+mut data := {"seed": 7}
+
+export func snapshot() { return data }
+
+export func insert_named(key, value) {
+    data[key] = value
+    return data[key]
+}
+
+func callback(x) {
+    assert_equal(data[0], 11)
+    data[1] = false
+    return x
+}
+
+export func edit() {
+    data[0] = 11
+    assert_equal(data["0"], 11)
+    let first := data
+    let result := map([3], callback)
+    assert_equal(result[0], 3)
+    assert_equal(has_key(first, 1), 0)
+    assert_equal(data[1], false)
+    data["00"] = null
+    data["+0"] = -0.0
+    data["-0"] = 19
+    data["long noncanonical inserted key"] = 23
+    assert_equal(data[0], 11)
+    assert_equal(has_key(data, "00"), 1)
+    assert_equal(data["00"], null)
+    assert_equal(type(data["+0"]), "float")
+    assert_equal(data["-0"], 19)
+    assert_equal(len(first), 2)
+    return first
+}
+
+export func edit_then_error() {
+    data["before error"] = 31
+    return data["absent"]
+}
+
+export func replace_root() {
+    data["before replacement"] = 37
+    let saved := data
+    data = {"replacement": 41}
+    data["after replacement"] = 43
+    return saved
+}

@@ -85,3 +85,19 @@ fn interpreter_dictionary_scalar_transitions() {
 fn jit_dictionary_scalar_transitions() {
     verify("jit");
 }
+
+#[test]
+fn initial_insertion_preserves_snapshots_callbacks_errors_and_root_replacement() {
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/dictionary_initial_insertion/main.kujo");
+    for mode in ["vm", "interpreter", "jit"] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command.arg("run").arg(&fixture).arg("--untrusted");
+        if mode != "vm" {
+            command.arg(format!("--{mode}"));
+        }
+        let result = command.output().unwrap();
+        assert!(result.status.success(), "{mode}: {}", String::from_utf8_lossy(&result.stderr));
+        assert_eq!(result.stdout, b"INITIAL INSERTION CONTRACT PASS\n");
+    }
+}
