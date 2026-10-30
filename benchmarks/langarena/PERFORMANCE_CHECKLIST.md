@@ -223,6 +223,12 @@ Work still needed, in priority order:
    cover cold/small-owner controls, fallback allocation nonregression, all three
    runtimes and memory review. Mixed two-write updates, general selectors and
    other unsupported shapes still need characterization.
+   [Post-promotion shape refresh](ARRAY_SHAPE_REFRESH_2026_10_30.md) now confirms
+   a 277,440-byte width penalty for mixed two-write updates, initial strings and
+   arithmetic selectors across widths 8/2,048 on `ac7f234`. All 192 allocation
+   observations and 288 semantic checks pass. Literal-selector and string-last
+   controls remain flat. Initial string routing is the next bounded fix; the
+   other two shapes remain separate open costs.
 2. Compound indexed arithmetic; primitive captured dependencies are now verified.
    [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
