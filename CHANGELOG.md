@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route eligible initial string and byte array updates into bounded batch storage,
+  preserving snapshot isolation, bounds checks and ordinary fallback publication.
+
 - Promote eligible captured-array scalar journals into bounded batch storage for
   mixed or larger scalar updates, preserving compact one/two-entry updates,
   snapshots, owner replacement and ordinary publication boundaries.

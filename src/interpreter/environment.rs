@@ -1081,7 +1081,8 @@ impl Environment {
         }
         if DictionaryCollectionPublication::supports(value)
             || (array_batch_capacity > 2
-                && self.pending_array_collection().is_some()
+                && (self.pending_array_collection().is_some()
+                    || matches!(value, Value::Str(_) | Value::Bytes(_)))
                 && super::array_batch_publication::BatchValue::supports(value))
         {
             return self.try_defer_array_collection_write(
@@ -2806,6 +2807,65 @@ impl Default for Environment {
 #[cfg(test)]
 mod indexed_publication_environment_tests {
     use super::*;
+
+    #[test]
+    fn initial_string_and_bytes_batches_preserve_snapshots_and_admission() {
+        for value in [Value::Str(Arc::new("entry".into())), Value::bytes(vec![0, 255])] {
+            let payload_matches = |actual: &Value| match (actual, &value) {
+                (Value::Str(a), Value::Str(b)) => a == b,
+                (Value::Bytes(a), Value::Bytes(b)) => a == b,
+                _ => false,
+            };
+            let (owner, mut active) = activation();
+            assert!(!active.try_defer_index_write_with_policy(
+                "data",
+                &Value::Int(0),
+                &value,
+                true,
+                0,
+                false,
+                0,
+            ));
+            assert!(!active.try_defer_index_write_with_policy(
+                "data",
+                &Value::Int(128),
+                &value,
+                true,
+                0,
+                false,
+                3,
+            ));
+            assert!(active.try_defer_index_write_with_policy(
+                "data",
+                &Value::Int(-128),
+                &value,
+                true,
+                0,
+                false,
+                3,
+            ));
+            assert!(matches!(active.capture_writes, Some((0, CaptureWrites::ArrayBatch(_)))));
+            let snapshot = active.clone();
+            for index in [1, 2] {
+                assert!(active.try_defer_index_write_with_policy(
+                    "data",
+                    &Value::Int(index),
+                    &Value::Int(77),
+                    true,
+                    0,
+                    false,
+                    3,
+                ));
+            }
+            active.publish_indexed_to(&mut owner.lock().unwrap());
+            let Value::Array(values) = owner.lock().unwrap().get("data").unwrap() else { panic!() };
+            assert!(payload_matches(&values[0]));
+            assert!(matches!(values[1], Value::Int(77)));
+            let Value::Array(saved) = snapshot.get("data").unwrap() else { panic!() };
+            assert!(payload_matches(&saved[0]));
+            assert!(matches!(saved[1], Value::Int(1)));
+        }
+    }
 
     fn activation() -> (Arc<Mutex<Environment>>, Environment) {
         let mut owner = Environment::new();
