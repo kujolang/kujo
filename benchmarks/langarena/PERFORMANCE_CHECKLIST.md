@@ -120,6 +120,10 @@ percentage or a reliable elapsed-time estimate.
    Acceptance covers 2,688 allocation pairs, 4,032 semantic checks, 1,271 library
    passes, 419 integrations, all 150 checksums and 192 reviewed RSS pairs. Broader
    unsupported selectors and capture/representation review remain open.
+   [Remaining selector isolation](REMAINING_SELECTOR_BASELINE_2026_10_30.md)
+   confirms a 277,440-byte width penalty for invariant-parameter multiplication
+   and division on the accepted runtime; 72 allocation observations and 108
+   semantic checks pass. These measured shapes require a bounded follow-up fix.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
    Separate required snapshot/publication work from avoidable copying. Each
