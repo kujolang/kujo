@@ -205,9 +205,12 @@ Work still needed, in priority order:
    about 633 KB to 7 KB. The four compound-indexed variants retain their measured
    587,520-byte width penalty and remain the next fix. This is not an elapsed-speed claim.
    The [first compound candidate](COMPOUND_PUBLICATION_REJECTION_2026_10_29.md)
-   is rejected for callback copying regressions. The revised candidate passes
-   target and callback controls; broad regression, checksum and memory acceptance
-   remain pending. Target allocation improvement alone does not close this item.
+   is rejected for callback copying regressions. The corrected implementation is
+   accepted in `7724558`: [verified results](COMPOUND_INDEXED_BATCHES_2026_10_30.md)
+   record 1,263 library passes, 414 integrations, all 150 test-size checksums,
+   656 allocation pairs / 984 semantic checks and 96 reviewed memory pairs. All
+   eight compound targets have flat width scaling; callback allocation regressions
+   are removed. General compound selectors retain fallback and remain for review.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
 4. Collection representation review and final combined-candidate verification,
@@ -215,10 +218,11 @@ Work still needed, in priority order:
 
 The nested-insertion, root replacement and eligible nested replacement cutoffs are
 complete. Struct-literal construction and eligible direct root-array replacement
-are also verified. The eligible general multiple-index batch cutoff is complete. The **next cutoff**
-is compound indexed arithmetic. Primitive captured-scalar admission is verified. Preserve snapshots,
-callbacks and error ordering and repeat the applicable regression and 150-checksum
-gates. Sections 3 and 4 remain open.
+are also verified. The eligible general multiple-index batch cutoff is complete. Compound indexed arithmetic with callback-free selectors is now verified in `7724558`.
+The **next cutoff** is isolation of remaining capture traversal/materialization
+and unsupported collection shapes, including general selectors and scalar-first
+journals. Preserve snapshots, callbacks and error ordering and repeat applicable
+regression and 150-checksum gates for further fixes. Sections 3 and 4 remain open.
 
 The [first nested candidate](nested-insertion-rejection-2026-10-29.json) remains
 rejected for 36 small-map allocation regressions. The subsequent

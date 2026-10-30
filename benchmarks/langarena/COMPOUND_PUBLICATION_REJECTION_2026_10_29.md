@@ -36,10 +36,10 @@ writes become observable. The caller's permissions are restored afterward. A
 separate regression test covers a callback whose selector replaces the root;
 reading the indexed value must preserve the pre-selector object snapshot.
 
-The revision is **not yet accepted**. Its target and callback controls pass,
-including zero allocation deltas in all 16 callback-body comparisons. Broad
-regression, checksum and memory gates remain necessary. No runtime commit is
-represented by this report.
+The revision was subsequently accepted in `7724558`; see the
+[final verification](COMPOUND_INDEXED_BATCHES_2026_10_30.md). It has zero allocation
+deltas in all 16 callback-body comparisons and passes the broad regression,
+checksum and memory gates. The first candidate remains rejected.
 
 ## Reproduction and provenance
 
