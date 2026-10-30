@@ -88,6 +88,31 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
 
+Review status, 2026-10-30: sections 3 and 4 remain open. The remaining work is
+grouped below; these groups are not equally sized and do not imply a completion
+percentage or a reliable elapsed-time estimate.
+
+1. Scalar-first array journal promotion is accepted in `ac7f234`.
+   [Verified results](SCALAR_FIRST_BATCHES_2026_10_30.md) record 1,344 allocation
+   comparisons, 2,664 semantic checks, three portable contracts, 1,266 library
+   passes, 415 integration passes and all 150 test-size checksums. All 72 memory
+   pairs are reviewed, including small increases. The next step is the remaining
+   unsupported-shape investigation below.
+2. Refresh remaining capture materialization and unsupported collection paths,
+   including oversized fallback, general compound selectors and dense updates.
+   Separate required snapshot/publication work from avoidable copying. Each
+   confirmed avoidable cost needs its own bounded fix and regression gates;
+   unmeasured shapes are investigation items, not confirmed defects.
+3. Conclude the specialized representation review and verify the combined final
+   candidate. Every remaining case must have an evidence-backed disposition:
+   fixed, required by semantics, or explicitly deferred with its limitation.
+   A deferred cost must not be described as fixed or as closing an unmet gate.
+
+The scalar-first patch is verified; the remaining investigation can produce
+additional patches. Clean-host Goose/Rust comparisons and section 5 compiled
+execution work are separate from this cutoff. Loaded-laptop elapsed times do not
+establish competitive speed improvements.
+
 Bounded root dictionary insertion is accepted in `4cd3bf1`; eligible nested initial
 insertion is now accepted in `2c91c49`. [Nested results and limits](NESTED_DICTIONARY_INSERTION_2026_10_29.md)
 record 1,239 library passes, 405 integrations, all 150 test-size checksums,
@@ -194,7 +219,10 @@ Work still needed, in priority order:
    scalar-first and three-scalar sequences; the reordered collection-first
    control stays flat at 6,251 bytes. All 96 allocation observations and 144
    runtime checks pass. Scalar journal promotion and scalar-only batch admission
-   remain unimplemented; cold/small-owner controls are required for acceptance.
+   are now accepted in `ac7f234`: [verified results](SCALAR_FIRST_BATCHES_2026_10_30.md)
+   cover cold/small-owner controls, fallback allocation nonregression, all three
+   runtimes and memory review. Mixed two-write updates, general selectors and
+   other unsupported shapes still need characterization.
 2. Compound indexed arithmetic; primitive captured dependencies are now verified.
    [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
@@ -237,8 +265,9 @@ The nested-insertion, root replacement and eligible nested replacement cutoffs a
 complete. Struct-literal construction and eligible direct root-array replacement
 are also verified. The eligible general multiple-index batch cutoff is complete. Compound indexed arithmetic with callback-free selectors is now verified in `7724558`.
 The **next cutoff** is isolation of remaining capture traversal/materialization
-and unsupported collection shapes, including general selectors and scalar-first
-journals. Preserve snapshots, callbacks and error ordering and repeat applicable
+and unsupported collection shapes, including general selectors and mixed two-write
+updates. Scalar-first journals are now verified separately. Preserve snapshots,
+callbacks and error ordering and repeat applicable
 regression and 150-checksum gates for further fixes. Sections 3 and 4 remain open.
 
 The [first nested candidate](nested-insertion-rejection-2026-10-29.json) remains
