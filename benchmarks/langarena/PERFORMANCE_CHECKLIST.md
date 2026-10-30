@@ -132,7 +132,10 @@ percentage or a reliable elapsed-time estimate.
    [Nested-row isolation](NESTED_ROW_BATCH_BASELINE_2026_10_30.md) now confirms
    a 261,120-byte per-call row-width penalty for array-valued dictionary/struct
    row updates at fixed write counts; 144 allocation observations and 216 semantic
-   checks pass. This is a confirmed follow-up fix. Deeper/escaping shapes remain
+   checks pass. Small array-only and mixed three-write batches also retain a
+   277,440-byte width penalty (144 additional allocation/216 semantic checks).
+   The confirmed follow-up must cover small mixed and dense updates together.
+   Deeper/escaping shapes remain
    separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;

@@ -24,6 +24,15 @@ runtime, not the in-progress invariant-selector candidate. An initial discarded
 fixture used struct field syntax on a dictionary and failed before measurement;
 the verified dictionary matrices use string-key indexing.
 
+A fourth matrix covers three explicit writes: array-only, scalar-first mixed,
+and collection-first mixed payloads, under both dictionary and struct owners.
+All six once-snapshot groups retain a 277,440-byte per-call width penalty from
+8 to 2,048 elements (for example, dictionary array-only: 9,339→286,779 bytes).
+This adds 144 allocation observations and 216 semantic checks, all independently
+verified. Combined allocation matrices now total 288 observations and 432
+semantic checks. The follow-up must cover these small mixed batches as well as
+counted dense updates; admitting only loops larger than four writes is insufficient.
+
 Nine additional baseline boundary runs pass across dictionary, struct and deep
 rows in VM/interpreter/JIT. They cover full batches, mixed scalar/array/dictionary
 payloads, negative aliases, overwrite after a full batch, callback observation,
