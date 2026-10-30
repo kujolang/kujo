@@ -95,6 +95,25 @@ impl IndexedPublication {
         true
     }
 
+    /// Transfer existing scalar writes without publishing or detaching the owner.
+    pub(super) fn into_batch(
+        self,
+        capacity: u16,
+    ) -> super::array_batch_publication::ArrayBatchPublication {
+        use super::array_batch_publication::{ArrayBatchPublication, BatchValue};
+        let Self { name, base, words, entries } = self;
+        let mut batch = ArrayBatchPublication::new(name, base, capacity);
+        for (entry, word) in entries.into_iter().zip(words) {
+            if entry != 0 {
+                assert!(batch.record(
+                    (entry & INDEX_MASK) as usize,
+                    BatchValue::from_owned(Self::decode(entry, word)),
+                ));
+            }
+        }
+        batch
+    }
+
     fn apply(base: &mut Arc<Vec<Value>>, entries: [u32; 2], words: [u64; 2]) {
         let values = Arc::make_mut(base);
         for (entry, word) in entries.into_iter().zip(words) {
@@ -165,6 +184,37 @@ mod tests {
             std::mem::align_of::<IndexedPublication>()
                 <= std::mem::align_of::<HashSet<(usize, String)>>()
         );
+    }
+
+    #[test]
+    fn promotion_preserves_scalar_bits_snapshots_and_replaced_owners() {
+        use super::super::array_batch_publication::BatchValue;
+        for value in [Value::Int(i64::MIN), Value::Float(-0.0), Value::Bool(true), Value::Null] {
+            let mut owner = original();
+            let snapshot = owner.clone();
+            let mut pending =
+                IndexedPublication::prepare("state".into(), base(&owner), 0, &value).unwrap();
+            assert!(pending.try_record(1, &Value::Int(19)));
+            let mut batch = pending.into_batch(3);
+            match (batch.get(0).unwrap(), &value) {
+                (Value::Int(a), Value::Int(b)) => assert_eq!(a, *b),
+                (Value::Float(a), Value::Float(b)) => assert_eq!(a.to_bits(), b.to_bits()),
+                (Value::Bool(a), Value::Bool(b)) => assert_eq!(a, *b),
+                (Value::Null, Value::Null) => {}
+                _ => panic!("scalar changed during promotion"),
+            }
+            assert!(batch.record(2, BatchValue::Int(29)));
+            let before = batch.snapshot_value();
+            assert!(batch.record(1, BatchValue::Int(39)));
+            assert!(!batch.record(128, BatchValue::Int(99)));
+            owner = Value::array(vec![Value::Int(100); 128]);
+            let (_, result) = batch.publish(Some(&mut owner));
+            assert_eq!(item(&owner, 1), 100);
+            assert_eq!(item(&result, 1), 39);
+            assert_eq!(item(&result, 2), 29);
+            assert_eq!(item(&before, 1), 19);
+            assert_eq!(item(&snapshot, 1), 1);
+        }
     }
 
     #[test]

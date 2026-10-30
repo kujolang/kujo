@@ -1115,6 +1115,15 @@ impl Environment {
         let index = resolved as usize;
         if let Some((0, CaptureWrites::Indexed(pending))) = &mut self.capture_writes {
             if !pending.try_record(index, value) {
+                if array_batch_capacity > 2 {
+                    return self.try_defer_array_collection_write(
+                        name,
+                        &Value::Int(index as i64),
+                        value,
+                        allow_boxed_array,
+                        array_batch_capacity,
+                    );
+                }
                 return false;
             }
         } else {
@@ -1151,6 +1160,8 @@ impl Environment {
         let Value::Int(index) = index else { return false };
         let length = if let Some(pending) = self.pending_array_collection() {
             pending.array_collection_len().expect("array publication")
+        } else if batch_capacity > 2 && self.pending_indexed().is_some() {
+            self.pending_indexed().expect("indexed publication").len()
         } else if matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
             let Some((key, Value::Array(base))) = self.scopes[0].get_key_value(name) else {
                 return false;
@@ -1169,6 +1180,16 @@ impl Environment {
         let index = resolved as usize;
         if index > u32::MAX as usize {
             return false;
+        }
+        if batch_capacity > 2 && self.pending_indexed().is_some() {
+            let Some((0, CaptureWrites::Indexed(pending))) = self.capture_writes.take() else {
+                unreachable!()
+            };
+            let mut batch = pending.into_batch(batch_capacity);
+            assert!(batch.record(index, BatchValue::from_owned(value.clone())));
+            self.capture_writes = Some((0, CaptureWrites::ArrayBatch(Box::new(batch))));
+            self.invalidate_capture_observation();
+            return true;
         }
         if let Some((0, CaptureWrites::ArrayBatch(batch))) = &mut self.capture_writes {
             if !batch.can_record(index) {

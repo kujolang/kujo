@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Promote eligible captured-array scalar journals into bounded batch storage for
+  mixed or larger scalar updates, preserving compact one/two-entry updates,
+  snapshots, owner replacement and ordinary publication boundaries.
+
 - Avoid redundant hash lookups when oversized captured binding names retain their
   original iteration order. Keep exact membership validation and ordinary lookup
   fallback for reordered or host-edited scopes, including same-size replacements.

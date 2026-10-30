@@ -40,7 +40,6 @@ struct Region<'a> {
     env: &'a Environment,
     counter: Option<(&'a str, i64)>,
     last: Option<i64>,
-    collection: bool,
     budget: Cell<usize>,
 }
 impl Region<'_> {
@@ -98,24 +97,17 @@ impl Region<'_> {
             return false;
         }
         match expr {
-            Expr::ArrayLiteral(items) => {
-                self.collection = true;
-                items.iter().all(|item| match item {
-                    ArrayElement::Single(value) => self.payload(value, depth + 1),
-                    _ => false,
-                })
-            }
-            Expr::DictLiteral(items) => {
-                self.collection = true;
-                items.iter().all(|item| match item {
-                    DictElement::Pair(key, value) => {
-                        self.scalar(key, depth + 1) && self.payload(value, depth + 1)
-                    }
-                    _ => false,
-                })
-            }
+            Expr::ArrayLiteral(items) => items.iter().all(|item| match item {
+                ArrayElement::Single(value) => self.payload(value, depth + 1),
+                _ => false,
+            }),
+            Expr::DictLiteral(items) => items.iter().all(|item| match item {
+                DictElement::Pair(key, value) => {
+                    self.scalar(key, depth + 1) && self.payload(value, depth + 1)
+                }
+                _ => false,
+            }),
             Expr::StructInstance { fields, .. } => {
-                self.collection = true;
                 fields.iter().all(|(_, value)| self.payload(value, depth + 1))
             }
             _ => self.scalar(expr, depth + 1),
@@ -268,13 +260,10 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         env,
         counter: None,
         last: None,
-        collection: false,
         budget: Cell::new(4096),
     };
     match region.statements(body, 0) {
-        Some(writes) if writes > 2 && region.collection => {
-            writes.min(base.len()).min(usize::from(u16::MAX)) as u16
-        }
+        Some(writes) if writes > 2 => writes.min(base.len()).min(usize::from(u16::MAX)) as u16,
         _ => 0,
     }
 }
@@ -349,6 +338,25 @@ mod tests {
             ),
             32
         );
+    }
+
+    #[test]
+    fn admits_scalar_batches_without_displacing_two_write_storage() {
+        let (env, _owner) = environment();
+        for body in [
+            "state[0] = n state[1] = n state[2] = n",
+            "state[0] = n state[1] = [n] state[2] = {\"value\": n}",
+            "mut j := 0 while j < 3 { state[j] = n j += 1 }",
+        ] {
+            assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 3);
+        }
+        for body in [
+            "state[0] = n state[1] = n",
+            "state[0] = n state[1] = n state[2] = observe()",
+            "state[0] = n state[1] = n state[99] = n",
+        ] {
+            assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 0);
+        }
     }
     #[test]
     fn rejects_observation_callbacks_uncertain_bounds_and_local_mutation() {
