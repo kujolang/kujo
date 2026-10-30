@@ -238,6 +238,12 @@ Work still needed, in priority order:
    regressions in target or historical controls. VM/JIT allocation
    results and all three runtimes' semantics are verified. Mixed two-write
    updates and arithmetic selectors remain separate open costs.
+   [Mixed-pair baseline](MIXED_PAIR_BASELINE_2026_10_30.md) on `94ad8f5` now
+   covers 12 ordered payload pairs at widths 2/3/8/2,048: 768 allocation
+   observations and 1,152 semantic checks pass. All pairs retain a 278,256-byte
+   width penalty between 2 and 2,048 elements; VM/JIT slopes agree. Compact mixed
+   pair storage must preserve the existing frame layout and cheap homogeneous
+   paths, with small-owner and snapshot controls retained.
 2. Compound indexed arithmetic; primitive captured dependencies are now verified.
    [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
