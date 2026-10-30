@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Batch eligible compound indexed arithmetic in captured dictionaries while
+  suspending caller optimization permissions inside operator callbacks; preserve
+  snapshots, selector order and error publication.
+
 - Admit primitive captured-scalar dependencies to eligible dictionary write
   batches, rechecking their types in the entered capture on every invocation.
 

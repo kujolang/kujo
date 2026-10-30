@@ -3075,6 +3075,34 @@ impl Interpreter {
         }
     }
 
+    // Operator bodies execute in the current activation, but the caller's
+    // publication proof says nothing about their selectors or mutation patterns.
+    // Suspend that proof while keeping writes private until an actual observation
+    // or call boundary requires publication.
+    fn with_operator_context<T>(
+        &mut self,
+        callable_name: &str,
+        body: impl FnOnce(&mut Self) -> T,
+    ) -> Result<T, Value> {
+        let depth = self.environment_activations.len();
+        let saved = self.environment_activations.last_mut().map(|frame| {
+            (
+                std::mem::take(&mut frame.publication_policy),
+                std::mem::take(&mut frame.nested_spill_hint),
+                std::mem::take(&mut frame.insertion_bound),
+            )
+        });
+        let result = self.with_function_context(callable_name, body);
+        debug_assert_eq!(self.environment_activations.len(), depth);
+        if let Some((policy, hint, bound)) = saved {
+            let frame = &mut self.environment_activations[depth - 1];
+            frame.publication_policy = policy;
+            frame.nested_spill_hint = hint;
+            frame.insertion_bound = bound;
+        }
+        result
+    }
+
     /// Attempts to call an operator method on a struct value
     /// Returns Some(result) if the struct has the operator method, None otherwise
     fn try_call_operator_method(
@@ -3122,7 +3150,7 @@ impl Interpreter {
 
                     // Execute method body
                     if let Err(error) = self
-                        .with_function_context(&format!("{}.{}", name, method_name), |interp| {
+                        .with_operator_context(&format!("{}.{}", name, method_name), |interp| {
                             interp.eval_stmts(&body.get())
                         })
                     {
@@ -3184,7 +3212,7 @@ impl Interpreter {
 
                     // Execute method body
                     if let Err(error) = self
-                        .with_function_context(&format!("{}.{}", name, method_name), |interp| {
+                        .with_operator_context(&format!("{}.{}", name, method_name), |interp| {
                             interp.eval_stmts(&body.get())
                         })
                     {

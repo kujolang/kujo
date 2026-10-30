@@ -60,8 +60,17 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
     }
     let required_parameters: Vec<String> =
         analyzer.required.into_iter().map(str::to_owned).collect();
-    let mut region = SparseRegion { names: &required_parameters, whole_value_mask: 0 };
-    let sparse_write_region = required_parameters.len() <= 32 && region.statements(body, 0);
+    let mut region =
+        SparseRegion { names: &required_parameters, whole_value_mask: 0, indexed_operands: false };
+    let sparse_write_region = required_parameters.len() <= 32
+        && (region.statements(body, 0) || {
+            // A separate proof retains the existing primitive-selector fast path.
+            // Indexed operands can invoke operators, so this proof admits only
+            // literal/identifier selectors, which cannot enter user code.
+            region.whole_value_mask = 0;
+            region.indexed_operands = true;
+            region.statements(body, 0)
+        });
     Some(Proof {
         whole_value_mask: region.whole_value_mask,
         region_flags: u8::from(sparse_write_region)
@@ -86,6 +95,7 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
 struct SparseRegion<'a> {
     names: &'a [String],
     whole_value_mask: u32,
+    indexed_operands: bool,
 }
 
 impl SparseRegion<'_> {
@@ -104,6 +114,11 @@ impl SparseRegion<'_> {
                 true
             }
             Expr::Int(_) | Expr::Float(_) | Expr::String(_) | Expr::Bool(_) => true,
+            Expr::IndexAccess { object, index }
+                if self.indexed_operands && matches!(object.as_ref(), Expr::Identifier(_)) =>
+            {
+                self.simple_selector(index, depth + 1)
+            }
             Expr::UnaryOp { operand, .. } => self.expression(operand, depth + 1),
             Expr::BinaryOp { left, right, .. } => {
                 self.expression(left, depth + 1) && self.expression(right, depth + 1)
@@ -112,9 +127,13 @@ impl SparseRegion<'_> {
         }
     }
 
-    // Indexed values have unknown runtime types and can invoke struct operators.
-    // Permit an indexed destination or direct return, but do not feed such a
-    // value into arithmetic or a local later used by arithmetic.
+    fn simple_selector(&mut self, expr: &Expr, depth: usize) -> bool {
+        matches!(expr, Expr::Int(_) | Expr::String(_) | Expr::Identifier(_))
+            && self.expression(expr, depth)
+    }
+
+    // The compound proof requires callback-free selectors even when an indexed
+    // value flows through a local. Operator entry suspends these permissions.
     fn indexed_access(&mut self, expr: &Expr, depth: usize) -> bool {
         if depth > 128 {
             return false;
@@ -123,7 +142,11 @@ impl SparseRegion<'_> {
             Expr::IndexAccess { object, index }
                 if matches!(object.as_ref(), Expr::Identifier(_)) =>
             {
-                self.expression(index, depth + 1)
+                if self.indexed_operands {
+                    self.simple_selector(index, depth + 1)
+                } else {
+                    self.expression(index, depth + 1)
+                }
             }
             _ => self.expression(expr, depth + 1),
         }
@@ -498,6 +521,27 @@ mod sparse_region_tests {
     }
 
     #[test]
+    fn compound_region_requires_callback_free_selectors() {
+        for tail in [
+            "return state[2] + n",
+            "let value := state[2] return value + n",
+            "state[2] += n return state[0]",
+            "return -state[2]",
+        ] {
+            assert!(eligible(
+                &format!("state[0] = n state[1] = n {tail}"),
+                &["n"],
+                &[Value::Int(1)]
+            ));
+        }
+        assert!(!eligible(
+            "state[0] = n let index := selectors[0] return state[index + 0]",
+            &["n"],
+            &[Value::Int(1)]
+        ));
+    }
+
+    #[test]
     fn sparse_region_rejects_observation_and_opaque_boundaries() {
         for tail in [
             "return state",
@@ -507,10 +551,6 @@ mod sparse_region_tests {
             "return state[state]",
             "return state.row",
             "state[2] = None return state[0]",
-            "return state[2] + n",
-            "let value := state[2] return value + n",
-            "state[2] += n return state[0]",
-            "return -state[2]",
             "if false { let saved := state } return state[0]",
         ] {
             assert!(
