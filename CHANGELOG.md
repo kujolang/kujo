@@ -11,6 +11,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid full captured-array copying for proven bounded addition/subtraction index expressions, retaining checked intermediate overflow, snapshot, callback and error publication semantics.
+
 - Keep eligible mixed two-write array updates in bounded private storage while
   preserving compact homogeneous journals, snapshots and publication boundaries.
 

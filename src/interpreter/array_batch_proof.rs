@@ -71,6 +71,17 @@ impl Region<'_> {
             Expr::UnaryOp { op, operand } if op == "-" => {
                 self.integer(operand, depth + 1, last)?.checked_neg()
             }
+            // These expressions are affine in the single counted variable.
+            // Both endpoints check every subexpression, including overflow.
+            Expr::BinaryOp { left, op, right } if op == "+" || op == "-" => {
+                let left = self.integer(left, depth + 1, last)?;
+                let right = self.integer(right, depth + 1, last)?;
+                if op == "+" {
+                    left.checked_add(right)
+                } else {
+                    left.checked_sub(right)
+                }
+            }
             _ => None,
         }
     }
@@ -375,6 +386,50 @@ mod tests {
             assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 0);
         }
     }
+    #[test]
+    fn admits_checked_affine_indices_and_rejects_overflowing_subexpressions() {
+        let owner = Value::array(vec![Value::Null; 8]);
+        let mut env = Environment::new();
+        env.define("state".into(), owner.clone());
+        for (body, offset) in [
+            ("state[offset + 0] = n state[1 + offset] = [n] state[(offset + 1) + 1] = n", 0),
+            ("state[offset - 0] = n state[offset - 1] = [n] state[offset - 2] = n", 2),
+            ("state[offset + 0] = n state[offset + 1] = [n] state[offset + 2] = n", -8),
+            ("mut j := 0 while j < 3 { state[offset + j] = [n] j += 1 }", 1),
+            ("mut j := 0 while j < 3 { state[offset - j] = [n] j += 1 }", 3),
+            ("mut j := 0 while j < 3 { state[-(offset + j)] = [n] j += 1 }", 1),
+        ] {
+            assert_eq!(
+                eligible(
+                    &parse(body),
+                    &["n".into(), "offset".into()],
+                    &[Value::Int(7), Value::Int(offset)],
+                    &env
+                ),
+                3
+            );
+        }
+        for (body, offset) in [
+            ("state[0] = n state[(offset + 1) - offset] = [n] state[2] = n", i64::MAX),
+            ("state[0] = n state[(offset - 1) - offset] = [n] state[2] = n", i64::MIN),
+            ("state[0] = n state[-(-offset)] = [n] state[2] = n", i64::MIN),
+            ("mut j := 0 while j < 3 { state[offset + j] = [n] j += 1 }", 7),
+            ("mut j := 0 while j < 3 { state[offset - j] = [n] j += 1 }", -7),
+            ("state[0] = n state[offset * offset] = [n] state[2] = n", 1),
+            ("state[0] = n state[offset + observe()] = [n] state[2] = n", 1),
+        ] {
+            assert_eq!(
+                eligible(
+                    &parse(body),
+                    &["n".into(), "offset".into()],
+                    &[Value::Int(7), Value::Int(offset)],
+                    &env
+                ),
+                0
+            );
+        }
+    }
+
     #[test]
     fn rejects_observation_callbacks_uncertain_bounds_and_local_mutation() {
         let (mut env, _owner) = environment();
