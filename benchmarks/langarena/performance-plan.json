@@ -4065,7 +4065,7 @@
     },
     {
       "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
-      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754\u20131.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
+      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
       "evidence": "paired-assignment-2026-10-23.json"
     },
     {
@@ -4370,7 +4370,7 @@
     },
     {
       "scope": "checked append unique Arc-node reuse",
-      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1\u20132 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
+      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1–2 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
       "evidence": "checked-append-node-relocations-2026-10-24.json"
     },
     {
@@ -4435,7 +4435,7 @@
       "timing_samples": 28,
       "rss_samples": 8,
       "evidence": "builtin-pool-release-2026-10-24.json",
-      "limit": "CPU speed limit 100\u219271%; local directional timing only; production/platform/competitive gates open"
+      "limit": "CPU speed limit 100→71%; local directional timing only; production/platform/competitive gates open"
     },
     {
       "runtime_commit": "4e42bd2",
@@ -4643,7 +4643,7 @@
     "pending": [
       "Clean-host acceptance and competitor comparisons",
       "Precise generated-native/fallback CPU-time attribution: xctrace absent and DTrace unavailable under current privileges/SIP",
-      "Runtime optimization sections 3\u20135 require the next authorized fix round"
+      "Runtime optimization sections 3–5 require the next authorized fix round"
     ],
     "evidence": [
       "benchmarks/langarena/LOCAL_ISOLATION_2026_10_25.md",
@@ -5375,8 +5375,8 @@
     "control_allocation_pairs": 192,
     "control_semantic_checks": 288,
     "memory_pairs": 48,
-    "allocation_result": "8192-name added-call bytes fall311959\u21921650 read and311970\u21921661 write in VM/JIT; no tested target/control allocation regressions",
-    "memory_tradeoff": "244746 retained metadata bytes per8192-nameowner;32owner RSS means increase2.9\u20133.7% locally; explicit cache tradeoff, not memory-neutral",
+    "allocation_result": "8192-name added-call bytes fall311959→1650 read and311970→1661 write in VM/JIT; no tested target/control allocation regressions",
+    "memory_tradeoff": "244746 retained metadata bytes per8192-nameowner;32owner RSS means increase2.9–3.7% locally; explicit cache tradeoff, not memory-neutral",
     "retention_regression": "Host scope shrink stale-name retention reproduced and fixed; immutable reinsertion and existing view snapshots preserved",
     "remaining": "Sections3/4 remain open for broader capture traversal/materialization, collection copying and representation review. No elapsed-speed/production/platform/clean-host acceptance."
   },
@@ -5635,5 +5635,17 @@
     "portable_callback_cases": 18,
     "memory_pairs": 96,
     "remaining": "General compound selectors, capture traversal/materialization, oversized fallback, unsupported collection paths including scalar-first journals, and representation review remain open. Sections3/4 not complete; clean-host speed comparisons remain pending."
+  },
+  "capture_membership_2026_10_30": {
+    "runtime_commit": "18ebd21",
+    "status": "verified",
+    "report": "CAPTURE_MEMBERSHIP_2026_10_30.md",
+    "evidence": "capture-membership-2026-10-30.json",
+    "allocation_pairs": 260,
+    "semantic_checks": 390,
+    "library_passes": 1264,
+    "integration_passes": 414,
+    "test_size_checksums": 150,
+    "limits": "Required linear membership traversal remains; broader sections 3/4 open. Local RSS uncertainty retained; no elapsed-speed claim."
   }
 }

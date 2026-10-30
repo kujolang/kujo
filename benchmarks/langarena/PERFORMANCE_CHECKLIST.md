@@ -217,6 +217,13 @@ Work still needed, in priority order:
    80 allocation observations and 120 semantic checks. Prior allocation savings
    remain intact; instrumented sampling identifies exact capture-membership
    lookups as the next traversal experiment. This is not a speed or closure claim.
+   Exact membership lookup optimization is now accepted in `18ebd21`:
+   [verified results](CAPTURE_MEMBERSHIP_2026_10_30.md) retain exact host-edit
+   validation while avoiding redundant hashes for unchanged name order. All 260
+   allocation pairs, 390 semantic checks, 1,264 library tests, 414 integrations
+   and 150 test-size checksums pass. Initial RSS increases and follow-up
+   baseline variation remain documented. Required linear validation and broader
+   materialization/fallback remain open; no elapsed-speed claim follows.
 4. Collection representation review and final combined-candidate verification,
    including dense updates and fresh snapshots.
 
