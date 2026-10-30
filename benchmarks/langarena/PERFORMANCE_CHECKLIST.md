@@ -98,6 +98,11 @@ percentage or a reliable elapsed-time estimate.
    passes, 415 integration passes and all 150 test-size checksums. All 72 memory
    pairs are reviewed, including small increases. The next step is the remaining
    unsupported-shape investigation below.
+   Initial string/byte batch routing is also accepted in `94ad8f5`:
+   [verified results](STRING_FIRST_BATCHES_2026_10_30.md) record 1,728 allocation
+   pairs, 3,240 semantic checks, 1,267 library passes, 416 integration passes,
+   all 150 test-size checksums and 144 reviewed memory pairs. Mixed two-write
+   updates and arithmetic selectors remain confirmed open costs.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
    Separate required snapshot/publication work from avoidable copying. Each
@@ -108,7 +113,7 @@ percentage or a reliable elapsed-time estimate.
    fixed, required by semantics, or explicitly deferred with its limitation.
    A deferred cost must not be described as fixed or as closing an unmet gate.
 
-The scalar-first patch is verified; the remaining investigation can produce
+The scalar-first and initial string/byte patches are verified; the remaining investigation can produce
 additional patches. Clean-host Goose/Rust comparisons and section 5 compiled
 execution work are separate from this cutoff. Loaded-laptop elapsed times do not
 establish competitive speed improvements.
@@ -227,8 +232,12 @@ Work still needed, in priority order:
    a 277,440-byte width penalty for mixed two-write updates, initial strings and
    arithmetic selectors across widths 8/2,048 on `ac7f234`. All 192 allocation
    observations and 288 semantic checks pass. Literal-selector and string-last
-   controls remain flat. Initial string routing is the next bounded fix; the
-   other two shapes remain separate open costs.
+   controls remain flat. Initial string/byte routing is now accepted in `94ad8f5`:
+   [verified results](STRING_FIRST_BATCHES_2026_10_30.md) show string-first costs
+   flat at 5,260 bytes per added call across widths 3/4/8/2,048, with no allocation
+   regressions in target or historical controls. VM/JIT allocation
+   results and all three runtimes' semantics are verified. Mixed two-write
+   updates and arithmetic selectors remain separate open costs.
 2. Compound indexed arithmetic; primitive captured dependencies are now verified.
    [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
