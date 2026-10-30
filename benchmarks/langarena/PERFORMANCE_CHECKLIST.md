@@ -102,7 +102,8 @@ percentage or a reliable elapsed-time estimate.
    [verified results](STRING_FIRST_BATCHES_2026_10_30.md) record 1,728 allocation
    pairs, 3,240 semantic checks, 1,267 library passes, 416 integration passes,
    all 150 test-size checksums and 144 reviewed memory pairs. Mixed two-write
-   updates are now accepted in `f92de4b`; arithmetic selectors remain open.
+   updates are now accepted in `f92de4b`; bounded arithmetic selectors are also
+   accepted in `5458132`.
    [Mixed-pair results](MIXED_PAIR_BATCHES_2026_10_30.md) record 2,496 allocation
    pairs, 4,392 semantic checks, 1,270 library passes, 418 integrations and all
    150 checksum cases. All 288 memory pairs were reviewed, retaining small
@@ -113,7 +114,12 @@ percentage or a reliable elapsed-time estimate.
    verifies 192 allocation observations and 288 semantic checks on `94ad8f5`,
    plus a three-runtime overflow/bounds/callback contract. All seven arithmetic
    forms retain a 277,440-byte width penalty from 8 to 2,048 elements; the
-   literal-index control is flat. No arithmetic-selector fix is included yet.
+   literal-index control is flat. The [verified fix](ARITHMETIC_SELECTOR_FIX_2026_10_30.md)
+   now removes that width penalty for the seven measured addition/subtraction
+   forms: 284,846→6,514 bytes/call (direct), 286,573→8,241 (loops) at width 2,048.
+   Acceptance covers 2,688 allocation pairs, 4,032 semantic checks, 1,271 library
+   passes, 419 integrations, all 150 checksums and 192 reviewed RSS pairs. Broader
+   unsupported selectors and capture/representation review remain open.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
    Separate required snapshot/publication work from avoidable copying. Each
