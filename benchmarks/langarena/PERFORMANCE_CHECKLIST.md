@@ -189,6 +189,12 @@ Work still needed, in priority order:
    contracts and 108 reviewed memory pairs. All 18 target groups have flat width
    scaling. Small and retained-snapshot peak-memory increases remain documented.
    Initial scalar-first journals and unsupported shapes retain fallback.
+   [Scalar-first isolation](SCALAR_FIRST_BASELINE_2026_10_30.md) on `18ebd21`
+   confirms a 269,824-byte owner-width penalty per added call for both mixed
+   scalar-first and three-scalar sequences; the reordered collection-first
+   control stays flat at 6,251 bytes. All 96 allocation observations and 144
+   runtime checks pass. Scalar journal promotion and scalar-only batch admission
+   remain unimplemented; cold/small-owner controls are required for acceptance.
 2. Compound indexed arithmetic; primitive captured dependencies are now verified.
    [Baseline isolation](COMPOUND_CAPTURE_BASELINE_2026_10_29.md) separates
    captured reads, captured assignments and indexed arithmetic: each independently
