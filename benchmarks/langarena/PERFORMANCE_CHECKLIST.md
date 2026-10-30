@@ -213,6 +213,10 @@ Work still needed, in priority order:
    are removed. General compound selectors retain fallback and remain for review.
 3. Remaining capture traversal/materialization and oversized fallback; distinguish
    necessary work from avoidable costs before changing it.
+   [Current-runtime refresh](REMAINING_CAPTURE_BASELINE_2026_10_30.md) passes
+   80 allocation observations and 120 semantic checks. Prior allocation savings
+   remain intact; instrumented sampling identifies exact capture-membership
+   lookups as the next traversal experiment. This is not a speed or closure claim.
 4. Collection representation review and final combined-candidate verification,
    including dense updates and fresh snapshots.
 
