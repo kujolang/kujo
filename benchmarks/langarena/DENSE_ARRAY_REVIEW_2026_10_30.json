@@ -1,0 +1,2751 @@
+{
+  "status": "characterized",
+  "pid": 77456,
+  "runtime": "5458132",
+  "identities": {
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo": "41b9e9f5aef3cfa9e01d05265aa01176ab421d817082741746d404c54e063609",
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe": "8642308aeb0f39a92133149d693cdd3e1c44eba92bb4ea788d442cfca3270d9e",
+    ".audit-evidence/dense-array-audit-2026-10-30/run.rb": "502bf62f275d0e0fd1f80cfb54481da045c135b1b62514f895816e55c81017dd"
+  },
+  "sources": {
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo": {
+      "sha256": "f4e9824ce41e99d4e9b27870f3aea8a07153e5e09f0779d79c5317cd9b58018b",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 {  assert_equal(edit(i + 1, 32), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo": {
+      "sha256": "37db3c40717330a984d7118fb405c708a84e8a004cc550c9d7d38379188abe01",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 {  assert_equal(edit(i + 1, 32), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo": {
+      "sha256": "4d5d698fd18c0952eea9ee9f028aed2f42ae3d83227ccea07db13c2fc338dd56",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 {  assert_equal(edit(i + 1, 32), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo": {
+      "sha256": "96455c72e26b0257055bdb4b10b0f705dd5be1969d5106281d68938538bfdcee",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 { let saved := snapshot() assert_equal(edit(i + 1, 32), i + 1) if i == 0 { assert_equal(saved[31], 0) } else { assert_equal(saved[31], [i + 31]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo": {
+      "sha256": "cf16fe75b2045a2405f16e032b6ad42f988e903971d6c284b59d65f39e8f6e55",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 { let saved := snapshot() assert_equal(edit(i + 1, 32), i + 1) if i == 0 { assert_equal(saved[31], 0) } else { assert_equal(saved[31], [i + 31]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo": {
+      "sha256": "d7f0182b108243c8e089ce0abbeecce0b720ba19106652a9b8cc673dd74845df",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 { let saved := snapshot() assert_equal(edit(i + 1, 32), i + 1) if i == 0 { assert_equal(saved[31], 0) } else { assert_equal(saved[31], [i + 31]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 32 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo": {
+      "sha256": "1c5b5fd3880d20b1f9ebadb909a0dec973b63dc45657c3876656443cd2c14fe2",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 {  assert_equal(edit(i + 1, 128), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo": {
+      "sha256": "130f29089be0d64bd551df77cef88d54df542ae28d99b5d3e772b6df0902a4ae",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 {  assert_equal(edit(i + 1, 128), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo": {
+      "sha256": "2c66710168b9acac0083de1ecae346df302e0d99d5c9f24e7b5eba4e6b86e631",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 {  assert_equal(edit(i + 1, 128), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo": {
+      "sha256": "a80ada19cb79902df15225b3c4c7fc9694577bbd8b7222ec2a020f6a59cef56e",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 { let saved := snapshot() assert_equal(edit(i + 1, 128), i + 1) if i == 0 { assert_equal(saved[127], 0) } else { assert_equal(saved[127], [i + 127]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo": {
+      "sha256": "184bb4574da5f7cba1572268e2ce9922149dcbc755f24233b33e28ef7b1701af",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 { let saved := snapshot() assert_equal(edit(i + 1, 128), i + 1) if i == 0 { assert_equal(saved[127], 0) } else { assert_equal(saved[127], [i + 127]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/owner.kujo": {
+      "sha256": "86008a53130fa3f55ab2c1d7f569813f8ef10ccc91e0b6661739fc213ea063e6",
+      "text": "mut state := [] mut k := 0 while k < 128 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo": {
+      "sha256": "62e63a5bf3f9434cf43ad7369da94bdb5e618c7aea057ce8d1201270437b42f8",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 { let saved := snapshot() assert_equal(edit(i + 1, 128), i + 1) if i == 0 { assert_equal(saved[127], 0) } else { assert_equal(saved[127], [i + 127]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 128) mut k := 0 while k < 128 { assert_equal(original[k], 0) if k < 128 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo": {
+      "sha256": "d09fc69fd2cb105065b838d270f759f95e23c04fec1cd54196e683dd699ba48b",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 {  assert_equal(edit(i + 1, 512), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo": {
+      "sha256": "bb936eeb1e58c600b1daf975b182f27593196a60faf298b635e97bf8aa9804a5",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 {  assert_equal(edit(i + 1, 512), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo": {
+      "sha256": "537f3143cffc0af672dbbf1427e8b0003f92dbcc75946ffe05ec0b2a5559d2a3",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 {  assert_equal(edit(i + 1, 512), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo": {
+      "sha256": "e5fdbbc301427d5ee5df6e75ce1a43ea057708134ed994dacf82d38e858d2c2d",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 { let saved := snapshot() assert_equal(edit(i + 1, 512), i + 1) if i == 0 { assert_equal(saved[511], 0) } else { assert_equal(saved[511], [i + 511]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo": {
+      "sha256": "487b9075be5e50436b5f5214754739ad103f08e040e0f153b05de674bd2b8db1",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 { let saved := snapshot() assert_equal(edit(i + 1, 512), i + 1) if i == 0 { assert_equal(saved[511], 0) } else { assert_equal(saved[511], [i + 511]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo": {
+      "sha256": "cdb5a1fdcfc64537883fef717a28b10397d57735233ff404c484558c055c2d21",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 { let saved := snapshot() assert_equal(edit(i + 1, 512), i + 1) if i == 0 { assert_equal(saved[511], 0) } else { assert_equal(saved[511], [i + 511]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 512 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo": {
+      "sha256": "2e18b999b0ea37e5ff10ac0151a3c14a42ce4b5c17a73c98e8167503acfc872d",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 {  assert_equal(edit(i + 1, 2048), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo": {
+      "sha256": "8a4d25e78f5cdb316bddac22ff4e5b5202fe9fba716c3157c27f1403a3dd3bce",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 {  assert_equal(edit(i + 1, 2048), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo": {
+      "sha256": "6e1267b229cfe2244e47974d4f206ad441cb78101da8660ee61d91d34de1f9bf",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 {  assert_equal(edit(i + 1, 2048), i + 1)  i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo": {
+      "sha256": "3161eb96af1bf8066292f690e63851904171ed0cd30b5018bd209db35542b43c",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 1 { let saved := snapshot() assert_equal(edit(i + 1, 2048), i + 1) if i == 0 { assert_equal(saved[2047], 0) } else { assert_equal(saved[2047], [i + 2047]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [1 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo": {
+      "sha256": "27dead7b5b580a8eb86aa651f8f92ae7bc9bf478159184683185986b460addcf",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 8 { let saved := snapshot() assert_equal(edit(i + 1, 2048), i + 1) if i == 0 { assert_equal(saved[2047], 0) } else { assert_equal(saved[2047], [i + 2047]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [8 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/owner.kujo": {
+      "sha256": "777f185fa577d8e0f05051b266099966674367a8f243c45d2451d09cc4ac3dc4",
+      "text": "mut state := [] mut k := 0 while k < 2048 { state = push(state, 0) k += 1 }\nexport func snapshot() { return state }\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\n"
+    },
+    "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo": {
+      "sha256": "70e63d6e9a0f5832b34370c610673513d774b5bb44db3301182dae89168f6741",
+      "text": "from owner import snapshot, edit\nlet original := snapshot()\nmut i := 0 while i < 16 { let saved := snapshot() assert_equal(edit(i + 1, 2048), i + 1) if i == 0 { assert_equal(saved[2047], 0) } else { assert_equal(saved[2047], [i + 2047]) } i += 1 }\nlet final := snapshot() assert_equal(len(final), 2048) mut k := 0 while k < 2048 { assert_equal(original[k], 0) if k < 2048 { assert_equal(final[k], [16 + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\"DENSE ARRAY PASS\")\n"
+    }
+  },
+  "rows": [
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=11824 requested_bytes=1741612\n",
+      "exit": 0,
+      "requests": 11824,
+      "bytes": 1741612
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=11915 requested_bytes=1751829\n",
+      "exit": 0,
+      "requests": 11915,
+      "bytes": 1751829
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=12965 requested_bytes=1935225\n",
+      "exit": 0,
+      "requests": 12965,
+      "bytes": 1935225
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=13056 requested_bytes=1945442\n",
+      "exit": 0,
+      "requests": 13056,
+      "bytes": 1945442
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=14269 requested_bytes=2156545\n",
+      "exit": 0,
+      "requests": 14269,
+      "bytes": 2156545
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=14360 requested_bytes=2166762\n",
+      "exit": 0,
+      "requests": 14360,
+      "bytes": 2166762
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=11869 requested_bytes=1747308\n",
+      "exit": 0,
+      "requests": 11869,
+      "bytes": 1747308
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=11960 requested_bytes=1757525\n",
+      "exit": 0,
+      "requests": 11960,
+      "bytes": 1757525
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=13451 requested_bytes=2095404\n",
+      "exit": 0,
+      "requests": 13451,
+      "bytes": 2095404
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=13542 requested_bytes=2105621\n",
+      "exit": 0,
+      "requests": 13542,
+      "bytes": 2105621
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=15259 requested_bytes=2493276\n",
+      "exit": 0,
+      "requests": 15259,
+      "bytes": 2493276
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=15350 requested_bytes=2503493\n",
+      "exit": 0,
+      "requests": 15350,
+      "bytes": 2503493
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=12592 requested_bytes=1827484\n",
+      "exit": 0,
+      "requests": 12592,
+      "bytes": 1827484
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=12683 requested_bytes=1837701\n",
+      "exit": 0,
+      "requests": 12683,
+      "bytes": 1837701
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=15749 requested_bytes=2469321\n",
+      "exit": 0,
+      "requests": 15749,
+      "bytes": 2469321
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=15840 requested_bytes=2479538\n",
+      "exit": 0,
+      "requests": 15840,
+      "bytes": 2479538
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=19357 requested_bytes=3202897\n",
+      "exit": 0,
+      "requests": 19357,
+      "bytes": 3202897
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=19448 requested_bytes=3213114\n",
+      "exit": 0,
+      "requests": 19448,
+      "bytes": 3213114
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=12637 requested_bytes=1833180\n",
+      "exit": 0,
+      "requests": 12637,
+      "bytes": 1833180
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=12728 requested_bytes=1843397\n",
+      "exit": 0,
+      "requests": 12728,
+      "bytes": 1843397
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=16235 requested_bytes=2574396\n",
+      "exit": 0,
+      "requests": 16235,
+      "bytes": 2574396
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=16326 requested_bytes=2584613\n",
+      "exit": 0,
+      "requests": 16326,
+      "bytes": 2584613
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=20347 requested_bytes=3421548\n",
+      "exit": 0,
+      "requests": 20347,
+      "bytes": 3421548
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=20438 requested_bytes=3431765\n",
+      "exit": 0,
+      "requests": 20438,
+      "bytes": 3431765
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=128948 requested_bytes=16582357\n",
+      "exit": 0,
+      "requests": 128948,
+      "bytes": 16582357
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=129039 requested_bytes=16592574\n",
+      "exit": 0,
+      "requests": 129039,
+      "bytes": 16592574
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=140169 requested_bytes=19017090\n",
+      "exit": 0,
+      "requests": 140169,
+      "bytes": 19017090
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=140260 requested_bytes=19027307\n",
+      "exit": 0,
+      "requests": 140260,
+      "bytes": 19027307
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=152993 requested_bytes=21799690\n",
+      "exit": 0,
+      "requests": 152993,
+      "bytes": 21799690
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=153084 requested_bytes=21809907\n",
+      "exit": 0,
+      "requests": 153084,
+      "bytes": 21809907
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=128993 requested_bytes=16588053\n",
+      "exit": 0,
+      "requests": 128993,
+      "bytes": 16588053
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=129084 requested_bytes=16598270\n",
+      "exit": 0,
+      "requests": 129084,
+      "bytes": 16598270
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=140655 requested_bytes=20729589\n",
+      "exit": 0,
+      "requests": 140655,
+      "bytes": 20729589
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=140746 requested_bytes=20739806\n",
+      "exit": 0,
+      "requests": 140746,
+      "bytes": 20739806
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=153983 requested_bytes=25462821\n",
+      "exit": 0,
+      "requests": 153983,
+      "bytes": 25462821
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=154074 requested_bytes=25473038\n",
+      "exit": 0,
+      "requests": 154074,
+      "bytes": 25473038
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=141236 requested_bytes=17955589\n",
+      "exit": 0,
+      "requests": 141236,
+      "bytes": 17955589
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=141327 requested_bytes=17965806\n",
+      "exit": 0,
+      "requests": 141327,
+      "bytes": 17965806
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=184713 requested_bytes=27561906\n",
+      "exit": 0,
+      "requests": 184713,
+      "bytes": 27561906
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=184804 requested_bytes=27572123\n",
+      "exit": 0,
+      "requests": 184804,
+      "bytes": 27572123
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=234401 requested_bytes=38540602\n",
+      "exit": 0,
+      "requests": 234401,
+      "bytes": 38540602
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=234492 requested_bytes=38550819\n",
+      "exit": 0,
+      "requests": 234492,
+      "bytes": 38550819
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=141281 requested_bytes=17961285\n",
+      "exit": 0,
+      "requests": 141281,
+      "bytes": 17961285
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=141372 requested_bytes=17971502\n",
+      "exit": 0,
+      "requests": 141372,
+      "bytes": 17971502
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=185199 requested_bytes=28392741\n",
+      "exit": 0,
+      "requests": 185199,
+      "bytes": 28392741
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=185290 requested_bytes=28402958\n",
+      "exit": 0,
+      "requests": 185290,
+      "bytes": 28402958
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "vm",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=235391 requested_bytes=40314453\n",
+      "exit": 0,
+      "requests": 235391,
+      "bytes": 40314453
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/task-allocation-probe",
+        "jit",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "ALLOCATION_AUDIT requests=235482 requested_bytes=40324670\n",
+      "exit": 0,
+      "requests": 235482,
+      "bytes": 40324670
+    }
+  ],
+  "semantics": [
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 32,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-32-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 128,
+      "writes": 128,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/128-128-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 512,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-512-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "once",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-once-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 1,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-1/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 8,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-8/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+      "mode": "vm",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+      "mode": "interpreter",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--interpreter"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "width": 2048,
+      "writes": 2048,
+      "snapshot": "fresh",
+      "calls": 16,
+      "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+      "mode": "jit",
+      "argv": [
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+        "run",
+        "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dense-array-audit-2026-10-30/fixtures/2048-2048-fresh-16/main.kujo",
+        "--untrusted",
+        "--scheduler-no-timeout",
+        "--jit"
+      ],
+      "stdout": "DENSE ARRAY PASS\n",
+      "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+      "exit": 0
+    }
+  ],
+  "slopes": [
+    {
+      "group": [
+        128,
+        32,
+        "once",
+        "vm"
+      ],
+      "requests": 163.0,
+      "bytes": 27665.0
+    },
+    {
+      "group": [
+        128,
+        32,
+        "once",
+        "jit"
+      ],
+      "requests": 163.0,
+      "bytes": 27665.0
+    },
+    {
+      "group": [
+        128,
+        32,
+        "fresh",
+        "vm"
+      ],
+      "requests": 226.0,
+      "bytes": 49734.0
+    },
+    {
+      "group": [
+        128,
+        32,
+        "fresh",
+        "jit"
+      ],
+      "requests": 226.0,
+      "bytes": 49734.0
+    },
+    {
+      "group": [
+        128,
+        128,
+        "once",
+        "vm"
+      ],
+      "requests": 451.0,
+      "bytes": 91697.0
+    },
+    {
+      "group": [
+        128,
+        128,
+        "once",
+        "jit"
+      ],
+      "requests": 451.0,
+      "bytes": 91697.0
+    },
+    {
+      "group": [
+        128,
+        128,
+        "fresh",
+        "vm"
+      ],
+      "requests": 514.0,
+      "bytes": 105894.0
+    },
+    {
+      "group": [
+        128,
+        128,
+        "fresh",
+        "jit"
+      ],
+      "requests": 514.0,
+      "bytes": 105894.0
+    },
+    {
+      "group": [
+        2048,
+        512,
+        "once",
+        "vm"
+      ],
+      "requests": 1603.0,
+      "bytes": 347825.0
+    },
+    {
+      "group": [
+        2048,
+        512,
+        "once",
+        "jit"
+      ],
+      "requests": 1603.0,
+      "bytes": 347825.0
+    },
+    {
+      "group": [
+        2048,
+        512,
+        "fresh",
+        "vm"
+      ],
+      "requests": 1666.0,
+      "bytes": 591654.0
+    },
+    {
+      "group": [
+        2048,
+        512,
+        "fresh",
+        "jit"
+      ],
+      "requests": 1666.0,
+      "bytes": 591654.0
+    },
+    {
+      "group": [
+        2048,
+        2048,
+        "once",
+        "vm"
+      ],
+      "requests": 6211.0,
+      "bytes": 1372337.0
+    },
+    {
+      "group": [
+        2048,
+        2048,
+        "once",
+        "jit"
+      ],
+      "requests": 6211.0,
+      "bytes": 1372337.0
+    },
+    {
+      "group": [
+        2048,
+        2048,
+        "fresh",
+        "vm"
+      ],
+      "requests": 6274.0,
+      "bytes": 1490214.0
+    },
+    {
+      "group": [
+        2048,
+        2048,
+        "fresh",
+        "jit"
+      ],
+      "requests": 6274.0,
+      "bytes": 1490214.0
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "allocation_observations": 48,
+    "semantic_checks": 72,
+    "report_sha256": "d626db0805b43859ee56324ecc0d04498fc65a1c397c6025b4628f04b8178091",
+    "verifier_sha256": "cc9589634c7c3770f1ecb4f93bae02cf61dc387dcb7d63be9ccfc75720339870",
+    "slopes": [
+      {
+        "group": [
+          128,
+          32,
+          "once",
+          "vm"
+        ],
+        "requests": 163.0,
+        "bytes": 27665.0
+      },
+      {
+        "group": [
+          128,
+          32,
+          "once",
+          "jit"
+        ],
+        "requests": 163.0,
+        "bytes": 27665.0
+      },
+      {
+        "group": [
+          128,
+          32,
+          "fresh",
+          "vm"
+        ],
+        "requests": 226.0,
+        "bytes": 49734.0
+      },
+      {
+        "group": [
+          128,
+          32,
+          "fresh",
+          "jit"
+        ],
+        "requests": 226.0,
+        "bytes": 49734.0
+      },
+      {
+        "group": [
+          128,
+          128,
+          "once",
+          "vm"
+        ],
+        "requests": 451.0,
+        "bytes": 91697.0
+      },
+      {
+        "group": [
+          128,
+          128,
+          "once",
+          "jit"
+        ],
+        "requests": 451.0,
+        "bytes": 91697.0
+      },
+      {
+        "group": [
+          128,
+          128,
+          "fresh",
+          "vm"
+        ],
+        "requests": 514.0,
+        "bytes": 105894.0
+      },
+      {
+        "group": [
+          128,
+          128,
+          "fresh",
+          "jit"
+        ],
+        "requests": 514.0,
+        "bytes": 105894.0
+      },
+      {
+        "group": [
+          2048,
+          512,
+          "once",
+          "vm"
+        ],
+        "requests": 1603.0,
+        "bytes": 347825.0
+      },
+      {
+        "group": [
+          2048,
+          512,
+          "once",
+          "jit"
+        ],
+        "requests": 1603.0,
+        "bytes": 347825.0
+      },
+      {
+        "group": [
+          2048,
+          512,
+          "fresh",
+          "vm"
+        ],
+        "requests": 1666.0,
+        "bytes": 591654.0
+      },
+      {
+        "group": [
+          2048,
+          512,
+          "fresh",
+          "jit"
+        ],
+        "requests": 1666.0,
+        "bytes": 591654.0
+      },
+      {
+        "group": [
+          2048,
+          2048,
+          "once",
+          "vm"
+        ],
+        "requests": 6211.0,
+        "bytes": 1372337.0
+      },
+      {
+        "group": [
+          2048,
+          2048,
+          "once",
+          "jit"
+        ],
+        "requests": 6211.0,
+        "bytes": 1372337.0
+      },
+      {
+        "group": [
+          2048,
+          2048,
+          "fresh",
+          "vm"
+        ],
+        "requests": 6274.0,
+        "bytes": 1490214.0
+      },
+      {
+        "group": [
+          2048,
+          2048,
+          "fresh",
+          "jit"
+        ],
+        "requests": 6274.0,
+        "bytes": 1490214.0
+      }
+    ]
+  },
+  "reproduction": {
+    "run.rb": "require 'json';require 'digest';require 'fileutils';require 'open3'\no=File.expand_path(__dir__);prior=File.expand_path('../arithmetic-selector-candidate-2026-10-30',o);sha=->(p){Digest::SHA256.file(p).hexdigest};bin=prior+'/candidate-kujo';probe=prior+'/task-allocation-probe'\nacceptance=JSON.parse(File.read(prior+'/acceptance-receipt.json'));raise 'Baseline' unless acceptance['status']=='accepted';acceptance['evidence_hashes'].each{|p,h|raise 'Baseline drift' unless sha.call(prior+'/'+p)==h}\nraise 'Output exists' if File.exist?(o+'/report.json')\nr={status:'running',pid:Process.pid,runtime:'5458132',identities:[bin,probe,__FILE__].to_h{|p|[p,sha.call(p)]},sources:{},rows:[],semantics:[]};save=->{File.write(o+'/report.json',JSON.pretty_generate(r)+\"\\n\")};save.call\nbegin\n [128,2048].product([4,1],%w[once fresh],[1,8,16]).each do |width,divisor,snapshot,calls|\n  count=width/divisor;d=o+'/fixtures/'+[width,count,snapshot,calls].join('-');FileUtils.mkdir_p(d)\n  owner=\"mut state := [] mut k := 0 while k < #{width} { state = push(state, 0) k += 1 }\\nexport func snapshot() { return state }\\nexport func edit(n, count) { mut j := 0 while j < count { state[j] = [n + j] j += 1 } return n }\\n\"\n  before=snapshot=='fresh' ? 'let saved := snapshot()' : ''\n  after=snapshot=='fresh' ? \"if i == 0 { assert_equal(saved[#{count-1}], 0) } else { assert_equal(saved[#{count-1}], [i + #{count-1}]) }\" : ''\n  main=\"from owner import snapshot, edit\\nlet original := snapshot()\\nmut i := 0 while i < #{calls} { #{before} assert_equal(edit(i + 1, #{count}), i + 1) #{after} i += 1 }\\nlet final := snapshot() assert_equal(len(final), #{width}) mut k := 0 while k < #{width} { assert_equal(original[k], 0) if k < #{count} { assert_equal(final[k], [#{calls} + k]) } else { assert_equal(final[k], 0) } k += 1 } print(\\\"DENSE ARRAY PASS\\\")\\n\"\n  File.write(d+'/owner.kujo',owner);File.write(d+'/main.kujo',main);[d+'/owner.kujo',d+'/main.kujo'].each{|p|r[:sources][p]=sha.call(p)}\n  meta={width:width,writes:count,snapshot:snapshot,calls:calls,path:d+'/main.kujo'}\n  %w[vm jit].each do |mode|\n   argv=[probe,mode,meta[:path]];out,err,s=Open3.capture3(*argv);m=err.match(/requests=(\\d+) requested_bytes=(\\d+)/);raise out+err unless s.success?&&out==\"DENSE ARRAY PASS\\n\"&&m;r[:rows]<<meta.merge(mode:mode,argv:argv,stdout:out,stderr:err,exit:s.exitstatus,requests:m[1].to_i,bytes:m[2].to_i);save.call\n  end\n  %w[vm interpreter jit].each do |mode|\n   argv=[bin,'run',meta[:path],'--untrusted','--scheduler-no-timeout']+(mode=='vm' ? [] : ['--'+mode]);out,err,s=Open3.capture3(*argv);raise out+err unless s.success?&&out==\"DENSE ARRAY PASS\\n\";r[:semantics]<<meta.merge(mode:mode,argv:argv,stdout:out,stderr:err,exit:s.exitstatus);save.call\n  end\n end\n raise 'Coverage' unless r[:rows].size==48&&r[:semantics].size==72\n r[:slopes]=r[:rows].group_by{|x|x.values_at(:width,:writes,:snapshot,:mode)}.map{|key,rows|a,b=rows.sort_by{|x|x[:calls]}.last(2);{group:key,requests:(b[:requests]-a[:requests])/8.0,bytes:(b[:bytes]-a[:bytes])/8.0}}\n r[:identities].merge(r[:sources]).each{|p,h|raise 'Identity drift' unless sha.call(p)==h};r[:status]='characterized';save.call\nrescue=>e;r[:status]='failed';r[:error]=e.message;save.call;raise\nend\n",
+    "verify.rb": "require 'json';require 'digest'\no=File.expand_path(__dir__);sha=->(p){Digest::SHA256.file(p).hexdigest};r=JSON.parse(File.read(o+'/report.json'));raise 'Incomplete' unless r['status']=='characterized'&&r['runtime']=='5458132'\nr['identities'].merge(r['sources']).each{|p,h|raise 'Identity drift' unless sha.call(p)==h}\nprior=File.expand_path('../arithmetic-selector-candidate-2026-10-30',o);bin=prior+'/candidate-kujo';probe=prior+'/task-allocation-probe';raise 'Artifacts' unless r['identities'].keys.map{|p|File.expand_path(p)}.sort==[bin,probe,o+'/run.rb'].sort\nbase=[128,2048].product([4,1],%w[once fresh],[1,8,16]).map{|w,d,s,c|[w,w/d,s,c]};key=->(x){x.values_at('width','writes','snapshot','calls','mode')}\nraise 'Allocation coverage' unless r['rows'].map{|x|key.call(x)}.sort==base.product(%w[vm jit]).map{|a,m|a+[m]}.sort\nraise 'Semantic coverage' unless r['semantics'].map{|x|key.call(x)}.sort==base.product(%w[vm interpreter jit]).map{|a,m|a+[m]}.sort\nsources={}\n{'rows'=>true,'semantics'=>false}.each do |kind,allocation|\n r[kind].each do |x|\n  path=o+'/fixtures/'+x.values_at('width','writes','snapshot','calls').join('-')+'/main.kujo';mode=x['mode'];argv=allocation ? [probe,mode,path] : [bin,'run',path,'--untrusted','--scheduler-no-timeout']+(mode=='vm' ? [] : ['--'+mode])\n  raise 'Invocation/output' unless x['path']==path&&x['argv']==argv&&x['exit']==0&&x['stdout']==\"DENSE ARRAY PASS\\n\"\n  raise 'Raw counters' if allocation&&x['stderr'].scan(/requests=(\\d+) requested_bytes=(\\d+)/)!=[[x['requests'].to_s,x['bytes'].to_s]]\n  [path,File.dirname(path)+'/owner.kujo'].each{|p|sources[p]=sha.call(p)}\n end\nend\nraise 'Fixture set' unless sources==r['sources']\nslopes=r['rows'].group_by{|x|x.values_at('width','writes','snapshot','mode')}.map{|key,rows|a,b=rows.sort_by{|x|x['calls']}.last(2);{'group'=>key,'requests'=>(b['requests']-a['requests'])/8.0,'bytes'=>(b['bytes']-a['bytes'])/8.0}}\nraise 'Slopes' unless slopes==r['slopes'];slopes.group_by{|x|x['group'][0,3]}.each{|_,v|raise 'Runtime disagreement' unless v.map{|x|x.values_at('bytes','requests')}.uniq.size==1}\nFile.write(o+'/verified.json',JSON.pretty_generate({status:'verified',allocation_observations:48,semantic_checks:72,report_sha256:sha.call(o+'/report.json'),verifier_sha256:sha.call(__FILE__),slopes:slopes})+\"\\n\")\nputs JSON.pretty_generate(slopes.select{|x|x['group'].last=='vm'})\n"
+  }
+}

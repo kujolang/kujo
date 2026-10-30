@@ -126,6 +126,10 @@ percentage or a reliable elapsed-time estimate.
    semantic checks pass. These measured shapes require a bounded follow-up fix.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
+   [Dense root-array review](DENSE_ARRAY_REVIEW_2026_10_30.md) passes 48 allocation
+   observations and 72 semantic checks: measured once-snapshot costs are linear
+   in writes with no owner-width term; fresh snapshots retain separate copies.
+   Dictionary/struct, deeper-loop and escaping shapes remain separate.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
    unmeasured shapes are investigation items, not confirmed defects.
@@ -307,8 +311,7 @@ The nested-insertion, root replacement and eligible nested replacement cutoffs a
 complete. Struct-literal construction and eligible direct root-array replacement
 are also verified. The eligible general multiple-index batch cutoff is complete. Compound indexed arithmetic with callback-free selectors is now verified in `7724558`.
 The **next cutoff** is isolation of remaining capture traversal/materialization
-and unsupported collection shapes, including general selectors and mixed two-write
-updates. Scalar-first journals are now verified separately. Preserve snapshots,
+and unsupported collection shapes, including general selectors. Scalar-first journals are now verified separately. Preserve snapshots,
 callbacks and error ordering and repeat applicable
 regression and 150-checksum gates for further fixes. Sections 3 and 4 remain open.
 
