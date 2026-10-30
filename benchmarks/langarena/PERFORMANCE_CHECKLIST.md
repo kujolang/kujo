@@ -102,7 +102,13 @@ percentage or a reliable elapsed-time estimate.
    [verified results](STRING_FIRST_BATCHES_2026_10_30.md) record 1,728 allocation
    pairs, 3,240 semantic checks, 1,267 library passes, 416 integration passes,
    all 150 test-size checksums and 144 reviewed memory pairs. Mixed two-write
-   updates and arithmetic selectors remain confirmed open costs.
+   updates are now accepted in `f92de4b`; arithmetic selectors remain open.
+   [Mixed-pair results](MIXED_PAIR_BATCHES_2026_10_30.md) record 2,496 allocation
+   pairs, 4,392 semantic checks, 1,270 library passes, 418 integrations and all
+   150 checksum cases. All 288 memory pairs were reviewed, retaining small
+   increases (largest group mean +159,744 bytes / 2.09%). Eligible width-2,048
+   mixed updates fall from roughly 284 KB to 6 KB per added call; this is an
+   allocation result, not an elapsed-time speedup.
    The [expanded arithmetic-selector baseline](ARITHMETIC_SELECTOR_BASELINE_2026_10_30.md)
    verifies 192 allocation observations and 288 semantic checks on `94ad8f5`,
    plus a three-runtime overflow/bounds/callback contract. All seven arithmetic
