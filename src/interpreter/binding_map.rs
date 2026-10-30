@@ -130,6 +130,23 @@ impl BindingMap {
     {
         Compact::build(source).map(|c| Self::Compact(Arc::new(c)))
     }
+    /// Validate exact membership, exploiting the unchanged owner's iteration order.
+    /// On the first difference, validate the remaining names by ordinary lookup:
+    /// equal lengths alone cannot detect host-side name replacement.
+    pub(crate) fn matches_names<T>(&self, names: &HashMap<String, T>) -> bool {
+        if names.len() != self.len() {
+            return false;
+        }
+        let mut actual = names.keys();
+        for expected in self.keys() {
+            let name = actual.next().expect("equal binding and scope lengths");
+            if name != expected {
+                return self.contains_key(name) && actual.all(|name| self.contains_key(name));
+            }
+        }
+        true
+    }
+
     pub(crate) fn is_compact(&self) -> bool {
         matches!(self, Self::Compact(_))
     }
@@ -361,5 +378,40 @@ mod tests {
         let empty = BindingMap::compact_from(std::iter::empty()).unwrap();
         assert!(empty.is_empty());
         assert_eq!(empty.get("missing"), None);
+    }
+}
+
+#[cfg(test)]
+mod membership_tests {
+    use super::*;
+
+    #[test]
+    fn exact_membership_survives_reordering_and_rejects_same_size_replacements() {
+        let names: HashMap<String, usize> = (0..8192).map(|i| (format!("name_{i}"), i)).collect();
+        let metadata =
+            BindingMap::compact_from(names.keys().map(|key| (key.as_str(), BindingKind::Const)))
+                .unwrap();
+        assert!(metadata.matches_names(&names));
+        let mut reversed: Vec<_> = names.keys().collect();
+        reversed.reverse();
+        let reordered =
+            BindingMap::compact_from(reversed.iter().map(|key| (key.as_str(), BindingKind::Const)))
+                .unwrap();
+        assert!(reordered.matches_names(&names));
+        let keys: Vec<_> = names.keys().cloned().collect();
+        for key in [&keys[0], &keys[keys.len() / 2], &keys[keys.len() - 1]] {
+            let mut changed = names.clone();
+            changed.remove(key);
+            changed.insert("host_replacement".into(), 0);
+            assert!(!metadata.matches_names(&changed));
+            assert!(!reordered.matches_names(&changed));
+        }
+        let mut changed_values = names.clone();
+        changed_values.values_mut().for_each(|value| *value = 0);
+        assert!(metadata.matches_names(&changed_values));
+        changed_values.remove(&keys[0]);
+        assert!(!metadata.matches_names(&changed_values));
+        assert!(metadata.matches_names(&names));
+        assert_eq!(metadata[&keys[0]], BindingKind::Const);
     }
 }

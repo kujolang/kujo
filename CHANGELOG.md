@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid redundant hash lookups when oversized captured binding names retain their
+  original iteration order. Keep exact membership validation and ordinary lookup
+  fallback for reordered or host-edited scopes, including same-size replacements.
+
 - Batch eligible compound indexed arithmetic in captured dictionaries while
   suspending caller optimization permissions inside operator callbacks; preserve
   snapshots, selector order and error publication.

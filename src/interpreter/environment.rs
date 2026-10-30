@@ -1389,9 +1389,7 @@ impl Environment {
             let names = &scopes[index];
             let oversized = index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY;
             if index > 0 && source.is_compact() {
-                let matches = oversized
-                    && names.len() == source.len()
-                    && names.keys().all(|name| source.contains_key(name));
+                let matches = oversized && source.matches_names(names);
                 if matches {
                     *target = source.clone();
                     continue;
