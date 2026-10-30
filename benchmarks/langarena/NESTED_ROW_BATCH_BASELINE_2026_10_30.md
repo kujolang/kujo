@@ -24,6 +24,13 @@ runtime, not the in-progress invariant-selector candidate. An initial discarded
 fixture used struct field syntax on a dictionary and failed before measurement;
 the verified dictionary matrices use string-key indexing.
 
+Nine additional baseline boundary runs pass across dictionary, struct and deep
+rows in VM/interpreter/JIT. They cover full batches, mixed scalar/array/dictionary
+payloads, negative aliases, overwrite after a full batch, callback observation,
+prior writes before a bounds error, and retained original/intermediate snapshots.
+These contracts establish behavior to preserve; the follow-up candidate must
+repeat them. Their fixtures and raw outputs are included in the evidence.
+
 Source attribution: `src/interpreter/row_spill_proof.rs` admits scalar row
 expressions, while these payloads are arrays. Admission and row storage must be
 reviewed together before choosing a fix; widening a guard alone is not proven

@@ -8255,5 +8255,172 @@
       }
     }
   },
-  "limits": "Allocation characterization, not elapsed speed; nested nonscalar row batches remain unfixed."
+  "limits": "Allocation characterization, not elapsed speed; nested nonscalar row batches remain unfixed.",
+  "boundary_contracts": {
+    "runtime": "5458132",
+    "status": "passed",
+    "binary": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+    "binary_sha256": "41b9e9f5aef3cfa9e01d05265aa01176ab421d817082741746d404c54e063609",
+    "sources": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/dict/owner.kujo": {
+        "sha256": "e7c1a26abf101da25806f0d6188461780d974c5385157df0d25e1aa10fcc0cf2",
+        "text": "mut root := {\"row\": [0,0,0,0,0,0,0,0]}\nexport func snapshot() { return root[\"row\"] }\nexport func batch(n) { mut j := 0 while j < 8 { root[\"row\"][j] = [n+j] j += 1 } return n }\nexport func mixed(n) { root[\"row\"][0] = n root[\"row\"][1] = [n] root[\"row\"][2] = {\"v\":n} return n }\nexport func aliases(n) { root[\"row\"][0] = [n] root[\"row\"][-8] = {\"v\":n} root[\"row\"][-1] = [n+1] return n }\nexport func fail(n) { root[\"row\"][0] = [n] root[\"row\"][1] = [n+1] root[\"row\"][8] = [999] return n }\nfunc observe() { return root[\"row\"][0] }\nexport func callback(n) { root[\"row\"][0] = [n] root[\"row\"][1] = observe() root[\"row\"][2] = [n] return n }\nexport func rewrite(n) { mut j := 0 while j < 8 { root[\"row\"][j] = [n+j] j += 1 } root[\"row\"][-8] = [n+99] return n }\n"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/dict/main.kujo": {
+        "sha256": "c06e33bf54c89a70cc6a6f493f0464e813beea650a0a2c0358ca0ba929dd3887",
+        "text": "from owner import snapshot, batch, mixed, aliases, fail, callback, rewrite\nlet original := snapshot()\nassert_equal(batch(10),10)\nlet saved := snapshot()\nassert_equal(mixed(20),20)\nassert_equal(snapshot()[0],20) assert_equal(snapshot()[1],[20]) assert_equal(snapshot()[2],{\"v\":20})\nassert_equal(aliases(30),30)\nassert_equal(snapshot()[0],{\"v\":30}) assert_equal(snapshot()[7],[31])\nlet before := snapshot()\nmut caught := false\ntry { fail(40) } except err { caught = true }\nassert(caught) assert_equal(snapshot()[0],[40]) assert_equal(snapshot()[1],[41]) assert_equal(snapshot()[7],before[7])\nassert_equal(callback(50),50) assert_equal(snapshot()[0],[50]) assert_equal(snapshot()[1],[50])\nassert_equal(rewrite(60),60) assert_equal(snapshot()[0],[159]) assert_equal(snapshot()[7],[67])\nmut j := 0 while j < 8 { assert_equal(original[j],0) assert_equal(saved[j],[10+j]) j += 1 }\nprint(\"NESTED ROW BOUNDARY PASS\")\n"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/struct/owner.kujo": {
+        "sha256": "a0c49f7577cbacf9835f9ddb3c40bab3a8a46a7fec3408114055555dd27b73f7",
+        "text": "struct State { row: array } mut root := State { row: [0,0,0,0,0,0,0,0] }\nexport func snapshot() { return root.row }\nexport func batch(n) { mut j := 0 while j < 8 { root.row[j] = [n+j] j += 1 } return n }\nexport func mixed(n) { root.row[0] = n root.row[1] = [n] root.row[2] = {\"v\":n} return n }\nexport func aliases(n) { root.row[0] = [n] root.row[-8] = {\"v\":n} root.row[-1] = [n+1] return n }\nexport func fail(n) { root.row[0] = [n] root.row[1] = [n+1] root.row[8] = [999] return n }\nfunc observe() { return root.row[0] }\nexport func callback(n) { root.row[0] = [n] root.row[1] = observe() root.row[2] = [n] return n }\nexport func rewrite(n) { mut j := 0 while j < 8 { root.row[j] = [n+j] j += 1 } root.row[-8] = [n+99] return n }\n"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/struct/main.kujo": {
+        "sha256": "c06e33bf54c89a70cc6a6f493f0464e813beea650a0a2c0358ca0ba929dd3887",
+        "text": "from owner import snapshot, batch, mixed, aliases, fail, callback, rewrite\nlet original := snapshot()\nassert_equal(batch(10),10)\nlet saved := snapshot()\nassert_equal(mixed(20),20)\nassert_equal(snapshot()[0],20) assert_equal(snapshot()[1],[20]) assert_equal(snapshot()[2],{\"v\":20})\nassert_equal(aliases(30),30)\nassert_equal(snapshot()[0],{\"v\":30}) assert_equal(snapshot()[7],[31])\nlet before := snapshot()\nmut caught := false\ntry { fail(40) } except err { caught = true }\nassert(caught) assert_equal(snapshot()[0],[40]) assert_equal(snapshot()[1],[41]) assert_equal(snapshot()[7],before[7])\nassert_equal(callback(50),50) assert_equal(snapshot()[0],[50]) assert_equal(snapshot()[1],[50])\nassert_equal(rewrite(60),60) assert_equal(snapshot()[0],[159]) assert_equal(snapshot()[7],[67])\nmut j := 0 while j < 8 { assert_equal(original[j],0) assert_equal(saved[j],[10+j]) j += 1 }\nprint(\"NESTED ROW BOUNDARY PASS\")\n"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/deep/owner.kujo": {
+        "sha256": "d01f92c0af9472b90b4830da51b2edacb2c5101408b47769254a2d96316cce04",
+        "text": "mut root := {\"outer\": [{\"row\": [0,0,0,0,0,0,0,0]}]}\nexport func snapshot() { return root[\"outer\"][0][\"row\"] }\nexport func batch(n) { mut j := 0 while j < 8 { root[\"outer\"][0][\"row\"][j] = [n+j] j += 1 } return n }\nexport func mixed(n) { root[\"outer\"][0][\"row\"][0] = n root[\"outer\"][0][\"row\"][1] = [n] root[\"outer\"][0][\"row\"][2] = {\"v\":n} return n }\nexport func aliases(n) { root[\"outer\"][0][\"row\"][0] = [n] root[\"outer\"][0][\"row\"][-8] = {\"v\":n} root[\"outer\"][0][\"row\"][-1] = [n+1] return n }\nexport func fail(n) { root[\"outer\"][0][\"row\"][0] = [n] root[\"outer\"][0][\"row\"][1] = [n+1] root[\"outer\"][0][\"row\"][8] = [999] return n }\nfunc observe() { return root[\"outer\"][0][\"row\"][0] }\nexport func callback(n) { root[\"outer\"][0][\"row\"][0] = [n] root[\"outer\"][0][\"row\"][1] = observe() root[\"outer\"][0][\"row\"][2] = [n] return n }\nexport func rewrite(n) { mut j := 0 while j < 8 { root[\"outer\"][0][\"row\"][j] = [n+j] j += 1 } root[\"outer\"][0][\"row\"][-8] = [n+99] return n }\n"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/deep/main.kujo": {
+        "sha256": "c06e33bf54c89a70cc6a6f493f0464e813beea650a0a2c0358ca0ba929dd3887",
+        "text": "from owner import snapshot, batch, mixed, aliases, fail, callback, rewrite\nlet original := snapshot()\nassert_equal(batch(10),10)\nlet saved := snapshot()\nassert_equal(mixed(20),20)\nassert_equal(snapshot()[0],20) assert_equal(snapshot()[1],[20]) assert_equal(snapshot()[2],{\"v\":20})\nassert_equal(aliases(30),30)\nassert_equal(snapshot()[0],{\"v\":30}) assert_equal(snapshot()[7],[31])\nlet before := snapshot()\nmut caught := false\ntry { fail(40) } except err { caught = true }\nassert(caught) assert_equal(snapshot()[0],[40]) assert_equal(snapshot()[1],[41]) assert_equal(snapshot()[7],before[7])\nassert_equal(callback(50),50) assert_equal(snapshot()[0],[50]) assert_equal(snapshot()[1],[50])\nassert_equal(rewrite(60),60) assert_equal(snapshot()[0],[159]) assert_equal(snapshot()[7],[67])\nmut j := 0 while j < 8 { assert_equal(original[j],0) assert_equal(saved[j],[10+j]) j += 1 }\nprint(\"NESTED ROW BOUNDARY PASS\")\n"
+      }
+    },
+    "rows": [
+      {
+        "shape": "dict",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/dict/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "dict",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/dict/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "dict",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/dict/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "shape": "struct",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/struct/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "struct",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/struct/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "struct",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/struct/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "shape": "deep",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/deep/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "deep",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/deep/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "shape": "deep",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/arithmetic-selector-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-followup-2026-10-30/fixtures/deep/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "NESTED ROW BOUNDARY PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      }
+    ],
+    "runner": "require 'json';require 'digest';require 'open3';require 'fileutils'\no=File.expand_path(__dir__);bin=File.expand_path('../arithmetic-selector-candidate-2026-10-30/candidate-kujo',o);sha=->(p){Digest::SHA256.file(p).hexdigest};r={runtime:'5458132',status:'running',binary:bin,binary_sha256:sha.call(bin),sources:{},rows:[]};save=->{File.write(o+'/contracts.json',JSON.pretty_generate(r)+\"\\n\")};save.call\nbegin\n [\n  ['dict','mut root := {\"row\": [0,0,0,0,0,0,0,0]}','root[\"row\"]'],\n  ['struct','struct State { row: array } mut root := State { row: [0,0,0,0,0,0,0,0] }','root.row'],\n  ['deep','mut root := {\"outer\": [{\"row\": [0,0,0,0,0,0,0,0]}]}','root[\"outer\"][0][\"row\"]']\n ].each do |kind,declaration,row|\n  d=o+'/fixtures/'+kind;FileUtils.mkdir_p(d)\n  owner=<<~KUJO\n  #{declaration}\n  export func snapshot() { return #{row} }\n  export func batch(n) { mut j := 0 while j < 8 { #{row}[j] = [n+j] j += 1 } return n }\n  export func mixed(n) { #{row}[0] = n #{row}[1] = [n] #{row}[2] = {\"v\":n} return n }\n  export func aliases(n) { #{row}[0] = [n] #{row}[-8] = {\"v\":n} #{row}[-1] = [n+1] return n }\n  export func fail(n) { #{row}[0] = [n] #{row}[1] = [n+1] #{row}[8] = [999] return n }\n  func observe() { return #{row}[0] }\n  export func callback(n) { #{row}[0] = [n] #{row}[1] = observe() #{row}[2] = [n] return n }\n  export func rewrite(n) { mut j := 0 while j < 8 { #{row}[j] = [n+j] j += 1 } #{row}[-8] = [n+99] return n }\n  KUJO\n  main=<<~KUJO\n  from owner import snapshot, batch, mixed, aliases, fail, callback, rewrite\n  let original := snapshot()\n  assert_equal(batch(10),10)\n  let saved := snapshot()\n  assert_equal(mixed(20),20)\n  assert_equal(snapshot()[0],20) assert_equal(snapshot()[1],[20]) assert_equal(snapshot()[2],{\"v\":20})\n  assert_equal(aliases(30),30)\n  assert_equal(snapshot()[0],{\"v\":30}) assert_equal(snapshot()[7],[31])\n  let before := snapshot()\n  mut caught := false\n  try { fail(40) } except err { caught = true }\n  assert(caught) assert_equal(snapshot()[0],[40]) assert_equal(snapshot()[1],[41]) assert_equal(snapshot()[7],before[7])\n  assert_equal(callback(50),50) assert_equal(snapshot()[0],[50]) assert_equal(snapshot()[1],[50])\n  assert_equal(rewrite(60),60) assert_equal(snapshot()[0],[159]) assert_equal(snapshot()[7],[67])\n  mut j := 0 while j < 8 { assert_equal(original[j],0) assert_equal(saved[j],[10+j]) j += 1 }\n  print(\"NESTED ROW BOUNDARY PASS\")\n  KUJO\n  File.write(d+'/owner.kujo',owner);File.write(d+'/main.kujo',main);[d+'/owner.kujo',d+'/main.kujo'].each{|p|r[:sources][p]=sha.call(p)}\n  %w[vm interpreter jit].each do |mode|\n   argv=[bin,'run',d+'/main.kujo','--untrusted','--scheduler-no-timeout']+(mode=='vm' ? [] : ['--'+mode]);out,err,status=Open3.capture3(*argv);raise out+err unless status.success?&&out==\"NESTED ROW BOUNDARY PASS\\n\";r[:rows]<<{shape:kind,mode:mode,argv:argv,stdout:out,stderr:err,exit:status.exitstatus};save.call\n  end\n end\n raise 'Coverage' unless r[:rows].map{|x|x.values_at(:shape,:mode)}==%w[dict struct deep].product(%w[vm interpreter jit]);r[:sources].each{|p,h|raise 'Drift' unless sha.call(p)==h};raise 'Binary drift' unless sha.call(bin)==r[:binary_sha256];r[:status]='passed';save.call;puts '9 nested-row runtime boundary contracts passed'\nrescue=>e;r[:status]='failed';r[:error]=e.message;save.call;raise\nend\n"
+  }
 }
