@@ -129,7 +129,11 @@ percentage or a reliable elapsed-time estimate.
    [Dense root-array review](DENSE_ARRAY_REVIEW_2026_10_30.md) passes 48 allocation
    observations and 72 semantic checks: measured once-snapshot costs are linear
    in writes with no owner-width term; fresh snapshots retain separate copies.
-   Dictionary/struct, deeper-loop and escaping shapes remain separate.
+   [Nested-row isolation](NESTED_ROW_BATCH_BASELINE_2026_10_30.md) now confirms
+   a 261,120-byte per-call row-width penalty for array-valued dictionary/struct
+   row updates at fixed write counts; 144 allocation observations and 216 semantic
+   checks pass. This is a confirmed follow-up fix. Deeper/escaping shapes remain
+   separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
    unmeasured shapes are investigation items, not confirmed defects.
