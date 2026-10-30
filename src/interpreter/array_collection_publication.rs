@@ -39,6 +39,27 @@ impl<T: CollectionPayload> ArrayCollectionPublication<T> {
         self.second.is_none()
     }
 
+    pub(super) fn can_record(&self, index: usize) -> bool {
+        index < self.base.len()
+            && index <= u32::MAX as usize
+            && (self.matches_index(index)
+                || self.second.is_none()
+                || self.indices[1] as usize == index)
+    }
+
+    pub(super) fn into_mixed(
+        self,
+    ) -> ArrayCollectionPublication<super::array_batch_publication::BatchValue> {
+        use super::array_batch_publication::BatchValue;
+        ArrayCollectionPublication {
+            name: self.name,
+            base: self.base,
+            indices: self.indices,
+            value: BatchValue::from_owned(self.value.into_value()),
+            second: self.second.map(|value| BatchValue::from_owned(value.into_value())),
+        }
+    }
+
     pub(super) fn into_batch(
         self,
         capacity: u16,

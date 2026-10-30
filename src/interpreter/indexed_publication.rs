@@ -95,6 +95,40 @@ impl IndexedPublication {
         true
     }
 
+    /// Check capacity before consuming a scalar journal for mixed-pair promotion.
+    pub(super) fn can_promote_pair(&self, index: usize) -> bool {
+        index < self.base.len()
+            && index <= u32::MAX as usize
+            && self
+                .entries
+                .iter()
+                .any(|entry| *entry == 0 || (*entry & INDEX_MASK) as usize == index)
+    }
+
+    pub(super) fn into_mixed(
+        self,
+    ) -> super::array_collection_publication::ArrayCollectionPublication<
+        super::array_batch_publication::BatchValue,
+    > {
+        use super::array_batch_publication::BatchValue;
+        use super::array_collection_publication::ArrayCollectionPublication;
+        let Self { name, base, words, entries } = self;
+        assert_ne!(entries[0], 0);
+        let mut pair = ArrayCollectionPublication::prepare(
+            name.into_string(),
+            base,
+            (entries[0] & INDEX_MASK) as usize,
+            BatchValue::from_owned(Self::decode(entries[0], words[0])),
+        );
+        if entries[1] != 0 {
+            assert!(pair.try_record(
+                (entries[1] & INDEX_MASK) as usize,
+                BatchValue::from_owned(Self::decode(entries[1], words[1])),
+            ));
+        }
+        pair
+    }
+
     /// Transfer existing scalar writes without publishing or detaching the owner.
     pub(super) fn into_batch(
         self,
@@ -160,6 +194,33 @@ impl IndexedPublication {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn mixed_pair_promotion_preserves_scalar_bits_and_capacity() {
+        use super::super::array_batch_publication::BatchValue;
+        for value in [Value::Int(i64::MIN), Value::Float(-0.0), Value::Bool(true), Value::Null] {
+            let owner = original();
+            let pending =
+                IndexedPublication::prepare("state".into(), base(&owner), 0, &value).unwrap();
+            assert!(pending.can_promote_pair(1));
+            assert!(!pending.can_promote_pair(128));
+            let mut pair = pending.into_mixed();
+            assert!(pair.try_record(1, BatchValue::Str(Arc::new("entry".into()))));
+            let saved = pair.snapshot_value();
+            assert!(!pair.can_record(2));
+            assert!(pair.try_record(0, BatchValue::Int(11)));
+            let Value::Array(values) = saved else { panic!() };
+            match (&values[0], &value) {
+                (Value::Int(a), Value::Int(b)) => assert_eq!(a, b),
+                (Value::Float(a), Value::Float(b)) => assert_eq!(a.to_bits(), b.to_bits()),
+                (Value::Bool(a), Value::Bool(b)) => assert_eq!(a, b),
+                (Value::Null, Value::Null) => {}
+                _ => panic!("scalar changed during mixed promotion"),
+            }
+            assert!(matches!(&values[1], Value::Str(s) if s.as_str() == "entry"));
+            assert_eq!(item(&owner, 0), 0);
+        }
+    }
 
     fn base(value: &Value) -> Arc<Vec<Value>> {
         let Value::Array(values) = value else { panic!("expected array") };

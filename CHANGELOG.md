@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep eligible mixed two-write array updates in bounded private storage while
+  preserving compact homogeneous journals, snapshots and publication boundaries.
+
 - Route eligible initial string and byte array updates into bounded batch storage,
   preserving snapshot isolation, bounds checks and ordinary fallback publication.
 

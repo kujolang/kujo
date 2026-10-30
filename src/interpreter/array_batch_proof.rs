@@ -249,7 +249,7 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         return 0;
     }
     let Some(Value::Array(base)) = env.nested_spill_proof_value(owner) else { return 0 };
-    if std::sync::Arc::strong_count(base) != 2 || base.len() < 3 {
+    if std::sync::Arc::strong_count(base) != 2 || base.len() < 2 {
         return 0;
     }
     let mut region = Region {
@@ -263,7 +263,7 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         budget: Cell::new(4096),
     };
     match region.statements(body, 0) {
-        Some(writes) if writes > 2 => writes.min(base.len()).min(usize::from(u16::MAX)) as u16,
+        Some(writes) if writes >= 2 => writes.min(base.len()).min(usize::from(u16::MAX)) as u16,
         _ => 0,
     }
 }
@@ -293,7 +293,7 @@ mod tests {
         ] {
             let body =
                 parse(&format!("mut j := 0 while j < limit {{ {payload} j += 1 }} return n"));
-            for count in [3, 8, 64] {
+            for count in [2, 3, 8, 64] {
                 assert_eq!(
                     eligible(
                         &body,
@@ -304,7 +304,7 @@ mod tests {
                     count as u16
                 );
             }
-            for count in [0, 1, 2, 65, i64::MAX] {
+            for count in [0, 1, 65, i64::MAX] {
                 assert_eq!(
                     eligible(
                         &body,
@@ -351,10 +351,27 @@ mod tests {
             assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 3);
         }
         for body in [
-            "state[0] = n state[1] = n",
             "state[0] = n state[1] = n state[2] = observe()",
             "state[0] = n state[1] = n state[99] = n",
         ] {
+            assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 0);
+        }
+        assert_eq!(
+            eligible(&parse("state[0] = n state[1] = n"), &["n".into()], &[Value::Int(7)], &env),
+            2
+        );
+    }
+
+    #[test]
+    fn admits_two_element_owners_without_widening_observation_bounds() {
+        let owner = Value::array(vec![Value::Null; 2]);
+        let mut env = Environment::new();
+        env.define("state".into(), owner.clone());
+        for body in ["state[0] = n state[1] = [n]", "state[-2] = [n] state[-1] = n"] {
+            assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 2);
+        }
+        for body in ["state[0] = n", "state[0] = n state[2] = n", "state[0] = n state[1] = read()"]
+        {
             assert_eq!(eligible(&parse(body), &["n".into()], &[Value::Int(7)], &env), 0);
         }
     }

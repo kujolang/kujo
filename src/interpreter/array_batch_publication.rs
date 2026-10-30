@@ -53,6 +53,12 @@ impl BatchValue {
     }
 }
 
+impl super::dictionary_publication::CollectionPayload for BatchValue {
+    fn into_value(self) -> Value {
+        BatchValue::into_value(self)
+    }
+}
+
 // This private, bounded journal hashes validated integer indices, not public
 // dictionary keys. Explicit seeds avoid AHasher::default's process-wide lazy
 // seed allocation on the first otherwise allocation-neutral array update.
