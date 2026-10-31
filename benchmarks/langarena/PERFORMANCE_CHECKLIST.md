@@ -88,6 +88,8 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
 
+Capture-storage admission is accepted in `342a653`. The [verified report](CAPTURE_STORAGE_BUDGETS_2026_10_31.md) records 3,784 strict allocation pairs, 5,784 semantic checks, all 150 test-size checksums and explicit live-heap/RSS tradeoff review. Aggregate capacity, long-name and multi-scope copying penalties are removed in the measured cases. Remaining work at this cutoff: repeated-array reservation and the final representation/combined-candidate review. Historical open entries below retain their original evidence; they do not imply the capture boundary defect is still unfixed.
+
 Review status, 2026-10-31: sections 3 and 4 remain open. The remaining work is
 grouped below; these groups are not equally sized and do not imply a completion
 percentage or a reliable elapsed-time estimate.
