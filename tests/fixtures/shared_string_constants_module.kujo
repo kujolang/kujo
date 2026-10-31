@@ -1,0 +1,4 @@
+export func literal(n) {
+    if n > 0 { return literal(n - 1) }
+    return "aé雪"
+}

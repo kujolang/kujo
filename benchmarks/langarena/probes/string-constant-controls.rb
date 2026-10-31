@@ -3,15 +3,16 @@ require 'json'
 require 'digest'
 require 'open3'
 require 'fileutils'
-probe, cli, directory = ARGV
-raise 'usage: PROBE ACCEPTED_CLI NEW_OUTPUT_DIRECTORY' unless directory
+probe, cli, directory, expected_cli_sha = ARGV
+expected_cli_sha ||= "45b21be67fe946d54cabaa5be20f67b4ab26414135afb2a3c5a55af1b672393f"
+raise 'usage: PROBE CLI NEW_OUTPUT_DIRECTORY [EXPECTED_CLI_SHA256]' unless directory
 probe = File.realpath(probe)
 cli = File.realpath(cli)
 raise 'new output directory required' if File.exist?(directory)
 FileUtils.mkdir_p(directory)
 directory = File.expand_path(directory)
 sha = ->(path) { Digest::SHA256.file(path).hexdigest }
-raise 'wrong accepted CLI' unless sha.call(cli) == '45b21be67fe946d54cabaa5be20f67b4ab26414135afb2a3c5a55af1b672393f'
+raise 'wrong CLI identity' unless sha.call(cli) == expected_cli_sha
 identity = [probe, cli, __FILE__, 'src/vm.rs', 'src/compiler.rs'].to_h { |path| [path, sha.call(path)] }
 environment = {'KUJO_ALLOCATION_PHASE'=>'0', 'DEBUG_JIT_CALL'=>nil, 'DEBUG_VM'=>nil, 'DEBUG_JIT'=>nil, 'DISABLE_FUNCTION_JIT'=>nil}
 run = ->(argv) { out, err, status = Open3.capture3(environment, *argv); raise "failed #{argv.inspect}: #{err}" unless status.success?; {argv:argv, stdout:out, stderr:err, exit:status.exitstatus} }

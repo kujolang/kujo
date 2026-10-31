@@ -743,6 +743,7 @@ defects have separate verified fixes in section 3.
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
 - [x] Isolate repeated string-key literal allocations on the accepted runtime: [baseline](STRING_CONSTANT_LOADS_2026_10_31.md), 24 semantic runs and 48 allocation observations. VM adds two requests and key-width + 40 requested bytes per read; JIT has no matched penalty. Runtime optimization remains pending.
+- [x] Evaluate dense string caching: [rejected experiment](STRING_CACHE_DENSE_EXPERIMENT_2026_10_31.md) removes hot allocations but adds 32,755 cold requested bytes with 2,048 unused constants. All 150 checksums pass; the layout is not accepted. A sparse revision is under verification.
 
 
 - [x] Evaluate borrowed scalar-load dispatch against whole workloads.

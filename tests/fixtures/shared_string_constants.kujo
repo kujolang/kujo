@@ -1,0 +1,39 @@
+from shared_string_constants_module import literal
+func local_literal(n) {
+    if n > 0 { return local_literal(n - 1) }
+    return "aé雪"
+}
+func append_copy(value) {
+    mut result := value
+    result += "!"
+    return result
+}
+func lookup(n) {
+    let data := {"aé雪": 7}
+    mut sum := 0
+    mut i := 0
+    while i < n { sum += data["aé雪"] i += 1 }
+    return sum
+}
+let original := local_literal(2)
+mut changed := original
+changed += "!"
+assert_equal(original, "aé雪")
+assert_equal(changed, "aé雪!")
+assert_equal(local_literal(3), original)
+assert_equal(literal(3), original)
+assert_equal(append_copy(literal(0)), changed)
+assert_equal(literal(0), original)
+assert_equal(map([1, 2, 3], local_literal), [original, original, original])
+assert_equal(map([original, original], append_copy), [changed, changed])
+assert_equal(lookup(2), 14)
+assert_equal(lookup(200), 1400)
+assert_equal(lookup(200), 1400)
+func multiple_literals() { return ["first", "second", "third"] }
+let saved := multiple_literals()
+mut updated := multiple_literals()
+updated[1] += "!"
+assert_equal(saved, ["first", "second", "third"])
+assert_equal(updated, ["first", "second!", "third"])
+assert_equal(multiple_literals(), saved)
+print("PASS")
