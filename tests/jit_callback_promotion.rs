@@ -37,8 +37,9 @@ fn hot_dispatch_retains_exception_closure_and_loop_behavior() {
 
 #[test]
 fn quicksort_promotes_pivot_helper_without_changing_snapshots_or_errors() {
-    // Use the actual port kernel, so the coverage test cannot silently diverge.
-    let port = include_str!("../benchmarks/langarena/port.kujo");
+    // Use the committed kernel assembled into the port, so clean checkouts do
+    // not require the ignored generated port.kujo file to compile this test.
+    let port = include_str!("../benchmarks/langarena/src/30_sort.kujo");
     let kernel = port.split("func quick_sort(input, low, high) {").nth(1).unwrap();
     let kernel = kernel.split("func merge_sort(").next().unwrap();
     let mut source = format!(
