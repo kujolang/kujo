@@ -1051,13 +1051,39 @@ pub unsafe extern "C" fn jit_field_read(
     ctx.field_receiver_pending = false;
     let result = (|| {
         let name = (name_ptr as *const String).as_ref().ok_or("Missing native field name")?;
-        let object = ctx
-            .owned_roots
-            .borrow_value(object, kind)
-            .map_err(|error| format!("Native ownership error: {error:?}"))?;
-        let (value, receiver) = VM::get_field_value(&object, name, |method| {
-            ctx.globals_ptr.as_ref().and_then(|globals| globals.get(method)).cloned()
-        })?;
+        // Like indexed reads, construct the owned-root borrow here rather than
+        // moving a full-width Cow<Value> through the common helper return ABI.
+        let object = if kind == crate::native_owned::OWNED {
+            std::borrow::Cow::Borrowed(
+                ctx.owned_roots
+                    .borrow_owned(object)
+                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+            )
+        } else {
+            ctx.owned_roots
+                .borrow_value(object, kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?
+        };
+        // Ordinary stored struct fields need no receiver or method lookup.
+        // ArgParser is excluded because its legacy methods override fields.
+        let stored = match object.as_ref() {
+            Value::Struct { name: type_name, fields } if type_name != "ArgParser" => {
+                fields.get(name)
+            }
+            _ => None,
+        };
+        let (value, receiver) = if let Some(value) = stored {
+            if let Some(immediate) = crate::native_scalar::encode(value) {
+                return Ok(immediate);
+            }
+            // Owned results still receive an independent root. Reuse this
+            // lookup rather than searching the field again on the fallback.
+            (value.clone(), None)
+        } else {
+            VM::get_field_value(&object, name, |method| {
+                ctx.globals_ptr.as_ref().and_then(|globals| globals.get(method)).cloned()
+            })?
+        };
         let encoded = ctx
             .owned_roots
             .encode(value)

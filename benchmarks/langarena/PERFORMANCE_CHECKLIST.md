@@ -787,6 +787,12 @@ defects have separate verified fixes in section 3.
   requests across 12 helper measurements (1.2 million reads), with a positive
   allocator control and source-program VM/interpreter/JIT checks. This excludes
   compilation and setup; CPU overhead, writes and other paths remain open.
+- [x] Reduce native field-result copying while preserving owned results and legacy methods.
+  [Verified helper optimization](NATIVE_FIELD_ABI_FIX_2026_10_31.md) records 480
+  matched observations: scalar-field helper medians fall 66.5–67.9%, nested-array
+  fields 32.2%, with overlapping array-control ranges. All 150 test-size checksums,
+  1,309 library and 15 targeted integration tests pass (eight existing manual
+  library ignores). These are local helper results, not end-to-end speed scores.
 - [ ] Identify hot unsupported operations and expensive transitions.
   [Refreshed attribution](CURRENT_KERNEL_ATTRIBUTION_2026_10_31.md) verifies six
   symbolized profiles directly linked to accepted `26105f4`. Dispatch/opcode
