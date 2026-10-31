@@ -145,11 +145,14 @@ percentage or a reliable elapsed-time estimate.
    checks pass. Small array-only and mixed three-write batches also retain a
    277,440-byte width penalty (144 additional allocation/216 semantic checks).
    The confirmed follow-up must cover small mixed and dense updates together.
-   The [nested-row candidate checkpoint](NESTED_ROW_MEMORY_REVIEW_2026_10_30.md)
-   passes correctness, allocation and historical controls, but remains unaccepted:
-   dense fresh-snapshot peak-memory increases need further isolation. A focused
-   36-pair follow-up retains positive means in all three runtimes; do not dismiss
-   these as machine load or mark this item fixed yet.
+   The [nested-row fix](NESTED_ROW_BATCHES_2026_10_30.md) is accepted in `b1bf786`:
+   3,048 allocation comparisons, 4,572 semantic runs, 18 boundary checks,
+   1,276 library tests, 421 integrations and all 150 checksums pass. Fixed-write
+   width penalties are removed for the measured mixed/collection row cases.
+   Memory review covers 288 RSS pairs, 36 focused follow-up pairs and 288 live
+   allocation pairs. Ending live growth matches; process-RSS increases remain
+   an explicitly reviewed tradeoff, not a claimed memory reduction. The
+   [earlier pending checkpoint](NESTED_ROW_MEMORY_REVIEW_2026_10_30.md) is historical.
    [Multiple dictionary replacement isolation](MULTI_KEY_COLLECTION_BASELINE_2026_10_30.md)
    on `f1893ea` also confirms a 624,240-byte per-call width penalty for three
    array-valued root dictionary replacements; the scalar control is flat.

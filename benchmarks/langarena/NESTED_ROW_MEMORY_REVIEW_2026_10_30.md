@@ -1,5 +1,9 @@
 # Nested-row candidate: acceptance pending
 
+Historical checkpoint, superseded by [accepted runtime `b1bf786`](NESTED_ROW_BATCHES_2026_10_30.md).
+Additional live-allocation measurements completed the review. The original RSS
+increases below remain recorded; acceptance does not claim lower process memory.
+
 Sections 3 and 4 remain open. This is a verification checkpoint, not an accepted
 runtime fix. The candidate is uncommitted; accepted runtime remains `f1893ea`.
 
