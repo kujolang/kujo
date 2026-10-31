@@ -3321,8 +3321,7 @@ impl VM {
 
             match instruction {
                 OpCode::LoadConst(index) => {
-                    let constant = &self.chunk.constants[index];
-                    let value = self.constant_to_value(constant)?;
+                    let value = self.load_constant_value(index)?;
                     self.stack.push(value);
                 }
 
@@ -6736,6 +6735,21 @@ impl VM {
         }
     }
 
+    // Keep the cache's lock/map frame off numeric and other constant loads.
+    // The string-only helper stays outlined; this small dispatch guard does not.
+    #[inline(always)]
+    fn load_constant_value(&self, index: usize) -> Result<Value, String> {
+        let constant = &self.chunk.constants[index];
+        if matches!(constant, Constant::String(_)) {
+            return Ok(Value::Str(
+                self.chunk
+                    .shared_string_constant(index)
+                    .expect("string constant kind checked before cache lookup"),
+            ));
+        }
+        self.constant_to_value(constant)
+    }
+
     /// Convert a constant to a runtime value
     fn constant_to_value(&self, constant: &Constant) -> Result<Value, String> {
         match constant {
@@ -9187,8 +9201,7 @@ impl VM {
                         OpCode::LoadCapture(index) => self.load_capture(index)?,
                         OpCode::StoreCapture(index) => self.store_capture(index)?,
                         OpCode::LoadConst(idx) => {
-                            let constant = &self.chunk.constants[idx];
-                            let value = self.constant_to_value(constant)?;
+                            let value = self.load_constant_value(idx)?;
                             self.stack.push(value);
                         }
 

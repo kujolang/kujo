@@ -5,7 +5,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, OnceLock, RwLock};
 
 static NEXT_CODE_ID: AtomicU64 = AtomicU64::new(1);
 
@@ -494,6 +494,8 @@ struct BytecodeStorage {
     named_bindings: OnceLock<HashSet<String>>,
     call_metadata: OnceLock<CallMetadata>,
     parameter_bindings: OnceLock<Vec<(Option<usize>, bool)>>,
+    first_string_constant: OnceLock<(usize, Arc<String>)>,
+    other_string_constants: OnceLock<Arc<RwLock<HashMap<usize, Arc<String>>>>>,
 }
 
 /// Dispatch facts belong to immutable code storage, not a function's name.
@@ -538,6 +540,8 @@ impl std::ops::DerefMut for BytecodeChunk {
         storage.named_bindings.take();
         storage.call_metadata.take();
         storage.parameter_bindings.take();
+        storage.first_string_constant.take();
+        storage.other_string_constants.take();
         &mut storage.data
     }
 }
@@ -613,7 +617,33 @@ impl BytecodeChunk {
             named_bindings: OnceLock::new(),
             call_metadata: OnceLock::new(),
             parameter_bindings: OnceLock::new(),
+            first_string_constant: OnceLock::new(),
+            other_string_constants: OnceLock::new(),
         }))
+    }
+
+    /// Keep the first accessed string inline and allocate sparse spill storage
+    /// only when another string is read. Unreachable constants never determine
+    /// cache allocation size. Public bytecode edits invalidate both caches.
+    // Called only after the VM checks the constant kind. Keep synchronization
+    // and cache initialization out of the scalar dispatch frame.
+    #[inline(never)]
+    pub(crate) fn shared_string_constant(&self, index: usize) -> Option<Arc<String>> {
+        let Constant::String(value) = &self.constants[index] else {
+            return None;
+        };
+        let (first_index, first_value) =
+            self.0.first_string_constant.get_or_init(|| (index, Arc::new(value.clone())));
+        if *first_index == index {
+            return Some(Arc::clone(first_value));
+        }
+        let cache =
+            self.0.other_string_constants.get_or_init(|| Arc::new(RwLock::new(HashMap::new())));
+        if let Some(value) = cache.read().expect("string cache read lock poisoned").get(&index) {
+            return Some(Arc::clone(value));
+        }
+        let mut entries = cache.write().expect("string cache write lock poisoned");
+        Some(Arc::clone(entries.entry(index).or_insert_with(|| Arc::new(value.clone()))))
     }
 
     /// Stable for shared immutable code; independent of names and allocation reuse.
@@ -784,6 +814,85 @@ pub struct ExceptionHandler {
 #[cfg(test)]
 mod sharing_tests {
     use super::*;
+
+    #[test]
+    fn string_constants_share_only_immutable_code_and_invalidate_on_host_edits() {
+        let mut code = BytecodeChunk::new();
+        code.add_constant(Constant::Int(7));
+        code.add_constant(Constant::String("aé雪".into()));
+        code.add_constant(Constant::String("unread".into()));
+        assert!(code.shared_string_constant(0).is_none());
+        assert!(code.0.first_string_constant.get().is_none());
+        let before = code.clone();
+        let value = code.shared_string_constant(1).unwrap();
+        assert!(Arc::ptr_eq(&value, &before.shared_string_constant(1).unwrap()));
+        assert!(code.0.other_string_constants.get().is_none());
+        let second = code.shared_string_constant(2).unwrap();
+        assert!(Arc::ptr_eq(&second, &before.shared_string_constant(2).unwrap()));
+        assert_eq!(code.0.other_string_constants.get().unwrap().read().unwrap().len(), 1);
+        let mut copy = Arc::clone(&value);
+        Arc::make_mut(&mut copy).push('!');
+        assert_eq!(&*code.shared_string_constant(1).unwrap(), "aé雪");
+        assert_eq!(&*copy, "aé雪!");
+        let cold = {
+            let mut c = BytecodeChunk::new();
+            c.constants = code.constants.clone();
+            c
+        };
+        assert_eq!(cold, code, "cache state is not code identity");
+        code.constants[1] = Constant::String("replacement".into());
+        assert!(code.0.first_string_constant.get().is_none());
+        assert_eq!(&*code.shared_string_constant(1).unwrap(), "replacement");
+        assert_eq!(&*before.shared_string_constant(1).unwrap(), "aé雪");
+        let weak = Arc::downgrade(&code.shared_string_constant(1).unwrap());
+        code.constants.clear();
+        assert!(weak.upgrade().is_none(), "cache must not outlive edited code");
+    }
+
+    #[test]
+    fn first_string_cache_does_not_allocate_slots_for_unread_constants() {
+        let mut code = BytecodeChunk::new();
+        code.constants = (0..2048).map(|i| Constant::String(format!("unused-{i}"))).collect();
+        code.constants.push(Constant::String("live".into()));
+        assert_eq!(&*code.shared_string_constant(2048).unwrap(), "live");
+        assert_eq!(code.0.first_string_constant.get().unwrap().0, 2048);
+        assert!(code.0.other_string_constants.get().is_none());
+        let old = code.clone();
+        code.constants[2048] = Constant::Int(7);
+        assert!(code.shared_string_constant(2048).is_none());
+        assert!(code.0.first_string_constant.get().is_none());
+        assert_eq!(&*old.shared_string_constant(2048).unwrap(), "live");
+    }
+
+    #[test]
+    fn string_constant_cache_is_shared_across_concurrent_code_users() {
+        let mut code = BytecodeChunk::new();
+        code.constants = vec![Constant::String("one".into()), Constant::String("two".into())];
+        let users: Vec<_> = (0..4)
+            .map(|offset| {
+                let code = code.clone();
+                std::thread::spawn(move || {
+                    for i in 0..64 {
+                        let index = (i + offset) % 2;
+                        assert_eq!(
+                            &*code.shared_string_constant(index).unwrap(),
+                            if index == 0 { "one" } else { "two" }
+                        );
+                    }
+                    [
+                        code.shared_string_constant(0).unwrap(),
+                        code.shared_string_constant(1).unwrap(),
+                    ]
+                })
+            })
+            .collect();
+        for user in users {
+            let values = user.join().unwrap();
+            for (index, value) in values.iter().enumerate() {
+                assert!(Arc::ptr_eq(value, &code.shared_string_constant(index).unwrap()));
+            }
+        }
+    }
 
     #[test]
     fn dispatch_metadata_is_shared_by_code_and_invalidated_on_every_edit() {
