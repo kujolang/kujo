@@ -123,7 +123,13 @@ percentage or a reliable elapsed-time estimate.
    [Remaining selector isolation](REMAINING_SELECTOR_BASELINE_2026_10_30.md)
    confirms a 277,440-byte width penalty for invariant-parameter multiplication
    and division on the accepted runtime; 72 allocation observations and 108
-   semantic checks pass. These measured shapes require a bounded follow-up fix.
+   semantic checks pass. The [invariant-selector fix](INVARIANT_SELECTOR_FIX_2026_10_30.md)
+   is now accepted in `f1893ea`: measured multiplication/division slopes fall
+   from 284,846 to 6,514 bytes/call at width 2,048. Acceptance covers 2,760
+   allocation comparisons, 4,140 semantic checks, nine portable contracts,
+   1,272 library tests, 420 integrations and all 150 test-size checksums. All
+   72 RSS pairs are reviewed, retaining the largest positive group mean of
+   182,272 bytes (2.09%). Counter-dependent products/quotients retain fallback.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
    [Dense root-array review](DENSE_ARRAY_REVIEW_2026_10_30.md) passes 48 allocation
