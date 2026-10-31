@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Retain eligible mixed and collection-valued nested row updates in bounded
+  private batches, preserving snapshots, aliasing, callback boundaries and
+  prior-write publication on errors.
+
 - Avoid repeated captured-array owner copying for checked invariant integer multiplication/division indices while preserving snapshot, overflow, division-by-zero and publication behavior.
 
 - Avoid full captured-array copying for proven bounded addition/subtraction index expressions, retaining checked intermediate overflow, snapshot, callback and error publication semantics.

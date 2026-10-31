@@ -894,7 +894,7 @@ impl Environment {
             return Err(path);
         }
         if let Some((0, CaptureWrites::Nested(pending))) = &mut self.capture_writes {
-            if !pending.try_record_owned_with_batching(&path, value, spill_hint.capacity) {
+            if !pending.try_record_owned_with_policy(&path, value, spill_hint) {
                 return Err(path);
             }
         } else {

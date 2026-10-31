@@ -12,10 +12,11 @@ use crate::ast::{Expr, Stmt};
 pub(crate) struct SpillPolicy {
     pub(super) capacity: u16,
     pub(super) allow_initial_insertion: bool,
+    pub(super) collection_rows: bool,
 }
 impl Default for SpillPolicy {
     fn default() -> Self {
-        Self { capacity: 0, allow_initial_insertion: true }
+        Self { capacity: 0, allow_initial_insertion: true, collection_rows: false }
     }
 }
 
@@ -201,6 +202,7 @@ pub(super) fn eligible(
         // maximum batch size. Further insertions still grow normally.
         SpillPolicy {
             capacity: region.writes.min(map.len().max(5)).min(u16::MAX as usize) as u16,
+            collection_rows: false,
             allow_initial_insertion: super::dictionary_publication::insertion_can_pay(
                 map,
                 u16::try_from(region.writes).unwrap_or(0),

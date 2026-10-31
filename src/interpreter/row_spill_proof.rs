@@ -1,7 +1,7 @@
-//! Profitability admission for scalar row batches, including bounded counted loops.
+//! Profitability admission for scalar and collection row batches, including counted loops.
 //! This does not authorize reordering: publication still handles every escape.
 use super::{environment::Environment, Value};
-use crate::ast::{Expr, Pattern, Stmt};
+use crate::ast::{ArrayElement, DictElement, Expr, Pattern, Stmt};
 use std::cell::Cell;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -59,6 +59,8 @@ struct Region<'a> {
     counter: Option<(&'a str, i64)>,
     loop_range: Option<LoopRange>,
     writes: usize,
+    collection_payload: bool,
+    reads_row: Cell<bool>,
     #[cfg(test)]
     validation_reads: Cell<usize>,
     #[cfg(test)]
@@ -167,7 +169,10 @@ impl Region<'_> {
                     || self.runtime.is_none()
                     || self.argument(name).is_some_and(scalar)
             }
-            Expr::IndexAccess { .. } => self.indexed(expr, true),
+            Expr::IndexAccess { .. } => {
+                self.reads_row.set(true);
+                self.indexed(expr, true)
+            }
             Expr::UnaryOp { operand, .. } => self.expression(operand, depth + 1),
             Expr::BinaryOp { left, right, .. } => {
                 self.expression(left, depth + 1) && self.expression(right, depth + 1)
@@ -187,17 +192,68 @@ impl<'a> Region<'a> {
             counter: None,
             loop_range: None,
             writes: 0,
+            collection_payload: false,
+            reads_row: Cell::new(false),
             #[cfg(test)]
             validation_reads: Cell::new(0),
             #[cfg(test)]
             validation_assignments: Cell::new(0),
         }
     }
+    fn payload(&mut self, expr: &Expr, depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        match expr {
+            Expr::ArrayLiteral(items) => {
+                self.collection_payload = true;
+                items.iter().all(|item| match item {
+                    ArrayElement::Single(value) => self.payload(value, depth + 1),
+                    _ => false,
+                })
+            }
+            Expr::DictLiteral(items) => {
+                self.collection_payload = true;
+                items.iter().all(|item| match item {
+                    DictElement::Pair(key, value) => {
+                        (matches!(key, Expr::String(_)) || self.expression(key, depth + 1))
+                            && self.payload(value, depth + 1)
+                    }
+                    _ => false,
+                })
+            }
+            Expr::StructInstance { fields, .. } => {
+                self.collection_payload = true;
+                fields.iter().all(|(_, value)| self.payload(value, depth + 1))
+            }
+            Expr::Identifier(name)
+                if name != self.owner.name
+                    && name != "null"
+                    && !self.counter.is_some_and(|(n, _)| n == name) =>
+            {
+                if self.runtime.is_none() {
+                    // Static shape only: runtime admission checks the actual kind.
+                    self.collection_payload = true;
+                    return true;
+                }
+                let Some(value) = self.argument(name) else { return false };
+                if !super::array_batch_publication::BatchValue::supports(value) {
+                    return false;
+                }
+                if !scalar(value) {
+                    self.collection_payload = true;
+                }
+                true
+            }
+            _ => self.expression(expr, depth + 1),
+        }
+    }
+
     fn assignment(&mut self, stmt: &Stmt, depth: usize) -> bool {
         #[cfg(test)]
         self.validation_assignments.set(self.validation_assignments.get() + 1);
         let Stmt::Assign { target, value } = stmt else { return false };
-        if !self.indexed(target, false) || !self.expression(value, depth + 1) {
+        if !self.indexed(target, false) || !self.payload(value, depth + 1) {
             return false;
         }
         self.writes = self.writes.saturating_add(1);
@@ -308,14 +364,22 @@ impl<'a> Region<'a> {
 pub(super) fn shape(body: &[Stmt]) -> bool {
     let Some(owner) = first_owner(body, 0) else { return false };
     let mut r = Region::new(owner, None);
-    r.statements(body, 0) && r.writes > 4
+    r.statements(body, 0) && (r.writes > 4 || (r.collection_payload && r.writes >= 2))
 }
-pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &Environment) -> u16 {
-    let Some(owner) = first_owner(body, 0) else { return 0 };
-    if params.iter().any(|n| n == owner.name) {
-        return 0;
+pub(super) fn eligible_policy(
+    body: &[Stmt],
+    params: &[String],
+    args: &[Value],
+    env: &Environment,
+) -> super::nested_spill_proof::SpillPolicy {
+    let Some(owner) = first_owner(body, 0) else { return Default::default() };
+    if params.len() != args.len()
+        || params.iter().any(|n| n == owner.name)
+        || params.iter().enumerate().any(|(i, n)| params[..i].contains(n))
+    {
+        return Default::default();
     }
-    let Some(root) = env.nested_spill_proof_value(owner.name) else { return 0 };
+    let Some(root) = env.nested_spill_proof_value(owner.name) else { return Default::default() };
     let leaf = match (owner.selector, root) {
         (Selector::Field(k), Value::Struct { fields, .. }) => fields.get(k),
         (Selector::String(k), Value::Dict(map)) => map.get(k),
@@ -332,13 +396,25 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         }
         _ => None,
     };
-    let Some(Value::Array(row)) = leaf else { return 0 };
+    let Some(Value::Array(row)) = leaf else { return Default::default() };
     let mut r = Region::new(owner, Some((row, params, args, env)));
-    if r.statements(body, 0) && r.writes > 4 {
-        r.writes.min(row.len()).min(u16::MAX as usize) as u16
+    if r.statements(body, 0)
+        && (r.writes > 4 || (r.collection_payload && r.writes >= 2))
+        && !(r.collection_payload && r.reads_row.get())
+    {
+        super::nested_spill_proof::SpillPolicy {
+            capacity: r.writes.min(row.len()).min(u16::MAX as usize) as u16,
+            collection_rows: r.collection_payload,
+            ..Default::default()
+        }
     } else {
-        0
+        Default::default()
     }
+}
+
+#[cfg(test)]
+fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &Environment) -> u16 {
+    eligible_policy(body, params, args, env).capacity
 }
 
 #[cfg(test)]
@@ -376,6 +452,33 @@ mod tests {
         assert_eq!(std::sync::Arc::strong_count(&root), 2);
     }
     #[test]
+    fn collection_rows_admit_mixed_batches_but_reject_reads_and_callbacks() {
+        let env = env();
+        for source in [
+            "state[0][0] = n state[0][1] = [n] state[0][2] = {\"v\": n} return n",
+            "state[0][0] = [n] state[0][1] = n return n",
+            "mut j := 0 while j < 32 { state[0][j] = [n + j] j += 1 } return n",
+        ] {
+            let body = parse(source);
+            assert!(shape(&body), "{source}");
+            let policy = eligible_policy(&body, &["n".into()], &[Value::Int(7)], &env);
+            assert!(policy.collection_rows, "{source}");
+            assert!(policy.capacity >= 2, "{source}");
+        }
+        for source in [
+            "state[0][0] = [n] state[0][1] = state[0][0] return n",
+            "state[0][0] = [n] state[0][1] = [observe()] return n",
+            "state[0][0] = [n] state[0][128] = [n] return n",
+        ] {
+            assert_eq!(eligible(&parse(source), &["n".into()], &[Value::Int(7)], &env), 0);
+        }
+        let scalar = parse("mut j := 0 while j < 8 { state[0][j] += n j += 1 } return n");
+        let policy = eligible_policy(&scalar, &["n".into()], &[Value::Int(7)], &env);
+        assert_eq!(policy.capacity, 8);
+        assert!(!policy.collection_rows);
+    }
+
+    #[test]
     fn rejects_escape_uncertain_loops_and_invalid_reads() {
         for body in [
             "mut j := -8 while j < -j { state[0][0] += 1 j += 1 }",
@@ -384,7 +487,7 @@ mod tests {
             "mut j := 0 while j < 8 { state[0][j] += 1 observe() j += 1 }",
             "mut j := 0 while j < 8 { state[0][j] += 1 j += 1 } return state",
             "mut j := 0 while j < 8 { state[0][j] += 1 j += 1 } return state[0]",
-            "mut j := 0 while j < 8 { state[0][j] = [1] j += 1 }",
+            "mut j := 0 while j < 8 { state[0][j] = [observe()] j += 1 }",
             "mut j := 0 while j < 129 { state[0][j] += 1 j += 1 }",
             "mut j := 0 while j < 65536 { state[0][0] += 1 j += 1 }",
             "mut j := 0 while j < 8 { state[0][j] += 1 j += 1 } return state[0][128]",

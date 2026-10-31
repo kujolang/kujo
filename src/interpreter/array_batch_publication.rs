@@ -63,7 +63,7 @@ impl super::dictionary_publication::CollectionPayload for BatchValue {
 // dictionary keys. Explicit seeds avoid AHasher::default's process-wide lazy
 // seed allocation on the first otherwise allocation-neutral array update.
 #[derive(Clone, Debug, Default)]
-struct IndexHashBuilder;
+pub(super) struct IndexHashBuilder;
 impl BuildHasher for IndexHashBuilder {
     type Hasher = ahash::AHasher;
 

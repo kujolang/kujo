@@ -1,5 +1,7 @@
-//! Private nested scalar writes retained in the already allocated assignment path.
+//! Private nested writes retained in the assignment path, with bounded row overflow.
+use super::array_batch_publication::{BatchValue, IndexHashBuilder};
 use super::assignment::Access;
+use super::dictionary_publication::CollectionPayload;
 use super::dictionary_publication::{
     with_integer_key, CollectionValue, DictionaryCollectionPublication,
 };
@@ -186,6 +188,67 @@ impl CollectionWrite {
     fn apply_owned(self, root: &mut Value) {
         let slot = self.slot(root);
         *slot = self.value.into_value();
+    }
+}
+
+/// Private sparse row payloads; retain no extra owner and never grow after admission.
+#[derive(Clone, Debug)]
+pub(crate) struct CollectionRowWrite {
+    selector: Selector,
+    writes: std::collections::HashMap<usize, BatchValue, IndexHashBuilder>,
+}
+impl CollectionRowWrite {
+    fn new(selector: Selector, hint: u16) -> Self {
+        Self {
+            selector,
+            writes: std::collections::HashMap::with_capacity_and_hasher(
+                usize::from(hint),
+                Default::default(),
+            ),
+        }
+    }
+    fn record(&mut self, index: usize, value: &mut Value) -> bool {
+        if !BatchValue::supports(value) {
+            return false;
+        }
+        if let Some(previous) = self.writes.get_mut(&index) {
+            *previous = BatchValue::from_owned(std::mem::replace(value, Value::Null));
+        } else {
+            if self.writes.len() == self.writes.capacity() {
+                return false;
+            }
+            self.writes
+                .insert(index, BatchValue::from_owned(std::mem::replace(value, Value::Null)));
+        }
+        true
+    }
+    fn row_mut<'a>(selector: &Selector, root: &'a mut Value) -> &'a mut Vec<Value> {
+        let leaf = match (selector, root) {
+            (Selector::Field(k), Value::Struct { fields, .. }) => Arc::make_mut(fields).get_mut(k),
+            (Selector::String(k), Value::Dict(map)) => Arc::make_mut(map).get_mut(k.as_str()),
+            (Selector::Integer(k), Value::Dict(map)) => {
+                with_integer_key(*k, |k| Arc::make_mut(map).get_mut(k))
+            }
+            (Selector::Integer(k), Value::Array(rows)) => {
+                let index = NestedPublication::resolve(*k, rows.len()).expect("validated owner");
+                Arc::make_mut(rows).get_mut(index)
+            }
+            _ => unreachable!("validated row owner"),
+        };
+        let Some(Value::Array(row)) = leaf else { unreachable!("validated row") };
+        Arc::make_mut(row)
+    }
+    fn apply(&self, root: &mut Value) {
+        let row = Self::row_mut(&self.selector, root);
+        for (index, value) in &self.writes {
+            row[*index] = value.clone().into_value();
+        }
+    }
+    fn apply_owned(self, root: &mut Value) {
+        let row = Self::row_mut(&self.selector, root);
+        for (index, value) in self.writes {
+            row[index] = value.into_value();
+        }
     }
 }
 
@@ -611,6 +674,20 @@ impl NestedPublication {
     fn read_at(root: &Value, write: &Access, owner: RowKey<'_>, key: RowKey<'_>) -> Option<Value> {
         match write {
             Access::DeferredCollection(write) => write.read(root, owner, key),
+            Access::DeferredCollectionRow(write) => {
+                let RowKey::Integer(index) = key else { return None };
+                if !write.selector.key().same(owner, root) {
+                    return None;
+                }
+                let row = write.selector.key().row(root)?;
+                Some(match Self::resolve(index, row.len()) {
+                    Some(index) => write
+                        .writes
+                        .get(&index)
+                        .map_or_else(|| row[index].clone(), |v| v.clone().into_value()),
+                    None => Value::Error(format!("Index out of bounds: {index}")),
+                })
+            }
             Access::DeferredDictionary(write) => match key {
                 RowKey::Integer(index) => {
                     with_integer_key(index, |key| write.read(root, owner, key))
@@ -731,12 +808,26 @@ impl NestedPublication {
     }
 
     /// A failed record must leave both the pending write and input unchanged.
+    #[cfg(test)]
     pub(super) fn try_record_owned_with_batching(
         &mut self,
         path: &[Access],
         value: &mut Value,
         spill_hint: u16,
     ) -> bool {
+        self.try_record_owned_with_policy(
+            path,
+            value,
+            super::nested_spill_proof::SpillPolicy { capacity: spill_hint, ..Default::default() },
+        )
+    }
+    pub(super) fn try_record_owned_with_policy(
+        &mut self,
+        path: &[Access],
+        value: &mut Value,
+        policy: super::nested_spill_proof::SpillPolicy,
+    ) -> bool {
+        let spill_hint = policy.capacity;
         let Some((Access::Index(root), rest)) = self.path.split_first_mut() else { unreachable!() };
         let (write, prefix) = rest.split_last_mut().expect("nested write");
         if path.len() != prefix.len() + 2 {
@@ -754,6 +845,117 @@ impl NestedPublication {
         }
         let root = owner;
         let path = &path[prefix.len()..];
+        // Promotion is opt-in for a proven collection-bearing row region. All
+        // validation precedes moving the old journal or the incoming payload.
+        if policy.collection_rows && spill_hint > 0 && BatchValue::supports(value) {
+            if let [first, Access::Index(Value::Int(raw))] = path {
+                if let Some(actual) = RowKey::from_access(first) {
+                    let selector = match write {
+                        Access::DeferredCollection(w)
+                            if matches!(w.key, CollectionKey::Array(_)) =>
+                        {
+                            Some(&w.selector)
+                        }
+                        Access::DeferredRow(w) => Some(&w.selector),
+                        Access::DeferredRowMany(w) => Some(&w.selector),
+                        Access::DeferredCollectionRow(w) => Some(&w.selector),
+                        _ => None,
+                    };
+                    if let Some(selector) = selector {
+                        if !selector.key().same(actual, root) {
+                            return false;
+                        }
+                        let Some(row) = selector.key().row(root) else { return false };
+                        let Some(index) = Self::resolve(*raw, row.len()) else { return false };
+                        if let Access::DeferredCollectionRow(w) = write {
+                            return w.record(index, value);
+                        }
+                        // Replacing an existing scalar slot needs no promotion,
+                        // even if a later statement may write a collection.
+                        if let Some(scalar) = Scalar::from_value(value) {
+                            match write {
+                                Access::DeferredRow(w) => {
+                                    if let Some(entry) =
+                                        w.entries.iter_mut().flatten().find(|e| e.index == index)
+                                    {
+                                        entry.value = scalar;
+                                        return true;
+                                    }
+                                }
+                                Access::DeferredRowMany(w) => {
+                                    if let Some(entry) = w.writes.get_mut(&index) {
+                                        *entry = scalar;
+                                        return true;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        // Keep an ordinary single collection overwrite allocation-free.
+                        let same_collection = matches!(write, Access::DeferredCollection(w)
+                            if w.key == CollectionKey::Array(index) && DictionaryCollectionPublication::supports(value));
+                        if !same_collection {
+                            let prior_count = match write {
+                                Access::DeferredCollection(_) => 1,
+                                Access::DeferredRow(w) => w.entries.iter().flatten().count(),
+                                Access::DeferredRowMany(w) => w.writes.len(),
+                                _ => unreachable!(),
+                            };
+                            let contains = match write {
+                                Access::DeferredCollection(w) => {
+                                    w.key == CollectionKey::Array(index)
+                                }
+                                Access::DeferredRow(w) => {
+                                    w.entries.iter().flatten().any(|e| e.index == index)
+                                }
+                                Access::DeferredRowMany(w) => w.writes.contains_key(&index),
+                                _ => unreachable!(),
+                            };
+                            if prior_count > usize::from(spill_hint)
+                                || (prior_count == usize::from(spill_hint) && !contains)
+                            {
+                                return false;
+                            }
+                            let old = std::mem::replace(write, Access::Field(String::new()));
+                            let mut batch = match old {
+                                Access::DeferredCollection(w) => {
+                                    let CollectionKey::Array(index) = w.key else { unreachable!() };
+                                    let mut batch = CollectionRowWrite::new(w.selector, spill_hint);
+                                    batch.writes.insert(index, BatchValue::Collection(w.value));
+                                    batch
+                                }
+                                Access::DeferredRow(w) => {
+                                    let mut batch = CollectionRowWrite::new(w.selector, spill_hint);
+                                    for entry in w.entries.into_iter().flatten() {
+                                        batch.writes.insert(
+                                            entry.index,
+                                            BatchValue::from_owned(entry.value.value()),
+                                        );
+                                    }
+                                    batch
+                                }
+                                Access::DeferredRowMany(w) => {
+                                    let mut batch = CollectionRowWrite::new(w.selector, spill_hint);
+                                    for (index, value) in w.writes {
+                                        batch
+                                            .writes
+                                            .insert(index, BatchValue::from_owned(value.value()));
+                                    }
+                                    batch
+                                }
+                                _ => unreachable!(),
+                            };
+                            assert!(batch.record(index, value), "validated batch capacity");
+                            *write = Access::DeferredCollectionRow(batch);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if matches!(write, Access::DeferredCollectionRow(_)) {
+            return false;
+        }
         if let Access::DeferredCollection(write) = write {
             let [first, last] = path else { return false };
             let Some(owner) = RowKey::from_access(first) else { return false };
@@ -879,6 +1081,7 @@ impl NestedPublication {
         let root = Self::path_owner_mut(prefix, root);
         match write {
             Access::DeferredCollection(write) => write.apply(root),
+            Access::DeferredCollectionRow(write) => write.apply(root),
             Access::DeferredRow(write) => write.apply(root),
             Access::DeferredRowMany(write) => write.apply(root),
             Access::DeferredDictionary(write) => write.apply(root),
@@ -889,6 +1092,9 @@ impl NestedPublication {
 
     fn apply_owned_path(prefix: &[Access], write: Access, root: &mut Value) {
         match write {
+            Access::DeferredCollectionRow(write) => {
+                write.apply_owned(Self::path_owner_mut(prefix, root));
+            }
             Access::DeferredCollection(write) => {
                 write.apply_owned(Self::path_owner_mut(prefix, root));
             }
@@ -934,6 +1140,108 @@ impl NestedPublication {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn collection_row_table_is_bounded_and_full_tables_accept_alias_rewrites() {
+        let mut batch = CollectionRowWrite::new(Selector::Integer(0), 3);
+        let capacity = batch.writes.capacity();
+        for index in 0..capacity {
+            assert!(batch.record(index, &mut Value::Int(index as i64)));
+        }
+        let mut extra = Value::array(vec![Value::Int(99)]);
+        assert!(!batch.record(capacity, &mut extra));
+        assert!(matches!(extra, Value::Array(_)));
+        assert_eq!(batch.writes.len(), capacity);
+        assert!(batch.record(0, &mut extra));
+        assert!(matches!(extra, Value::Null));
+        assert_eq!(batch.writes.capacity(), capacity);
+        let mut owner = Value::array(vec![Value::array(vec![Value::Null; capacity])]);
+        batch.apply_owned(&mut owner);
+        let Value::Array(rows) = owner else { unreachable!() };
+        let Value::Array(row) = &rows[0] else { unreachable!() };
+        let Value::Array(first) = &row[0] else { unreachable!() };
+        assert!(matches!(first[0], Value::Int(99)));
+    }
+
+    #[test]
+    fn collection_policy_uses_existing_padding() {
+        #[allow(dead_code)]
+        struct PreviousPolicy {
+            capacity: u16,
+            allow_initial_insertion: bool,
+        }
+        assert_eq!(
+            std::mem::size_of::<super::super::nested_spill_proof::SpillPolicy>(),
+            std::mem::size_of::<PreviousPolicy>()
+        );
+    }
+
+    #[test]
+    fn collection_row_promotion_moves_values_and_rejects_invalid_writes_atomically() {
+        let policy = super::super::nested_spill_proof::SpillPolicy {
+            capacity: 3,
+            collection_rows: true,
+            ..Default::default()
+        };
+        for scalar_first in [false, true] {
+            let mut owner = Value::array(vec![Value::array(vec![Value::Int(0); 8])]);
+            let Value::Array(rows) = &owner else { unreachable!() };
+            let root_pointer = Arc::as_ptr(rows);
+            let Value::Array(row) = &rows[0] else { unreachable!() };
+            let row_pointer = Arc::as_ptr(row);
+            let mut first =
+                if scalar_first { Value::Int(10) } else { Value::array(vec![Value::Int(10)]) };
+            let mut pending = NestedPublication::prepare_owned(
+                "state".into(),
+                owner.clone(),
+                array_path(0, 0),
+                &mut first,
+            )
+            .unwrap();
+            let mut payload = Value::array(vec![Value::Int(20)]);
+            let Value::Array(values) = &payload else { unreachable!() };
+            let payload_pointer = Arc::as_ptr(values);
+            assert!(pending.try_record_owned_with_policy(&array_path(0, 1), &mut payload, policy));
+            assert!(matches!(payload, Value::Null));
+            let Some(Value::Array(values)) = pending.read(RowKey::Integer(0), 1) else { panic!() };
+            assert_eq!(Arc::as_ptr(&values), payload_pointer);
+            drop(values);
+            assert!(pending.try_record_owned_with_policy(
+                &array_path(0, 2),
+                &mut Value::Int(30),
+                policy
+            ));
+            let saved = pending.snapshot_value();
+            let mut rejected = Value::array(vec![Value::Int(99)]);
+            for path in [array_path(0, 8), array_path(1, 0)] {
+                assert!(!pending.try_record_owned_with_policy(&path, &mut rejected, policy));
+                assert!(matches!(rejected, Value::Array(_)));
+            }
+            assert!(!pending.try_record_owned_with_policy(
+                &array_path(0, 1),
+                &mut rejected,
+                Default::default()
+            ));
+            assert!(matches!(rejected, Value::Array(_)));
+            assert!(pending.try_record_owned_with_policy(
+                &array_path(-1, -7),
+                &mut rejected,
+                policy
+            ));
+            assert!(matches!(rejected, Value::Null));
+            pending.publish(Some(&mut owner));
+            let Value::Array(rows) = &owner else { unreachable!() };
+            assert_eq!(Arc::as_ptr(rows), root_pointer);
+            let Value::Array(row) = &rows[0] else { unreachable!() };
+            assert_eq!(Arc::as_ptr(row), row_pointer);
+            let Value::Array(current) = &row[1] else { unreachable!() };
+            assert!(matches!(current[0], Value::Int(99)));
+            let Value::Array(saved) = saved else { unreachable!() };
+            let Value::Array(saved_row) = &saved[0] else { unreachable!() };
+            let Value::Array(old) = &saved_row[1] else { unreachable!() };
+            assert!(matches!(old[0], Value::Int(20)));
+        }
+    }
 
     fn array_path(row: i64, index: i64) -> Vec<Access> {
         vec![Access::Index(Value::Int(row)), Access::Index(Value::Int(index))]

@@ -262,15 +262,7 @@ impl FunctionBodyRef {
             if dictionary.capacity != 0 {
                 dictionary
             } else {
-                super::nested_spill_proof::SpillPolicy {
-                    capacity: super::row_spill_proof::eligible(
-                        &self.storage.body,
-                        params,
-                        args,
-                        env,
-                    ),
-                    ..Default::default()
-                }
+                super::row_spill_proof::eligible_policy(&self.storage.body, params, args, env)
             }
         } else {
             super::nested_spill_proof::SpillPolicy::default()
