@@ -3,6 +3,10 @@
 Status: the scoped local receiver-copy fix and its regression gates pass. Broader
 section 5 work remains open; this is not universal field-read or speed acceptance.
 
+Runtime commit: `26105f4`. The [293-artifact evidence bundle](local-field-reads-2026-10-31.json.gz)
+retains raw results, exact identities, verifiers, fixtures and rejected-candidate
+evidence; every embedded artifact digest and bundle membership was checked.
+
 ## Problem and implementation
 
 The [baseline](STRUCT_FIELD_READ_BASELINE_2026_10_31.md) isolates the temporary

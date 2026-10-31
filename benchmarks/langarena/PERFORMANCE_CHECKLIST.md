@@ -108,9 +108,9 @@ retains historical open statements and does not define a new unbounded fix queue
 Current scope clarification: **zero further fix rounds are required for this
 bounded section 3/4 review cutoff**. Active named-load and struct-field work is
 section 5. This distinction does not close the broader residual requirements.
-The next struct-field fix requires implementation/targeted verification and
-combined regression/allocation verification; failures can require more work.
-These are stages, not a promised calendar estimate or a count of all future fixes.
+The local struct-field fix has now passed implementation, targeted verification
+and combined regression/allocation review (`26105f4`, section 5 below). This does
+not close broader compiled-execution work or promise a count of all future fixes.
 
 The [additional nested struct/string baseline](NESTED_DICTIONARY_EXTRA_PAYLOADS_2026_10_31.md)
 verifies 144 allocation observations and 216 semantic checks on accepted runtime
@@ -740,7 +740,7 @@ bounds and depth checks intact. Broader collection representation costs and impo
 environment materialization remain open; the reproduced captured-state reentry
 defects have separate verified fixes in section 3.
 
-## 5. Compiled execution (first dispatch allocation fix verified; broader work open)
+## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
 - [ ] Refresh per-benchmark native execution/fallback evidence.
   [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
@@ -763,8 +763,8 @@ defects have separate verified fixes in section 3.
   allocation observations, 192 semantic cases, 64 native-entry checks and 48
   JIT repeats. VM type-name growth adds 248 bytes per inline read; extraction
   controls remove that slope. JIT repeats show the same scale with compiler
-  variability. Receiver-copy removal is the next implementation gate; no fix
-  or speedup is claimed by this baseline.
+  variability. Subsequent receiver-copy removal is verified below; this baseline
+  itself makes no fix or speedup claim.
 - [x] Establish receiver replacement/returned-value ownership coverage before
   changing local field reads. `tests/jit_field_reads.rs` now checks short/long
   struct names, receiver replacement, original snapshots and independent nested
@@ -772,6 +772,16 @@ defects have separate verified fixes in section 3.
   (`112b272d0b378247d22a4814d551eaff0ec77c13b8e217f174fcae3c06bf3db2`),
   across VM/interpreter/JIT, including native-entry assertions. This is a
   semantic baseline, not a receiver-copy fix or allocation acceptance.
+- [x] Borrow eligible local field receivers in VM/JIT (`26105f4`).
+  [Verified results](LOCAL_FIELD_READS_2026_10_31.md) remove the VM's 248-byte
+  type-name slope with 32 lower/32 equal deterministic VM pairs. All 128 allocation,
+  192 semantic, 64 native-entry, 48 JIT-repeat and 150 checksum cases pass, alongside
+  1,309 library, 433 selected integration and 14 targeted tests. The rejected
+  integer-dictionary loop candidate has a permanent negative-control regression.
+  Priority NeuralNet/TextRaytracer allocations decrease in VM/JIT; six initial
+  increases remain recorded with 36 overlapping paired follow-ups. Four fixed-output
+  QuickSort runs match exactly. No elapsed-speed, zero-regression or universal
+  field-read claim follows; interpreter and fallback paths remain outside this fix.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
@@ -861,7 +871,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations on `a1f1858`; [verified current evidence](BORROWED_NAMED_LOADS_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
+- [x] Recheck all 150 test-size combinations on `26105f4`; [verified current evidence](LOCAL_FIELD_READS_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
