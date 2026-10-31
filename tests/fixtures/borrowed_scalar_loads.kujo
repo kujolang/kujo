@@ -1,0 +1,34 @@
+func identity(value) {
+    mut warm := 0
+    while warm < 2 { warm += 1 }
+    return value
+}
+func fresh() { return [[7], {"key": [8]}] }
+func constant_callback(value) { return 13 }
+func local_callback(value) { return value }
+func mutate_copy(value) {
+    mut copy := value
+    copy[0][0] = 99
+    return copy
+}
+for value in [0, -17, 2.5, true, false, null, "aé雪", bytes([0, 255])] {
+    assert_equal(identity(value), value)
+}
+let original := fresh()
+mut returned := identity(original)
+returned[0][0] = 42
+returned[1]["key"][0] = 43
+assert_equal(original, [[7], {"key": [8]}])
+assert_equal(fresh(), original)
+assert_equal(returned, [[42], {"key": [43]}])
+assert_equal(map([1, 2, 3], constant_callback), [13, 13, 13])
+assert_equal(map([1, 2, 3], local_callback), [1, 2, 3])
+let rows := [[[1]], [[2]]]
+let changed := map(rows, mutate_copy)
+assert_equal(rows, [[[1]], [[2]]])
+assert_equal(changed, [[[99]], [[99]]])
+mut caught := 0
+try { mutate_copy([]) } except error { caught += 1 }
+assert_equal(caught, 1)
+assert_equal(identity(31), 31)
+print("PASS")

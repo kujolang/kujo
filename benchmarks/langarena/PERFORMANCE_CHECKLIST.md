@@ -742,6 +742,14 @@ defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
+- [x] Evaluate borrowed scalar-load dispatch against whole workloads.
+  [Rejected experiment](BORROWED_SCALAR_LOADS_EXPERIMENT_2026_10_31.md) passed
+  1,310 library tests, 22 targeted integration tests and all 150 checksums.
+  QuickSort improved, but NeuralNet JIT was slower in nine of ten paired runs
+  after follow-up. The combined main/callback candidate was rejected and runtime
+  source restored. Isolating the two dispatch changes remains open; no runtime
+  speedup is accepted from this experiment.
+
 - [x] Isolate scalar opcode operand materialization before a dispatch candidate.
   [Paired helper evidence](OPCODE_OPERAND_COST_2026_10_31.md) checks 16 observations
   and 32 million operand reads against the accepted `fd7b764` library. Opaque
