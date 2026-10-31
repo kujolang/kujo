@@ -11,6 +11,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid repeated captured-array owner copying for checked invariant integer multiplication/division indices while preserving snapshot, overflow, division-by-zero and publication behavior.
+
 - Avoid full captured-array copying for proven bounded addition/subtraction index expressions, retaining checked intermediate overflow, snapshot, callback and error publication semantics.
 
 - Keep eligible mixed two-write array updates in bounded private storage while

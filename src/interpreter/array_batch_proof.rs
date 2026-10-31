@@ -52,6 +52,15 @@ impl Region<'_> {
         self.params.iter().position(|p| p == name).and_then(|i| self.args.get(i))
     }
     fn integer(&self, expr: &Expr, depth: usize, last: bool) -> Option<i64> {
+        self.integer_expression(expr, depth, last, true)
+    }
+    fn integer_expression(
+        &self,
+        expr: &Expr,
+        depth: usize,
+        last: bool,
+        allow_counter: bool,
+    ) -> Option<i64> {
         if depth > 128 || !self.visit() {
             return None;
         }
@@ -60,6 +69,9 @@ impl Region<'_> {
             Expr::Identifier(name) if name != self.owner => {
                 if let Some((counter, start)) = self.counter {
                     if counter == name {
+                        if !allow_counter {
+                            return None;
+                        }
                         return if last { self.last.or(Some(start)) } else { Some(start) };
                     }
                 }
@@ -69,17 +81,29 @@ impl Region<'_> {
                 }
             }
             Expr::UnaryOp { op, operand } if op == "-" => {
-                self.integer(operand, depth + 1, last)?.checked_neg()
+                self.integer_expression(operand, depth + 1, last, allow_counter)?.checked_neg()
             }
             // These expressions are affine in the single counted variable.
             // Both endpoints check every subexpression, including overflow.
             Expr::BinaryOp { left, op, right } if op == "+" || op == "-" => {
-                let left = self.integer(left, depth + 1, last)?;
-                let right = self.integer(right, depth + 1, last)?;
+                let left = self.integer_expression(left, depth + 1, last, allow_counter)?;
+                let right = self.integer_expression(right, depth + 1, last, allow_counter)?;
                 if op == "+" {
                     left.checked_add(right)
                 } else {
                     left.checked_sub(right)
+                }
+            }
+            // Multiplication/division are admitted only for invariant integer
+            // operands. Nonlinear counter expressions cannot be proven safe by
+            // checking endpoints (interior values may overflow or divide by zero).
+            Expr::BinaryOp { left, op, right } if op == "*" || op == "/" => {
+                let left = self.integer_expression(left, depth + 1, last, false)?;
+                let right = self.integer_expression(right, depth + 1, last, false)?;
+                if op == "*" {
+                    left.checked_mul(right)
+                } else {
+                    left.checked_div(right)
                 }
             }
             _ => None,
@@ -415,7 +439,7 @@ mod tests {
             ("state[0] = n state[-(-offset)] = [n] state[2] = n", i64::MIN),
             ("mut j := 0 while j < 3 { state[offset + j] = [n] j += 1 }", 7),
             ("mut j := 0 while j < 3 { state[offset - j] = [n] j += 1 }", -7),
-            ("state[0] = n state[offset * offset] = [n] state[2] = n", 1),
+            ("state[0] = n state[offset * offset] = [n] state[2] = n", i64::MAX),
             ("state[0] = n state[offset + observe()] = [n] state[2] = n", 1),
         ] {
             assert_eq!(
@@ -428,6 +452,58 @@ mod tests {
                 0
             );
         }
+    }
+
+    #[test]
+    fn invariant_products_and_quotients_require_checked_integer_operands() {
+        let (env, _owner) = environment();
+        let check = |index: &str, a: i64, b: i64| {
+            eligible(
+                &parse(&format!("state[0] = 1 state[{index}] = [2] state[2] = 3")),
+                &["a".into(), "b".into()],
+                &[Value::Int(a), Value::Int(b)],
+                &env,
+            )
+        };
+        for (index, a, b) in [
+            ("a * b", 2, 3),
+            ("a / b", 7, 2),
+            ("a / b", -7, 2),
+            ("a / b", 7, -2),
+            ("a * b + 1", -2, 3),
+            ("(a * b) / b", 3, 2),
+            ("a * a", 3, 0),
+        ] {
+            assert_eq!(check(index, a, b), 3, "{index} {a} {b}");
+        }
+        for (index, a, b) in [
+            ("a * b", i64::MAX, 2),
+            ("a / b", i64::MIN, -1),
+            ("a / b", 1, 0),
+            ("a * b", 32, 2),
+            ("(a * b) / b", i64::MAX, 2),
+            ("a / (b - b)", 1, 1),
+        ] {
+            assert_eq!(check(index, a, b), 0, "{index} {a} {b}");
+        }
+        for index in ["j * j", "1 / (j - 1)", "j * (2 - j)", "(j * 0) + 1"] {
+            let body = parse(&format!("mut j := 0 while j < 3 {{ state[{index}] = [1] j += 1 }}"));
+            assert_eq!(eligible(&body, &[], &[], &env), 0, "{index}");
+        }
+        let body = parse("mut j := 0 while j < 3 { state[a * b + j] = [1] j += 1 }");
+        assert_eq!(
+            eligible(&body, &["a".into(), "b".into()], &[Value::Int(2), Value::Int(3)], &env),
+            3
+        );
+        assert_eq!(
+            eligible(
+                &parse("state[0] = 1 state[a / b] = [2] state[2] = 3"),
+                &["a".into(), "b".into()],
+                &[Value::Float(3.0), Value::Int(1)],
+                &env
+            ),
+            0
+        );
     }
 
     #[test]
