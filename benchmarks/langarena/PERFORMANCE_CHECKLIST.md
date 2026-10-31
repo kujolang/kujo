@@ -742,6 +742,13 @@ defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
+- [x] Isolate scalar opcode operand materialization before a dispatch candidate.
+  [Paired helper evidence](OPCODE_OPERAND_COST_2026_10_31.md) checks 16 observations
+  and 32 million operand reads against the accepted `fd7b764` library. Opaque
+  owned extraction is slower than borrowed extraction; this is a mechanism
+  control, not an actual VM speedup or runtime-fix acceptance. Whole-workload
+  candidate measurement and semantic regression gates remain open.
+
 - [ ] Refresh per-benchmark native execution/fallback evidence.
   [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
   checksums and exact event inventories. Every JIT case records native entries;

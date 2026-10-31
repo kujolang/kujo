@@ -1,0 +1,24 @@
+{
+  "status": "verified-helper-only",
+  "identities": {
+    ".audit-evidence/opcode-operands-2026-10-31/probe": "7f528844625d725f878248dafe679fe72817d7f07db6e83eed08db405312da77",
+    ".audit-evidence/native-field-abi-2026-10-31/candidate-library/libkujo.rlib": "ffce3ed37b9cd1935ac3898ce042c354024c5b64e21148a255636dabde8bbd2a",
+    "benchmarks/langarena/probes/opcode_operand_cost.rs": "8138a43823ba937563e3207d6fcf214287b98acda12f92c825a4c5c6b909efea"
+  },
+  "stdout": "round,path,reads,checksum,ns_per_read\n0,owned,2000000,254991808,8.6923035\n0,borrowed,2000000,254991808,3.135498\n1,borrowed,2000000,254991808,2.2901945\n1,owned,2000000,254991808,8.426597\n2,owned,2000000,254991808,8.8248685\n2,borrowed,2000000,254991808,2.956617\n3,borrowed,2000000,254991808,2.3055475\n3,owned,2000000,254991808,9.0009875\n4,owned,2000000,254991808,8.4944125\n4,borrowed,2000000,254991808,3.111461\n5,borrowed,2000000,254991808,2.3169115\n5,owned,2000000,254991808,8.6238545\n6,owned,2000000,254991808,9.7774285\n6,borrowed,2000000,254991808,3.3438895\n7,borrowed,2000000,254991808,2.3792945\n7,owned,2000000,254991808,8.9709215\n",
+  "stderr": "",
+  "exit": 0,
+  "summary_ns": {
+    "owned": {
+      "min": 8.426597,
+      "median": 8.758586,
+      "max": 9.7774285
+    },
+    "borrowed": {
+      "min": 2.2901945,
+      "median": 2.66795575,
+      "max": 3.3438895
+    }
+  },
+  "limitations": "Opaque owned-enum extraction versus borrowed extraction. This intentionally prevents clone elision; it does not measure actual VM dispatch, value cloning, workload speedup or clean-host performance."
+}
