@@ -92,6 +92,13 @@ Review status, 2026-10-31: sections 3 and 4 remain open. The remaining work is
 grouped below; these groups are not equally sized and do not imply a completion
 percentage or a reliable elapsed-time estimate.
 
+The [additional nested struct/string baseline](NESTED_DICTIONARY_EXTRA_PAYLOADS_2026_10_31.md)
+verifies 144 allocation observations and 216 semantic checks on accepted runtime
+`8ab7c6a`. Both payload types retain a 624,240-byte per-call width penalty in
+VM/JIT for all three owner shapes. Include these cases in nested-candidate
+acceptance; candidate results remain pending.
+
+
 1. Scalar-first array journal promotion is accepted in `ac7f234`.
    [Verified results](SCALAR_FIRST_BATCHES_2026_10_30.md) record 1,344 allocation
    comparisons, 2,664 semantic checks, three portable contracts, 1,266 library
