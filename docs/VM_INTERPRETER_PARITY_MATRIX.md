@@ -1,9 +1,19 @@
 # VM/Interpreter/Compiler Parity Matrix
 
-Last updated: 2026-10-10
+Last updated: 2026-10-31
 
 This matrix is the release-facing record for VM, interpreter, and compiler
 parity. New runtime work must update the table and its named test evidence.
+
+## ArgParser stored-field precedence (2026-10-31)
+
+A user-declared `ArgParser` struct with an integer `help` field exposes an existing
+difference: VM and experimental JIT return the legacy method marker for
+`parser.help`, while the interpreter returns the stored integer. The intended
+uniform precedence remains unresolved; preserving this baseline during a
+performance change does not classify it as intentionally divergent.
+`tests/jit_field_scalar_abi.rs` records the per-runtime expectations and requires
+actual native entries in JIT. See the [reproduction and evidence](../benchmarks/langarena/NATIVE_FIELD_ABI_BASELINE_2026_10_31.md).
 
 ## Indexed replacement depth policy (2026-10-24)
 
@@ -91,6 +101,7 @@ equivalence for every native and input combination.
 - `unsupported (explicit)`: Rejected intentionally with deterministic errors.
 - `not yet parity-covered`: Implemented surface exists, but dedicated parity evidence is still pending.
 - `intentionally divergent`: Behavior differs by design and is documented.
+- `known divergence (unresolved)`: A reproduced difference awaits a uniform compatibility contract.
 
 ## Matrix
 
@@ -101,6 +112,7 @@ equivalence for every native and input combination.
 | Top-level generator iteration (`func*`, `yield`, `for ... in generator`) | lowers generator declarations and generator call sites | generator creation + iteration in interpreter runtime | owned ordinary-dispatch continuation and lazy iteration | supported within documented generator scope | `vm_and_interpreter_match_generator_iteration_surface`, `vm_and_interpreter_error_on_generator_arity_mismatch`, `vm_and_interpreter_error_on_generator_arity_too_many` |
 | Struct field and nested assignment | binding-rooted write-back; nested paths use `UpdatePath` | checked updates on an owned root | matching write-back with copy isolation | supported | `assignment_writeback`, `nested_assignment` integration tests |
 | Struct methods (`obj.method(...)`) | lowers `MethodCall` to field-get + call | explicit `self` method dispatch | bytecode method dispatch | supported | `vm_and_interpreter_match_struct_method_behavior_contract` |
+| User-declared `ArgParser` stored `help` field | ordinary struct and field lowering | stored field wins | legacy method marker wins; experimental JIT matches VM | known divergence (unresolved) | `scalar_field_reads_preserve_tags_owned_results_and_legacy_parser_precedence` |
 | Struct generator methods (`func*` inside `struct`) | lowers methods through the ordinary generator-function representation | creates owned continuations with explicit `self` or snapshotted legacy field bindings | matching receiver snapshot, shared alias progress, completion and cached-error behavior | supported | `vm_and_interpreter_support_struct_generator_methods`, `vm_and_interpreter_support_legacy_struct_generator_field_bindings`, `vm_struct_generator_method_snapshots_receiver_and_aliases_share_progress`, `interpreter_struct_generator_method_snapshots_receiver_and_aliases_share_progress` |
 | Collections/indexing/mutation | lowers array/dict/index ops and in-place updates | runtime checked index/map semantics | matching checked index/map semantics | supported | `vm_and_interpreter_match_valid_index_assignment_success_path`, `vm_and_interpreter_error_on_invalid_index_assignment_target`, `vm_and_interpreter_error_on_out_of_bounds_array_index`, `vm_and_interpreter_error_on_missing_string_map_key`, `vm_and_interpreter_match_successful_local_map_update` |
 | Spread literals + destructuring bindings | emits marker-based spread/dict construction | spread + destructuring execution | matching marker-based spread/dict execution | supported | `vm_and_interpreter_match_spread_destructuring_surface` |
