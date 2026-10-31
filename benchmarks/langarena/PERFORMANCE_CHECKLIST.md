@@ -150,6 +150,9 @@ percentage or a reliable elapsed-time estimate.
    array-valued root dictionary replacements; the scalar control is flat.
    All 48 allocation observations and 72 runtime checks pass. This needs a
    separate bounded fix after the nested-row candidate; it is not yet addressed.
+   An additional 144 allocation/216 runtime controls confirm the same penalty
+   for two-key arrays, dictionary/struct payloads and both mixed-value orders;
+   same-key mixed replacement remains flat. Preserve that compact control.
    Deeper/escaping shapes remain
    separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
