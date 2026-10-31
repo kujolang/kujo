@@ -59,7 +59,8 @@ VM and interpreter implementation files are unchanged.
 
 ## Provenance and limits
 
-Baseline runtime source is `26105f4`, with the baseline established in `61d0e4b`.
+Accepted runtime commit: `fd7b764`. Baseline runtime source is `26105f4`, with
+the baseline established in `61d0e4b`.
 Candidate CLI SHA-256:
 `45b21be67fe946d54cabaa5be20f67b4ab26414135afb2a3c5a55af1b672393f`.
 Candidate library SHA-256:
