@@ -170,6 +170,13 @@ percentage or a reliable elapsed-time estimate.
    per-call leaf-width penalty for two-array and three-value mixed updates.
    Recheck this separate nested-owner gap on the root-dictionary candidate after
    acceptance; that candidate is not yet measured by this report.
+   [Capture pool boundary isolation](CAPTURE_POOL_BOUNDARY_2026_10_30.md)
+   adds 72 allocation observations and 108 semantic runs on `b1bf786`.
+   At 8,190 extra retained locals, read/write slopes rise to
+   2,720,287/2,720,298 bytes per call; 8,191/8,192 use compact metadata
+   and stay at 1,650/1,661. This confirms another section-3 fix target:
+   reconcile capture admission with bounded pool capacity/key-byte limits,
+   preserving cold captures, host edits, snapshots and retention bounds.
    Other deeper/escaping shapes remain separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
