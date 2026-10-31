@@ -8,7 +8,7 @@ use std::collections::{BTreeSet, HashSet};
 
 #[derive(Clone)]
 pub(super) struct Proof {
-    pub required_parameters: Vec<String>,
+    pub required_parameters: super::capture_names::CaptureNames,
     pub primitive_arguments: bool,
     pub read_only: bool,
     pub whole_value_mask: u32,
@@ -17,6 +17,9 @@ pub(super) struct Proof {
 }
 
 impl Proof {
+    pub(super) fn constructs_struct_payload(&self) -> bool {
+        self.region_flags & 4 != 0
+    }
     pub(super) fn sparse_write_region(&self) -> bool {
         self.region_flags & 1 != 0
     }
@@ -41,25 +44,41 @@ fn insertion_bound_preserves_cached_proof_layout() {
     assert_eq!(std::mem::align_of::<Proof>(), std::mem::align_of::<Previous>());
 }
 
-struct Analyzer<'a> {
+struct Analyzer<'a, const COLLECT: bool = true> {
     scopes: Vec<HashSet<&'a str>>,
     required: BTreeSet<&'a str>,
     primitive_arguments: bool,
     read_only: bool,
+    constructs_struct_payload: bool,
 }
 
 pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
-    let mut analyzer = Analyzer {
+    // Reject unsupported syntax before allocating name sets. A constructor may
+    // be safe as an assignment payload while a later callback still rejects
+    // the entire proof. Both passes use the same visitor and depth limits.
+    let mut shape = Analyzer::<false> {
+        scopes: Vec::new(),
+        required: BTreeSet::new(),
+        primitive_arguments: false,
+        read_only: true,
+        constructs_struct_payload: false,
+    };
+    if !shape.statements(body, 0) {
+        return None;
+    }
+    let mut analyzer = Analyzer::<true> {
         scopes: vec![HashSet::new()],
         required: BTreeSet::new(),
         primitive_arguments: false,
         read_only: true,
+        constructs_struct_payload: false,
     };
     if !analyzer.statements(body, 0) {
         return None;
     }
-    let required_parameters: Vec<String> =
-        analyzer.required.into_iter().map(str::to_owned).collect();
+    let required_parameters =
+        super::capture_names::CaptureNames::from_names(analyzer.required.iter().copied());
+    drop(analyzer.required);
     let mut region =
         SparseRegion { names: &required_parameters, whole_value_mask: 0, indexed_operands: false };
     let sparse_write_region = required_parameters.len() <= 32
@@ -73,7 +92,8 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
         });
     Some(Proof {
         whole_value_mask: region.whole_value_mask,
-        region_flags: u8::from(sparse_write_region)
+        region_flags: (u8::from(analyzer.constructs_struct_payload) << 2)
+            | u8::from(sparse_write_region)
             | (u8::from(
                 super::nested_spill_proof::shape(body) || super::row_spill_proof::shape(body),
             ) << 1),
@@ -93,12 +113,34 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
 // Whole captured-value reads require per-invocation primitive validation;
 // opaque operations keep the single-key path.
 struct SparseRegion<'a> {
-    names: &'a [String],
+    names: &'a super::capture_names::CaptureNames,
     whole_value_mask: u32,
     indexed_operands: bool,
 }
 
 impl SparseRegion<'_> {
+    fn payload(&mut self, expr: &Expr, depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        match expr {
+            Expr::ArrayLiteral(items) => items.iter().all(|item| match item {
+                ArrayElement::Single(value) => self.payload(value, depth + 1),
+                ArrayElement::Spread(_) => false,
+            }),
+            Expr::DictLiteral(items) => items.iter().all(|item| match item {
+                DictElement::Pair(key, value) => {
+                    self.expression(key, depth + 1) && self.payload(value, depth + 1)
+                }
+                DictElement::Spread(_) => false,
+            }),
+            Expr::StructInstance { fields, .. } => {
+                fields.iter().all(|(_, value)| self.payload(value, depth + 1))
+            }
+            _ => self.expression(expr, depth),
+        }
+    }
+
     fn expression(&mut self, expr: &Expr, depth: usize) -> bool {
         if depth > 128 {
             return false;
@@ -160,7 +202,10 @@ impl SparseRegion<'_> {
             Stmt::Let { value, type_annotation: None, .. }
             | Stmt::Const { value, type_annotation: None, .. } => self.expression(value, depth + 1),
             Stmt::Assign { target, value } => {
-                self.indexed_access(target, depth + 1) && self.expression(value, depth + 1)
+                self.indexed_access(target, depth + 1)
+                    && if matches!(target,Expr::IndexAccess { object, .. } if matches!(object.as_ref(),Expr::Identifier(_))) {
+                        self.payload(value,depth+1)
+                    } else { self.expression(value,depth+1) }
             }
             Stmt::ExprStmt(expr) => self.expression(expr, depth + 1),
             Stmt::Return(Some(expr)) => self.indexed_access(expr, depth + 1),
@@ -183,9 +228,38 @@ impl SparseRegion<'_> {
     }
 }
 
-impl<'a> Analyzer<'a> {
+impl<'a, const COLLECT: bool> Analyzer<'a, COLLECT> {
+    fn payload(&mut self, expr: &'a Expr, depth: usize) -> bool {
+        if depth > 128 {
+            return false;
+        }
+        match expr {
+            Expr::ArrayLiteral(items) => items.iter().all(|item| match item {
+                ArrayElement::Single(value) => self.payload(value, depth + 1),
+                ArrayElement::Spread(_) => false,
+            }),
+            Expr::DictLiteral(items) => items.iter().all(|item| match item {
+                DictElement::Pair(key, value) => {
+                    self.expression(key, depth + 1) && self.payload(value, depth + 1)
+                }
+                DictElement::Spread(_) => false,
+            }),
+            Expr::StructInstance { fields, .. } => {
+                self.constructs_struct_payload = true;
+                fields.iter().all(|(_, value)| self.payload(value, depth + 1))
+            }
+            _ => self.expression(expr, depth),
+        }
+    }
+
+    fn bind(&mut self, name: &'a str) {
+        if COLLECT {
+            self.scopes.last_mut().unwrap().insert(name);
+        }
+    }
+
     fn reference(&mut self, name: &'a str) {
-        if !self.scopes.iter().rev().any(|scope| scope.contains(name)) {
+        if COLLECT && !self.scopes.iter().rev().any(|scope| scope.contains(name)) {
             self.required.insert(name);
         }
     }
@@ -196,7 +270,7 @@ impl<'a> Analyzer<'a> {
         }
         match pattern {
             Pattern::Identifier(name) => {
-                self.scopes.last_mut().unwrap().insert(name);
+                self.bind(name);
             }
             Pattern::Ignore => {}
             Pattern::Array { elements, rest } => {
@@ -204,13 +278,15 @@ impl<'a> Analyzer<'a> {
                     return false;
                 }
                 if let Some(name) = rest {
-                    self.scopes.last_mut().unwrap().insert(name);
+                    self.bind(name);
                 }
             }
             Pattern::Dict { keys, rest } => {
-                self.scopes.last_mut().unwrap().extend(keys.iter().map(String::as_str));
+                for key in keys {
+                    self.bind(key);
+                }
                 if let Some(name) = rest {
-                    self.scopes.last_mut().unwrap().insert(name);
+                    self.bind(name);
                 }
             }
         }
@@ -266,12 +342,16 @@ impl<'a> Analyzer<'a> {
     }
 
     fn scoped(&mut self, body: &'a [Stmt], binding: Option<&'a str>, depth: usize) -> bool {
-        self.scopes.push(HashSet::new());
+        if COLLECT {
+            self.scopes.push(HashSet::new());
+        }
         if let Some(name) = binding {
-            self.scopes.last_mut().unwrap().insert(name);
+            self.bind(name);
         }
         let result = self.statements(body, depth + 1);
-        self.scopes.pop();
+        if COLLECT {
+            self.scopes.pop();
+        }
         result
     }
 
@@ -287,12 +367,15 @@ impl<'a> Analyzer<'a> {
                 if !self.expression(value, depth + 1) {
                     return false;
                 }
-                self.scopes.last_mut().unwrap().insert(name);
+                self.bind(name);
                 true
             }
             Stmt::Assign { target, value } => {
                 self.read_only = false;
-                self.expression(target, depth + 1) && self.expression(value, depth + 1)
+                self.expression(target, depth + 1)
+                    && if matches!(target,Expr::IndexAccess { object, .. } if matches!(object.as_ref(),Expr::Identifier(_))) {
+                        self.payload(value,depth+1)
+                    } else { self.expression(value,depth+1) }
             }
             Stmt::ExprStmt(value) | Stmt::Return(Some(value)) => self.expression(value, depth + 1),
             Stmt::Return(None) | Stmt::Break | Stmt::Continue => true,
@@ -441,7 +524,7 @@ mod read_projection_tests {
     fn read_dependencies_keep_outer_reads_and_exclude_local_names() {
         let p = proof("let copied := state return copied[index]").unwrap();
         assert!(p.read_only);
-        assert_eq!(p.required_parameters, vec!["index", "state"]);
+        assert_eq!(p.required_parameters.iter().collect::<Vec<_>>(), vec!["index", "state"]);
         assert!(!p.primitive_arguments);
         assert!(proof("return state + index").unwrap().primitive_arguments);
     }
@@ -560,5 +643,61 @@ mod sparse_region_tests {
         }
         let many = (0..40).map(|i| format!("x{i}")).collect::<Vec<_>>().join(" + ");
         assert!(!eligible(&format!("state[0] = 1 state[1] = 2 return {many}"), &[], &[]));
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn dictionary_payload_proof_keeps_constructors_out_of_operators_and_local_flows() {
+    let parse = |s: &str| crate::parser::Parser::new(crate::lexer::tokenize(s).unwrap()).parse();
+    for source in [
+        "state[0]=[n] state[1]={\"v\":n+1} state[2]=Cell { value:n+2 } return n",
+        "state[0]=[{\"v\":Cell { value:n }}] return n",
+    ] {
+        assert!(analyze(&parse(source)).unwrap().sparse_write_region(), "{source}");
+    }
+    for source in [
+        "state[0]=[callback()] return n",
+        "state[0]=[...items] return n",
+        "state[0]=Cell { value:callback() } return n",
+        "state[0]=Cell { value:n } + n return n",
+        "mut local:=Cell { value:n } state[0]=local+n return n",
+        "mut local:=0 local=Cell { value:n } state[0]=local+n return n",
+    ] {
+        assert!(analyze(&parse(source)).is_none_or(|p| !p.sparse_write_region()), "{source}");
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn constructed_struct_payload_retains_lexical_operator_capture_flag() {
+    let source = "mut items:=[0] items[0]=Trigger { value:n } return items[0]+n";
+    let body = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap()).parse();
+    let proof = analyze(&body).unwrap();
+    assert!(proof.constructs_struct_payload());
+    assert!(!proof.sparse_write_region());
+    let body = super::value::LeakyFunctionBody::new(body);
+    assert!(!body.get().can_skip_capture_setup(&["n".into()], &[super::Value::Int(1)]));
+}
+
+#[cfg(test)]
+#[test]
+fn syntax_preflight_matches_name_collection_without_materializing_scopes() {
+    for source in [
+        "state[0]=Item {value:n} let exposed:=state assert_equal(exposed[0].value,n) return n",
+        "state[0]=Item {value:n} mut caught:=false try {state[0]=Item {value:[1][99]}} except e {caught=true} return n",
+        "let outer:=state if n>0 {let outer:=n state[0]=[outer]} return outer",
+        "for item in items {state[0]=[item]} return n",
+        "let [first,...rest]:=items return first",
+        "state[0]=Item {value:n} return n",
+    ] {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap()).parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty(), "{source}: {:?}", parsed.diagnostics);
+        let mut shape=Analyzer::<false>{scopes:Vec::new(),required:BTreeSet::new(),primitive_arguments:false,read_only:true,constructs_struct_payload:false};
+        let mut full=Analyzer::<true>{scopes:vec![HashSet::new()],required:BTreeSet::new(),primitive_arguments:false,read_only:true,constructs_struct_payload:false};
+        assert_eq!(shape.statements(&parsed.stmts,0),full.statements(&parsed.stmts,0),"{source}");
+        assert!(shape.scopes.is_empty());
+        assert!(shape.required.is_empty());
+        assert_eq!(shape.scopes.capacity(),0);
     }
 }

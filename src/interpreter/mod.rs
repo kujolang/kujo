@@ -25,6 +25,7 @@ mod async_runtime;
 mod binding_map;
 mod capabilities;
 mod capture_independence;
+mod capture_names;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
@@ -2502,8 +2503,8 @@ impl Interpreter {
         if self.task_cancellation.is_none() && self.active_capture_index(captured).is_none() {
             if let Some(proof) = body.read_capture_proof(args) {
                 let projected =
-                    captured.lock().unwrap_or_else(|p| p.into_inner()).project_capture_reads(
-                        &proof.required_parameters,
+                    captured.lock().unwrap_or_else(|p| p.into_inner()).project_capture_name_iter(
+                        proof.required_parameters.iter(),
                         params,
                         proof.primitive_arguments,
                         &mut self.capture_storage_pool,
@@ -2559,7 +2560,13 @@ impl Interpreter {
         if let Some(frame) = self.environment_activations.last_mut() {
             frame.nested_spill_hint = nested_spill_hint;
             frame.insertion_bound = if frame.globals == CapturedGlobals::Snapshot {
-                insertion_bound.max(array_batch_capacity)
+                // The array proof caps distinct writes by the actual owner length.
+                // A dictionary's insertion count can exceed that cap on rewrites.
+                if array_batch_capacity > 0 {
+                    array_batch_capacity
+                } else {
+                    insertion_bound
+                }
             } else {
                 0
             };
@@ -9111,5 +9118,44 @@ fn collection_literal_assignment_reuses_unaliased_captured_dictionary() {
             Value::Dict(items) => assert!(matches!(items["value"], Value::Int(42))),
             other => panic!("unexpected replacement: {other:?}"),
         }
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn captured_array_batch_capacity_keeps_owner_bound_when_dictionary_proof_also_matches() {
+    let source =
+        "state[0]=[n] state[1]=[n] state[0]=[n] state[1]=[n] state[0]=[n] state[1]=[n] return n";
+    for (owner, expected_array, expected_bound) in [
+        (Value::array(vec![Value::Null; 2]), 2, 2),
+        (Value::array(vec![Value::Null; 3]), 3, 3),
+        (Value::array(vec![Value::Null; 64]), 6, 6),
+        (
+            Value::dict(
+                [(Arc::from("0"), Value::Null), (Arc::from("1"), Value::Null)]
+                    .into_iter()
+                    .collect(),
+            ),
+            0,
+            6,
+        ),
+    ] {
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        let body = LeakyFunctionBody::new(parsed.stmts);
+        let mut captured = Environment::new();
+        captured.define("state".into(), owner);
+        let captured = Arc::new(Mutex::new(captured));
+        let mut interpreter = Interpreter::new();
+        interpreter.enter_captured_function_environment(
+            &captured,
+            &body.get(),
+            &["n".into()],
+            &[Value::Int(1)],
+        );
+        let frame = interpreter.environment_activations.last().unwrap();
+        assert_eq!(frame.array_batch_capacity(), expected_array);
+        assert_eq!(frame.insertion_bound, expected_bound);
     }
 }
