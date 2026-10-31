@@ -32,3 +32,18 @@ this report does not close sections 3 or 4 or make an all-workloads claim.
 [Raw results, fixtures and verification](nested-dictionary-payload-baseline-2026-10-30.json)
 preserve binary/probe/source identities, exact coverage, stdout, allocation
 counters and per-call slopes. No Kostya contact occurred.
+
+## Portable follow-up contract
+
+A separate regression fixture passes nine baseline executions: dictionary,
+struct-field and deeper dictionary owners in VM, interpreter and JIT. It covers
+mixed and collection values, scalar-pair/table promotion, repeated aliases,
+insertions, dense updates, saved snapshots, prior writes before division-by-zero,
+operator callbacks, local struct operator lookup, leaf/root replacement and
+replacement during index evaluation. The latter checks that assignment updates
+the replacement target, preserving the user-approved rule.
+
+The raw artifact includes the standalone Rust test source, generator, build
+arguments, hashes and passing output. This preflight ran on accepted `b1bf786`;
+it neither certifies the pending root-dictionary candidate nor fixes the measured
+nested-leaf copying cost. Reuse the fixture when implementing that follow-up.
