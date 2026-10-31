@@ -788,6 +788,12 @@ defects have separate verified fixes in section 3.
   allocator control and source-program VM/interpreter/JIT checks. This excludes
   compilation and setup; CPU overhead, writes and other paths remain open.
 - [ ] Identify hot unsupported operations and expensive transitions.
+  [Refreshed attribution](CURRENT_KERNEL_ATTRIBUTION_2026_10_31.md) verifies six
+  symbolized profiles directly linked to accepted `26105f4`. Dispatch/opcode
+  cloning, indexed ownership and debug environment lookups remain visible. A
+  native callback regression protects post-callback debug-flag visibility; no
+  runtime optimization or competitive speed claim is made from these samples.
+
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
 - [ ] Preserve integer/Boolean/float/error semantics.
