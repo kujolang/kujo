@@ -161,6 +161,9 @@ percentage or a reliable elapsed-time estimate.
    An additional 144 allocation/216 runtime controls confirm the same penalty
    for two-key arrays, dictionary/struct payloads and both mixed-value orders;
    same-key mixed replacement remains flat. Preserve that compact control.
+   A refresh on accepted `b1bf786` passes another 144 allocation/216 semantic
+   checks and confirms the same 624,240-byte width penalty; the next fix remains
+   necessary after nested-row acceptance.
    Deeper/escaping shapes remain
    separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each

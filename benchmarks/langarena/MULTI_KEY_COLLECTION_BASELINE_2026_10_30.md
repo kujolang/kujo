@@ -49,3 +49,13 @@ path. It must also extend collection-literal eligibility: `SparseRegion::express
 currently rejects array and dictionary literals even though the broader capture
 analyzer accepts them. Storage changes alone will not admit this workload. New-key
 and nested dictionary-leaf cases remain outside this matrix.
+
+## Refresh after accepted nested-row fix
+
+On `b1bf786`, the same six payload forms pass 144 allocation observations and 216
+semantic runs across VM, interpreter and JIT. Existing fixture paths and hashes
+are preserved. The five multiple-key forms still incur a 624,240-byte per-call
+width penalty from 8 to 2,048 dictionary entries; the same-key mixed control
+remains flat. This confirms the next fix is still needed after nested-row
+acceptance. [Refresh evidence](dictionary-payload-refresh-2026-10-30.json) contains
+raw outputs, source identities, exact-coverage verification and per-call slopes.
