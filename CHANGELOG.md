@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Bound eligible repeated array-write reservations by up to eight distinct
+  proven constant destinations, preserving value semantics, negative aliases,
+  snapshots and ordered error publication with conservative fallback.
+
 - Select compact captured-local metadata using aggregate map-capacity, key-byte
   and scope budgets, avoiding repeated name copies near pool limits while
   preserving snapshots, immutable bindings, host edits and bounded idle storage.
