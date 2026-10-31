@@ -741,6 +741,11 @@ defects have separate verified fixes in section 3.
   this does not establish native CPU-time coverage. Six post-warmup samples pass,
   but stripped release symbols prevent reliable function attribution. Symbolized
   attribution remains the next gate; this broad item stays open.
+  The [symbolized follow-up](SYMBOLIZED_KERNELS_2026_10_31.md) now verifies six
+  post-warmup profiles with resolved runtime functions. VM opcode cloning and
+  dispatch, JIT ownership/indexed access, and a debug environment-lookup caller
+  are identified. Precise native/fallback CPU coverage is still incomplete.
+  The next bounded gate isolates opcode/name-copy costs before selecting a fix.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
