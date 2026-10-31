@@ -3,8 +3,12 @@
 Reviewed scope: 2026-10-26. This is the human-readable tracker for
 `performance-plan.json`. Check a box only when its stated gate has evidence.
 Historical passes do not certify a later runtime revision. A timeout is incomplete,
-and a stopped case is cancelled, not failed. Sections 1 and 2 have completed their available local diagnosis. The user has
-now authorized sections 3 and 4; section 5 has not been restarted.
+and a stopped case is cancelled, not failed. Sections 1 and 2 have completed their
+available local diagnosis. The bounded sections 3/4 fix sequence and review cutoff
+are complete; zero additional rounds are required for that cutoff. Broader
+requirements remain partially proved, as recorded in the dispositions below.
+Current runtime optimization work is in section 5, including the string-cache
+dispatch candidate under verification. Clean-host comparisons remain pending.
 
 ## Completed foundation
 
