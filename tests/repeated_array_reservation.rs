@@ -92,6 +92,69 @@ print("REPEATED RESERVATION PASS")
         );
         assert_eq!(output.stdout, b"REPEATED RESERVATION PASS\n");
     }
+    verify_large_constant_sites(mode);
+}
+
+fn verify_large_constant_sites(mode: &str) {
+    for width in [64, 2048] {
+        for destinations in [9, 16, 33] {
+            let directory = tempfile::tempdir().unwrap();
+            let zeros = vec!["0"; width].join(",");
+            let writes =
+                (0..destinations).map(|k| format!("state[{k}] = [n, j]\n")).collect::<String>();
+            let owner = format!(
+                "mut state := [{zeros}]\n\
+                 export func snapshot() {{ return state }}\n\
+                 export func update(n) {{ mut j := 0 while j < 64 {{ {writes} j += 1 }} }}\n\
+                 export func fail() {{ update(99) state[{width}] = 1 }}\n"
+            );
+            std::fs::write(directory.path().join("owner.kujo"), owner).unwrap();
+            let source = format!(
+                r#"
+from owner import snapshot, update, fail
+let original := snapshot()
+let invoke := update
+invoke(1)
+let first := snapshot()
+update(2)
+let second := snapshot()
+mut caught := false
+try {{ fail() }} except error {{ caught = true }}
+assert(caught)
+let final := snapshot()
+mut k := 0
+while k < {width} {{
+    assert_equal(original[k], 0)
+    if k < {destinations} {{
+        assert_equal(first[k], [1, 63])
+        assert_equal(second[k], [2, 63])
+        assert_equal(final[k], [99, 63])
+    }} else {{
+        assert_equal(first[k], 0)
+        assert_equal(second[k], 0)
+        assert_equal(final[k], 0)
+    }}
+    k += 1
+}}
+print("LARGE CONSTANT SITES PASS")
+"#
+            );
+            let path = directory.path().join("main.kujo");
+            std::fs::write(&path, source).unwrap();
+            let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+            command.args(["run", "--untrusted", "--scheduler-no-timeout"]);
+            if mode != "vm" {
+                command.arg(format!("--{mode}"));
+            }
+            let output = command.arg(path).output().unwrap();
+            assert!(
+                output.status.success(),
+                "{mode}/{width}/{destinations}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert_eq!(output.stdout, b"LARGE CONSTANT SITES PASS\n");
+        }
+    }
 }
 #[test]
 fn vm_repeated_reservation_value_semantics() {

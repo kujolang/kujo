@@ -42,9 +42,12 @@ struct Region<'a> {
     last: Option<i64>,
     budget: Cell<usize>,
     // A bounded, allocation-free union of constant physical destinations.
-    // Varying selectors or a full set retain the ordinary write-count bound.
+    // A full set uses constant site count; varying selectors retain write count.
     destinations: [usize; 8],
     destination_count: Option<usize>,
+    // Beyond the exact inline union, each constant write site contributes at
+    // most one destination. Count sites once, never loop executions.
+    constant_destination_sites: Option<usize>,
 }
 impl Region<'_> {
     fn visit(&self) -> bool {
@@ -169,6 +172,11 @@ impl Region<'_> {
                 if !valid(first) || !valid(last) || !self.payload(value, depth + 1) {
                     return None;
                 }
+                self.constant_destination_sites = if first == last {
+                    self.constant_destination_sites.and_then(|count| count.checked_add(1))
+                } else {
+                    None
+                };
                 if let Some(count) = self.destination_count {
                     // Compare raw endpoints before normalizing negative aliases:
                     // a varying -length..0 selector has equal physical endpoints.
@@ -322,12 +330,16 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         budget: Cell::new(4096),
         destinations: [0; 8],
         destination_count: Some(0),
+        constant_destination_sites: Some(0),
     };
     match region.statements(body, 0) {
         Some(writes) if writes >= 2 => {
             // Capacity two selects the existing compact publication path, even
             // when repeated writes touch only one physical destination.
-            let bound = region.destination_count.map_or(writes, |count| writes.min(count.max(2)));
+            let bound = region
+                .destination_count
+                .or(region.constant_destination_sites)
+                .map_or(writes, |count| writes.min(count.max(2)));
             bound.min(base.len()).min(usize::from(u16::MAX)) as u16
         }
         _ => 0,
@@ -392,10 +404,43 @@ mod tests {
         assert_eq!(eligible(&body, &[], &[], &env), 64);
         let body = parse("state[0] = [1] mut j := 0 while j < 32 { state[j] = [1] j += 1 }");
         assert_eq!(eligible(&body, &[], &[], &env), 33);
-        // More than eight known destinations retain the conservative bound.
+        // More than eight known destinations use the conservative site count.
         let updates = (0..9).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
         let body = parse(&format!("mut j := 0 while j < 32 {{ {updates} j += 1 }}"));
-        assert_eq!(eligible(&body, &[], &[], &env), 64);
+        assert_eq!(eligible(&body, &[], &[], &env), 9);
+    }
+
+    #[test]
+    fn constant_site_bound_covers_large_unions_branches_and_sequential_loops() {
+        let (env, _owner) = environment();
+        for count in [9, 16, 33, 63] {
+            let updates = (0..count).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
+            for iterations in [2, 32, 1024] {
+                let body =
+                    parse(&format!("mut j := 0 while j < {iterations} {{ {updates} j += 1 }}"));
+                assert_eq!(eligible(&body, &[], &[], &env), count);
+            }
+        }
+        let low = (0..9).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
+        let high = (9..18).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
+        let body = parse(&format!(
+            "mut j := 0 while j < 32 {{ if j % 2 == 0 {{ {low} }} else {{ {high} }} j += 1 }}"
+        ));
+        assert_eq!(eligible(&body, &[], &[], &env), 18);
+        let body = parse(&format!(
+            "mut j := 0 while j < 16 {{ {low} j += 1 }} while j < 32 {{ {high} j += 1 }}"
+        ));
+        assert_eq!(eligible(&body, &[], &[], &env), 18);
+    }
+
+    #[test]
+    fn varying_selector_invalidates_site_bound_even_after_exact_union_fills() {
+        let (env, _owner) = environment();
+        let fixed = (0..9).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
+        for updates in [format!("{fixed} state[j] = [j]"), format!("state[j] = [j] {fixed}")] {
+            let body = parse(&format!("mut j := 0 while j < 64 {{ {updates} j += 1 }}"));
+            assert_eq!(eligible(&body, &[], &[], &env), 64);
+        }
     }
 
     #[test]
