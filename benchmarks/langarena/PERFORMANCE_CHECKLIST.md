@@ -90,6 +90,8 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 Capture-storage admission is accepted in `342a653`. The [verified report](CAPTURE_STORAGE_BUDGETS_2026_10_31.md) records 3,784 strict allocation pairs, 5,784 semantic checks, all 150 test-size checksums and explicit live-heap/RSS tradeoff review. Aggregate capacity, long-name and multi-scope copying penalties are removed in the measured cases. Repeated-array reservation is now accepted in `1ed1866`; [verified results](REPEATED_ARRAY_FIX_2026_10_31.md) include 3,832 strict allocation pairs, 5,856 semantic observations, 150 checksums and explicit boundary/RSS review. The [final representation/combined-candidate review](SECTIONS_3_4_REVIEW_2026_10_31.md) is complete. This reproduced-fix sequence is accepted; broader capture traversal/fallback, fresh-snapshot representation and unsupported-proof costs remain explicit. Sections 3/4 are not claimed universally complete. Historical open entries below retain their original evidence; they do not imply the capture boundary defect is still unfixed.
 
+Post-review follow-up: [constant-destination limit measurements](ARRAY_DESTINATION_LIMIT_2026_10_31.md) confirm a remaining reservation penalty for nine/sixteen constant write sites on `1ed1866`; 48 allocation observations and 72 semantic runs pass. A conservative constant-site bound is proposed, not yet implemented or accepted. The earlier eight-destination fix remains valid within its recorded scope.
+
 Review status, 2026-10-31: the current fix sequence and final review are complete.
 The broader section 3/4 requirements remain partially proved; see the review's
 requirement dispositions and four residual-cost categories. The chronology below
