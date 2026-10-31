@@ -95,8 +95,8 @@ percentage or a reliable elapsed-time estimate.
 The [additional nested struct/string baseline](NESTED_DICTIONARY_EXTRA_PAYLOADS_2026_10_31.md)
 verifies 144 allocation observations and 216 semantic checks on accepted runtime
 `8ab7c6a`. Both payload types retain a 624,240-byte per-call width penalty in
-VM/JIT for all three owner shapes. Include these cases in nested-candidate
-acceptance; candidate results remain pending.
+VM/JIT for all three owner shapes. These cases now pass the accepted
+[nested dictionary batch fix](NESTED_DICTIONARY_BATCHES_2026_10_31.md) in `b401dc6`.
 
 
 1. Scalar-first array journal promotion is accepted in `ac7f234`.
@@ -182,8 +182,12 @@ acceptance; candidate results remain pending.
    Dictionary, struct-field and deeper dictionary owners retain a 624,240-byte
    per-call leaf-width penalty for two-array and three-value mixed updates.
    The accepted root-dictionary gate rechecks these exact 144 allocation/216
-   semantic cases; this separate nested-owner gap remains. Its storage and
-   admission-proof work is in progress, not yet integrated or accepted.
+   semantic cases. The nested-owner fix is now accepted in `b401dc6`;
+   [verification](NESTED_DICTIONARY_BATCHES_2026_10_31.md) records 3,784 strict
+   allocation pairs, 72 reviewed boundary pairs, 5,784 semantic observations,
+   1,301 library passes, 424 integrations and all 150 test-size checksums.
+   All 144 RSS groups and 12 follow-up pairs were reviewed, retaining positive
+   memory costs as explicit tradeoffs. Capture and repeated-array work remains.
    [Nested boundary controls](NESTED_DICTIONARY_BOUNDARIES_2026_10_31.md) add
    72 allocation observations and 108 semantic checks on the same accepted
    runtime for insertion, dense updates and repeated overwrites. These counters
