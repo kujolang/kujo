@@ -782,6 +782,11 @@ defects have separate verified fixes in section 3.
   increases remain recorded with 36 overlapping paired follow-ups. Four fixed-output
   QuickSort runs match exactly. No elapsed-speed, zero-regression or universal
   field-read claim follows; interpreter and fallback paths remain outside this fix.
+- [x] Isolate warmed cached native indexed-read allocations on accepted `26105f4`.
+  [Measured controls](INDEXED_READ_ALLOCATION_SCREEN_2026_10_31.md) record zero
+  requests across 12 helper measurements (1.2 million reads), with a positive
+  allocator control and source-program VM/interpreter/JIT checks. This excludes
+  compilation and setup; CPU overhead, writes and other paths remain open.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
