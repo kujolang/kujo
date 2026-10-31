@@ -1354,47 +1354,52 @@ fn indexed_read(
     cache: Option<&mut crate::native_owned::OwnedReadCache>,
 ) -> i64 {
     let result = (|| {
-        // Owned objects are borrowed once, including fallback cases. Construct
-        // the borrowed Cow locally to avoid transferring a full-width Value
-        // through the helper ABI on the common array-read path.
-        let object = if object_kind == crate::native_owned::OWNED {
-            std::borrow::Cow::Borrowed(
-                match cache {
-                    Some(cache) => ctx.owned_roots.borrow_owned_cached(object, cache),
-                    None => ctx.owned_roots.borrow_owned(object),
-                }
-                .map_err(|error| format!("Native ownership error: {error:?}"))?,
-            )
-        } else {
-            ctx.owned_roots
-                .borrow_value(object, object_kind)
-                .map_err(|error| format!("Native ownership error: {error:?}"))?
-        };
-        if index_kind == crate::native_scalar::INTEGER {
-            if let Value::Array(values) = object.as_ref() {
-                let resolved = if index < 0 { values.len() as i64 + index } else { index };
-                if let Some(element) =
-                    usize::try_from(resolved).ok().and_then(|offset| values.get(offset))
-                {
-                    if let Some(immediate) = crate::native_scalar::encode(element) {
-                        return Ok(immediate);
+        // Keep owned-array reads as direct borrows. Joining a borrowed object
+        // with an immediate-value Cow before this path can retain full Value
+        // selection work on every scalar read after unrelated lookup changes.
+        let value = if object_kind == crate::native_owned::OWNED {
+            let object = match cache {
+                Some(cache) => ctx.owned_roots.borrow_owned_cached(object, cache),
+                None => ctx.owned_roots.borrow_owned(object),
+            }
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            if index_kind == crate::native_scalar::INTEGER {
+                if let Value::Array(values) = object {
+                    let resolved = if index < 0 { values.len() as i64 + index } else { index };
+                    if let Some(element) =
+                        usize::try_from(resolved).ok().and_then(|offset| values.get(offset))
+                    {
+                        if let Some(immediate) = crate::native_scalar::encode(element) {
+                            return Ok(immediate);
+                        }
+                        // The result still receives its own root and ordinary
+                        // value semantics; no borrowed element escapes the call.
+                        let value = element.clone();
+                        return ctx
+                            .owned_roots
+                            .encode(value)
+                            .map_err(|error| format!("Native ownership error: {error:?}"));
                     }
-                    // Match the VM's owned-element clone without repeating the
-                    // validated lookup. The result receives an independent root.
-                    let value = element.clone();
-                    return ctx
-                        .owned_roots
-                        .encode(value)
-                        .map_err(|error| format!("Native ownership error: {error:?}"));
                 }
             }
-        }
-        // Other collection/index variants and errors retain the VM contract.
-        let index = ctx
-            .owned_roots
-            .borrow_value(index, index_kind)
-            .map_err(|error| format!("Native ownership error: {error:?}"))?;
-        let value = VM::get_indexed_value(&object, &index)?;
+            let index = ctx
+                .owned_roots
+                .borrow_value(index, index_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            VM::get_indexed_value(object, &index)?
+        } else {
+            // Validate the object before the index, including invalid kinds.
+            // Non-owned objects and array errors retain the VM's fallback rules.
+            let object = ctx
+                .owned_roots
+                .borrow_value(object, object_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            let index = ctx
+                .owned_roots
+                .borrow_value(index, index_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            VM::get_indexed_value(&object, &index)?
+        };
         ctx.owned_roots.encode(value).map_err(|error| format!("Native ownership error: {error:?}"))
     })();
     match result {
@@ -13956,6 +13961,49 @@ mod tests {
                 .as_deref()
                 .unwrap()
                 .starts_with("Native ownership error:"));
+        }
+        context.owned_roots.leave().unwrap();
+    }
+
+    #[test]
+    fn indexed_read_validates_object_then_index_on_direct_and_fallback_paths() {
+        use crate::native_owned::{OwnedReadCache, OwnershipError, OWNED};
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        let (array, _) = context.owned_roots.encode(Value::array(vec![Value::Int(9)])).unwrap();
+        let (stale, kind) = context.owned_roots.encode(Value::array(vec![])).unwrap();
+        context.owned_roots.release(stale, kind).unwrap();
+        for cached in [false, true] {
+            let mut cache = OwnedReadCache::default();
+            for (object, object_kind, index, index_kind, error) in [
+                (0, 99, stale, OWNED, OwnershipError::InvalidKind(99)),
+                (stale, OWNED, 0, 99, OwnershipError::StaleHandle),
+                (7, crate::native_scalar::INTEGER, stale, OWNED, OwnershipError::StaleHandle),
+                (array, OWNED, 0, 99, OwnershipError::InvalidKind(99)),
+            ] {
+                context.runtime_error = None;
+                // SAFETY: context/cache are live and disjoint. Invalid operands
+                // deliberately exercise validation; they are never pointers.
+                unsafe {
+                    if cached {
+                        jit_indexed_read_cached(
+                            &mut context,
+                            object,
+                            object_kind,
+                            index,
+                            index_kind,
+                            &mut cache as *mut OwnedReadCache as i64,
+                        );
+                    } else {
+                        jit_indexed_read(&mut context, object, object_kind, index, index_kind);
+                    }
+                }
+                assert_eq!(
+                    context.runtime_error.as_deref(),
+                    Some(format!("Native ownership error: {error:?}").as_str())
+                );
+            }
         }
         context.owned_roots.leave().unwrap();
     }

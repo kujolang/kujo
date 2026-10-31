@@ -9,9 +9,32 @@
 #![allow(dead_code)] // Staged ABI foundation; native boundaries adopt it together.
 
 use crate::interpreter::Value;
-use nohash_hasher::BuildNoHashHasher;
+use nohash_hasher::NoHashHasher;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
+
+/// Root handles are issued sequentially. Identity hashing leaves their upper
+/// fingerprints equal and clusters retained low handles during transient churn.
+/// Mix only the table hash: handle identity and all lifetime checks stay intact.
+#[derive(Default)]
+struct RootHandleHasher(NoHashHasher<u64>);
+
+impl Hasher for RootHandleHasher {
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0.finish().wrapping_mul(0x9e3779b97f4a7c15)
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        self.0.write(bytes);
+    }
+
+    #[inline]
+    fn write_u64(&mut self, value: u64) {
+        self.0.write_u64(value);
+    }
+}
 
 pub(crate) const OWNED: i64 = 4;
 
@@ -71,7 +94,7 @@ struct Slot {
 pub(crate) struct NativeOwnedValues {
     slots: Vec<Slot>,
     free: Option<usize>,
-    lookup: HashMap<u64, usize, BuildNoHashHasher<u64>>,
+    lookup: HashMap<u64, usize, BuildHasherDefault<RootHandleHasher>>,
     frames: Vec<Frame>,
     next_handle: Option<u64>,
     next_frame: Option<u64>,
@@ -528,6 +551,7 @@ impl NativeOwnedValues {
         self.lookup.get(&handle.0).copied().ok_or(OwnershipError::StaleHandle)
     }
 
+    #[inline]
     pub(crate) fn get(&self, handle: Handle) -> Result<&Value, OwnershipError> {
         let index = self.index(handle)?;
         Ok(self.slots[index].value.as_ref().expect("live native root"))
@@ -640,6 +664,56 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn root_table_churn_avoids_retained_handle_equality_scans() {
+        use std::cell::Cell;
+        use std::hash::{BuildHasher, Hash};
+        use std::rc::Rc;
+
+        struct Key(u64, Rc<Cell<usize>>);
+        impl Hash for Key {
+            fn hash<H: Hasher>(&self, hasher: &mut H) {
+                self.0.hash(hasher);
+            }
+        }
+        impl PartialEq for Key {
+            fn eq(&self, other: &Self) -> bool {
+                self.1.set(self.1.get() + 1);
+                self.0 == other.0
+            }
+        }
+        impl Eq for Key {}
+
+        fn comparisons<S: BuildHasher + Default>(start: u64) -> usize {
+            let count = Rc::new(Cell::new(0));
+            let key = |id| Key(start + id, Rc::clone(&count));
+            let mut lookup = HashMap::<Key, usize, S>::default();
+            for id in 1..=2048 {
+                assert!(lookup.insert(key(id), id as usize).is_none());
+            }
+            count.set(0);
+            for id in 2049..=10240 {
+                assert!(lookup.insert(key(id), 9).is_none());
+                assert_eq!(lookup.get(&key(id)), Some(&9));
+                assert_eq!(lookup.remove(&key(id)), Some(9));
+            }
+            let comparisons = count.get();
+            assert_eq!(lookup.len(), 2048);
+            for id in 1..=2048 {
+                assert_eq!(lookup.get(&key(id)), Some(&(id as usize)));
+            }
+            comparisons
+        }
+
+        // Count actual key comparisons, not elapsed time or a particular hash
+        // constant. Include high handle ranges without changing their identity.
+        for start in [0, 1 << 32, 1 << 63] {
+            let identity = comparisons::<nohash_hasher::BuildNoHashHasher<u64>>(start);
+            let mixed = comparisons::<BuildHasherDefault<RootHandleHasher>>(start);
+            assert!(mixed * 4 < identity, "start={start} mixed={mixed} identity={identity}");
+        }
+    }
 
     #[test]
     fn discarded_roots_drop_owners_while_taken_and_promoted_values_survive() {
