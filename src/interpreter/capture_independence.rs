@@ -66,6 +66,20 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
     if !shape.statements(body, 0) {
         return None;
     }
+    if shape.constructs_struct_payload && super::nested_dictionary_collection_proof::shape(body) {
+        // Nested struct writers must retain their lexical capture. Only the
+        // bounded nested-write admission needs this cache entry; collecting
+        // capture-elision names would allocate without enabling capture elision.
+        // Runtime admission still validates every selector, owner and operand.
+        return Some(Proof {
+            required_parameters: super::capture_names::CaptureNames::from_names(std::iter::empty()),
+            primitive_arguments: true,
+            read_only: false,
+            whole_value_mask: 0,
+            region_flags: 4 | 2,
+            insertion_bound: 0,
+        });
+    }
     let mut analyzer = Analyzer::<true> {
         scopes: vec![HashSet::new()],
         required: BTreeSet::new(),
@@ -95,7 +109,9 @@ pub(super) fn analyze(body: &[Stmt]) -> Option<Proof> {
         region_flags: (u8::from(analyzer.constructs_struct_payload) << 2)
             | u8::from(sparse_write_region)
             | (u8::from(
-                super::nested_spill_proof::shape(body) || super::row_spill_proof::shape(body),
+                super::nested_spill_proof::shape(body)
+                    || super::row_spill_proof::shape(body)
+                    || super::nested_dictionary_collection_proof::shape(body),
             ) << 1),
         insertion_bound: if sparse_write_region {
             super::dictionary_insertion_proof::cached_bound(body)
@@ -204,8 +220,10 @@ impl SparseRegion<'_> {
             Stmt::Assign { target, value } => {
                 self.indexed_access(target, depth + 1)
                     && if matches!(target,Expr::IndexAccess { object, .. } if matches!(object.as_ref(),Expr::Identifier(_))) {
-                        self.payload(value,depth+1)
-                    } else { self.expression(value,depth+1) }
+                        self.payload(value, depth + 1)
+                    } else {
+                        self.expression(value, depth + 1)
+                    }
             }
             Stmt::ExprStmt(expr) => self.expression(expr, depth + 1),
             Stmt::Return(Some(expr)) => self.indexed_access(expr, depth + 1),
@@ -373,9 +391,11 @@ impl<'a, const COLLECT: bool> Analyzer<'a, COLLECT> {
             Stmt::Assign { target, value } => {
                 self.read_only = false;
                 self.expression(target, depth + 1)
-                    && if matches!(target,Expr::IndexAccess { object, .. } if matches!(object.as_ref(),Expr::Identifier(_))) {
-                        self.payload(value,depth+1)
-                    } else { self.expression(value,depth+1) }
+                    && if matches!(target, Expr::IndexAccess { .. }) {
+                        self.payload(value, depth + 1)
+                    } else {
+                        self.expression(value, depth + 1)
+                    }
             }
             Stmt::ExprStmt(value) | Stmt::Return(Some(value)) => self.expression(value, depth + 1),
             Stmt::Return(None) | Stmt::Break | Stmt::Continue => true,
@@ -699,5 +719,23 @@ fn syntax_preflight_matches_name_collection_without_materializing_scopes() {
         assert!(shape.scopes.is_empty());
         assert!(shape.required.is_empty());
         assert_eq!(shape.scopes.capacity(),0);
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn nested_struct_payload_keeps_operator_capture_and_bounded_admission() {
+    for target in ["state.inner[0]", "state[\"outer\"][\"inner\"][0]"] {
+        let source = format!("{target}=Trigger {{ value:n }} return n");
+        let body = crate::parser::Parser::new(crate::lexer::tokenize(&source).unwrap()).parse();
+        let proof = analyze(&body).unwrap();
+        assert!(proof.constructs_struct_payload());
+        assert!(proof.nested_spill_region());
+        assert!(!proof.sparse_write_region());
+        assert!(!proof.read_only);
+        assert_eq!(proof.required_parameters.len(), 0);
+        let body = super::value::LeakyFunctionBody::new(body);
+        assert!(!body.get().can_skip_capture_setup(&["n".into()], &[super::Value::Int(1)]));
+        assert!(body.get().read_capture_proof(&[super::Value::Int(1)]).is_none());
     }
 }

@@ -36,6 +36,7 @@ pub mod generator;
 mod generator_lowering;
 mod indexed_publication;
 pub(crate) mod native_functions;
+mod nested_dictionary_collection_proof;
 mod nested_publication;
 mod nested_spill_proof;
 pub mod persistent_queue;

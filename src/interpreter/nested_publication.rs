@@ -496,6 +496,112 @@ impl DictionaryManyWrite {
     }
 }
 
+/// Mixed dictionary payloads retain only changed keys and their owned values.
+/// Admission/promotion is separate; this storage does not retain another root.
+#[derive(Clone, Debug)]
+pub(crate) struct CollectionDictionaryWrite {
+    selector: Selector,
+    writes: std::collections::HashMap<
+        Arc<str>,
+        BatchValue,
+        std::hash::BuildHasherDefault<ahash::AHasher>,
+    >,
+    limit: u16,
+}
+
+impl CollectionDictionaryWrite {
+    #[cfg(test)]
+    fn new(selector: Selector, limit: u16) -> Self {
+        Self::with_known_keys(selector, limit, usize::from(limit.min(4)))
+    }
+
+    fn with_known_keys(selector: Selector, limit: u16, known_keys: usize) -> Self {
+        debug_assert!(known_keys <= usize::from(limit));
+        Self {
+            selector,
+            writes: std::collections::HashMap::with_capacity_and_hasher(
+                known_keys,
+                Default::default(),
+            ),
+            limit,
+        }
+    }
+
+    fn record(&mut self, root: &Value, key: &str, value: &mut Value) -> bool {
+        if !BatchValue::supports(value) {
+            return false;
+        }
+        let Some(Value::Dict(base)) = self.selector.key().value(root) else {
+            return false;
+        };
+        // Rewrites must not reserve, even when the table is full.
+        if let Some(previous) = self.writes.get_mut(key) {
+            *previous = BatchValue::from_owned(std::mem::replace(value, Value::Null));
+            return true;
+        }
+        if self.writes.len() >= usize::from(self.limit)
+            || (!base.contains_key(key) && !collection_insertion_can_pay(base, self.limit))
+        {
+            return false;
+        }
+        let key = base.get_key_value(key).map_or_else(|| Arc::from(key), |(key, _)| key.clone());
+        self.writes.insert(key, BatchValue::from_owned(std::mem::replace(value, Value::Null)));
+        true
+    }
+
+    fn read(&self, root: &Value, owner: RowKey<'_>, key: &str) -> Option<Value> {
+        if !self.selector.key().same(owner, root) {
+            return None;
+        }
+        let Value::Dict(base) = self.selector.key().value(root)? else { return None };
+        self.writes.get(key).map(|v| v.clone().into_value()).or_else(|| base.get(key).cloned())
+    }
+
+    fn dictionary_mut<'a>(
+        selector: &Selector,
+        root: &'a mut Value,
+    ) -> &'a mut super::value::DictMap {
+        let leaf = match (selector, root) {
+            (Selector::Field(key), Value::Struct { fields, .. }) => {
+                Arc::make_mut(fields).get_mut(key)
+            }
+            (Selector::String(key), Value::Dict(map)) => Arc::make_mut(map).get_mut(key.as_str()),
+            (Selector::Integer(key), Value::Dict(map)) => {
+                with_integer_key(*key, |key| Arc::make_mut(map).get_mut(key))
+            }
+            (Selector::Integer(key), Value::Array(rows)) => {
+                let index = NestedPublication::resolve(*key, rows.len()).expect("validated owner");
+                Arc::make_mut(rows).get_mut(index)
+            }
+            _ => unreachable!("validated dictionary owner"),
+        };
+        let Some(Value::Dict(map)) = leaf else { unreachable!("validated dictionary leaf") };
+        Arc::make_mut(map)
+    }
+
+    fn apply(&self, root: &mut Value) {
+        let map = Self::dictionary_mut(&self.selector, root);
+        for (key, value) in &self.writes {
+            if let Some(slot) = map.get_mut(key.as_ref()) {
+                *slot = value.clone().into_value();
+            } else {
+                map.insert(key.clone(), value.clone().into_value());
+            }
+        }
+    }
+
+    fn apply_owned(self, root: &mut Value) {
+        let map = Self::dictionary_mut(&self.selector, root);
+        for (key, value) in self.writes {
+            if let Some(slot) = map.get_mut(key.as_ref()) {
+                *slot = value.into_value();
+            } else {
+                map.insert(key, value.into_value());
+            }
+        }
+    }
+}
+
 /// Two Vec slots hold the original root and the write metadata. Admission moves
 /// existing path/key storage; it does not allocate a journal or clone the root.
 #[derive(Clone, Debug)]
@@ -504,7 +610,118 @@ pub(super) struct NestedPublication {
     path: Vec<Access>,
 }
 
+/// Include the mixed payload's actual bucket size and all geometric growth.
+/// A successful estimate is only a profitability hint; ownership checks remain separate.
+pub(super) fn collection_insertion_can_pay(base: &super::value::DictMap, writes: u16) -> bool {
+    if writes == 0 || base.is_empty() {
+        return false;
+    }
+    let bucket_bytes = std::mem::size_of::<(Arc<str>, BatchValue)>() + 1;
+    let mut buckets = 4usize;
+    let mut traffic = 0usize;
+    loop {
+        traffic = traffic.saturating_add(buckets.saturating_mul(bucket_bytes) + 16);
+        if (buckets == 4 && writes <= 3)
+            || (buckets > 4 && buckets - buckets / 8 >= usize::from(writes))
+        {
+            break;
+        }
+        buckets *= 2;
+    }
+    traffic <= base.capacity().saturating_mul(std::mem::size_of::<Value>())
+}
 impl NestedPublication {
+    fn collection_insertion_admission(
+        root: &Value,
+        path: &[Access],
+        value: &Value,
+        policy: super::nested_spill_proof::SpillPolicy,
+    ) -> bool {
+        let text_or_bytes = matches!(value, Value::Str(_) | Value::Bytes(_));
+        if !policy.collection_rows
+            || policy.capacity < 2
+            || !(DictionaryCollectionPublication::supports(value) || text_or_bytes)
+        {
+            return false;
+        }
+        let Some((owner, path)) = Self::admission_owner(root, path) else { return false };
+        let [first, Access::Index(index)] = path else { return false };
+        let Some(Value::Dict(base)) = RowKey::from_access(first).and_then(|key| key.value(owner))
+        else {
+            return false;
+        };
+        if Arc::strong_count(base) != 1 || !collection_insertion_can_pay(base, policy.capacity) {
+            return false;
+        }
+        let exists = match index {
+            Value::Str(key) => base.contains_key(key.as_str()),
+            Value::Int(key) => with_integer_key(*key, |key| base.contains_key(key)),
+            _ => return false,
+        };
+        // Existing collection values retain their compact single-write route.
+        // Text/bytes need the mixed journal even for the first replacement.
+        if exists {
+            text_or_bytes
+        } else {
+            policy.allow_initial_insertion
+        }
+    }
+
+    pub(super) fn can_prepare_with_policy(
+        root: &Value,
+        path: &[Access],
+        value: &Value,
+        policy: super::nested_spill_proof::SpillPolicy,
+    ) -> bool {
+        Self::can_prepare(root, path, value, policy.allow_initial_insertion)
+            || Self::collection_insertion_admission(root, path, value, policy)
+    }
+
+    pub(super) fn prepare_owned_with_policy(
+        name: String,
+        root: Value,
+        mut path: Vec<Access>,
+        value: &mut Value,
+        policy: super::nested_spill_proof::SpillPolicy,
+    ) -> Result<Self, (String, Value, Vec<Access>)> {
+        if !Self::collection_insertion_admission(&root, &path, value, policy) {
+            return Self::prepare_owned(name, root, path, value);
+        }
+        // Admission checks every owner and the budget before consuming a value
+        // or allocating a missing key. Replacements reuse the canonical key.
+        let (owner, leaf_path) = Self::admission_owner(&root, &path).expect("admitted owner");
+        let Value::Dict(base) = RowKey::from_access(&leaf_path[0])
+            .and_then(|key| key.value(owner))
+            .expect("admitted dictionary")
+        else {
+            unreachable!("admitted dictionary")
+        };
+        let key: Arc<str> = match path.last().expect("admitted key") {
+            Access::Index(Value::Str(key)) => base
+                .get_key_value(key.as_str())
+                .map(|(key, _)| key.clone())
+                .unwrap_or_else(|| Arc::from(key.as_str())),
+            Access::Index(Value::Int(key)) => with_integer_key(*key, |key| {
+                base.get_key_value(key)
+                    .map(|(key, _)| key.clone())
+                    .unwrap_or_else(|| Arc::from(key))
+            }),
+            _ => unreachable!("admitted key"),
+        };
+        path.pop();
+        let selector = match path.pop().expect("admitted insertion owner") {
+            Access::Field(field) => Selector::Field(field),
+            Access::Index(Value::Str(key)) => Selector::String(key),
+            Access::Index(Value::Int(key)) => Selector::Integer(key),
+            _ => unreachable!("admitted insertion selector"),
+        };
+        let mut write = CollectionDictionaryWrite::with_known_keys(selector, policy.capacity, 1);
+        write.writes.insert(key, BatchValue::from_owned(std::mem::replace(value, Value::Null)));
+        path.insert(0, Access::Index(root));
+        path.push(Access::DeferredCollectionDictionary(write));
+        Ok(Self { name, path })
+    }
+
     fn resolve(index: i64, length: usize) -> Option<usize> {
         let resolved = if index < 0 { length as i64 + index } else { index };
         (resolved >= 0 && (resolved as usize) < length).then_some(resolved as usize)
@@ -688,6 +905,13 @@ impl NestedPublication {
                     None => Value::Error(format!("Index out of bounds: {index}")),
                 })
             }
+            Access::DeferredCollectionDictionary(write) => match key {
+                RowKey::Integer(index) => {
+                    with_integer_key(index, |key| write.read(root, owner, key))
+                }
+                RowKey::String(key) => write.read(root, owner, key),
+                _ => None,
+            },
             Access::DeferredDictionary(write) => match key {
                 RowKey::Integer(index) => {
                     with_integer_key(index, |key| write.read(root, owner, key))
@@ -821,6 +1045,146 @@ impl NestedPublication {
             super::nested_spill_proof::SpillPolicy { capacity: spill_hint, ..Default::default() },
         )
     }
+    // None leaves compact scalar/single-collection handling in its existing path.
+    fn record_collection_dictionary(
+        root: &Value,
+        write: &mut Access,
+        path: &[Access],
+        value: &mut Value,
+        limit: u16,
+    ) -> Option<bool> {
+        let [first, Access::Index(index)] = path else { return None };
+        let owner = RowKey::from_access(first)?;
+        let selector = match &*write {
+            Access::DeferredCollection(w) if matches!(w.key, CollectionKey::Dictionary(_)) => {
+                &w.selector
+            }
+            Access::DeferredDictionary(w) => &w.selector,
+            Access::DeferredDictionaryMany(w) => &w.selector,
+            Access::DeferredCollectionDictionary(w) => &w.selector,
+            _ => return None,
+        };
+        if !selector.key().same(owner, root) {
+            return Some(false);
+        }
+        let Some(Value::Dict(base)) = selector.key().value(root) else { return Some(false) };
+        let mut record = |key: &str| {
+            if let Access::DeferredCollectionDictionary(w) = write {
+                return Some(w.record(root, key, value));
+            }
+            if Scalar::from_value(value).is_some()
+                && matches!(
+                    write,
+                    Access::DeferredDictionary(_) | Access::DeferredDictionaryMany(_)
+                )
+            {
+                return None;
+            }
+            let (count, contains) = match &*write {
+                Access::DeferredCollection(w) => {
+                    let CollectionKey::Dictionary(old) = &w.key else { unreachable!() };
+                    (1, old.as_ref() == key)
+                }
+                Access::DeferredDictionary(w) => (
+                    w.keys.iter().flatten().count(),
+                    w.keys.iter().flatten().any(|old| old.as_ref() == key),
+                ),
+                Access::DeferredDictionaryMany(w) => (w.writes.len(), w.writes.contains_key(key)),
+                _ => unreachable!(),
+            };
+            if count == 1
+                && contains
+                && DictionaryCollectionPublication::supports(value)
+                && matches!(write, Access::DeferredDictionary(_))
+            {
+                let Access::DeferredDictionary(old) =
+                    std::mem::replace(write, Access::Field(String::new()))
+                else {
+                    unreachable!()
+                };
+                let key = old.keys.into_iter().flatten().next().expect("single scalar key");
+                *write = Access::DeferredCollection(CollectionWrite {
+                    selector: old.selector,
+                    key: CollectionKey::Dictionary(key),
+                    value: CollectionValue::from_owned_value(std::mem::replace(value, Value::Null)),
+                });
+                return Some(true);
+            }
+            if let Access::DeferredCollection(_) = write {
+                if contains {
+                    if DictionaryCollectionPublication::supports(value) {
+                        return None;
+                    }
+                    if let Some(scalar) = Scalar::from_value(value) {
+                        let Access::DeferredCollection(old) =
+                            std::mem::replace(write, Access::Field(String::new()))
+                        else {
+                            unreachable!()
+                        };
+                        let CollectionKey::Dictionary(key) = old.key else { unreachable!() };
+                        *write = Access::DeferredDictionary(DictionaryWrite::new(
+                            old.selector,
+                            key,
+                            scalar,
+                        ));
+                        return Some(true);
+                    }
+                }
+            }
+            if count > usize::from(limit)
+                || (!contains && count == usize::from(limit))
+                || (!contains
+                    && !base.contains_key(key)
+                    && !collection_insertion_can_pay(base, limit))
+            {
+                return Some(false);
+            }
+            // Reserve only keys already present plus the incoming distinct key,
+            // never the source loop bound. Promotion copies the existing journal
+            // once without intermediate table growth.
+            let known_keys = count + usize::from(!contains);
+            // Every possible rejection precedes replacing the old journal.
+            let old = std::mem::replace(write, Access::Field(String::new()));
+            let mut batch = match old {
+                Access::DeferredCollection(w) => {
+                    let CollectionKey::Dictionary(key) = w.key else { unreachable!() };
+                    let mut batch =
+                        CollectionDictionaryWrite::with_known_keys(w.selector, limit, known_keys);
+                    batch.writes.insert(key, BatchValue::Collection(w.value));
+                    batch
+                }
+                Access::DeferredDictionary(w) => {
+                    let values: [Value; 4] = std::array::from_fn(|slot| w.value(slot));
+                    let mut batch =
+                        CollectionDictionaryWrite::with_known_keys(w.selector, limit, known_keys);
+                    for (key, value) in w.keys.into_iter().zip(values) {
+                        if let Some(key) = key {
+                            batch.writes.insert(key, BatchValue::from_owned(value));
+                        }
+                    }
+                    batch
+                }
+                Access::DeferredDictionaryMany(w) => {
+                    let mut batch =
+                        CollectionDictionaryWrite::with_known_keys(w.selector, limit, known_keys);
+                    for (key, value) in w.writes {
+                        batch.writes.insert(key, BatchValue::from_owned(value.value()));
+                    }
+                    batch
+                }
+                _ => unreachable!(),
+            };
+            assert!(batch.record(root, key, value), "validated dictionary promotion");
+            *write = Access::DeferredCollectionDictionary(batch);
+            Some(true)
+        };
+        match index {
+            Value::Str(key) => record(key),
+            Value::Int(key) => with_integer_key(*key, record),
+            _ => Some(false),
+        }
+    }
+
     pub(super) fn try_record_owned_with_policy(
         &mut self,
         path: &[Access],
@@ -845,6 +1209,13 @@ impl NestedPublication {
         }
         let root = owner;
         let path = &path[prefix.len()..];
+        if policy.collection_rows && spill_hint > 0 && BatchValue::supports(value) {
+            if let Some(recorded) =
+                Self::record_collection_dictionary(root, write, path, value, spill_hint)
+            {
+                return recorded;
+            }
+        }
         // Promotion is opt-in for a proven collection-bearing row region. All
         // validation precedes moving the old journal or the incoming payload.
         if policy.collection_rows && spill_hint > 0 && BatchValue::supports(value) {
@@ -953,7 +1324,10 @@ impl NestedPublication {
                 }
             }
         }
-        if matches!(write, Access::DeferredCollectionRow(_)) {
+        if matches!(
+            write,
+            Access::DeferredCollectionRow(_) | Access::DeferredCollectionDictionary(_)
+        ) {
             return false;
         }
         if let Access::DeferredCollection(write) = write {
@@ -1082,6 +1456,7 @@ impl NestedPublication {
         match write {
             Access::DeferredCollection(write) => write.apply(root),
             Access::DeferredCollectionRow(write) => write.apply(root),
+            Access::DeferredCollectionDictionary(write) => write.apply(root),
             Access::DeferredRow(write) => write.apply(root),
             Access::DeferredRowMany(write) => write.apply(root),
             Access::DeferredDictionary(write) => write.apply(root),
@@ -1093,6 +1468,9 @@ impl NestedPublication {
     fn apply_owned_path(prefix: &[Access], write: Access, root: &mut Value) {
         match write {
             Access::DeferredCollectionRow(write) => {
+                write.apply_owned(Self::path_owner_mut(prefix, root));
+            }
+            Access::DeferredCollectionDictionary(write) => {
                 write.apply_owned(Self::path_owner_mut(prefix, root));
             }
             Access::DeferredCollection(write) => {
@@ -2366,5 +2744,388 @@ mod collection_tests {
         let (_, result) = pending.publish(Some(&mut owner));
         assert!(Value::equals(&snapshot, &result));
         assert!(Value::equals(&owner, &result));
+    }
+}
+
+#[cfg(test)]
+mod collection_dictionary_storage_tests {
+    use super::*;
+
+    fn root() -> Value {
+        let leaf =
+            Value::dict((0..128).map(|i| (Arc::from(i.to_string()), Value::Int(0))).collect());
+        Value::dict([(Arc::from("inner"), leaf)].into_iter().collect())
+    }
+
+    fn leaf(root: &Value) -> &Arc<super::super::value::DictMap> {
+        let Value::Dict(parent) = root else { panic!("dictionary root") };
+        let Value::Dict(leaf) = &parent["inner"] else { panic!("dictionary leaf") };
+        leaf
+    }
+
+    #[test]
+    fn mixed_dictionary_storage_preserves_snapshots_and_moves_into_unique_leaf() {
+        let mut root = root();
+        let original = root.clone();
+        let mut journal =
+            CollectionDictionaryWrite::new(Selector::String(Arc::new("inner".into())), 3);
+        let mut array = Value::array(vec![Value::Int(42)]);
+        assert!(journal.record(&root, "0", &mut array));
+        assert!(matches!(array, Value::Null));
+        assert!(Arc::ptr_eq(
+            journal.writes.get_key_value("0").unwrap().0,
+            leaf(&root).get_key_value("0").unwrap().0
+        ));
+        let mut map = Value::dict([(Arc::from("v"), Value::Int(7))].into_iter().collect());
+        assert!(journal.record(&root, "1", &mut map));
+        assert!(matches!(map, Value::Null));
+        let mut snapshot = root.clone();
+        journal.apply(&mut snapshot);
+        let mut replacement = Value::Bool(true);
+        assert!(journal.record(&root, "0", &mut replacement));
+        assert!(matches!(
+            journal.read(&root, RowKey::String("inner"), "0"),
+            Some(Value::Bool(true))
+        ));
+        assert!(journal.read(&root, RowKey::String("other"), "0").is_none());
+        assert!(
+            matches!(&leaf(&snapshot)["0"], Value::Array(items) if matches!(items[0], Value::Int(42)))
+        );
+        assert!(matches!(&leaf(&original)["0"], Value::Int(0)));
+        drop(original);
+        let leaf_address = Arc::as_ptr(leaf(&root));
+        journal.apply_owned(&mut root);
+        assert_eq!(Arc::as_ptr(leaf(&root)), leaf_address, "unique leaf must not detach");
+        assert!(matches!(&leaf(&root)["0"], Value::Bool(true)));
+        assert!(
+            matches!(&leaf(&root)["1"], Value::Dict(items) if matches!(items["v"], Value::Int(7)))
+        );
+        assert!(matches!(&leaf(&root)["127"], Value::Int(0)));
+        assert!(
+            matches!(&leaf(&snapshot)["0"], Value::Array(items) if matches!(items[0], Value::Int(42)))
+        );
+    }
+
+    #[test]
+    fn dictionary_storage_bounds_distinct_keys_and_rewrites_full_tables() {
+        let root = root();
+        let selector = Selector::String(Arc::new("inner".into()));
+        let upper_bound = CollectionDictionaryWrite::new(selector.clone(), u16::MAX);
+        assert!(upper_bound.writes.capacity() <= 7, "do not reserve for a loop's write count");
+        let mut journal = CollectionDictionaryWrite::new(selector, 7);
+        for i in 0..7 {
+            let mut value = Value::array(vec![Value::Int(i)]);
+            assert!(journal.record(&root, &i.to_string(), &mut value));
+        }
+        let capacity = journal.writes.capacity();
+        for i in 0..1024 {
+            let mut value = Value::Int(i);
+            assert!(journal.record(&root, "0", &mut value));
+            assert_eq!(journal.writes.capacity(), capacity);
+        }
+        let mut rejected = Value::array(vec![Value::Int(99)]);
+        assert!(!journal.record(&root, "new", &mut rejected));
+        assert!(matches!(&rejected, Value::Array(items) if matches!(items[0], Value::Int(99))));
+        let mut unsupported = Value::Error("unchanged".into());
+        assert!(!journal.record(&root, "0", &mut unsupported));
+        assert!(matches!(unsupported, Value::Error(message) if message=="unchanged"));
+        assert!(matches!(
+            journal.read(&root, RowKey::String("inner"), "0"),
+            Some(Value::Int(1023))
+        ));
+        assert!(std::mem::size_of::<CollectionDictionaryWrite>() <= std::mem::size_of::<Value>());
+    }
+}
+
+#[cfg(test)]
+mod collection_dictionary_promotion_tests {
+    use super::*;
+    fn root() -> Value {
+        Value::dict(
+            [(
+                Arc::from("inner"),
+                Value::dict((0..128).map(|i| (Arc::from(i.to_string()), Value::Int(0))).collect()),
+            )]
+            .into_iter()
+            .collect(),
+        )
+    }
+    fn path(key: i64) -> Vec<Access> {
+        vec![Access::Index(Value::Str(Arc::new("inner".into()))), Access::Index(Value::Int(key))]
+    }
+    fn leaf(root: &Value) -> &Arc<super::super::value::DictMap> {
+        let Value::Dict(parent) = root else { panic!("root") };
+        let Value::Dict(leaf) = &parent["inner"] else { panic!("leaf") };
+        leaf
+    }
+    fn policy(capacity: u16) -> super::super::nested_spill_proof::SpillPolicy {
+        super::super::nested_spill_proof::SpillPolicy {
+            capacity,
+            collection_rows: true,
+            ..Default::default()
+        }
+    }
+    #[test]
+    fn dictionary_promotion_preserves_inline_many_and_collection_history() {
+        for count in [1usize, 4, 6] {
+            let mut owner = root();
+            let pointer = Arc::as_ptr(leaf(&owner));
+            let mut first =
+                if count == 1 { Value::array(vec![Value::Int(10)]) } else { Value::Int(10) };
+            let mut pending = NestedPublication::prepare_owned(
+                "state".into(),
+                owner.clone(),
+                path(0),
+                &mut first,
+            )
+            .unwrap();
+            for key in 1..count {
+                assert!(pending.try_record_with_batching(
+                    &path(key as i64),
+                    &Value::Int(10 + key as i64),
+                    7
+                ));
+            }
+            let before = pending.snapshot_value();
+            let mut incoming = Value::array(vec![Value::Int(99)]);
+            assert!(!pending.try_record_owned_with_policy(
+                &path(count as i64),
+                &mut incoming,
+                policy(1)
+            ));
+            assert!(matches!(&incoming,Value::Array(items) if matches!(items[0],Value::Int(99))));
+            assert!(pending.try_record_owned_with_policy(
+                &path(count as i64),
+                &mut incoming,
+                policy((count + 1) as u16)
+            ));
+            assert!(matches!(incoming, Value::Null));
+            let Some(Access::DeferredCollectionDictionary(batch)) = pending.path.last() else {
+                panic!("batch not selected")
+            };
+            assert_eq!(batch.writes.len(), count + 1);
+            let after = pending.snapshot_value();
+            let mut replacement = Value::Bool(false);
+            assert!(pending.try_record_owned_with_policy(
+                &path(0),
+                &mut replacement,
+                policy((count + 1) as u16)
+            ));
+            let bad = vec![
+                Access::Index(Value::Str(Arc::new("other".into()))),
+                Access::Index(Value::Int(0)),
+            ];
+            let mut rejected = Value::array(vec![Value::Int(123)]);
+            assert!(!pending.try_record_owned_with_policy(&bad, &mut rejected, policy(7)));
+            assert!(matches!(&rejected,Value::Array(items) if matches!(items[0],Value::Int(123))));
+            pending.publish(Some(&mut owner));
+            assert_eq!(Arc::as_ptr(leaf(&owner)), pointer);
+            assert!(matches!(&leaf(&owner)["0"], Value::Bool(false)));
+            assert!(
+                matches!(&leaf(&owner)[count.to_string().as_str()],Value::Array(items) if matches!(items[0],Value::Int(99)))
+            );
+            assert!(matches!(&leaf(&before)[count.to_string().as_str()], Value::Int(0)));
+            if count == 1 {
+                assert!(
+                    matches!(&leaf(&after)["0"],Value::Array(items) if matches!(items[0],Value::Int(10)))
+                );
+            } else {
+                for key in 0..count {
+                    assert!(
+                        matches!(&leaf(&after)[key.to_string().as_str()],Value::Int(n) if *n==10+key as i64)
+                    );
+                }
+            }
+        }
+    }
+    #[test]
+    fn promotion_reservation_tracks_known_keys_not_logical_limit() {
+        let root = root();
+        for count in [2usize, 7, 8, 32, 64] {
+            let mut batch = CollectionDictionaryWrite::with_known_keys(
+                Selector::String(Arc::new("inner".into())),
+                u16::MAX,
+                count,
+            );
+            let reserved = batch.writes.capacity();
+            assert!(reserved >= count && reserved < count * 2);
+            for key in 0..count {
+                let mut value = Value::array(vec![Value::Int(key as i64)]);
+                assert!(batch.record(&root, &key.to_string(), &mut value));
+                assert_eq!(batch.writes.capacity(), reserved);
+            }
+            for key in 0..count {
+                let mut value = Value::Bool(true);
+                assert!(batch.record(&root, &key.to_string(), &mut value));
+                assert_eq!(batch.writes.capacity(), reserved);
+            }
+        }
+    }
+
+    #[test]
+    fn first_collection_insertion_preserves_missing_keys_snapshots_and_owned_publication() {
+        for deep in [false, true] {
+            let mut owner = if deep {
+                Value::dict([(Arc::from("outer"), root())].into_iter().collect())
+            } else {
+                root()
+            };
+            let make_path = |key: i64| {
+                let mut p = path(key);
+                if deep {
+                    p.insert(0, Access::Index(Value::Str(Arc::new("outer".into()))));
+                }
+                p
+            };
+            let get_leaf = |value: &Value| -> Arc<super::super::value::DictMap> {
+                let Value::Dict(map) = value else { panic!("root") };
+                if deep {
+                    leaf(&map["outer"]).clone()
+                } else {
+                    leaf(value).clone()
+                }
+            };
+            let pointer = Arc::as_ptr(&get_leaf(&owner));
+            let mut value = Value::array(vec![Value::Int(7)]);
+            let original = owner.clone();
+            assert!(NestedPublication::can_prepare_with_policy(
+                &original,
+                &make_path(200),
+                &value,
+                policy(2)
+            ));
+            let mut pending = NestedPublication::prepare_owned_with_policy(
+                "state".into(),
+                original,
+                make_path(200),
+                &mut value,
+                policy(2),
+            )
+            .unwrap();
+            assert!(matches!(value, Value::Null));
+            let before = pending.snapshot_value();
+            assert!(
+                matches!(&get_leaf(&before)["200"],Value::Array(a) if matches!(a[0],Value::Int(7)))
+            );
+            assert!(!get_leaf(&owner).contains_key("200"));
+            let mut second = Value::dict([(Arc::from("v"), Value::Int(8))].into_iter().collect());
+            assert!(pending.try_record_owned_with_policy(&make_path(201), &mut second, policy(2)));
+            assert!(matches!(second, Value::Null));
+            let mut rejected = Value::array(vec![Value::Int(9)]);
+            assert!(!pending.try_record_owned_with_policy(
+                &make_path(202),
+                &mut rejected,
+                policy(2)
+            ));
+            assert!(matches!(&rejected,Value::Array(a) if matches!(a[0],Value::Int(9))));
+            pending.publish(Some(&mut owner));
+            assert_eq!(Arc::as_ptr(&get_leaf(&owner)), pointer);
+            assert_eq!(get_leaf(&owner).len(), 130);
+            assert!(!get_leaf(&before).contains_key("201"));
+            assert!(!get_leaf(&owner).contains_key("202"));
+        }
+    }
+
+    #[test]
+    fn initial_text_and_bytes_reuse_keys_and_preserve_snapshots() {
+        for mut value in [Value::Str(Arc::new("text".into())), Value::Bytes(Arc::new(vec![0, 255]))]
+        {
+            let mut owner = root();
+            let canonical = leaf(&owner).get_key_value("0").unwrap().0.clone();
+            let expected = value.clone();
+            let no_insertion = super::super::nested_spill_proof::SpillPolicy {
+                allow_initial_insertion: false,
+                ..policy(2)
+            };
+            let mut pending = NestedPublication::prepare_owned_with_policy(
+                "state".into(),
+                owner.clone(),
+                path(0),
+                &mut value,
+                no_insertion,
+            )
+            .unwrap();
+            assert!(matches!(value, Value::Null));
+            let Some(Access::DeferredCollectionDictionary(batch)) = pending.path.last() else {
+                panic!("text and bytes must enter the bounded journal");
+            };
+            assert!(Arc::ptr_eq(batch.writes.get_key_value("0").unwrap().0, &canonical));
+            let before = pending.snapshot_value();
+            match (&leaf(&before)["0"], &expected) {
+                (Value::Str(actual), Value::Str(expected)) => assert_eq!(actual, expected),
+                (Value::Bytes(actual), Value::Bytes(expected)) => assert_eq!(actual, expected),
+                _ => panic!("payload type changed"),
+            }
+            let mut next = Value::array(vec![Value::Int(9)]);
+            assert!(pending.try_record_owned_with_policy(&path(1), &mut next, policy(2)));
+            pending.publish(Some(&mut owner));
+            assert!(matches!(&leaf(&owner)["1"], Value::Array(v) if matches!(v[0], Value::Int(9))));
+            assert!(matches!(&leaf(&before)["1"], Value::Int(_)));
+        }
+    }
+
+    #[test]
+    fn initial_collection_insertion_requires_policy_unique_owners_and_budget() {
+        let owner = root();
+        let mut value = Value::array(vec![Value::Int(7)]);
+        for blocked in [
+            Default::default(),
+            policy(1),
+            super::super::nested_spill_proof::SpillPolicy {
+                allow_initial_insertion: false,
+                ..policy(2)
+            },
+            policy(u16::MAX),
+        ] {
+            assert!(!NestedPublication::can_prepare_with_policy(
+                &owner.clone(),
+                &path(200),
+                &value,
+                blocked
+            ));
+            assert!(NestedPublication::prepare_owned_with_policy(
+                "state".into(),
+                owner.clone(),
+                path(200),
+                &mut value,
+                blocked
+            )
+            .is_err());
+            assert!(matches!(&value,Value::Array(a) if matches!(a[0],Value::Int(7))));
+        }
+        let alias = leaf(&owner).clone();
+        assert!(!NestedPublication::can_prepare_with_policy(
+            &owner.clone(),
+            &path(200),
+            &value,
+            policy(2)
+        ));
+        drop(alias);
+        assert!(NestedPublication::can_prepare_with_policy(
+            &owner.clone(),
+            &path(200),
+            &value,
+            policy(2)
+        ));
+    }
+    #[test]
+    fn same_key_dictionary_changes_keep_compact_storage() {
+        let owner = root();
+        let mut initial = Value::array(vec![Value::Int(1)]);
+        let mut pending =
+            NestedPublication::prepare_owned("state".into(), owner.clone(), path(0), &mut initial)
+                .unwrap();
+        let mut scalar = Value::Int(7);
+        assert!(pending.try_record_owned_with_policy(&path(0), &mut scalar, policy(2)));
+        assert!(matches!(pending.path.last(), Some(Access::DeferredDictionary(_))));
+        let mut array = Value::array(vec![Value::Int(8)]);
+        assert!(pending.try_record_owned_with_policy(&path(0), &mut array, policy(2)));
+        assert!(matches!(pending.path.last(), Some(Access::DeferredCollection(_))));
+        assert!(matches!(array, Value::Null));
+        let saved = pending.snapshot_value();
+        assert!(
+            matches!(&leaf(&saved)["0"],Value::Array(items) if matches!(items[0],Value::Int(8)))
+        );
+        assert!(matches!(&leaf(&owner)["0"], Value::Int(0)));
     }
 }
