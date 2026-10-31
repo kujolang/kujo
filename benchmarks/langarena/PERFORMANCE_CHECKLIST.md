@@ -751,6 +751,13 @@ defects have separate verified fixes in section 3.
   library tests and 433 selected integration tests pass. Eight priority VM
   workloads request fewer bytes; JIT byte follow-ups overlap. This is allocation
   evidence, not elapsed-speed or native-coverage acceptance.
+- [x] Isolate repeated local struct field-read costs on accepted `a1f1858`.
+  [Verified baseline](STRUCT_FIELD_READ_BASELINE_2026_10_31.md) covers 128
+  allocation observations, 192 semantic cases, 64 native-entry checks and 48
+  JIT repeats. VM type-name growth adds 248 bytes per inline read; extraction
+  controls remove that slope. JIT repeats show the same scale with compiler
+  variability. Receiver-copy removal is the next implementation gate; no fix
+  or speedup is claimed by this baseline.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
