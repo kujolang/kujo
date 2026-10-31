@@ -1,5 +1,10 @@
 # Sections 3 and 4: representation and acceptance review
 
+Follow-up: `5a0632d` closes the reproduced greater-than-eight constant-site
+reservation penalty described below. The [accepted report](CONSTANT_SITE_FIX_2026_10_31.md)
+supersedes that specific residual; varying selectors and unsupported expressions
+remain conservatively bounded. The other residual categories remain open.
+
 Reviewed runtime `1ed1866`, documentation head `17cc1c2`. The current sequence of
 reproduced fixes and its combined regression gates is accepted. This review is
 complete; **the broader section 3/4 optimization requirements are only partially
