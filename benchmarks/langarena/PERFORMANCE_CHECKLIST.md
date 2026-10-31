@@ -93,6 +93,14 @@ Capture-storage admission is accepted in `342a653`. The [verified report](CAPTUR
 Post-review follow-up: [constant-destination limit measurements](ARRAY_DESTINATION_LIMIT_2026_10_31.md) confirm a remaining reservation penalty for nine/sixteen constant write sites on `1ed1866`; 48 allocation observations and 72 semantic runs pass. The conservative constant-site bound is now implemented and accepted in `5a0632d`; [verified results](CONSTANT_SITE_FIX_2026_10_31.md) record 3,880 strict allocation pairs, 5,928 semantic observations, all 150 test-size checksums and explicit boundary/RSS review. This closes the reproduced nine/sixteen-site reservation cost. The earlier eight-destination fix remains valid within its recorded scope.
 
 Review status, 2026-10-31: the current fix sequence and final review are complete.
+The [capture-path census](CAPTURE_PATH_CENSUS_2026_10_31.md) now completes the
+bounded reachability follow-up: all 150 test-size checksums and 15 positive controls
+pass. None of these benchmark runs reaches the measured compact-membership scans
+or fallback snapshots. Five interpreter cases reach ordinary capture activation;
+the measured interpreter paths record no events in VM/JIT. This does not measure
+all VM closure costs or fresh-snapshot representation costs. Further optimization
+must follow an attributed workload; another speculative fallback refactor is not
+justified by this matrix. The next review cutoff is reached.
 The broader section 3/4 requirements remain partially proved; see the review's
 requirement dispositions and four residual-cost categories. The chronology below
 retains historical open statements and does not define a new unbounded fix queue.

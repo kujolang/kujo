@@ -5,6 +5,12 @@ reservation penalty described below. The [accepted report](CONSTANT_SITE_FIX_202
 supersedes that specific residual; varying selectors and unsupported expressions
 remain conservatively bounded. The other residual categories remain open.
 
+The subsequent [all-50 capture-path census](CAPTURE_PATH_CENSUS_2026_10_31.md)
+passes 150 test-size checksums and 15 positive controls. The measured membership
+and fallback-snapshot paths are not reached in those benchmark runs. This narrows
+their relevance to the benchmark work without removing their general runtime cost
+or changing their semantic obligations.
+
 Reviewed runtime `1ed1866`, documentation head `17cc1c2`. The current sequence of
 reproduced fixes and its combined regression gates is accepted. This review is
 complete; **the broader section 3/4 optimization requirements are only partially
