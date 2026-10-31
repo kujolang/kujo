@@ -733,9 +733,14 @@ bounds and depth checks intact. Broader collection representation costs and impo
 environment materialization remain open; the reproduced captured-state reentry
 defects have separate verified fixes in section 3.
 
-## 5. Compiled execution (not started in this round)
+## 5. Compiled execution (diagnostic refresh started; fixes not yet selected)
 
 - [ ] Refresh per-benchmark native execution/fallback evidence.
+  [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
+  checksums and exact event inventories. Every JIT case records native entries;
+  this does not establish native CPU-time coverage. Six post-warmup samples pass,
+  but stripped release symbols prevent reliable function attribution. Symbolized
+  attribution remains the next gate; this broad item stays open.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
