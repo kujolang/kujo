@@ -181,6 +181,10 @@ percentage or a reliable elapsed-time estimate.
    72 allocation/108 semantic checks: 1,024 long-name locals retain
    466–581 KB per added call versus 1,266/1,277 bytes for short names.
    Both count/capacity and key-byte admission need coverage in that fix.
+   [Scope-distribution controls](CAPTURE_SCOPE_BUDGET_2026_10_30.md) add
+   36 allocation/54 semantic checks: distributing 6,144 locals across
+   three lexical blocks costs about 2.04 MB per call, versus 1.3 KB
+   across one or two. Include aggregate multi-scope retention in the fix.
    Other deeper/escaping shapes remain separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
