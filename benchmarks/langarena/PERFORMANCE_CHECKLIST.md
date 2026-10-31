@@ -132,6 +132,10 @@ percentage or a reliable elapsed-time estimate.
    182,272 bytes (2.09%). Counter-dependent products/quotients retain fallback.
 2. Refresh remaining capture materialization and unsupported collection paths,
    including oversized fallback, general compound selectors and dense updates.
+   The [latest accepted capture refresh](REMAINING_CAPTURE_BASELINE_2026_10_30.md#latest-accepted-runtime-refresh)
+   on `f1893ea` passes 80 allocation observations and 120 runtime checks; all 32
+   per-call allocation groups remain unchanged. These existing shapes preserve
+   their fixes; exceptional fallback and unmeasured capture shapes remain open.
    [Dense root-array review](DENSE_ARRAY_REVIEW_2026_10_30.md) passes 48 allocation
    observations and 72 semantic checks: measured once-snapshot costs are linear
    in writes with no owner-width term; fresh snapshots retain separate copies.

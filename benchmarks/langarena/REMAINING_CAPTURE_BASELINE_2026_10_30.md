@@ -41,3 +41,19 @@ journals and broader representation review remain open.
 artifact identities, raw allocation rows, recomputed slopes, sampling output and
 audit implementations. Both profiling executions returned the expected result.
 No runtime changes accompany this baseline.
+
+## Latest accepted-runtime refresh
+
+Runtime `f1893ea` repeats the same 80 allocation observations and 120 semantic
+checks using the original fixture paths and verified source hashes. All 32
+per-call allocation groups match the table and imported-read slopes above,
+including the 8,192-local premium. VM, interpreter and JIT checks pass.
+[Refresh evidence](capture-refresh-2026-10-30.json) preserves raw invocations,
+outputs, artifact/source hashes and an independent verifier.
+
+This confirms that the historical multi-megabyte capture allocation costs have
+not returned in these shapes. It does not prove that exceptional fallback or
+unmeasured capture shapes are free of avoidable costs. The membership scan's
+required linear work and the accepted lookup reduction are documented in
+[the membership fix](CAPTURE_MEMBERSHIP_2026_10_30.md). This refresh supplies no new
+CPU attribution or elapsed-speed claim, and does not close sections 3 or 4.
