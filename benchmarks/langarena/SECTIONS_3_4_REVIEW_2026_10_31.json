@@ -1,0 +1,35 @@
+{
+  "status": "review-evidence-verified",
+  "runtime_commit": "1ed1866",
+  "scope": "Source/evidence integrity and stated scoped coverage; not full section3/4 optimization completion.",
+  "bundle_sha256": "bf42385c83d6e7d8b67221e7553a0f471d2d84788c7b95c81b234bab58c3f589",
+  "artifact_count": 108,
+  "checked_library_tests": [
+    "repeated_destinations_bound_reservation_without_losing_compact_storage",
+    "reservation_union_covers_sequential_regions_and_varying_alias_endpoints",
+    "smaller_reservations_do_not_admit_uncertain_or_invalid_updates",
+    "capture_dense_capacity_projection_matches_reservation_boundaries",
+    "capture_budget_admission_avoids_unrecyclable_local_name_copies",
+    "shared_capture_cache_drops_stale_mutable_membership_after_host_edits",
+    "small_capture_budget_ignores_public_owner_spare_capacity",
+    "shared_capture_metadata_preserves_host_membership_and_reinserted_kinds"
+  ],
+  "source_and_report_hashes": {
+    "src/interpreter/environment.rs": "47dd813cd6db1d3ff8422c8395623d63a726dbb4cb076600bb8fd155dc0cd0d1",
+    "src/interpreter/array_batch_proof.rs": "844a1d031bfa7a8d6bfa952d810f4708a1dde77284b2ba67ad57aae303206996",
+    "src/interpreter/array_batch_publication.rs": "01fb6ba26ba6dcb47f557777bec8b6f20db6c7eec8d7e68902dfb3bf4803dfd2",
+    "benchmarks/langarena/SECTIONS_3_4_REVIEW_2026_10_31.md": "08e9bb4a00b1bfdb4a2e83c07de0a3293b9d085a8f7ccf6798d67c79a903d507",
+    "benchmarks/langarena/REPEATED_ARRAY_FIX_2026_10_31.md": "f25d7f43c18d83a6abf59950038ca3a736b02be3581d1faec0a093bfd3498812",
+    "benchmarks/langarena/CAPTURE_STORAGE_BUDGETS_2026_10_31.md": "5102c743ec5e360447bd48503a38c365c9732e6c282ae276e7b238e13924d58f",
+    "benchmarks/langarena/SHARED_CAPTURE_METADATA_2026_10_28.md": "82925e6cf3d9026e34fa9f05b3bb3f446667353a0c0d68f8f0c5f4ac72f4f8f6",
+    "benchmarks/langarena/DENSE_ARRAY_REVIEW_2026_10_30.md": "b2dcee9f830440c3c6b5227a5640d837681ddf41cf96199051f7b84b71c7c771",
+    "benchmarks/langarena/CHUNKED_OWNER_PROTOTYPE_2026_10_26.md": "bee23dd85f7459ba694f626d718270057a9fc656d330620cd4bb85ddd9d23119"
+  },
+  "verifier_sha256": "4ed4f90e9f8829d237b8ebf494dde29579a8e6552ca7738dafa199f3e9f3b2b9",
+  "remaining": [
+    "capture membership traversal",
+    "fallback materialization attribution",
+    "fresh snapshot and payload representation costs",
+    "bounded proof coverage"
+  ]
+}

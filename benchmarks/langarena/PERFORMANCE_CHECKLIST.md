@@ -88,11 +88,12 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
 
-Capture-storage admission is accepted in `342a653`. The [verified report](CAPTURE_STORAGE_BUDGETS_2026_10_31.md) records 3,784 strict allocation pairs, 5,784 semantic checks, all 150 test-size checksums and explicit live-heap/RSS tradeoff review. Aggregate capacity, long-name and multi-scope copying penalties are removed in the measured cases. Repeated-array reservation is now accepted in `1ed1866`; [verified results](REPEATED_ARRAY_FIX_2026_10_31.md) include 3,832 strict allocation pairs, 5,856 semantic observations, 150 checksums and explicit boundary/RSS review. Remaining work at this cutoff: final representation/combined-candidate review. Historical open entries below retain their original evidence; they do not imply the capture boundary defect is still unfixed.
+Capture-storage admission is accepted in `342a653`. The [verified report](CAPTURE_STORAGE_BUDGETS_2026_10_31.md) records 3,784 strict allocation pairs, 5,784 semantic checks, all 150 test-size checksums and explicit live-heap/RSS tradeoff review. Aggregate capacity, long-name and multi-scope copying penalties are removed in the measured cases. Repeated-array reservation is now accepted in `1ed1866`; [verified results](REPEATED_ARRAY_FIX_2026_10_31.md) include 3,832 strict allocation pairs, 5,856 semantic observations, 150 checksums and explicit boundary/RSS review. The [final representation/combined-candidate review](SECTIONS_3_4_REVIEW_2026_10_31.md) is complete. This reproduced-fix sequence is accepted; broader capture traversal/fallback, fresh-snapshot representation and unsupported-proof costs remain explicit. Sections 3/4 are not claimed universally complete. Historical open entries below retain their original evidence; they do not imply the capture boundary defect is still unfixed.
 
-Review status, 2026-10-31: sections 3 and 4 remain open. The remaining work is
-grouped below; these groups are not equally sized and do not imply a completion
-percentage or a reliable elapsed-time estimate.
+Review status, 2026-10-31: the current fix sequence and final review are complete.
+The broader section 3/4 requirements remain partially proved; see the review's
+requirement dispositions and four residual-cost categories. The chronology below
+retains historical open statements and does not define a new unbounded fix queue.
 
 The [additional nested struct/string baseline](NESTED_DICTIONARY_EXTRA_PAYLOADS_2026_10_31.md)
 verifies 144 allocation observations and 216 semantic checks on accepted runtime
@@ -704,7 +705,7 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   150 test-size checksums and targeted controls pass. The reusable gate rejects
   the unchanged baseline; tiny QuickSort/BrainfuckArray differences overlap in
   four paired observations. These are allocation results, not elapsed-speed wins.
-- [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
+- [x] Complete the current specialized representation review, including the newly reproduced reservation cost and combined-candidate gates; [final dispositions](SECTIONS_3_4_REVIEW_2026_10_31.md) retain residual costs. Representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
   [Repeated-position array controls](REPEATED_ARRAY_RESERVATION_2026_10_31.md)
   confirm another open reservation cost on accepted `b1bf786` and pending V4:
   two repeatedly overwritten positions cost 9,840/167,280 extra requested
@@ -712,7 +713,7 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   passes 16 allocation observations and 24 semantic checks. The
   [accepted fix](REPEATED_ARRAY_FIX_2026_10_31.md) in `1ed1866` removes both
   measured width penalties with a bounded distinct-position reservation.
-  Final representation review remains open; no elapsed-time speed claim.
+  Final representation review is recorded above; no elapsed-time speed claim.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
 - [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Subsequent captured-state reentry and ordered-visibility fixes are verified in section 3; imported environment materialization remains open.
