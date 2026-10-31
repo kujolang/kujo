@@ -48,6 +48,23 @@ frame ownership, stale-handle detection, cache validation, bounds or snapshots.
 Existing lifecycle contracts plus targeted VM/interpreter/JIT checks are required.
 Do not claim success from the synthetic map control alone.
 
+## Table memory follow-up
+
+`probes/native_root_hash_memory.rs` adds 18 deterministic observations of the exact
+u64-to-usize map shape. It records setup, 4,096 warmup churn cycles, 100,000 measured
+cycles and drop separately. All repetitions agree and allocator activity is
+checked. At one live entry both hashers retain 84 requested allocator bytes.
+At 64 entries identity hashing grows from 2,192 to 4,368 retained bytes during
+warmup, while multiplied hashing stays at 2,192. At 2,048 entries identity grows
+from 69,648 to 139,280 bytes; multiplied hashing stays at 69,648. Setup allocation
+traffic is equal, measured warmed loops request no further allocations, and both
+tables release all their storage on drop. The changed hash policy avoids one
+extra table allocation in each wider case.
+
+These are map-level controls mirroring the candidate policy, not integrated
+runtime heap/RSS measurements or runtime acceptance. Raw counters, identities,
+source and verifier are in `native-root-hash-memory-2026-10-31.json.gz`.
+
 ## Reproduction and limits
 
 Sources: `probes/native_root_read_scaling.rs` and
