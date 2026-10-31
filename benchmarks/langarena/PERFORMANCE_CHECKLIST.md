@@ -747,8 +747,12 @@ defects have separate verified fixes in section 3.
   1,310 library tests, 22 targeted integration tests and all 150 checksums.
   QuickSort improved, but NeuralNet JIT was slower in nine of ten paired runs
   after follow-up. The combined main/callback candidate was rejected and runtime
-  source restored. Isolating the two dispatch changes remains open; no runtime
-  speedup is accepted from this experiment.
+  source restored. The [main-dispatch-only follow-up](MAIN_SCALAR_LOADS_2026_10_31.md)
+  is measured and preserved on `codex/main-scalar-load-experiment-20261031`
+  (`0360325`). All 12 measured VM pairs improve, but QuickSort JIT remains mixed
+  with higher paired medians. The variant is deferred to clean-host review;
+  accepted runtime source remains unchanged. No runtime speedup is accepted
+  from these dispatch experiments yet.
 
 - [x] Isolate scalar opcode operand materialization before a dispatch candidate.
   [Paired helper evidence](OPCODE_OPERAND_COST_2026_10_31.md) checks 16 observations
