@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Batch eligible mixed and collection-valued nested dictionary writes, including
+  bounded new-key insertions, while preserving snapshots, owner identity,
+  lexical operator captures and ordered fallback/error publication.
+
 - Batch eligible bounded dictionary updates with mixed and collection values
   without copying the captured owner on each helper call, preserving snapshots,
   compact same-key updates, operator callbacks and ordered error publication.

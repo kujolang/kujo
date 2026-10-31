@@ -262,7 +262,18 @@ impl FunctionBodyRef {
             if dictionary.capacity != 0 {
                 dictionary
             } else {
-                super::row_spill_proof::eligible_policy(&self.storage.body, params, args, env)
+                let row =
+                    super::row_spill_proof::eligible_policy(&self.storage.body, params, args, env);
+                if row.capacity != 0 {
+                    row
+                } else {
+                    super::nested_dictionary_collection_proof::eligible(
+                        &self.storage.body,
+                        params,
+                        args,
+                        env,
+                    )
+                }
             }
         } else {
             super::nested_spill_proof::SpillPolicy::default()

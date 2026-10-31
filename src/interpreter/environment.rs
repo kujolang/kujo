@@ -956,18 +956,15 @@ impl Environment {
             }
         } else {
             if !self.scopes[0].get(name).is_some_and(|root| {
-                super::nested_publication::NestedPublication::can_prepare(
-                    root,
-                    &path,
-                    value,
-                    spill_hint.allow_initial_insertion,
+                super::nested_publication::NestedPublication::can_prepare_with_policy(
+                    root, &path, value, spill_hint,
                 )
             }) {
                 return Err(path);
             }
             let Some((key, root)) = self.scopes[0].remove_entry(name) else { return Err(path) };
-            match super::nested_publication::NestedPublication::prepare_owned(
-                key, root, path, value,
+            match super::nested_publication::NestedPublication::prepare_owned_with_policy(
+                key, root, path, value, spill_hint,
             ) {
                 Ok(pending) => self.capture_writes = Some((0, CaptureWrites::Nested(pending))),
                 Err((key, root, path)) => {
