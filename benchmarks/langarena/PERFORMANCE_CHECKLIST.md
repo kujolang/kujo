@@ -164,8 +164,13 @@ percentage or a reliable elapsed-time estimate.
    A refresh on accepted `b1bf786` passes another 144 allocation/216 semantic
    checks and confirms the same 624,240-byte width penalty; the next fix remains
    necessary after nested-row acceptance.
-   Deeper/escaping shapes remain
-   separate audit items.
+   [Nested dictionary payload isolation](NESTED_DICTIONARY_PAYLOAD_BASELINE_2026_10_30.md)
+   on `b1bf786` passes 144 allocation observations and 216 semantic runs.
+   Dictionary, struct-field and deeper dictionary owners retain a 624,240-byte
+   per-call leaf-width penalty for two-array and three-value mixed updates.
+   Recheck this separate nested-owner gap on the root-dictionary candidate after
+   acceptance; that candidate is not yet measured by this report.
+   Other deeper/escaping shapes remain separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
    unmeasured shapes are investigation items, not confirmed defects.
