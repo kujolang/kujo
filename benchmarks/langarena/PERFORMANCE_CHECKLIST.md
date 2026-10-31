@@ -7,8 +7,9 @@ and a stopped case is cancelled, not failed. Sections 1 and 2 have completed the
 available local diagnosis. The bounded sections 3/4 fix sequence and review cutoff
 are complete; zero additional rounds are required for that cutoff. Broader
 requirements remain partially proved, as recorded in the dispositions below.
-Current runtime optimization work is in section 5, including the string-cache
-dispatch candidate under verification. Clean-host comparisons remain pending.
+Current runtime optimization work is in section 5. The string-cache dispatch
+candidate has completed local verification and is deferred to clean-host review.
+Clean-host comparisons remain pending.
 
 ## Completed foundation
 
@@ -747,7 +748,7 @@ defects have separate verified fixes in section 3.
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
 - [x] Isolate repeated string-key literal allocations on the accepted runtime: [baseline](STRING_CONSTANT_LOADS_2026_10_31.md), 24 semantic runs and 48 allocation observations. VM adds two requests and key-width + 40 requested bytes per read; JIT has no matched penalty. Runtime optimization remains pending.
-- [x] Evaluate dense string caching: [rejected experiment](STRING_CACHE_DENSE_EXPERIMENT_2026_10_31.md) removes hot allocations but adds 32,755 cold requested bytes with 2,048 unused constants. All 150 checksums pass; the layout is not accepted. The [sparse follow-up](SPARSE_STRING_CACHE_EXPERIMENT_2026_10_31.md) removes that allocation penalty and passes 150 checksums, but is not accepted after a repeated MergeSort VM slowdown. A dispatch revision is under verification.
+- [x] Evaluate dense string caching: [rejected experiment](STRING_CACHE_DENSE_EXPERIMENT_2026_10_31.md) removes hot allocations but adds 32,755 cold requested bytes with 2,048 unused constants. All 150 checksums pass; the layout is not accepted. The [sparse follow-up](SPARSE_STRING_CACHE_EXPERIMENT_2026_10_31.md) removes that allocation penalty and passes 150 checksums, but is not accepted after a repeated MergeSort VM slowdown. The [string-only dispatch revision](STRING_CACHE_DISPATCH_EXPERIMENT_2026_10_31.md) passes correctness/allocation gates and avoids a consistent MergeSort slowdown, but combined QuickSort VM timings remain inconclusive. It is preserved in `7e07db7` on `codex/string-cache-dispatch-experiment-20261031` for clean-host review; accepted runtime source is unchanged.
 
 
 - [x] Evaluate borrowed scalar-load dispatch against whole workloads.
