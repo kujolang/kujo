@@ -685,6 +685,12 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   the unchanged baseline; tiny QuickSort/BrainfuckArray differences overlap in
   four paired observations. These are allocation results, not elapsed-speed wins.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
+  [Repeated-position array controls](REPEATED_ARRAY_RESERVATION_2026_10_31.md)
+  confirm another open reservation cost on accepted `b1bf786` and pending V4:
+  two repeatedly overwritten positions cost 9,840/167,280 extra requested
+  bytes per call at width 2,048 versus 8 for 64/1,024 iterations. Each artifact
+  passes 16 allocation observations and 24 semantic checks. Fix and verify the
+  distinct-position bound; these results do not establish elapsed-time speed.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
 - [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Subsequent captured-state reentry and ordered-visibility fixes are verified in section 3; imported environment materialization remains open.

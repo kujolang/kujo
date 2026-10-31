@@ -1,0 +1,1636 @@
+{
+  "scope": "Repeated array-position reservation baseline; no runtime fix or acceptance",
+  "baseline": {
+    "status": "measured",
+    "pid": 90297,
+    "runtime": "b1bf786",
+    "identities": {
+      ".audit-evidence/repeated-array-keys-baseline-2026-10-31/run.rb": "453a41c5c339667cf28b89ccacb125e8f808b17127f397f86dd6f2cc8dc2d0c6",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo": "87dd7ffcc199d7cb642408ace58aefd6b81cfb33db681d1ce4e2d32359c7de4b",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe": "c3f2b3fb2b8a71be4ca740aaaa58fc2e262dc4f52293b20145e9e640a13f0209"
+    },
+    "sources": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<64 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "c859ec2fe32b858b6e998ff10a602ab9254ac794677d0f1e13b38f2ee3e22226"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=1 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),8) assert_equal(final[0],[64]) assert_equal(final[1],{\"v\":64}) mut k:=0 while k<8 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "3f729dd6e2e92d3c783291adeb0a01d625a29c22631d00e22050c6795d99afca"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<64 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "c859ec2fe32b858b6e998ff10a602ab9254ac794677d0f1e13b38f2ee3e22226"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=8 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),8) assert_equal(final[0],[71]) assert_equal(final[1],{\"v\":71}) mut k:=0 while k<8 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "c5c626def799470ca72cace45afc48894c347933abf107e16e0df940b869a6c7"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<1024 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "72ca91e528cc430b8e2e4c34c4bb33f2640e6942048528e037be38be634fd57d"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=1 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),8) assert_equal(final[0],[1024]) assert_equal(final[1],{\"v\":1024}) mut k:=0 while k<8 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "fc7245a837c5280ea78b8d01ff8602c81f33c951a371864abb02b4237c1f4716"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<1024 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "72ca91e528cc430b8e2e4c34c4bb33f2640e6942048528e037be38be634fd57d"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=8 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),8) assert_equal(final[0],[1031]) assert_equal(final[1],{\"v\":1031}) mut k:=0 while k<8 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "4cc99302368f5083536cd2a8d210647244fb68b8090c74630f696dae68c2f767"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<64 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "5d2a28e8cc82421ceb3994a402b7e19497c7d9dc6602b5c5f1309daf03510eb1"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=1 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),2048) assert_equal(final[0],[64]) assert_equal(final[1],{\"v\":64}) mut k:=0 while k<2048 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "28fbce3dd5f1f02ee73ea4db5d0559dde6e6b3c7696ef3da117f97b576faf9fb"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<64 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "5d2a28e8cc82421ceb3994a402b7e19497c7d9dc6602b5c5f1309daf03510eb1"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=8 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),2048) assert_equal(final[0],[71]) assert_equal(final[1],{\"v\":71}) mut k:=0 while k<2048 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "8b1d40ef76a4919e4ab34ff36f3ea9b8232690bb9337406d4a82809e50601f6f"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<1024 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "db4b0f8a00652793cbdf9ea03d554ecd122b8f043ceed1a820752e2a7dff0432"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=1 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),2048) assert_equal(final[0],[1024]) assert_equal(final[1],{\"v\":1024}) mut k:=0 while k<2048 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "97aa6bce51b114cbe09b6bc591014a96368821649afc2abc1c927006f4b598e1"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/owner.kujo": {
+        "source": "mut state:=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\nexport func snapshot(){return state}\nexport func update(n){mut i:=0 while i<1024 {state[0]=[n+i] state[1]={\"v\":n+i} i+=1} return n}\n",
+        "sha256": "db4b0f8a00652793cbdf9ea03d554ecd122b8f043ceed1a820752e2a7dff0432"
+      },
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo": {
+        "source": "from owner import snapshot,update\nlet original:=snapshot() mut n:=1 while n<=8 {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),2048) assert_equal(final[0],[1031]) assert_equal(final[1],{\"v\":1031}) mut k:=0 while k<2048 {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\"REPEATED ARRAY KEYS PASS\")\n",
+        "sha256": "c060b726065ccad8f432c3189159f6d13bfd880d67ccb87fcfabce02266e2afd"
+      }
+    },
+    "rows": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=4987 requested_bytes=887753\n",
+        "exit": 0,
+        "requests": 4987,
+        "bytes": 887753
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=5077 requested_bytes=897918\n",
+        "exit": 0,
+        "requests": 5077,
+        "bytes": 897918
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=9439 requested_bytes=1529121\n",
+        "exit": 0,
+        "requests": 9439,
+        "bytes": 1529121
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=9529 requested_bytes=1539286\n",
+        "exit": 0,
+        "requests": 9529,
+        "bytes": 1539286
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=13627 requested_bytes=2161787\n",
+        "exit": 0,
+        "requests": 13627,
+        "bytes": 2161787
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=13717 requested_bytes=2171952\n",
+        "exit": 0,
+        "requests": 13717,
+        "bytes": 2171952
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=78559 requested_bytes=11720595\n",
+        "exit": 0,
+        "requests": 78559,
+        "bytes": 11720595
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=78649 requested_bytes=11730760\n",
+        "exit": 0,
+        "requests": 78649,
+        "bytes": 11730760
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=117209 requested_bytes=17007425\n",
+        "exit": 0,
+        "requests": 117209,
+        "bytes": 17007425
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=117300 requested_bytes=17017642\n",
+        "exit": 0,
+        "requests": 117300,
+        "bytes": 17017642
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=121661 requested_bytes=17717673\n",
+        "exit": 0,
+        "requests": 121661,
+        "bytes": 17717673
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=121752 requested_bytes=17727890\n",
+        "exit": 0,
+        "requests": 121752,
+        "bytes": 17727890
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=125849 requested_bytes=18281459\n",
+        "exit": 0,
+        "requests": 125849,
+        "bytes": 18281459
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=125940 requested_bytes=18291676\n",
+        "exit": 0,
+        "requests": 125940,
+        "bytes": 18291676
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=190781 requested_bytes=29011227\n",
+        "exit": 0,
+        "requests": 190781,
+        "bytes": 29011227
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=190872 requested_bytes=29021444\n",
+        "exit": 0,
+        "requests": 190872,
+        "bytes": 29021444
+      }
+    ],
+    "semantics": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/nested-row-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      }
+    ]
+  },
+  "baseline_verification": {
+    "status": "verified",
+    "report_sha256": "888c05f4acf60dd576df70ac120b73aa7cdbc32dca032e07ac6edbf01c7984db",
+    "allocation_observations": 16,
+    "semantic_checks": 24,
+    "slopes": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "mode": "vm",
+        "bytes_per_call": 91624.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "mode": "jit",
+        "bytes_per_call": 91624.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "mode": "vm",
+        "bytes_per_call": 1365544.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "mode": "jit",
+        "bytes_per_call": 1365544.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "mode": "vm",
+        "bytes_per_call": 101464.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "mode": "jit",
+        "bytes_per_call": 101464.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "mode": "vm",
+        "bytes_per_call": 1532824.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "mode": "jit",
+        "bytes_per_call": 1532824.0,
+        "requests_per_call": 9276.0
+      }
+    ]
+  },
+  "v4": {
+    "status": "measured",
+    "pid": 96137,
+    "baseline_sha256": "888c05f4acf60dd576df70ac120b73aa7cdbc32dca032e07ac6edbf01c7984db",
+    "identities": {
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo": "2cdd877558d46ea5c6e0cdc1761aca9b228570a148a7820b6623c7169d4c1e85",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe": "1b75fe0a16e4b6919e31c6af90d0c1f0c7e7dc04c3b2643929c5833383248bb8",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-library/libkujo.rlib": "4c4a161172618fc1cf19897ea3aca3632fab694941f1a313f61ffd01c37af585"
+    },
+    "rows": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=4982 requested_bytes=887670\n",
+        "exit": 0,
+        "requests": 4982,
+        "bytes": 887670
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=5072 requested_bytes=897835\n",
+        "exit": 0,
+        "requests": 5072,
+        "bytes": 897835
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=9434 requested_bytes=1529038\n",
+        "exit": 0,
+        "requests": 9434,
+        "bytes": 1529038
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=9524 requested_bytes=1539203\n",
+        "exit": 0,
+        "requests": 9524,
+        "bytes": 1539203
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=13622 requested_bytes=2161704\n",
+        "exit": 0,
+        "requests": 13622,
+        "bytes": 2161704
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=13712 requested_bytes=2171869\n",
+        "exit": 0,
+        "requests": 13712,
+        "bytes": 2171869
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=78554 requested_bytes=11720512\n",
+        "exit": 0,
+        "requests": 78554,
+        "bytes": 11720512
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=78644 requested_bytes=11730677\n",
+        "exit": 0,
+        "requests": 78644,
+        "bytes": 11730677
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=117204 requested_bytes=17007342\n",
+        "exit": 0,
+        "requests": 117204,
+        "bytes": 17007342
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=117295 requested_bytes=17017559\n",
+        "exit": 0,
+        "requests": 117295,
+        "bytes": 17017559
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=121656 requested_bytes=17717590\n",
+        "exit": 0,
+        "requests": 121656,
+        "bytes": 17717590
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=121747 requested_bytes=17727807\n",
+        "exit": 0,
+        "requests": 121747,
+        "bytes": 17727807
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=125844 requested_bytes=18281376\n",
+        "exit": 0,
+        "requests": 125844,
+        "bytes": 18281376
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=125935 requested_bytes=18291593\n",
+        "exit": 0,
+        "requests": 125935,
+        "bytes": 18291593
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "vm",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=190776 requested_bytes=29011144\n",
+        "exit": 0,
+        "requests": 190776,
+        "bytes": 29011144
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/task-allocation-probe",
+          "jit",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "ALLOCATION_AUDIT requests=190867 requested_bytes=29021361\n",
+        "exit": 0,
+        "requests": 190867,
+        "bytes": 29021361
+      }
+    ],
+    "semantics": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/8-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-64-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 1,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-1/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "vm",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "interpreter",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--interpreter"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "",
+        "exit": 0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "calls": 8,
+        "path": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+        "mode": "jit",
+        "argv": [
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/dictionary-batch-candidate-2026-10-30/candidate-kujo",
+          "run",
+          "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/repeated-array-keys-baseline-2026-10-31/fixtures/2048-1024-8/main.kujo",
+          "--untrusted",
+          "--scheduler-no-timeout",
+          "--jit"
+        ],
+        "stdout": "REPEATED ARRAY KEYS PASS\n",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 2: CallNative(\"__vm_import_symbol\", 2)).\n",
+        "exit": 0
+      }
+    ]
+  },
+  "v4_verification": {
+    "status": "verified",
+    "candidate_accepted": false,
+    "allocation_observations": 16,
+    "semantic_checks": 24,
+    "report_sha256": "780efac1a61991800a801224aeb320170c8c672b45832ee5adeb1d3e6879c548",
+    "slopes": [
+      {
+        "width": 8,
+        "iterations": 64,
+        "mode": "vm",
+        "bytes_per_call": 91624.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 8,
+        "iterations": 64,
+        "mode": "jit",
+        "bytes_per_call": 91624.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "mode": "vm",
+        "bytes_per_call": 1365544.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 8,
+        "iterations": 1024,
+        "mode": "jit",
+        "bytes_per_call": 1365544.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "mode": "vm",
+        "bytes_per_call": 101464.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 2048,
+        "iterations": 64,
+        "mode": "jit",
+        "bytes_per_call": 101464.0,
+        "requests_per_call": 636.0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "mode": "vm",
+        "bytes_per_call": 1532824.0,
+        "requests_per_call": 9276.0
+      },
+      {
+        "width": 2048,
+        "iterations": 1024,
+        "mode": "jit",
+        "bytes_per_call": 1532824.0,
+        "requests_per_call": 9276.0
+      }
+    ]
+  },
+  "scripts": {
+    "run.rb": {
+      "source": "require 'json';require 'digest';require 'fileutils';require 'open3'\no=File.expand_path(__dir__);base=File.expand_path('../nested-row-candidate-2026-10-30',o);sha=->(p){Digest::SHA256.file(p).hexdigest};raise 'existing' if File.exist?(o+'/report.json')\nr={status:'running',pid:Process.pid,runtime:'b1bf786',identities:[__FILE__,base+'/candidate-kujo',base+'/task-allocation-probe'].to_h{|p|[p,sha.call(p)]},sources:{},rows:[],semantics:[]};save=->{File.write(o+'/report.json.tmp',JSON.pretty_generate(r)+\"\\n\");File.rename(o+'/report.json.tmp',o+'/report.json')};save.call\nbegin\n [8,2048].product([64,1024],[1,8]).each do |width,iterations,calls|\n  dir=o+\"/fixtures/#{width}-#{iterations}-#{calls}\";FileUtils.mkdir_p(dir)\n  owner=\"mut state:=[#{(['0']*width).join(',')}]\\nexport func snapshot(){return state}\\nexport func update(n){mut i:=0 while i<#{iterations} {state[0]=[n+i] state[1]={\\\"v\\\":n+i} i+=1} return n}\\n\"\n  main=\"from owner import snapshot,update\\nlet original:=snapshot() mut n:=1 while n<=#{calls} {assert_equal(update(n),n) n+=1} let final:=snapshot() assert_equal(len(final),#{width}) assert_equal(final[0],[#{calls+iterations-1}]) assert_equal(final[1],{\\\"v\\\":#{calls+iterations-1}}) mut k:=0 while k<#{width} {assert_equal(original[k],0) if k>=2 {assert_equal(final[k],0)} k+=1} print(\\\"REPEATED ARRAY KEYS PASS\\\")\\n\"\n  File.write(dir+'/owner.kujo',owner);File.write(dir+'/main.kujo',main)\n  %w[owner main].each{|name|p=dir+'/'+name+'.kujo';r[:sources][p]={source:File.read(p),sha256:sha.call(p)}}\n  meta={width:width,iterations:iterations,calls:calls,path:dir+'/main.kujo'}\n  %w[vm jit].each do |mode|\n   args=[base+'/task-allocation-probe',mode,meta[:path]];out,err,s=Open3.capture3(*args);m=err.match(/requests=(\\d+) requested_bytes=(\\d+)/);raise out+err unless s.success?&&m&&out==\"REPEATED ARRAY KEYS PASS\\n\"\n   r[:rows]<<meta.merge(mode:mode,argv:args,stdout:out,stderr:err,exit:s.exitstatus,requests:m[1].to_i,bytes:m[2].to_i)\n  end\n  %w[vm interpreter jit].each do |mode|\n   args=[base+'/candidate-kujo','run',meta[:path],'--untrusted','--scheduler-no-timeout']+(mode=='vm' ? [] : ['--'+mode]);out,err,s=Open3.capture3(*args);raise out+err unless s.success?&&out==\"REPEATED ARRAY KEYS PASS\\n\"\n   r[:semantics]<<meta.merge(mode:mode,argv:args,stdout:out,stderr:err,exit:s.exitstatus)\n  end\n  save.call\n end\n r[:identities].each{|p,h|raise 'identity' unless sha.call(p)==h};raise 'coverage' unless r[:rows].size==16&&r[:semantics].size==24\n r[:status]='measured';save.call\nrescue=>e;r[:status]='failed';r[:error]=e.message;save.call;raise\nend\n",
+      "sha256": "453a41c5c339667cf28b89ccacb125e8f808b17127f397f86dd6f2cc8dc2d0c6"
+    },
+    "verify.rb": {
+      "source": "require 'json'\nrequire 'digest'\no=File.expand_path(__dir__)\nr=JSON.parse(File.read(o+'/report.json'))\nraise 'status' unless r['status']=='measured'\nr.fetch('identities').each{|p,h|raise \"identity #{p}\" unless Digest::SHA256.file(p).hexdigest==h}\nr.fetch('sources').each{|p,v|raise \"source #{p}\" unless File.read(p)==v['source'] && Digest::SHA256.file(p).hexdigest==v['sha256']}\nbase=File.expand_path('../nested-row-candidate-2026-10-30',o)\nexpected=[8,2048].product([64,1024],[1,8])\n[['rows',%w[vm jit]],['semantics',%w[vm interpreter jit]]].each do |kind,modes|\n rows=r.fetch(kind)\n raise 'coverage' unless rows.map{|v|v.values_at('width','iterations','calls','mode')}==expected.flat_map{|v|modes.map{|m|v+[m]}}\n rows.each do |v|\n  path=o+\"/fixtures/#{v['width']}-#{v['iterations']}-#{v['calls']}/main.kujo\"\n  args=kind=='rows' ? [base+'/task-allocation-probe',v['mode'],path] : [base+'/candidate-kujo','run',path,'--untrusted','--scheduler-no-timeout']+(v['mode']=='vm' ? [] : ['--'+v['mode']])\n  raise 'execution' unless v['argv']==args && v['path']==path && v['exit']==0 && v['stdout']==\"REPEATED ARRAY KEYS PASS\\n\"\n  if kind=='rows'\n   m=v['stderr'].match(/requests=(\\d+) requested_bytes=(\\d+)/)\n   raise 'counters' unless m && v['requests']==m[1].to_i && v['bytes']==m[2].to_i\n  end\n end\nend\nslopes=[8,2048].product([64,1024],%w[vm jit]).map do |width,iterations,mode|\n a,b=[1,8].map{|calls|r['rows'].find{|v|v.values_at('width','iterations','calls','mode')==[width,iterations,calls,mode]}}\n {width:width,iterations:iterations,mode:mode,bytes_per_call:(b['bytes']-a['bytes'])/7.0,requests_per_call:(b['requests']-a['requests'])/7.0}\nend\nreceipt={status:'verified',report_sha256:Digest::SHA256.file(o+'/report.json').hexdigest,allocation_observations:16,semantic_checks:24,slopes:slopes}\nFile.write(o+'/verified.json',JSON.pretty_generate(receipt)+\"\\n\")\nputs JSON.pretty_generate(receipt)\n",
+      "sha256": "98feb26b38c3027707e8fc7190d794bb16d918fa973f602599510e9b76bc4a74"
+    },
+    "refresh-v4.rb": {
+      "source": "require 'json'; require 'digest'; require 'open3'\no=File.expand_path(__dir__);base=File.expand_path('../dictionary-batch-candidate-2026-10-30',o)\nr=JSON.parse(File.read(o+'/report.json')); raise 'existing refresh' if File.exist?(o+'/v4.json')\ncomparison=JSON.parse(File.read(base+'/comparison.json'))\nidentities=comparison.fetch('identities').select{|p,_|p.end_with?('/candidate-kujo','/task-allocation-probe','/libkujo.rlib')}\nverify=->{identities.each{|p,h|raise 'identity' unless Digest::SHA256.file(p).hexdigest==h};r['sources'].each{|p,v|raise 'fixture' unless Digest::SHA256.file(p).hexdigest==v['sha256']}}\nverify.call\nout={status:'running',pid:Process.pid,baseline_sha256:Digest::SHA256.file(o+'/report.json').hexdigest,identities:identities,rows:[],semantics:[]}\nsave=->{File.write(o+'/v4.json.tmp',JSON.pretty_generate(out)+\"\\n\");File.rename(o+'/v4.json.tmp',o+'/v4.json')};save.call\nbegin\n %w[rows semantics].each do |kind|\n  r[kind].each do |row|\n   args=row['argv'].dup;args[0]=base+'/'+File.basename(args[0]);stdout,stderr,status=Open3.capture3(*args)\n   raise stdout+stderr unless status.success? && stdout==row['stdout']\n   item=row.merge('argv'=>args,'stdout'=>stdout,'stderr'=>stderr,'exit'=>status.exitstatus)\n   if kind=='rows'\n    m=stderr.match(/requests=(\\d+) requested_bytes=(\\d+)/);raise 'counter' unless m\n    item['requests']=m[1].to_i;item['bytes']=m[2].to_i\n   end\n   out[kind.to_sym]<<item;save.call\n  end\n end\n verify.call;out[:status]='measured';save.call\nrescue=>e;out[:status]='failed';out[:error]=e.message;save.call;raise\nend\n",
+      "sha256": "fdda02f16204b714f4abd283b40712130fc317837b7a29663f58980d7ffe193c"
+    },
+    "verify-v4.rb": {
+      "source": "require 'json';require 'digest'\no=File.expand_path(__dir__);a=JSON.parse(File.read(o+'/report.json'));b=JSON.parse(File.read(o+'/v4.json'));base=File.expand_path('../dictionary-batch-candidate-2026-10-30',o)\nraise 'incomplete' unless b['status']=='measured' && b['baseline_sha256']==Digest::SHA256.file(o+'/report.json').hexdigest\nb['identities'].each{|p,h|raise 'identity' unless Digest::SHA256.file(p).hexdigest==h}\na['sources'].each{|p,v|raise 'fixture' unless Digest::SHA256.file(p).hexdigest==v['sha256']}\n%w[rows semantics].each do |kind|\n raise 'coverage' unless a[kind].size==b[kind].size\n a[kind].zip(b[kind]).each do |old,now|\n  %w[width iterations calls mode path stdout exit].each{|k|raise k unless old[k]==now[k]}\n  args=old['argv'].dup;args[0]=base+'/'+File.basename(args[0]);raise 'argv' unless now['argv']==args\n  if kind=='rows'\n   m=now['stderr'].match(/requests=(\\d+) requested_bytes=(\\d+)/)\n   raise 'counters' unless m && now['requests']==m[1].to_i && now['bytes']==m[2].to_i\n  end\n end\nend\nslopes=[8,2048].product([64,1024],%w[vm jit]).map do |w,i,m|\n x,y=[1,8].map{|c|b['rows'].find{|r|r.values_at('width','iterations','calls','mode')==[w,i,c,m]}}\n {width:w,iterations:i,mode:m,bytes_per_call:(y['bytes']-x['bytes'])/7.0,requests_per_call:(y['requests']-x['requests'])/7.0}\nend\nr={status:'verified',candidate_accepted:false,allocation_observations:16,semantic_checks:24,report_sha256:Digest::SHA256.file(o+'/v4.json').hexdigest,slopes:slopes}\nFile.write(o+'/v4-verified.json',JSON.pretty_generate(r)+\"\\n\");puts JSON.pretty_generate(r)\n",
+      "sha256": "3a8a1182045d176485c31ecd7747952962bce7e97b561239c2db9485e0197797"
+    }
+  }
+}
