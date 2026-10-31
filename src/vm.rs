@@ -2601,6 +2601,29 @@ impl VM {
         Self::get_field_value(object, field, |name| self.globals.lock().unwrap().get(name))
     }
 
+    /// Consume scalar opcode metadata without materializing an owned opcode.
+    /// Values still follow the ordinary clone/conversion path. Advance before
+    /// resolution so failures retain the same instruction position as dispatch.
+    #[inline]
+    fn execute_scalar_load(&mut self) -> Result<(), String> {
+        let instruction = &self.chunk.instructions[self.ip];
+        self.ip += 1;
+        let value = match instruction {
+            OpCode::LoadConst(index) => self.constant_to_value(&self.chunk.constants[*index])?,
+            OpCode::LoadLocal(slot) => self
+                .call_frames
+                .last()
+                .ok_or("LoadLocal requires call frame")?
+                .local_slots
+                .get(*slot)
+                .cloned()
+                .ok_or_else(|| format!("Invalid local slot: {}", slot))?,
+            _ => unreachable!("scalar loads require a local or constant operand"),
+        };
+        self.stack.push(value);
+        Ok(())
+    }
+
     fn execute_named_load(&mut self) -> Result<(), String> {
         let instruction = &self.chunk.instructions[self.ip];
         self.ip += 1;
@@ -3292,6 +3315,10 @@ impl VM {
 
             // These operations only borrow opcode metadata while resolving values.
             match &self.chunk.instructions[self.ip] {
+                OpCode::LoadLocal(_) | OpCode::LoadConst(_) => {
+                    self.execute_scalar_load()?;
+                    continue;
+                }
                 OpCode::FieldGetLocal(slot, field) => {
                     let result = self.read_local_field(*slot, field);
                     self.ip += 1;
@@ -3320,10 +3347,8 @@ impl VM {
             self.ip += 1;
 
             match instruction {
-                OpCode::LoadConst(index) => {
-                    let constant = &self.chunk.constants[index];
-                    let value = self.constant_to_value(constant)?;
-                    self.stack.push(value);
+                OpCode::LoadConst(_) | OpCode::LoadLocal(_) => {
+                    unreachable!("scalar loads execute before opcode cloning")
                 }
 
                 OpCode::LoadCapture(index) => self.load_capture(index)?,
@@ -3367,16 +3392,6 @@ impl VM {
                         }
                     }
                 }
-                OpCode::LoadLocal(slot) => {
-                    let frame = self.call_frames.last().ok_or("LoadLocal requires call frame")?;
-                    let value = frame
-                        .local_slots
-                        .get(slot)
-                        .cloned()
-                        .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-                    self.stack.push(value);
-                }
-
                 OpCode::LoadVar(_) | OpCode::LoadGlobal(_) => {
                     unreachable!("named loads execute before opcode cloning")
                 }
@@ -10259,6 +10274,60 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn scalar_load_errors_preserve_consumed_instruction_and_stack() {
+        let mut missing_frame = BytecodeChunk::new();
+        missing_frame.emit(OpCode::LoadLocal(7));
+        let mut vm = VM::new();
+        vm.set_jit_enabled(false);
+        assert_eq!(vm.execute(missing_frame).unwrap_err(), "LoadLocal requires call frame");
+        assert_eq!(vm.ip, 1);
+        assert!(vm.stack.is_empty());
+
+        for callback in [false, true] {
+            let mut chunk = BytecodeChunk::new();
+            chunk.constants.push(Constant::Pattern(crate::ast::Pattern::Ignore));
+            chunk.emit(OpCode::LoadConst(0));
+            chunk.emit(OpCode::Return);
+            let mut vm = VM::new();
+            vm.set_jit_enabled(false);
+            let result = if callback {
+                vm.call_function_from_jit(
+                    Value::BytecodeFunction {
+                        chunk,
+                        captured: HashMap::new(),
+                        captured_binding_kinds: HashMap::new(),
+                    },
+                    vec![],
+                )
+            } else {
+                vm.execute(chunk)
+            };
+            assert_eq!(result.unwrap_err(), "Cannot convert pattern to value");
+            assert_eq!(vm.ip, 1);
+            assert!(vm.stack.is_empty());
+        }
+
+        let mut chunk = BytecodeChunk::new();
+        chunk.emit(OpCode::LoadLocal(7));
+        chunk.emit(OpCode::Return);
+        let mut vm = VM::new();
+        vm.set_jit_enabled(false);
+        let error = vm
+            .call_function_from_jit(
+                Value::BytecodeFunction {
+                    chunk,
+                    captured: HashMap::new(),
+                    captured_binding_kinds: HashMap::new(),
+                },
+                vec![],
+            )
+            .unwrap_err();
+        assert_eq!(error, "Invalid local slot: 7");
+        assert_eq!(vm.ip, 1);
+        assert!(vm.stack.is_empty());
+    }
 
     #[cfg(feature = "runtime-jit")]
     #[test]
