@@ -733,7 +733,7 @@ bounds and depth checks intact. Broader collection representation costs and impo
 environment materialization remain open; the reproduced captured-state reentry
 defects have separate verified fixes in section 3.
 
-## 5. Compiled execution (diagnostic refresh started; fixes not yet selected)
+## 5. Compiled execution (first dispatch allocation fix verified; broader work open)
 
 - [ ] Refresh per-benchmark native execution/fallback evidence.
   [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
@@ -745,7 +745,12 @@ defects have separate verified fixes in section 3.
   post-warmup profiles with resolved runtime functions. VM opcode cloning and
   dispatch, JIT ownership/indexed access, and a debug environment-lookup caller
   are identified. Precise native/fallback CPU coverage is still incomplete.
-  The next bounded gate isolates opcode/name-copy costs before selecting a fix.
+  The [named-load fix](BORROWED_NAMED_LOADS_2026_10_31.md) in `a1f1858` closes
+  the reproduced VM opcode-name copy: 248 extra bytes per read becomes zero.
+  All 32 allocation pairs, 48 semantic cases, 150 test-size checksums, 1,309
+  library tests and 433 selected integration tests pass. Eight priority VM
+  workloads request fewer bytes; JIT byte follow-ups overlap. This is allocation
+  evidence, not elapsed-speed or native-coverage acceptance.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
@@ -835,7 +840,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations after these optimizations (`c83ee4b`; row-overflow-publication-2026-10-28.json). Repeat for later runtime changes.
+- [x] Recheck all 150 test-size combinations on `a1f1858`; [verified current evidence](BORROWED_NAMED_LOADS_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
