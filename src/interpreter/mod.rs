@@ -9129,8 +9129,10 @@ fn captured_array_batch_capacity_keeps_owner_bound_when_dictionary_proof_also_ma
         "state[0]=[n] state[1]=[n] state[0]=[n] state[1]=[n] state[0]=[n] state[1]=[n] return n";
     for (owner, expected_array, expected_bound) in [
         (Value::array(vec![Value::Null; 2]), 2, 2),
-        (Value::array(vec![Value::Null; 3]), 3, 3),
-        (Value::array(vec![Value::Null; 64]), 6, 6),
+        // Repeated writes need only two distinct array destinations, even when
+        // the dictionary proof independently admits all six writes.
+        (Value::array(vec![Value::Null; 3]), 2, 2),
+        (Value::array(vec![Value::Null; 64]), 2, 2),
         (
             Value::dict(
                 [(Arc::from("0"), Value::Null), (Arc::from("1"), Value::Null)]

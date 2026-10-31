@@ -41,6 +41,10 @@ struct Region<'a> {
     counter: Option<(&'a str, i64)>,
     last: Option<i64>,
     budget: Cell<usize>,
+    // A bounded, allocation-free union of constant physical destinations.
+    // Varying selectors or a full set retain the ordinary write-count bound.
+    destinations: [usize; 8],
+    destination_count: Option<usize>,
 }
 impl Region<'_> {
     fn visit(&self) -> bool {
@@ -160,11 +164,31 @@ impl Region<'_> {
                 }
                 let valid =
                     |index: i64| index >= -(self.length as i64) && index < self.length as i64;
-                if !valid(self.integer(index, 0, false)?)
-                    || !valid(self.integer(index, 0, true)?)
-                    || !self.payload(value, depth + 1)
-                {
+                let first = self.integer(index, 0, false)?;
+                let last = self.integer(index, 0, true)?;
+                if !valid(first) || !valid(last) || !self.payload(value, depth + 1) {
                     return None;
+                }
+                if let Some(count) = self.destination_count {
+                    // Compare raw endpoints before normalizing negative aliases:
+                    // a varying -length..0 selector has equal physical endpoints.
+                    if first != last {
+                        self.destination_count = None;
+                    } else {
+                        let physical = if first < 0 {
+                            (self.length as i64 + first) as usize
+                        } else {
+                            first as usize
+                        };
+                        if !self.destinations[..count].contains(&physical) {
+                            if count == self.destinations.len() {
+                                self.destination_count = None;
+                            } else {
+                                self.destinations[count] = physical;
+                                self.destination_count = Some(count + 1);
+                            }
+                        }
+                    }
                 }
                 Some(1)
             }
@@ -296,9 +320,16 @@ pub(super) fn eligible(body: &[Stmt], params: &[String], args: &[Value], env: &E
         counter: None,
         last: None,
         budget: Cell::new(4096),
+        destinations: [0; 8],
+        destination_count: Some(0),
     };
     match region.statements(body, 0) {
-        Some(writes) if writes >= 2 => writes.min(base.len()).min(usize::from(u16::MAX)) as u16,
+        Some(writes) if writes >= 2 => {
+            // Capacity two selects the existing compact publication path, even
+            // when repeated writes touch only one physical destination.
+            let bound = region.destination_count.map_or(writes, |count| writes.min(count.max(2)));
+            bound.min(base.len()).min(usize::from(u16::MAX)) as u16
+        }
         _ => 0,
     }
 }
@@ -317,6 +348,73 @@ mod tests {
         let mut env = Environment::new();
         env.define("state".into(), owner.clone());
         (env, owner)
+    }
+    #[test]
+    fn repeated_destinations_bound_reservation_without_losing_compact_storage() {
+        let (env, _owner) = environment();
+        for (updates, expected) in [
+            ("state[0] = n state[1] = [n]", 2),
+            ("state[0] = n state[1] = [n] state[2] = {\"v\": n}", 3),
+            ("state[0] = n state[-64] = [n]", 2),
+            ("state[-1] = n state[63] = [n]", 2),
+            ("state[j - j] = n state[(j + 1) - j] = [n]", 2),
+            ("state[offset] = n state[offset + 1] = [n]", 2),
+            ("if j % 2 == 0 { state[0] = n } else { state[1] = [n] } state[2] = n", 3),
+        ] {
+            for iterations in [2, 64, 1024] {
+                let body =
+                    parse(&format!("mut j := 0 while j < limit {{ {updates} j += 1 }} return n"));
+                assert_eq!(
+                    eligible(
+                        &body,
+                        &["n".into(), "offset".into(), "limit".into()],
+                        &[Value::Int(7), Value::Int(1), Value::Int(iterations)],
+                        &env
+                    ),
+                    expected,
+                    "{updates}, {iterations}"
+                );
+            }
+        }
+        assert_eq!(eligible(&parse("state[0] = [1]"), &[], &[], &env), 0);
+    }
+
+    #[test]
+    fn reservation_union_covers_sequential_regions_and_varying_alias_endpoints() {
+        let (env, _owner) = environment();
+        let body = parse(
+            "state[0] = [1] mut j := 0 while j < 4 { state[1] = [j] j += 1 }
+            while j < 8 { state[2] = [j] j += 1 } state[3] = [1]",
+        );
+        assert_eq!(eligible(&body, &[], &[], &env), 4);
+        // -64 and 0 alias, but every intermediate negative index is distinct.
+        let body = parse("mut j := -64 while j < 1 { state[j] = [1] j += 1 }");
+        assert_eq!(eligible(&body, &[], &[], &env), 64);
+        let body = parse("state[0] = [1] mut j := 0 while j < 32 { state[j] = [1] j += 1 }");
+        assert_eq!(eligible(&body, &[], &[], &env), 33);
+        // More than eight known destinations retain the conservative bound.
+        let updates = (0..9).map(|i| format!("state[{i}] = [j]\n")).collect::<String>();
+        let body = parse(&format!("mut j := 0 while j < 32 {{ {updates} j += 1 }}"));
+        assert_eq!(eligible(&body, &[], &[], &env), 64);
+    }
+
+    #[test]
+    fn smaller_reservations_do_not_admit_uncertain_or_invalid_updates() {
+        let (env, _owner) = environment();
+        for updates in [
+            "state[0] = [1] state[observe()] = [2]",
+            "state[0] = [1] state[1] = [observe()]",
+            "state[0] = [1] state[64] = [2]",
+            "state[0] = [1] state[(large + j) - large] = [2]",
+            "state[0] = [1] state[j * 0] = [2]",
+        ] {
+            let body = parse(&format!("mut j := 0 while j < 32 {{ {updates} j += 1 }}"));
+            assert_eq!(
+                eligible(&body, &["large".into()], &[Value::Int(i64::MAX)], &env),
+                0,
+                "{updates}"
+            );
+        }
     }
     #[test]
     fn admits_bounds_checked_counted_mixed_and_struct_batches() {
