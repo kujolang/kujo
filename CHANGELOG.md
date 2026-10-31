@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Batch eligible bounded dictionary updates with mixed and collection values
+  without copying the captured owner on each helper call, preserving snapshots,
+  compact same-key updates, operator callbacks and ordered error publication.
+  Keep short cached proof names inline to avoid new cold-call allocations.
+
 - Retain eligible mixed and collection-valued nested row updates in bounded
   private batches, preserving snapshots, aliasing, callback boundaries and
   prior-write publication on errors.

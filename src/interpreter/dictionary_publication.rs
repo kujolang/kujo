@@ -1,5 +1,6 @@
 //! Dictionary keys updated without copying their captured public owner.
 //! The first key stays inline; a second key promotes to a sparse write table.
+use super::array_batch_publication::BatchValue;
 use super::value::DictMap;
 use super::Value;
 use std::sync::Arc;
@@ -816,6 +817,144 @@ impl DictionaryManyPublication {
     }
 }
 
+type CollectionWrites =
+    std::collections::HashMap<Arc<str>, BatchValue, std::hash::BuildHasherDefault<ahash::AHasher>>;
+
+/// Bounded collection/mixed journal. Existing scalar journals stay compact.
+#[derive(Clone, Debug)]
+pub(super) struct DictionaryBatchPublication {
+    name: Box<str>,
+    base: Arc<DictMap>,
+    writes: CollectionWrites,
+    limit: u16,
+}
+impl DictionaryBatchPublication {
+    fn new(name: Box<str>, base: Arc<DictMap>, bound: u16) -> Self {
+        debug_assert!(bound >= 2);
+        Self {
+            name,
+            base,
+            limit: bound,
+            writes: CollectionWrites::with_capacity_and_hasher(
+                usize::from(bound.min(4)),
+                Default::default(),
+            ),
+        }
+    }
+    pub(super) fn name(&self) -> &str {
+        &self.name
+    }
+    pub(super) fn can_record(&self, key: &str, value: &Value, bound: u16) -> bool {
+        BatchValue::supports(value)
+            && (self.writes.contains_key(key)
+                || (self.writes.len() < usize::from(self.limit)
+                    && (self.base.contains_key(key) || insertion_can_pay(&self.base, bound))))
+    }
+    pub(super) fn record(&mut self, key: &str, value: &Value) {
+        // Avoid HashMap::insert's reserve on an occupied full table.
+        if let Some(slot) = self.writes.get_mut(key) {
+            *slot = BatchValue::from_owned(value.clone());
+        } else {
+            assert!(self.writes.len() < usize::from(self.limit), "validated batch capacity");
+            let key =
+                self.base.get_key_value(key).map_or_else(|| Arc::from(key), |(k, _)| k.clone());
+            self.writes.insert(key, BatchValue::from_owned(value.clone()));
+        }
+    }
+    pub(super) fn get(&self, key: &str) -> Option<Value> {
+        self.writes.get(key).map(CollectionPayload::value).or_else(|| self.base.get(key).cloned())
+    }
+    pub(super) fn snapshot_value(&self) -> Value {
+        let mut base = self.base.clone();
+        let map = Arc::make_mut(&mut base);
+        for (key, value) in &self.writes {
+            if let Some(slot) = map.get_mut(key.as_ref()) {
+                *slot = value.value();
+            } else {
+                map.insert(key.clone(), value.value());
+            }
+        }
+        Value::Dict(base)
+    }
+    fn apply_owned(writes: CollectionWrites, base: &mut Arc<DictMap>) {
+        let map = Arc::make_mut(base);
+        for (key, value) in writes {
+            if let Some(slot) = map.get_mut(key.as_ref()) {
+                *slot = value.into_value();
+            } else {
+                map.insert(key, value.into_value());
+            }
+        }
+    }
+    pub(super) fn publish(self, owner: Option<&mut Value>) -> (String, Value) {
+        let Self { name, mut base, writes, .. } = self;
+        if let Some(Value::Dict(public)) = owner {
+            if Arc::ptr_eq(&base, public) {
+                drop(base);
+                Self::apply_owned(writes, public);
+                return (name.into_string(), Value::Dict(public.clone()));
+            }
+        }
+        Self::apply_owned(writes, &mut base);
+        (name.into_string(), Value::Dict(base))
+    }
+    pub(super) fn discard(self) -> (String, Value) {
+        (self.name.into_string(), Value::Dict(self.base))
+    }
+}
+
+impl<T: DictionaryScalar> DictionaryPublication<T> {
+    pub(super) fn can_batch(&self, key: &str, bound: u16) -> bool {
+        bound >= 2 && (self.base.contains_key(key) || insertion_can_pay(&self.base, bound))
+    }
+    pub(super) fn into_batch(self, bound: u16) -> DictionaryBatchPublication {
+        let mut batch = DictionaryBatchPublication::new(self.name, self.base, bound);
+        batch.writes.insert(self.key, BatchValue::from_owned(self.value.into_value()));
+        batch
+    }
+}
+impl<T: CollectionPayload> DictionaryCollectionPublication<T> {
+    pub(super) fn can_batch(&self, key: &str, bound: u16) -> bool {
+        bound >= 2 && (self.base.contains_key(key) || insertion_can_pay(&self.base, bound))
+    }
+    pub(super) fn into_batch(self, bound: u16) -> DictionaryBatchPublication {
+        let mut batch = DictionaryBatchPublication::new(self.name, self.base, bound);
+        batch.writes.insert(self.key, BatchValue::from_owned(self.value.into_value()));
+        batch
+    }
+}
+impl DictionaryManyPublication {
+    pub(super) fn can_batch(&self, key: &str, bound: u16) -> bool {
+        usize::from(bound) > self.writes.len()
+            && (self.base.contains_key(key)
+                || self.writes.contains_key(key)
+                || insertion_can_pay(&self.base, bound))
+    }
+    pub(super) fn into_batch(self, bound: u16) -> DictionaryBatchPublication {
+        let mut batch = DictionaryBatchPublication::new(self.name, self.base, bound);
+        for (key, value) in self.writes {
+            batch.writes.insert(key, BatchValue::from_owned(value.into_value()));
+        }
+        batch
+    }
+}
+impl DictionaryPairPublication {
+    pub(super) fn can_batch(&self, key: &str, bound: u16) -> bool {
+        bound >= 3 && (self.base.contains_key(key) || insertion_can_pay(&self.base, bound))
+    }
+    pub(super) fn into_batch(self, bound: u16) -> DictionaryBatchPublication {
+        // Convert the two inline entries directly; do not allocate a scalar table.
+        let mut batch = DictionaryBatchPublication::new(self.name, self.base, bound);
+        for (entry, word) in self.entries.into_iter().zip(self.words) {
+            with_integer_key(Self::key(entry), |key| {
+                let key = batch.base.get_key_value(key).expect("existing pair key").0.clone();
+                batch.writes.insert(key, BatchValue::from_owned(Self::value(entry, word)));
+            });
+        }
+        batch
+    }
+}
+
 #[cfg(test)]
 mod many_tests {
     use super::*;
@@ -1107,4 +1246,133 @@ mod collection_entry_tests {
         )
         .is_err());
     }
+}
+
+#[cfg(test)]
+mod collection_batch_tests {
+    use super::*;
+    fn owner() -> Value {
+        Value::Dict(Arc::new(DictMap::from_iter(
+            (0..64).map(|i| (Arc::from(i.to_string()), Value::Int(0))),
+        )))
+    }
+    fn array(n: i64) -> Value {
+        Value::Array(Arc::new(vec![Value::Int(n)]))
+    }
+    #[test]
+    fn collection_batch_keeps_snapshots_moves_payloads_and_reuses_unique_owner() {
+        let mut owner = owner();
+        let Value::Dict(base) = &owner else { unreachable!() };
+        let ptr = Arc::as_ptr(base);
+        let scalar = DictionaryPublication::prepare("state".into(), base.clone(), "0", 3).unwrap();
+        assert!(!scalar.can_batch("1", 0));
+        let mut batch = scalar.into_batch(3);
+        let payload = array(8);
+        batch.record("1", &payload);
+        let Value::Array(a) = &payload else { unreachable!() };
+        assert!(matches!(batch.get("1"),Some(Value::Array(b)) if Arc::ptr_eq(a,&b)));
+        let snapshot = batch.snapshot_value();
+        batch.record("0", &array(9));
+        batch.record("1", &Value::Bool(true));
+        batch.publish(Some(&mut owner));
+        let Value::Dict(after) = &owner else { unreachable!() };
+        assert_eq!(Arc::as_ptr(after), ptr);
+        assert!(matches!(snapshot.dictionary_get("0"), Some(Value::Int(3))));
+        assert!(matches!(snapshot.dictionary_get("1"),Some(Value::Array(b)) if Arc::ptr_eq(a,&b)));
+        assert!(matches!(owner.dictionary_get("1"), Some(Value::Bool(true))));
+        assert!(matches!(owner.dictionary_get("63"), Some(Value::Int(0))));
+    }
+    #[test]
+    fn collection_batch_full_table_rewrites_without_growth_and_rejects_new_slots() {
+        let Value::Dict(base) = owner() else { unreachable!() };
+        let mut batch =
+            DictionaryPublication::prepare("state".into(), base, "0", 0).unwrap().into_batch(3);
+        let capacity = batch.writes.capacity();
+        for i in 1..capacity {
+            batch.record(&i.to_string(), &array(i as i64));
+        }
+        assert_eq!(batch.writes.len(), capacity);
+        assert!(batch.can_record("1", &Value::Null, 3));
+        batch.record("1", &Value::Null);
+        assert_eq!(batch.writes.capacity(), capacity);
+        assert!(!batch.can_record("63", &array(1), 3));
+        assert!(!batch.can_record("1", &Value::NativeFunction("print".into()), 3));
+        assert!(matches!(batch.get("1"), Some(Value::Null)));
+    }
+    #[test]
+    fn collection_batch_promotes_pair_many_and_collection_without_losing_prior_writes() {
+        let Value::Dict(base) = owner() else { unreachable!() };
+        let pair = DictionaryPublication::prepare("state".into(), base.clone(), "0", 11)
+            .unwrap()
+            .into_pair("1", &Value::Bool(true));
+        let mut batch = pair.into_batch(3);
+        batch.record("2", &array(7));
+        assert!(matches!(batch.get("0"), Some(Value::Int(11))));
+        assert!(matches!(batch.get("1"), Some(Value::Bool(true))));
+        let many = DictionaryPublication::prepare("state".into(), base.clone(), "0", 12)
+            .unwrap()
+            .into_many("1", &Value::Float(2.5));
+        assert!(many.can_batch("2", 3));
+        let mut batch = many.into_batch(3);
+        batch.record("2", &array(6));
+        assert!(matches!(batch.get("1"),Some(Value::Float(n)) if n==2.5));
+        let pending =
+            DictionaryCollectionPublication::prepare("state".into(), base.clone(), "0", &array(5))
+                .unwrap();
+        assert!(!pending.can_batch("new", 0));
+        let mut batch = pending.into_batch(3);
+        batch.record("1", &Value::Int(19));
+        let saved = batch.snapshot_value();
+        let (_, discarded) = batch.clone().discard();
+        assert!(matches!(discarded.dictionary_get("1"), Some(Value::Int(0))));
+        let mut replacement = Value::Dict(Arc::new(DictMap::default()));
+        let (_, published) = batch.publish(Some(&mut replacement));
+        assert!(matches!(saved.dictionary_get("1"), Some(Value::Int(19))));
+        assert!(matches!(published.dictionary_get("1"), Some(Value::Int(19))));
+        assert!(
+            matches!(published.dictionary_get("0"),Some(Value::Array(v)) if matches!(v[0],Value::Int(5)))
+        );
+        assert!(replacement.dictionary_get("1").is_none());
+        assert!(matches!(base["0"], Value::Int(0)));
+    }
+    #[test]
+    fn collection_batch_insertion_preserves_initial_and_private_snapshots() {
+        let mut owner = owner();
+        let initial = owner.clone();
+        let Value::Dict(base) = &owner else { unreachable!() };
+        let mut batch = DictionaryPublication::prepare("state".into(), base.clone(), "new-a", 1)
+            .unwrap()
+            .into_batch(3);
+        assert!(batch.can_record("new-b", &array(2), 3));
+        batch.record("new-b", &array(2));
+        let saved = batch.snapshot_value();
+        batch.record("new-b", &Value::Null);
+        batch.publish(Some(&mut owner));
+        assert!(initial.dictionary_get("new-a").is_none());
+        assert!(matches!(saved.dictionary_get("new-b"), Some(Value::Array(_))));
+        assert!(matches!(owner.dictionary_get("new-b"), Some(Value::Null)));
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn dictionary_collection_batch_reserves_for_distinct_keys_not_loop_iterations() {
+    let base =
+        Arc::new(DictMap::from_iter((0..64).map(|i| (Arc::from(i.to_string()), Value::Int(0)))));
+    let mut batch =
+        DictionaryPublication::prepare("state".into(), base, "0", 0).unwrap().into_batch(16384);
+    let capacity = batch.writes.capacity();
+    assert!(capacity <= 7, "two-key loop must not reserve16384slots: {capacity}");
+    for i in 0..8192 {
+        let value = Value::Array(Arc::new(vec![Value::Int(i)]));
+        batch.record("0", &value);
+        batch.record("1", &value);
+        assert_eq!(batch.writes.capacity(), capacity);
+    }
+    for i in 2..64 {
+        assert!(batch.can_record(&i.to_string(), &Value::Int(i), 16384));
+        batch.record(&i.to_string(), &Value::Int(i));
+    }
+    assert!(batch.writes.capacity() >= 64);
+    assert!(batch.writes.capacity() < 128);
 }

@@ -88,7 +88,7 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
 
-Review status, 2026-10-30: sections 3 and 4 remain open. The remaining work is
+Review status, 2026-10-31: sections 3 and 4 remain open. The remaining work is
 grouped below; these groups are not equally sized and do not imply a completion
 percentage or a reliable elapsed-time estimate.
 
@@ -156,20 +156,27 @@ percentage or a reliable elapsed-time estimate.
    [Multiple dictionary replacement isolation](MULTI_KEY_COLLECTION_BASELINE_2026_10_30.md)
    on `f1893ea` also confirms a 624,240-byte per-call width penalty for three
    array-valued root dictionary replacements; the scalar control is flat.
-   All 48 allocation observations and 72 runtime checks pass. This needs a
-   separate bounded fix after the nested-row candidate; it is not yet addressed.
+   All 48 allocation observations and 72 runtime checks pass. This historical
+   root-dictionary gap is now addressed by the bounded fix below.
    An additional 144 allocation/216 runtime controls confirm the same penalty
    for two-key arrays, dictionary/struct payloads and both mixed-value orders;
    same-key mixed replacement remains flat. Preserve that compact control.
    A refresh on accepted `b1bf786` passes another 144 allocation/216 semantic
-   checks and confirms the same 624,240-byte width penalty; the next fix remains
-   necessary after nested-row acceptance.
+   checks and confirms the same 624,240-byte width penalty before the fix.
+   [Root dictionary batches](DICTIONARY_BATCHES_2026_10_30.md) are accepted in
+   `8ab7c6a`: 3,624 allocation pairs, 5,436 semantic runs, 18 boundary checks,
+   1,288 library tests, 422 integrations and all 150 test-size checksums pass.
+   The measured fixed-write width penalty is removed; compact same-key paths
+   remain. All 252 RSS pairs and 15 additional follow-up pairs are reviewed,
+   retaining positive observations and explicitly accepting modest process-RSS
+   tradeoffs. This is an allocation improvement, not a speed or memory-win claim.
    [Nested dictionary payload isolation](NESTED_DICTIONARY_PAYLOAD_BASELINE_2026_10_30.md)
    on `b1bf786` passes 144 allocation observations and 216 semantic runs.
    Dictionary, struct-field and deeper dictionary owners retain a 624,240-byte
    per-call leaf-width penalty for two-array and three-value mixed updates.
-   Recheck this separate nested-owner gap on the root-dictionary candidate after
-   acceptance; that candidate is not yet measured by this report.
+   The accepted root-dictionary gate rechecks these exact 144 allocation/216
+   semantic cases; this separate nested-owner gap remains. Its storage and
+   admission-proof work is in progress, not yet integrated or accepted.
    [Nested boundary controls](NESTED_DICTIONARY_BOUNDARIES_2026_10_31.md) add
    72 allocation observations and 108 semantic checks on the same accepted
    runtime for insertion, dense updates and repeated overwrites. These counters
@@ -685,6 +692,12 @@ Section 3 remains open for capture-map traversal, captured-local prefix material
   the unchanged baseline; tiny QuickSort/BrainfuckArray differences overlap in
   four paired observations. These are allocation results, not elapsed-speed wins.
 - [ ] Broaden specialized representation review when profiles identify additional costs; representative controls are not universal coverage. The [chunked-owner experiment](CHUNKED_OWNER_PROTOTYPE_2026_10_26.md) passed 63 numeric snapshot cases but rejects chunking plus contiguous publication: all 27 matched cases allocate more. No runtime integration or closure of this item.
+  [Repeated-position array controls](REPEATED_ARRAY_RESERVATION_2026_10_31.md)
+  confirm another open reservation cost on accepted `b1bf786` and pending V4:
+  two repeatedly overwritten positions cost 9,840/167,280 extra requested
+  bytes per call at width 2,048 versus 8 for 64/1,024 iterations. Each artifact
+  passes 16 allocation observations and 24 semantic checks. Fix and verify the
+  distinct-position bound; these results do not establish elapsed-time speed.
 - [x] Add scaling checks for accidental quadratic behavior, including actual compiler-emitted loops rather than hand-built opcodes alone.
 - [x] Observe peak memory separately from allocation traffic; clean-host acceptance remains pending.
 - [x] Implement the user-approved root-after-index rule for direct indexed writes in VM/JIT. Runtime `3a9cbe4` passes 30 targeted cases, actual native execution proof, 206 integration tests, 1,114 library tests and 150 test-size checksums; paired allocation and timing gates passed. See [verification and limitations](INDEX_ROOT_ORDER_VERIFICATION_2026_10_26.md). Subsequent captured-state reentry and ordered-visibility fixes are verified in section 3; imported environment materialization remains open.

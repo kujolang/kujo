@@ -6,8 +6,9 @@
 use super::array_collection_publication::ArrayCollectionPublication;
 use super::binding_map::BindingMap;
 use super::dictionary_publication::{
-    CollectionPayload, CollectionValue, DictionaryCollectionPublication, DictionaryManyPublication,
-    DictionaryPairPublication, DictionaryPublication, DictionaryScalar,
+    CollectionPayload, CollectionValue, DictionaryBatchPublication,
+    DictionaryCollectionPublication, DictionaryManyPublication, DictionaryPairPublication,
+    DictionaryPublication, DictionaryScalar,
 };
 use super::value::Value;
 use std::collections::{HashMap, HashSet};
@@ -72,6 +73,7 @@ enum CaptureWrites {
     DictionaryArray(DictionaryCollectionPublication<Arc<Vec<Value>>>),
     DictionaryMap(DictionaryCollectionPublication<Arc<super::value::DictMap>>),
     DictionaryMany(Box<DictionaryManyPublication>),
+    DictionaryBatch(Box<DictionaryBatchPublication>),
     DictionaryPair(DictionaryPairPublication),
     Nested(super::nested_publication::NestedPublication),
 }
@@ -178,6 +180,7 @@ impl CaptureWrites {
             Self::DictionaryMap(pending) => pending.get(key),
             Self::DictionaryPair(pending) => pending.get(key),
             Self::DictionaryMany(pending) => pending.get(key),
+            Self::DictionaryBatch(pending) => pending.get(key),
             _ => None,
         }
     }
@@ -189,15 +192,25 @@ impl CaptureWrites {
         allow_many: bool,
         insertion_bound: u16,
     ) -> bool {
+        if let Self::DictionaryBatch(pending) = self {
+            return allow_many && pending.can_record(key, value, insertion_bound);
+        }
         if DictionaryCollectionPublication::supports(value) {
+            macro_rules! admit {
+                ($p:expr) => {
+                    $p.matches_key(key) || (allow_many && $p.can_batch(key, insertion_bound))
+                };
+            }
             return match self {
-                Self::Dictionary(pending) => pending.matches_key(key),
-                Self::DictionaryFloat(pending) => pending.matches_key(key),
-                Self::DictionaryBool(pending) => pending.matches_key(key),
-                Self::DictionaryNull(pending) => pending.matches_key(key),
-                Self::DictionaryCollection(pending) => pending.matches_key(key),
-                Self::DictionaryArray(pending) => pending.matches_key(key),
-                Self::DictionaryMap(pending) => pending.matches_key(key),
+                Self::Dictionary(p) => admit!(p),
+                Self::DictionaryFloat(p) => admit!(p),
+                Self::DictionaryBool(p) => admit!(p),
+                Self::DictionaryNull(p) => admit!(p),
+                Self::DictionaryCollection(p) => admit!(p),
+                Self::DictionaryArray(p) => admit!(p),
+                Self::DictionaryMap(p) => admit!(p),
+                Self::DictionaryPair(p) => allow_many && p.can_batch(key, insertion_bound),
+                Self::DictionaryMany(p) => allow_many && p.can_batch(key, insertion_bound),
                 _ => false,
             };
         }
@@ -226,9 +239,15 @@ impl CaptureWrites {
                     || (allow_many
                         && (pending.contains_key(key) || pending.can_insert(insertion_bound)))
             }
-            Self::DictionaryCollection(pending) => pending.matches_key(key),
-            Self::DictionaryArray(pending) => pending.matches_key(key),
-            Self::DictionaryMap(pending) => pending.matches_key(key),
+            Self::DictionaryCollection(pending) => {
+                pending.matches_key(key) || (allow_many && pending.can_batch(key, insertion_bound))
+            }
+            Self::DictionaryArray(pending) => {
+                pending.matches_key(key) || (allow_many && pending.can_batch(key, insertion_bound))
+            }
+            Self::DictionaryMap(pending) => {
+                pending.matches_key(key) || (allow_many && pending.can_batch(key, insertion_bound))
+            }
             Self::DictionaryMany(_) => allow_many,
             Self::DictionaryPair(pending) => pending.can_record(key, value) || allow_many,
             _ => false,
@@ -308,11 +327,20 @@ impl CaptureWrites {
         }
     }
 
-    fn with_dictionary_value(self, key: &str, value: &Value) -> Self {
+    fn with_dictionary_value(self, key: &str, value: &Value, bound: u16) -> Self {
+        macro_rules! batch {
+            ($p:expr) => {{
+                let mut p = $p.into_batch(bound);
+                p.record(key, value);
+                Self::DictionaryBatch(Box::new(p))
+            }};
+        }
         match self {
             Self::Dictionary(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if DictionaryCollectionPublication::supports(value) {
+                    batch!(pending)
                 } else if pending.can_pair(key, value) {
                     Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
@@ -322,6 +350,8 @@ impl CaptureWrites {
             Self::DictionaryFloat(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if DictionaryCollectionPublication::supports(value) {
+                    batch!(pending)
                 } else if pending.can_pair(key, value) {
                     Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
@@ -331,6 +361,8 @@ impl CaptureWrites {
             Self::DictionaryBool(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if DictionaryCollectionPublication::supports(value) {
+                    batch!(pending)
                 } else if pending.can_pair(key, value) {
                     Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
@@ -340,6 +372,8 @@ impl CaptureWrites {
             Self::DictionaryNull(pending) => {
                 if pending.matches_key(key) {
                     Self::replace_dictionary_value(pending, value)
+                } else if DictionaryCollectionPublication::supports(value) {
+                    batch!(pending)
                 } else if pending.can_pair(key, value) {
                     Self::DictionaryPair(pending.into_pair(key, value))
                 } else {
@@ -347,15 +381,21 @@ impl CaptureWrites {
                 }
             }
             Self::DictionaryArray(pending) => {
-                debug_assert!(pending.matches_key(key));
+                if !pending.matches_key(key) {
+                    return batch!(pending);
+                }
                 Self::replace_collection_value(pending, value)
             }
             Self::DictionaryMap(pending) => {
-                debug_assert!(pending.matches_key(key));
+                if !pending.matches_key(key) {
+                    return batch!(pending);
+                }
                 Self::replace_collection_value(pending, value)
             }
             Self::DictionaryCollection(mut pending) => {
-                debug_assert!(pending.matches_key(key));
+                if !pending.matches_key(key) {
+                    return batch!(pending);
+                }
                 if DictionaryCollectionPublication::supports(value)
                     && !matches!(value, Value::Array(_) | Value::Dict(_))
                 {
@@ -366,6 +406,9 @@ impl CaptureWrites {
                 }
             }
             Self::DictionaryPair(mut pending) => {
+                if DictionaryCollectionPublication::supports(value) {
+                    return batch!(pending);
+                }
                 if pending.can_record(key, value) {
                     pending.record(key, value);
                     Self::DictionaryPair(pending)
@@ -376,8 +419,15 @@ impl CaptureWrites {
                 }
             }
             Self::DictionaryMany(mut pending) => {
+                if DictionaryCollectionPublication::supports(value) {
+                    return batch!(pending);
+                }
                 pending.record(key, value);
                 Self::DictionaryMany(pending)
+            }
+            Self::DictionaryBatch(mut pending) => {
+                pending.record(key, value);
+                Self::DictionaryBatch(pending)
             }
             _ => unreachable!("admitted dictionary journal"),
         }
@@ -412,6 +462,7 @@ impl CaptureWrites {
             | Self::DictionaryBool(_)
             | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
+            | Self::DictionaryBatch(_)
             | Self::DictionaryNull(_)
             | Self::DictionaryCollection(_)
             | Self::DictionaryArray(_)
@@ -436,6 +487,7 @@ impl CaptureWrites {
             | Self::DictionaryBool(_)
             | Self::DictionaryPair(_)
             | Self::DictionaryMany(_)
+            | Self::DictionaryBatch(_)
             | Self::DictionaryNull(_)
             | Self::DictionaryCollection(_)
             | Self::DictionaryArray(_)
@@ -470,6 +522,7 @@ impl CaptureWrites {
             Self::DictionaryMap(pending) => Some(pending.name()),
             Self::DictionaryPair(pending) => Some(pending.name()),
             Self::DictionaryMany(pending) => Some(pending.name()),
+            Self::DictionaryBatch(pending) => Some(pending.name()),
             Self::Nested(pending) => Some(pending.name()),
             _ => None,
         }
@@ -492,6 +545,7 @@ impl CaptureWrites {
             Self::DictionaryMap(pending) => Some(pending.snapshot_value()),
             Self::DictionaryPair(pending) => Some(pending.snapshot_value()),
             Self::DictionaryMany(pending) => Some(pending.snapshot_value()),
+            Self::DictionaryBatch(pending) => Some(pending.snapshot_value()),
             Self::Nested(pending) => Some(pending.snapshot_value()),
             _ => None,
         }
@@ -514,6 +568,7 @@ impl CaptureWrites {
             Self::DictionaryMap(pending) => Some(pending.publish(owner)),
             Self::DictionaryPair(pending) => Some(pending.publish(owner)),
             Self::DictionaryMany(pending) => Some(pending.publish(owner)),
+            Self::DictionaryBatch(pending) => Some(pending.publish(owner)),
             Self::Nested(pending) => Some(pending.publish(owner)),
             _ => None,
         }
@@ -536,6 +591,7 @@ impl CaptureWrites {
             Self::DictionaryMap(pending) => Some(pending.discard()),
             Self::DictionaryPair(pending) => Some(pending.discard()),
             Self::DictionaryMany(pending) => Some(pending.discard()),
+            Self::DictionaryBatch(pending) => Some(pending.discard()),
             Self::Nested(pending) => Some(pending.discard()),
             _ => None,
         }
@@ -801,6 +857,7 @@ impl Environment {
                 | CaptureWrites::DictionaryArray(_)
                 | CaptureWrites::DictionaryMap(_)
                 | CaptureWrites::DictionaryMany(_)
+                | CaptureWrites::DictionaryBatch(_)
                 | CaptureWrites::DictionaryPair(_)),
             )) => Some(pending),
             _ => None,
@@ -1069,7 +1126,9 @@ impl Environment {
                         self.capture_writes,
                         Some((
                             0,
-                            CaptureWrites::DictionaryMany(_) | CaptureWrites::DictionaryPair(_)
+                            CaptureWrites::DictionaryMany(_)
+                                | CaptureWrites::DictionaryPair(_)
+                                | CaptureWrites::DictionaryBatch(_)
                         ))
                     )))
             || self.has_local_binding(name)
@@ -1397,7 +1456,8 @@ impl Environment {
                 return false;
             }
             let Some((0, pending)) = self.capture_writes.take() else { unreachable!() };
-            self.capture_writes = Some((0, pending.with_dictionary_value(key, value)));
+            self.capture_writes =
+                Some((0, pending.with_dictionary_value(key, value, insertion_bound)));
         } else {
             if !matches!(self.capture_writes, Some((0, CaptureWrites::Empty))) {
                 return false;
@@ -1708,9 +1768,20 @@ impl Environment {
     /// Project only proven read dependencies. No callbacks, writes, tasks or active
     /// reentry may use this path; each selected value comes from the actual owner.
     /// Captured locals remain owner-backed and must not become snapshots.
-    pub(crate) fn project_capture_reads(
+    #[cfg(test)]
+    fn project_capture_reads(
         &self,
         names: &[String],
+        params: &[String],
+        primitive: bool,
+        pool: &mut CaptureStoragePool,
+    ) -> Option<Self> {
+        self.project_capture_name_iter(names.iter().map(String::as_str), params, primitive, pool)
+    }
+
+    pub(crate) fn project_capture_name_iter<'a>(
+        &self,
+        names: impl Iterator<Item = &'a str> + Clone,
         params: &[String],
         primitive: bool,
         pool: &mut CaptureStoragePool,
@@ -1718,7 +1789,7 @@ impl Environment {
         if self.scopes.len() != 1 || self.has_live_capture() {
             return None;
         }
-        for name in names.iter().filter(|name| !params.contains(name)) {
+        for name in names.clone().filter(|name| !params.iter().any(|param| param == *name)) {
             let value = self.get(name)?;
             if primitive && !super::value::is_capture_primitive(&value) {
                 return None;
@@ -1728,17 +1799,17 @@ impl Environment {
         storage.scopes.resize_with(1, HashMap::new);
         storage.binding_kinds.resize_with(1, BindingMap::new);
         let wanted = |name: &str| {
-            names.iter().any(|candidate| candidate == name)
+            names.clone().any(|candidate| candidate == name)
                 && !params.iter().any(|candidate| candidate == name)
         };
         storage.scopes[0].retain(|name, _| wanted(name));
         storage.binding_kinds[0].retain(|name, _| wanted(name));
-        for name in names.iter().filter(|name| wanted(name)) {
+        for name in names.clone().filter(|name| wanted(name)) {
             let value = self.get(name)?;
             if let Some(slot) = storage.scopes[0].get_mut(name) {
                 *slot = value;
             } else {
-                storage.scopes[0].insert(name.clone(), value);
+                storage.scopes[0].insert(name.to_owned(), value);
             }
             let kind = self
                 .scopes
@@ -1749,7 +1820,7 @@ impl Environment {
                 .and_then(|(index, _)| self.binding_kinds[index].get(name))
                 .copied();
             if let Some(kind) = kind {
-                storage.binding_kinds[0].insert(name.clone(), kind);
+                storage.binding_kinds[0].insert(name.to_owned(), kind);
             } else {
                 storage.binding_kinds[0].remove(name);
             }

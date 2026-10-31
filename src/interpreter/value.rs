@@ -287,7 +287,7 @@ impl FunctionBodyRef {
             && args.iter().all(is_capture_primitive)
             && proof.required_parameters.iter().enumerate().all(|(index, name)| {
                 proof.whole_value_mask & (1u32 << index) == 0
-                    || params.contains(name)
+                    || params.iter().any(|param| param == name)
                     // Inspect the entered capture on every invocation. A captured
                     // primitive can become an operator-bearing value between calls.
                     // Borrowing also avoids materializing pending/live snapshots.
@@ -332,7 +332,10 @@ impl FunctionBodyRef {
         else {
             return false;
         };
-        proof.required_parameters.iter().all(|name| params.contains(name))
+        // A struct stored in a local collection can later reach an operator
+        // through an indexed read. Keep its lexical operator environment.
+        !proof.constructs_struct_payload()
+            && proof.required_parameters.iter().all(|name| params.iter().any(|param| param == name))
             && (!proof.primitive_arguments
                 || args.iter().all(|value| {
                     matches!(
