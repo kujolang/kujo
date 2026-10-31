@@ -105,6 +105,13 @@ The broader section 3/4 requirements remain partially proved; see the review's
 requirement dispositions and four residual-cost categories. The chronology below
 retains historical open statements and does not define a new unbounded fix queue.
 
+Current scope clarification: **zero further fix rounds are required for this
+bounded section 3/4 review cutoff**. Active named-load and struct-field work is
+section 5. This distinction does not close the broader residual requirements.
+The next struct-field fix requires implementation/targeted verification and
+combined regression/allocation verification; failures can require more work.
+These are stages, not a promised calendar estimate or a count of all future fixes.
+
 The [additional nested struct/string baseline](NESTED_DICTIONARY_EXTRA_PAYLOADS_2026_10_31.md)
 verifies 144 allocation observations and 216 semantic checks on accepted runtime
 `8ab7c6a`. Both payload types retain a 624,240-byte per-call width penalty in
@@ -758,6 +765,13 @@ defects have separate verified fixes in section 3.
   controls remove that slope. JIT repeats show the same scale with compiler
   variability. Receiver-copy removal is the next implementation gate; no fix
   or speedup is claimed by this baseline.
+- [x] Establish receiver replacement/returned-value ownership coverage before
+  changing local field reads. `tests/jit_field_reads.rs` now checks short/long
+  struct names, receiver replacement, original snapshots and independent nested
+  returned arrays. All four field-read tests pass on the saved accepted CLI
+  (`112b272d0b378247d22a4814d551eaff0ec77c13b8e217f174fcae3c06bf3db2`),
+  across VM/interpreter/JIT, including native-entry assertions. This is a
+  semantic baseline, not a receiver-copy fix or allocation acceptance.
 - [ ] Identify hot unsupported operations and expensive transitions.
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.

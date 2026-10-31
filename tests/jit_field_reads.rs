@@ -2,6 +2,45 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
+fn local_field_reads_survive_receiver_replacement_and_return() {
+    for name_length in [8, 256] {
+        let name = format!("T{}", "x".repeat(name_length - 1));
+        let mut source = format!(
+            r#"
+struct {name} {{ value: any }}
+func replace_local(item) {{
+    let before := item.value
+    let original := item
+    item = {name} {{ value: [9,10] }}
+    mut after := item.value
+    after[0] = 99
+    assert_equal(original.value,before)
+    assert_equal(item.value,[9,10])
+    return [before,after,item.value]
+}}
+let seed := [7,8]
+let holder := {name} {{ value: seed }}
+"#
+        );
+        for _ in 0..200 {
+            source.push_str("assert_equal(replace_local(holder),[[7,8],[99,10],[9,10]])\n");
+        }
+        source.push_str(
+            r#"
+mut returned := replace_local(holder)
+returned[0][0] = 123
+returned[2][0] = 456
+assert_equal(returned,[[123,8],[99,10],[456,10]])
+assert_equal(holder.value,[7,8])
+assert_equal(seed,[7,8])
+print("PASS")
+"#,
+        );
+        check(source, &["replace_local"]);
+    }
+}
+
+#[test]
 fn native_field_reads_preserve_types_snapshots_and_errors() {
     let mut source = String::from(
         r#"
