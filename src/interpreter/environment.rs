@@ -699,9 +699,22 @@ impl CaptureStoragePool {
     }
 }
 
+// Fresh std HashMap capacities on the supported toolchain. This is a bounded
+// profitability estimate, not a safety invariant; recycle checks real capacity.
+fn projected_capture_map_capacity(names: usize) -> usize {
+    match names {
+        0 => 0,
+        1..=3 => 3,
+        4..=7 => 7,
+        _ => names
+            .checked_mul(8)
+            .and_then(|scaled| (scaled / 7).checked_next_power_of_two())
+            .map_or(usize::MAX, |buckets| buckets / 8 * 7),
+    }
+}
+
 // HashMap::clone_from clears/reallocates keys. Refill existing entries instead,
-// while consulting the actual source keys/kinds on every invocation. Rust hosts
-// may edit the public owner map; no cached shape/version assumption is valid.
+// consulting actual source keys/kinds on every invocation, including host edits.
 fn refill_capture_map<T: Clone>(target: &mut HashMap<String, T>, source: &HashMap<String, T>) {
     // Fresh dense maps can use the normal bulk clone instead of repeatedly
     // growing and rehashing. Do not copy a sparse source's unused buckets or
@@ -1494,12 +1507,62 @@ impl Environment {
         Self::capture_activation_with_pool(owner, &mut CaptureStoragePool::default())
     }
 
+    /// Estimate fresh dense capture storage, not public owner spare capacity.
+    /// This selects a representation only. Actual recycle bounds remain the
+    /// authority even if a future std HashMap implementation changes its growth.
+    fn capture_storage_needs_compact(&self) -> bool {
+        if self.scopes.len() <= 1 {
+            return false;
+        }
+        if self.scopes.len() > CaptureStoragePool::MAX_SCOPES
+            || self.binding_kinds.len() > CaptureStoragePool::MAX_SCOPES
+        {
+            return true;
+        }
+        let mut capacity = 0usize;
+        let mut key_bytes = 0usize;
+        for scope in &self.scopes {
+            capacity = capacity.saturating_add(projected_capture_map_capacity(scope.len()));
+            if capacity > CaptureStoragePool::MAX_CAPACITY {
+                return true;
+            }
+            for name in scope.keys() {
+                key_bytes = key_bytes.saturating_add(name.len());
+                if key_bytes > CaptureStoragePool::MAX_KEY_BYTES {
+                    return true;
+                }
+            }
+        }
+        for (index, kinds) in self.binding_kinds.iter().enumerate() {
+            // A compact local owner has implicit mutable kinds. Reverting to
+            // ordinary storage materializes only immutable exceptions, as below.
+            let implicit_mutable = index > 0 && kinds.is_compact();
+            let mut count = 0usize;
+            for (name, kind) in kinds.iter() {
+                if implicit_mutable && *kind == BindingKind::Mutable {
+                    continue;
+                }
+                count = count.saturating_add(1);
+                key_bytes = key_bytes.saturating_add(name.len());
+                if key_bytes > CaptureStoragePool::MAX_KEY_BYTES {
+                    return true;
+                }
+            }
+            capacity = capacity.saturating_add(projected_capture_map_capacity(count));
+            if capacity > CaptureStoragePool::MAX_CAPACITY {
+                return true;
+            }
+        }
+        false
+    }
+
     pub(crate) fn capture_activation_with_pool(
         owner: &Arc<Mutex<Self>>,
         pool: &mut CaptureStoragePool,
     ) -> Self {
         let mut captured = owner.lock().unwrap_or_else(|p| p.into_inner());
         debug_assert!(captured.live_capture.is_none(), "capture owners must own real values");
+        let compact_locals = captured.capture_storage_needs_compact();
         let mut storage = pool.take();
         storage.scopes.resize_with(captured.scopes.len(), HashMap::new);
         storage.binding_kinds.resize_with(captured.binding_kinds.len(), BindingMap::new);
@@ -1507,8 +1570,8 @@ impl Environment {
         {
             if index == 0 {
                 refill_capture_map(target, source);
-            } else if source.len() >= CaptureStoragePool::MAX_CAPACITY {
-                // This many names cannot fit the bounded idle pool. Keep only
+            } else if compact_locals {
+                // Aggregate dense storage cannot fit the bounded idle pool. Keep only
                 // key/kind metadata; actual values remain in the public owner.
                 *target = HashMap::new();
             } else {
@@ -1530,7 +1593,7 @@ impl Environment {
             storage.binding_kinds.iter_mut().zip(binding_kinds.iter_mut()).enumerate()
         {
             let names = &scopes[index];
-            let oversized = index > 0 && names.len() >= CaptureStoragePool::MAX_CAPACITY;
+            let oversized = index > 0 && compact_locals;
             if index > 0 && source.is_compact() {
                 let matches = oversized && source.matches_names(names);
                 if matches {
@@ -4644,7 +4707,7 @@ mod compact_name_pool_tests {
             let mut pool = CaptureStoragePool::default();
             let active = Environment::capture_activation_with_pool(&owner, &mut pool);
             assert!(active.scopes[0].is_empty());
-            assert_eq!(active.binding_kinds[1].is_compact(), width >= 8192);
+            assert!(active.binding_kinds[1].is_compact());
             for index in 0..width {
                 assert!(
                     matches!(active.get(&format!("name_{index}")), Some(Value::Int(value)) if value == index)
@@ -4655,5 +4718,79 @@ mod compact_name_pool_tests {
             assert_eq!(pool.capacity, 0);
             assert_eq!(pool.key_bytes, 0);
         }
+    }
+    #[test]
+    fn capture_budget_admission_avoids_unrecyclable_local_name_copies() {
+        for (width, scopes, prefix) in [(8190, 1, 0), (1024, 1, 129), (2048, 3, 0)] {
+            let mut env = Environment::new();
+            let prefix = "x".repeat(prefix);
+            for scope in 0..scopes {
+                env.push_scope();
+                for n in 0..width {
+                    env.define(format!("{prefix}name_{scope}_{n}"), Value::Int(n as i64));
+                }
+            }
+            let owner = Arc::new(Mutex::new(env));
+            let mut pool = CaptureStoragePool::default();
+            for pass in 0..2 {
+                let active = Environment::capture_activation_with_pool(&owner, &mut pool);
+                let copied_names: usize = active.scopes.iter().skip(1).map(HashMap::len).sum();
+                let capacity: usize = active
+                    .scopes
+                    .iter()
+                    .map(HashMap::capacity)
+                    .chain(active.binding_kinds.iter().map(BindingMap::capacity))
+                    .sum();
+                let bytes: usize = active
+                    .scopes
+                    .iter()
+                    .flat_map(HashMap::keys)
+                    .map(String::capacity)
+                    .chain(active.binding_kinds.iter().map(BindingMap::key_capacity_bytes))
+                    .sum();
+                eprintln!("capture width={width} scopes={scopes} prefix={} pass={pass} copied={copied_names} capacity={capacity} key_bytes={bytes}", prefix.len());
+                assert_eq!(copied_names, 0, "unrecyclable local keys must use shared metadata");
+                for scope in 0..scopes {
+                    assert!(matches!(
+                        active.get(&format!("{prefix}name_{scope}_0")),
+                        Some(Value::Int(0))
+                    ));
+                }
+                pool.recycle(active);
+                assert!(pool.capacity <= CaptureStoragePool::MAX_CAPACITY);
+                assert!(pool.key_bytes <= CaptureStoragePool::MAX_KEY_BYTES);
+            }
+        }
+    }
+
+    #[test]
+    fn small_capture_budget_ignores_public_owner_spare_capacity() {
+        for spare in [0, 16384] {
+            let mut env = Environment::new();
+            env.push_scope();
+            env.scopes[1].reserve(spare);
+            for n in 0..32 {
+                env.define(format!("name_{n}"), Value::Int(n));
+            }
+            let owner = Arc::new(Mutex::new(env));
+            let mut pool = CaptureStoragePool::default();
+            for _ in 0..2 {
+                let active = Environment::capture_activation_with_pool(&owner, &mut pool);
+                assert!(!active.binding_kinds[1].is_compact());
+                assert_eq!(active.scopes[1].len(), 32);
+                pool.recycle(active);
+                assert_eq!(pool.frames.len(), 1);
+                assert!(pool.capacity <= CaptureStoragePool::MAX_CAPACITY);
+            }
+        }
+    }
+
+    #[test]
+    fn capture_dense_capacity_projection_matches_reservation_boundaries() {
+        for width in [0, 1, 3, 4, 7, 8, 14, 15, 28, 29, 32, 1024, 2048, 4096, 8190, 8191, 8192] {
+            let map: HashMap<String, Value> = HashMap::with_capacity(width);
+            assert_eq!(projected_capture_map_capacity(width), map.capacity());
+        }
+        assert_eq!(projected_capture_map_capacity(usize::MAX), usize::MAX);
     }
 }

@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Select compact captured-local metadata using aggregate map-capacity, key-byte
+  and scope budgets, avoiding repeated name copies near pool limits while
+  preserving snapshots, immutable bindings, host edits and bounded idle storage.
+
 - Batch eligible mixed and collection-valued nested dictionary writes, including
   bounded new-key insertions, while preserving snapshots, owner identity,
   lexical operator captures and ordered fallback/error publication.
