@@ -170,6 +170,11 @@ percentage or a reliable elapsed-time estimate.
    per-call leaf-width penalty for two-array and three-value mixed updates.
    Recheck this separate nested-owner gap on the root-dictionary candidate after
    acceptance; that candidate is not yet measured by this report.
+   [Nested boundary controls](NESTED_DICTIONARY_BOUNDARIES_2026_10_31.md) add
+   72 allocation observations and 108 semantic checks on the same accepted
+   runtime for insertion, dense updates and repeated overwrites. These counters
+   include verification helpers; they are regression baselines, not isolated
+   mutation costs. Refresh them on the accepted root candidate before the nested fix.
    [Capture pool boundary isolation](CAPTURE_POOL_BOUNDARY_2026_10_30.md)
    adds 72 allocation observations and 108 semantic runs on `b1bf786`.
    At 8,190 extra retained locals, read/write slopes rise to
