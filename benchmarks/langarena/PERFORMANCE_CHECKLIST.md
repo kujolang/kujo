@@ -177,6 +177,10 @@ percentage or a reliable elapsed-time estimate.
    and stay at 1,650/1,661. This confirms another section-3 fix target:
    reconcile capture admission with bounded pool capacity/key-byte limits,
    preserving cold captures, host edits, snapshots and retention bounds.
+   [Key-byte isolation](CAPTURE_KEY_BYTES_2026_10_30.md) adds another
+   72 allocation/108 semantic checks: 1,024 long-name locals retain
+   466–581 KB per added call versus 1,266/1,277 bytes for short names.
+   Both count/capacity and key-byte admission need coverage in that fix.
    Other deeper/escaping shapes remain separate audit items.
    Separate required snapshot/publication work from avoidable copying. Each
    confirmed avoidable cost needs its own bounded fix and regression gates;
