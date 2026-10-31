@@ -88,7 +88,7 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
 
-Review status, 2026-10-30: sections 3 and 4 remain open. The remaining work is
+Review status, 2026-10-31: sections 3 and 4 remain open. The remaining work is
 grouped below; these groups are not equally sized and do not imply a completion
 percentage or a reliable elapsed-time estimate.
 
@@ -156,20 +156,27 @@ percentage or a reliable elapsed-time estimate.
    [Multiple dictionary replacement isolation](MULTI_KEY_COLLECTION_BASELINE_2026_10_30.md)
    on `f1893ea` also confirms a 624,240-byte per-call width penalty for three
    array-valued root dictionary replacements; the scalar control is flat.
-   All 48 allocation observations and 72 runtime checks pass. This needs a
-   separate bounded fix after the nested-row candidate; it is not yet addressed.
+   All 48 allocation observations and 72 runtime checks pass. This historical
+   root-dictionary gap is now addressed by the bounded fix below.
    An additional 144 allocation/216 runtime controls confirm the same penalty
    for two-key arrays, dictionary/struct payloads and both mixed-value orders;
    same-key mixed replacement remains flat. Preserve that compact control.
    A refresh on accepted `b1bf786` passes another 144 allocation/216 semantic
-   checks and confirms the same 624,240-byte width penalty; the next fix remains
-   necessary after nested-row acceptance.
+   checks and confirms the same 624,240-byte width penalty before the fix.
+   [Root dictionary batches](DICTIONARY_BATCHES_2026_10_30.md) are accepted in
+   `8ab7c6a`: 3,624 allocation pairs, 5,436 semantic runs, 18 boundary checks,
+   1,288 library tests, 422 integrations and all 150 test-size checksums pass.
+   The measured fixed-write width penalty is removed; compact same-key paths
+   remain. All 252 RSS pairs and 15 additional follow-up pairs are reviewed,
+   retaining positive observations and explicitly accepting modest process-RSS
+   tradeoffs. This is an allocation improvement, not a speed or memory-win claim.
    [Nested dictionary payload isolation](NESTED_DICTIONARY_PAYLOAD_BASELINE_2026_10_30.md)
    on `b1bf786` passes 144 allocation observations and 216 semantic runs.
    Dictionary, struct-field and deeper dictionary owners retain a 624,240-byte
    per-call leaf-width penalty for two-array and three-value mixed updates.
-   Recheck this separate nested-owner gap on the root-dictionary candidate after
-   acceptance; that candidate is not yet measured by this report.
+   The accepted root-dictionary gate rechecks these exact 144 allocation/216
+   semantic cases; this separate nested-owner gap remains. Its storage and
+   admission-proof work is in progress, not yet integrated or accepted.
    [Nested boundary controls](NESTED_DICTIONARY_BOUNDARIES_2026_10_31.md) add
    72 allocation observations and 108 semantic checks on the same accepted
    runtime for insertion, dense updates and repeated overwrites. These counters
