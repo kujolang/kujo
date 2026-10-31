@@ -2592,6 +2592,86 @@ impl VM {
         })
     }
 
+    /// Read named operands while borrowing immutable opcode metadata. Resolution
+    /// and value cloning remain unchanged; no reference survives this operation.
+    fn execute_named_load(&mut self) -> Result<(), String> {
+        let instruction = &self.chunk.instructions[self.ip];
+        self.ip += 1;
+        match instruction {
+            OpCode::LoadVar(name) => {
+                // Look in current call frame first - check captured variables (Arc<Mutex<Value>>) first, then locals
+                let value = if let Some(frame) = self.call_frames.last() {
+                    if std::env::var("DEBUG_VM").is_ok() {
+                        eprintln!("LoadVar('{}'):  checking frame captured ({} entries) and locals ({} entries)",
+                        name, frame.captured.len(), frame.locals.len());
+                    }
+
+                    // Check captured variables first (these are shared mutable references)
+                    if let Some(captured_ref) = frame.captured.get(name) {
+                        if std::env::var("DEBUG_VM").is_ok() {
+                            eprintln!("LoadVar('{}'): found in captured", name);
+                        }
+                        Some(captured_ref.lock().unwrap().clone())
+                    } else {
+                        // Fall back to locals
+                        frame.locals.get(name).cloned()
+                    }
+                } else {
+                    if std::env::var("DEBUG_VM").is_ok() {
+                        eprintln!("LoadVar('{}'): no call frame", name);
+                    }
+                    None
+                };
+
+                let value = value
+                    .or_else(|| {
+                        let global_val = self.resolve_global_value(name);
+                        if std::env::var("DEBUG_VM").is_ok() {
+                            eprintln!(
+                                "LoadVar('{}'): checking globals -> {:?}",
+                                name,
+                                global_val.is_some()
+                            );
+                        }
+                        global_val
+                    })
+                    .ok_or_else(|| {
+                        if std::env::var("DEBUG_VM").is_ok() {
+                            eprintln!(
+                                "LoadVar('{}'): FAILED - not in captured, locals or globals",
+                                name
+                            );
+                            eprintln!(
+                                "  Current frame captured: {:?}",
+                                self.call_frames
+                                    .last()
+                                    .map(|f| f.captured.keys().collect::<Vec<_>>())
+                            );
+                            eprintln!(
+                                "  Current frame locals: {:?}",
+                                self.call_frames
+                                    .last()
+                                    .map(|f| f.locals.keys().collect::<Vec<_>>())
+                            );
+                        }
+                        Self::undefined_variable_message(name)
+                    })?;
+
+                self.stack.push(value);
+            }
+
+            OpCode::LoadGlobal(name) => {
+                let value = self
+                    .resolve_global_value(name)
+                    .ok_or_else(|| Self::undefined_variable_message(name))?;
+                self.stack.push(value);
+            }
+
+            _ => unreachable!("expected named load opcode"),
+        }
+        Ok(())
+    }
+
     /// Consume a resolved write's operands without copying its opcode metadata.
     /// Short paths live on this call's stack; arbitrary deeper paths keep the
     /// existing owned storage. No values survive the operation in a reuse pool.
@@ -3202,14 +3282,17 @@ impl VM {
                 }
             }
 
-            // Resolve assignment paths before cloning the opcode: its immutable
-            // shape is needed only while consuming the already-evaluated indices.
-            if matches!(
-                &self.chunk.instructions[self.ip],
-                OpCode::UpdateBindingPath(_, _) | OpCode::UpdatePath(_)
-            ) {
-                self.execute_path_update()?;
-                continue;
+            // These operations only borrow opcode metadata while resolving values.
+            match &self.chunk.instructions[self.ip] {
+                OpCode::LoadVar(_) | OpCode::LoadGlobal(_) => {
+                    self.execute_named_load()?;
+                    continue;
+                }
+                OpCode::UpdateBindingPath(_, _) | OpCode::UpdatePath(_) => {
+                    self.execute_path_update()?;
+                    continue;
+                }
+                _ => {}
             }
             let instruction = self.chunk.instructions[self.ip].clone();
             self.ip += 1;
@@ -3272,73 +3355,8 @@ impl VM {
                     self.stack.push(value);
                 }
 
-                OpCode::LoadVar(name) => {
-                    // Look in current call frame first - check captured variables (Arc<Mutex<Value>>) first, then locals
-                    let value = if let Some(frame) = self.call_frames.last() {
-                        if std::env::var("DEBUG_VM").is_ok() {
-                            eprintln!("LoadVar('{}'):  checking frame captured ({} entries) and locals ({} entries)", 
-                                name, frame.captured.len(), frame.locals.len());
-                        }
-
-                        // Check captured variables first (these are shared mutable references)
-                        if let Some(captured_ref) = frame.captured.get(&name) {
-                            if std::env::var("DEBUG_VM").is_ok() {
-                                eprintln!("LoadVar('{}'): found in captured", name);
-                            }
-                            Some(captured_ref.lock().unwrap().clone())
-                        } else {
-                            // Fall back to locals
-                            frame.locals.get(&name).cloned()
-                        }
-                    } else {
-                        if std::env::var("DEBUG_VM").is_ok() {
-                            eprintln!("LoadVar('{}'): no call frame", name);
-                        }
-                        None
-                    };
-
-                    let value = value
-                        .or_else(|| {
-                            let global_val = self.resolve_global_value(&name);
-                            if std::env::var("DEBUG_VM").is_ok() {
-                                eprintln!(
-                                    "LoadVar('{}'): checking globals -> {:?}",
-                                    name,
-                                    global_val.is_some()
-                                );
-                            }
-                            global_val
-                        })
-                        .ok_or_else(|| {
-                            if std::env::var("DEBUG_VM").is_ok() {
-                                eprintln!(
-                                    "LoadVar('{}'): FAILED - not in captured, locals or globals",
-                                    name
-                                );
-                                eprintln!(
-                                    "  Current frame captured: {:?}",
-                                    self.call_frames
-                                        .last()
-                                        .map(|f| f.captured.keys().collect::<Vec<_>>())
-                                );
-                                eprintln!(
-                                    "  Current frame locals: {:?}",
-                                    self.call_frames
-                                        .last()
-                                        .map(|f| f.locals.keys().collect::<Vec<_>>())
-                                );
-                            }
-                            Self::undefined_variable_message(&name)
-                        })?;
-
-                    self.stack.push(value);
-                }
-
-                OpCode::LoadGlobal(name) => {
-                    let value = self
-                        .resolve_global_value(&name)
-                        .ok_or_else(|| Self::undefined_variable_message(&name))?;
-                    self.stack.push(value);
+                OpCode::LoadVar(_) | OpCode::LoadGlobal(_) => {
+                    unreachable!("named loads execute before opcode cloning")
                 }
 
                 OpCode::StoreVar(name) => {
