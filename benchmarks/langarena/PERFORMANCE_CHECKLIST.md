@@ -19,10 +19,12 @@ Clean-host comparisons remain pending.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest verified runtime `f415211`: 150/150 test-size checksums across VM,
-  interpreter and JIT (`root-array-collection-publication-2026-10-29.json`).
-- [x] Latest relevant gate: 1,254 library passes, eight ignored; 409 distinct
-  integration passes, one manual profiling test ignored (`root-array-collection-publication-2026-10-29.json`).
+- [x] Latest accepted runtime `fd7b764`: 150/150 test-size checksums across VM,
+  interpreter and JIT ([native field ABI verification](NATIVE_FIELD_ABI_FIX_2026_10_31.md)).
+  Subsequent experimental candidates are not accepted baselines.
+- [x] Latest accepted-runtime gate: 1,309 library passes, eight existing manual
+  ignores, and 15 targeted integration passes. This is not a rerun of the full
+  integration corpus; earlier broader gates retain their own source identities.
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -926,7 +928,7 @@ time, resource evidence and limitations for every case and runtime.
 | Distance::Jaro | [ ] | [ ] | [ ] |
 | Distance::NGram | [ ] | [ ] | [ ] |
 
-- [x] Recheck all 150 test-size combinations on `26105f4`; [verified current evidence](LOCAL_FIELD_READS_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
+- [x] Recheck all 150 test-size combinations on accepted `fd7b764`; [verified current evidence](NATIVE_FIELD_ABI_FIX_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
