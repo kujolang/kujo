@@ -828,6 +828,14 @@ defects have separate verified fixes in section 3.
   native callback regression protects post-callback debug-flag visibility; no
   runtime optimization or competitive speed claim is made from these samples.
 
+- [x] Isolate native root-count scaling on the accepted runtime.
+  [Root lifecycle baseline](NATIVE_ROOT_READ_SCALING_2026_10_31.md) verifies 72
+  helper observations and 126 independent map controls. Scalar reads remain
+  roughly flat; owned-row read/validate/release cycles grow 3.19–3.75× from one
+  to 2,048 live roots. Identity-hash insert/get/remove controls reproduce growth,
+  while multiplied hashing trades slightly slower lookups for flatter lifecycle
+  cost. This is a candidate mechanism, not an accepted runtime fix or speedup.
+
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
 - [ ] Preserve integer/Boolean/float/error semantics.
