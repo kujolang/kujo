@@ -1671,6 +1671,12 @@ impl Compiler {
             }
 
             Expr::FieldAccess { object, field } => {
+                if let Expr::Identifier(name) = &**object {
+                    if let Some(slot) = self.resolve_local_slot(name) {
+                        self.chunk.emit(OpCode::FieldGetLocal(slot, field.clone()));
+                        return Ok(());
+                    }
+                }
                 self.compile_expr(object)?;
                 self.chunk.emit(OpCode::FieldGet(field.clone()));
                 Ok(())

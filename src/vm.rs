@@ -2594,6 +2594,13 @@ impl VM {
 
     /// Read named operands while borrowing immutable opcode metadata. Resolution
     /// and value cloning remain unchanged; no reference survives this operation.
+    fn read_local_field(&self, slot: usize, field: &str) -> Result<(Value, Option<Value>), String> {
+        let frame = self.call_frames.last().ok_or("FieldGetLocal requires call frame")?;
+        let object =
+            frame.local_slots.get(slot).ok_or_else(|| format!("Invalid local slot: {}", slot))?;
+        Self::get_field_value(object, field, |name| self.globals.lock().unwrap().get(name))
+    }
+
     fn execute_named_load(&mut self) -> Result<(), String> {
         let instruction = &self.chunk.instructions[self.ip];
         self.ip += 1;
@@ -2959,6 +2966,7 @@ impl VM {
                                 {
                                     match instr {
                                         OpCode::LoadLocal(slot)
+                                        | OpCode::FieldGetLocal(slot, _)
                                         | OpCode::StoreLocal(slot)
                                         | OpCode::DefineLocal(slot)
                                         | OpCode::ReleaseDeadLocal(slot) => {
@@ -3284,6 +3292,20 @@ impl VM {
 
             // These operations only borrow opcode metadata while resolving values.
             match &self.chunk.instructions[self.ip] {
+                OpCode::FieldGetLocal(slot, field) => {
+                    let result = self.read_local_field(*slot, field);
+                    self.ip += 1;
+                    match result {
+                        Ok((value, receiver)) => {
+                            if let Some(receiver) = receiver {
+                                self.stack.push(receiver);
+                            }
+                            self.stack.push(value);
+                        }
+                        Err(error) => self.throw_runtime_value(Value::Error(error))?,
+                    }
+                    continue;
+                }
                 OpCode::LoadVar(_) | OpCode::LoadGlobal(_) => {
                     self.execute_named_load()?;
                     continue;
@@ -5454,6 +5476,8 @@ impl VM {
                     self.stack.push(Value::Null);
                 }
 
+                OpCode::FieldGetLocal(_, _) => unreachable!("handled before opcode cloning"),
+
                 OpCode::FieldGet(field) => {
                     let object = self.stack.pop().ok_or("Stack underflow")?;
                     let result = Self::get_field_value(&object, &field, |name| {
@@ -6585,6 +6609,7 @@ impl VM {
                         | OpCode::IndexGet
                         | OpCode::IndexGetInPlace(_)
                         | OpCode::FieldGet(_)
+                        | OpCode::FieldGetLocal(_, _)
                         | OpCode::PushScope
                         | OpCode::PopScope
                         | OpCode::ReleaseDeadLocal(_)
@@ -9109,6 +9134,7 @@ impl VM {
                             | OpCode::Call(_)
                             | OpCode::CallNative(_, _)
                             | OpCode::FieldGet(_)
+                            | OpCode::FieldGetLocal(_, _)
                             | OpCode::MakeStruct(_, _)
                             | OpCode::Jump(_)
                             | OpCode::JumpIfFalse(_)
@@ -9559,6 +9585,14 @@ impl VM {
                             }?;
 
                             self.stack.push(result);
+                        }
+
+                        OpCode::FieldGetLocal(slot, field) => {
+                            let (value, receiver) = self.read_local_field(slot, &field)?;
+                            if let Some(receiver) = receiver {
+                                self.stack.push(receiver);
+                            }
+                            self.stack.push(value);
                         }
 
                         OpCode::FieldGet(field) => {

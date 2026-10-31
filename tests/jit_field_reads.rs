@@ -2,6 +2,53 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
+fn local_field_reads_preserve_integer_dictionary_loop_admission() {
+    // VM field lookup supports integer dictionaries. The interpreter does not
+    // promise dictionary dot access; its portable dictionary syntax is indexing.
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("mixed_fields.kujo");
+    std::fs::write(
+        &path,
+        r#"
+func once() {
+    mut data := {}
+    data[0] = 7
+    data[-1] = 1
+    mut i := 0
+    mut sum := 0
+    while i < 200 {
+        sum += data[0]
+        assert_equal(data.missing,null)
+        data[0] = 7
+        i += 1
+    }
+    return sum
+}
+assert_equal(once(),1400)
+print("PASS")
+"#,
+    )
+    .unwrap();
+    for mode in ["vm", "jit"] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command
+            .args(["run", "--scheduler-no-timeout"])
+            .env("DISABLE_FUNCTION_JIT", "1")
+            .env("DEBUG_JIT_LOOP", "1");
+        if mode == "jit" {
+            command.arg("--jit");
+        }
+        let output = command.arg(&path).output().unwrap();
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(output.status.success(), "{mode}: {stderr}");
+        assert_eq!(output.stdout, b"PASS\n");
+        if mode == "jit" {
+            assert!(stderr.contains("Executing compiled loop"), "{stderr}");
+        }
+    }
+}
+
+#[test]
 fn local_field_reads_survive_receiver_replacement_and_return() {
     for name_length in [8, 256] {
         let name = format!("T{}", "x".repeat(name_length - 1));

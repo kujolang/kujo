@@ -5711,6 +5711,7 @@ impl BytecodeTranslator {
 
             // Dict/Array operations
             OpCode::FieldGet(_) => (1, 1),
+            OpCode::FieldGetLocal(_, _) => (0, 1),
             OpCode::FieldSet(_) => (2, 1),
             OpCode::GuardAppendPath(_) => (0, 0),
             OpCode::TryPopRebind(_, _, _, shape, _) => {
@@ -7238,6 +7239,47 @@ impl BytecodeTranslator {
                 self.release_operand(builder, object);
                 self.release_operand(builder, value);
                 self.push_value(result);
+                return Ok(false);
+            }
+
+            OpCode::FieldGetLocal(slot, name) => {
+                // A local owns its root for the whole read. Only the returned
+                // field needs an independent root; never release the receiver.
+                let variable = self.local_names.get(*slot).and_then(|local| {
+                    if self.use_local_slots && !self.non_int_locals.contains(local) {
+                        self.local_variables.get(local).copied()
+                    } else {
+                        None
+                    }
+                });
+                if let Some(variable) = variable {
+                    let object = builder.use_var(variable);
+                    let kind = builder.use_var(Variable::new(variable.index() + 1));
+                    let ctx = self.ctx_param.ok_or("Field read requires context")?;
+                    let helper = self.field_read_func.ok_or("Field read requires helper")?;
+                    let name =
+                        self.field_names.get(name).ok_or("Field read requires retained name")?;
+                    let pointer = builder.ins().iconst(types::I64, Arc::as_ptr(name) as i64);
+                    let call = builder.ins().call(helper, &[ctx, object, kind, pointer]);
+                    let result = builder.inst_results(call)[0];
+                    self.capture_loaded_operand(builder, ctx, result);
+                    self.push_value(result);
+                } else {
+                    // Preserve the existing lookup for non-register locals.
+                    self.translate_instruction(builder, pc, &OpCode::LoadLocal(*slot), constants)?;
+                    let object = self.pop_value()?;
+                    let ctx = self.ctx_param.ok_or("Field read requires context")?;
+                    let helper = self.field_read_func.ok_or("Field read requires helper")?;
+                    let name =
+                        self.field_names.get(name).ok_or("Field read requires retained name")?;
+                    let pointer = builder.ins().iconst(types::I64, Arc::as_ptr(name) as i64);
+                    let kind = self.scalar_kind(builder, object);
+                    let call = builder.ins().call(helper, &[ctx, object, kind, pointer]);
+                    let result = builder.inst_results(call)[0];
+                    self.capture_loaded_operand(builder, ctx, result);
+                    self.release_operand(builder, object);
+                    self.push_value(result);
+                }
                 return Ok(false);
             }
 
@@ -9247,7 +9289,7 @@ impl BytecodeTranslator {
     }
 
     fn guard_loop_callback(
-        &self,
+        &mut self,
         builder: &mut FunctionBuilder,
         pc: usize,
         instruction: &OpCode,
@@ -9266,7 +9308,7 @@ impl BytecodeTranslator {
             | OpCode::GreaterThan
             | OpCode::GreaterEqual
             | OpCode::ForNext(_) => 2,
-            OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) => 1,
+            OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _) => 1,
             OpCode::Call(_) | OpCode::Return | OpCode::ReturnNone => 0,
             _ => return Ok(false),
         };
@@ -9290,9 +9332,25 @@ impl BytecodeTranslator {
             self.emit_return(builder, status);
             return Ok(true);
         }
-        let index =
-            self.value_stack.len().checked_sub(depth).ok_or("Callback guard stack underflow")?;
-        let value = self.value_stack[index];
+        // A local field opcode has no receiver on the operand stack. Load a
+        // temporary for inspection, but keep it off the stack reconstructed at
+        // deoptimization: the VM will re-read the local at this instruction.
+        let local_receiver = if let OpCode::FieldGetLocal(slot, _) = instruction {
+            self.translate_instruction(builder, pc, &OpCode::LoadLocal(*slot), &[])?;
+            Some(self.pop_value()?)
+        } else {
+            None
+        };
+        let value = if let Some(value) = local_receiver {
+            value
+        } else {
+            let index = self
+                .value_stack
+                .len()
+                .checked_sub(depth)
+                .ok_or("Callback guard stack underflow")?;
+            self.value_stack[index]
+        };
         let kind = self.scalar_kind(builder, value);
         let resume = builder.create_block();
         let proceed = builder.create_block();
@@ -9301,7 +9359,8 @@ impl BytecodeTranslator {
         builder.ins().brif(owned, inspect, &[], proceed, &[]);
         builder.seal_block(inspect);
         builder.switch_to_block(inspect);
-        let guard_kind = if matches!(instruction, OpCode::FieldGet(_)) {
+        let guard_kind = if matches!(instruction, OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _))
+        {
             builder.ins().iconst(types::I64, -2)
         } else if matches!(instruction, OpCode::ForNext(_)) {
             builder.ins().iconst(types::I64, -3)
@@ -9322,9 +9381,15 @@ impl BytecodeTranslator {
             builder.ins().call(push, &[ctx, *value, kind]);
         }
         self.persist_local_slots(builder, true);
+        if let Some(value) = local_receiver {
+            self.release_operand(builder, value);
+        }
         let status = builder.ins().iconst(types::I64, 2);
         self.emit_return(builder, status);
         builder.switch_to_block(proceed);
+        if let Some(value) = local_receiver {
+            self.release_operand(builder, value);
+        }
         Ok(false)
     }
 
@@ -9843,7 +9908,10 @@ impl JitCompiler {
             .instructions
             .iter()
             .filter_map(|instruction| {
-                let (OpCode::FieldGet(name) | OpCode::FieldSet(name)) = instruction else {
+                let (OpCode::FieldGet(name)
+                | OpCode::FieldGetLocal(_, name)
+                | OpCode::FieldSet(name)) = instruction
+                else {
                     return None;
                 };
                 let retained =
@@ -10284,9 +10352,11 @@ impl JitCompiler {
             OpCode::AddInPlace(_) => false,
 
             // Dict/Array operations - in-place ops supported for int paths
-            OpCode::FieldGet(_) | OpCode::FieldSet(_) | OpCode::IndexGet | OpCode::ForNext(_) => {
-                true
-            }
+            OpCode::FieldGet(_)
+            | OpCode::FieldGetLocal(_, _)
+            | OpCode::FieldSet(_)
+            | OpCode::IndexGet
+            | OpCode::ForNext(_) => true,
             OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
             OpCode::IndexSet => true,
             OpCode::IndexGetInPlace(_)
@@ -10741,8 +10811,11 @@ impl JitCompiler {
                 .windows(2)
                 .enumerate()
                 .filter_map(|(pc, pair)| {
-                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
-                        .then_some(pc + 1)
+                    matches!(
+                        (&pair[0], &pair[1]),
+                        (OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _), OpCode::Call(_))
+                    )
+                    .then_some(pc + 1)
                 })
                 .collect();
             translator.field_names = field_names;
@@ -11506,8 +11579,11 @@ impl JitCompiler {
                 .windows(2)
                 .enumerate()
                 .filter_map(|(pc, pair)| {
-                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
-                        .then_some(pc + 1)
+                    matches!(
+                        (&pair[0], &pair[1]),
+                        (OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _), OpCode::Call(_))
+                    )
+                    .then_some(pc + 1)
                 })
                 .collect();
             translator.field_names = field_names;
@@ -11810,8 +11886,11 @@ impl JitCompiler {
                 .windows(2)
                 .enumerate()
                 .filter_map(|(pc, pair)| {
-                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
-                        .then_some(pc + 1)
+                    matches!(
+                        (&pair[0], &pair[1]),
+                        (OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _), OpCode::Call(_))
+                    )
+                    .then_some(pc + 1)
                 })
                 .collect();
             translator.field_names = field_names;
@@ -12460,8 +12539,11 @@ impl JitCompiler {
                 .windows(2)
                 .enumerate()
                 .filter_map(|(pc, pair)| {
-                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
-                        .then_some(pc + 1)
+                    matches!(
+                        (&pair[0], &pair[1]),
+                        (OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _), OpCode::Call(_))
+                    )
+                    .then_some(pc + 1)
                 })
                 .collect();
             translator.field_names = field_names;

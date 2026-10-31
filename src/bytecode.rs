@@ -252,6 +252,9 @@ pub enum OpCode {
     /// Operand: field name
     FieldGet(String),
 
+    /// Read a local receiver without cloning it; the returned field is independent.
+    FieldGetLocal(usize, String),
+
     /// Pop value and object, set object.field = value
     /// Operand: field name
     FieldSet(String),
