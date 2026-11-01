@@ -5706,5 +5706,11 @@
     "workload_report": "DEPTH_CACHE_WORKLOAD_COMPARISON_2026_11_01.md",
     "integrated_source_manifest_files": 890,
     "limits": "Loaded-host observations only. Broader section 5, production-size matrix and clean-host comparisons remain open."
+  },
+  "accepted_depth_profiles_2026_11_01": {
+    "status": "six_profiles_verified",
+    "runtime_commit": "55e2f6836dac3016c3446a7477022c09a4ab47d7",
+    "report": "ACCEPTED_DEPTH_PROFILES_2026_11_01.md",
+    "next": "Isolate pre-invocation debug environment lookup cost; preserve post-callback flag visibility."
   }
 }
