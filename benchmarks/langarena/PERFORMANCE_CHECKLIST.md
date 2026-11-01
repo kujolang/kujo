@@ -788,6 +788,10 @@ defects have separate verified fixes in section 3.
   candidate measurement and semantic regression gates remain open.
 
 - [ ] Refresh per-benchmark native execution/fallback evidence.
+  [Accepted-validation census](ACCEPTED_VALIDATION_CENSUS_2026_11_01.md) verifies
+  all 100 VM/JIT cases on `782c712d`. Call/native/compilation/cache event counts
+  match the previous census; threaded scheduling counters vary. Precise CPU
+  coverage and code-memory lifetime measurement remain open.
   Latest [accepted-loop census](ACCEPTED_LOOP_CENSUS_2026_11_01.md) verifies all 100 VM/JIT checksum cases and event inventories on `348a6270`. Precise CPU attribution remains open; old profiles do not certify this revision.
   [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
   checksums and exact event inventories. Every JIT case records native entries;
