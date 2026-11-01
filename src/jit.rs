@@ -184,6 +184,11 @@ impl NativeStackBases {
 
 impl VMContext {
     /// Refresh only VM-owned views; this function's named-local map is separately owned.
+    // SAFETY:
+    // - Preconditions: any non-null vm_ptr is a live, exclusively accessible VM;
+    //   no references into its globals/slots survive the refresh operation.
+    // - Postconditions: eligible VM-owned pointers reference the VM's current
+    //   containers; loop-environment and separately owned local views stay intact.
     unsafe fn refresh_vm_views(&mut self) {
         if !self.vm_owned_views || !self.loop_environment_ptr.is_null() {
             return;
@@ -869,8 +874,11 @@ pub unsafe extern "C" fn jit_load_variable(
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. The root store validates the
-// operand identity and creates a distinct root in the current activation.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusively accessible;
+//   its root store belongs to the current native activation.
+// - Postconditions: validated owned operands receive a distinct root; immediate
+//   payloads retain their codec semantics. Invalid roots set runtime_error.
 pub unsafe extern "C" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     match ctx.owned_roots.duplicate(value, kind) {
@@ -883,8 +891,11 @@ pub unsafe extern "C" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Only a validated current-scope
-// root can be released; payloads are never treated as raw pointers.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusively accessible;
+//   its root store belongs to the current native activation.
+// - Postconditions: the codec releases validated owned roots without interpreting
+//   payloads as pointers; errors set runtime_error and return a failure status.
 pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     match ctx.owned_roots.release(value, kind) {
@@ -899,8 +910,12 @@ pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, ki
 /// Remove a dead binding. Whole-function contexts borrow the caller's slot
 /// vector, so only loop contexts may clear a physical VM local slot.
 #[no_mangle]
-// SAFETY: context maps and (for loop contexts) local slots remain exclusively
-// borrowed for this call. Validate the slot before changing either container.
+// SAFETY:
+// - Preconditions: ctx and non-null map/slot pointers are aligned and live;
+//   mutated maps/slots are exclusive, and the name map remains immutable.
+//   clear_vm_slot is requested only for a VM-owned loop slot vector.
+// - Postconditions: validated slots are cleared and the named binding removed;
+//   absent names/slots report an error before their corresponding mutation.
 pub unsafe extern "C" fn jit_release_dead_local(
     ctx: *mut VMContext,
     slot: usize,
@@ -927,9 +942,12 @@ pub unsafe extern "C" fn jit_release_dead_local(
 
 /// Transfer a named parameter into the active native frame.
 #[no_mangle]
-// SAFETY: ctx and its local/name maps remain live and exclusively borrowed.
-// Parameter initialization runs after native frame entry. Transfer the local
-// value into that frame's roots rather than retaining an artificial COW alias.
+// SAFETY:
+// - Preconditions: ctx and non-null local/name maps are aligned and live;
+//   locals and roots are exclusive, names immutable, and native frame entry
+//   precedes parameter initialization.
+// - Postconditions: the selected argument or named binding transfers into the
+//   active frame's codec; return_value_kind describes success, errors are recorded.
 pub unsafe extern "C" fn jit_take_parameter(
     ctx: *mut VMContext,
     name_hash: i64,
@@ -972,8 +990,11 @@ pub unsafe extern "C" fn jit_take_parameter(
 
 /// Load a retained immutable literal through the ordinary owned-value codec.
 #[no_mangle]
-// SAFETY: generated code passes a Value allocation retained by JitCompiler for
-// the lifetime of the machine code. ctx is live and exclusively borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusive; nonzero pointer
+//   addresses an aligned immutable Value retained by JitCompiler for this call.
+// - Postconditions: the literal is cloned into the active frame's codec without
+//   transferring its allocation; missing literals/codec failures record an error.
 pub unsafe extern "C" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
@@ -995,8 +1016,11 @@ pub unsafe extern "C" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> 
 
 /// Load a named operand without leaving hidden values on the VM stack.
 #[no_mangle]
-// SAFETY: ctx and the referenced name/local/global maps remain live for this
-// call. Values are cloned through their ordinary ownership contract, not pointers.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusive; non-null name,
+//   local and global maps are aligned, live and immutable during lookup.
+// - Postconditions: a resolved value is cloned into the active frame's codec;
+//   missing names/values and codec failures record errors, not fabricated pointers.
 pub unsafe extern "C" fn jit_load_operand(
     ctx: *mut VMContext,
     name_hash: i64,

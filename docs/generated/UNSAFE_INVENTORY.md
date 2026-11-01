@@ -60,151 +60,151 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/jit.rs | 79 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 90 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
 | src/jit.rs | 98 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
-| src/jit.rs | 187 | executable | jit_executable |     unsafe fn refresh_vm_views(&mut self) { |
-| src/jit.rs | 373 | executable | jit_executable |             let vm = unsafe { &mut *(ctx.vm_ptr as *mut crate::vm::VM) }; |
-| src/jit.rs | 426 | executable | jit_executable | pub type CompiledFn = unsafe extern ""C"" fn(*mut VMContext) -> i64; |
-| src/jit.rs | 431 | executable | jit_executable | pub type CompiledFnWithArg = unsafe extern ""C"" fn(*mut VMContext, i64) -> i64; |
-| src/jit.rs | 433 | non_executable | jit_comment_or_doc | /// Invoke a compiled JIT function through one audited unsafe boundary. |
-| src/jit.rs | 451 | executable | jit_executable |     let status = unsafe { compiled_fn(ctx as *mut VMContext) }; |
-| src/jit.rs | 455 | non_executable | jit_comment_or_doc | /// Invoke a single-argument compiled JIT function through one audited unsafe boundary. |
-| src/jit.rs | 476 | executable | jit_executable |     let status = unsafe { compiled_fn(ctx as *mut VMContext, arg) }; |
-| src/jit.rs | 636 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_push(ctx: *mut VMContext, value: i64) { |
-| src/jit.rs | 655 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_pop(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 683 | executable | jit_executable | pub unsafe extern ""C"" fn jit_obj_push_string(ctx: *mut VMContext, ptr: i64, len: i64) -> i64 { |
-| src/jit.rs | 711 | executable | jit_executable | pub unsafe extern ""C"" fn jit_obj_to_vm_stack(ctx: *mut VMContext, handle: i64) -> i64 { |
-| src/jit.rs | 744 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_variable( |
-| src/jit.rs | 874 | executable | jit_executable | pub unsafe extern ""C"" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
-| src/jit.rs | 888 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
-| src/jit.rs | 904 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_dead_local( |
-| src/jit.rs | 933 | executable | jit_executable | pub unsafe extern ""C"" fn jit_take_parameter( |
-| src/jit.rs | 977 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> i64 { |
-| src/jit.rs | 1000 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_operand( |
-| src/jit.rs | 1044 | executable | jit_executable | pub unsafe extern ""C"" fn jit_field_read( |
-| src/jit.rs | 1113 | executable | jit_executable | pub unsafe extern ""C"" fn jit_field_write( |
-| src/jit.rs | 1162 | executable | jit_executable | pub unsafe extern ""C"" fn jit_index_set_result( |
-| src/jit.rs | 1219 | executable | jit_executable | pub unsafe extern ""C"" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64) -> i64 { |
-| src/jit.rs | 1248 | executable | jit_executable | pub unsafe extern ""C"" fn jit_for_next( |
-| src/jit.rs | 1313 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_read( |
-| src/jit.rs | 1328 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_read_cached( |
-| src/jit.rs | 1417 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> i64 { |
-| src/jit.rs | 1437 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_indexed_read( |
-| src/jit.rs | 1476 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_write( |
-| src/jit.rs | 1549 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_pop_rebind( |
-| src/jit.rs | 1748 | executable | jit_executable | pub unsafe extern ""C"" fn jit_guard_append_path( |
-| src/jit.rs | 1792 | executable | jit_executable | pub unsafe extern ""C"" fn jit_update_binding_path( |
-| src/jit.rs | 1817 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_binding_path( |
-| src/jit.rs | 1840 | executable | jit_executable | unsafe fn jit_mutate_binding_path( |
-| src/jit.rs | 2004 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
-| src/jit.rs | 2053 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -> i64 { |
-| src/jit.rs | 2066 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_operator( |
-| src/jit.rs | 2121 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 { |
-| src/jit.rs | 2149 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_local_slot( |
-| src/jit.rs | 2187 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable( |
-| src/jit.rs | 2229 | executable | jit_executable | pub unsafe extern ""C"" fn jit_scalar_type_error( |
-| src/jit.rs | 2262 | executable | jit_executable | pub unsafe extern ""C"" fn jit_arithmetic_error( |
-| src/jit.rs | 2286 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_initialization( |
-| src/jit.rs | 2326 | executable | jit_executable | pub unsafe extern ""C"" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 2343 | executable | jit_executable | pub unsafe extern ""C"" fn jit_assign_variable( |
-| src/jit.rs | 2423 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable_from_stack(ctx: *mut VMContext, name_hash: i64) -> i64 { |
-| src/jit.rs | 2473 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_local( |
-| src/jit.rs | 2570 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_result(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 2575 | executable | jit_executable | unsafe fn jit_append_target( |
-| src/jit.rs | 2601 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_rebind( |
-| src/jit.rs | 2674 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_string_append( |
-| src/jit.rs | 2765 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_append( |
-| src/jit.rs | 2882 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_const_string_in_place( |
-| src/jit.rs | 2939 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_const_char_in_place( |
-| src/jit.rs | 2999 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_dict_get( |
-| src/jit.rs | 3162 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_dict_set( |
-| src/jit.rs | 3437 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_int_dict_get( |
-| src/jit.rs | 3520 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_int_dict_set( |
-| src/jit.rs | 3668 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_unique_ptr(ctx: *mut VMContext, slot_index: i64) -> i64 { |
-| src/jit.rs | 3749 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
-| src/jit.rs | 3808 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
-| src/jit.rs | 3838 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_full_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
-| src/jit.rs | 3865 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_set_ptr(dict_ptr: i64, key: i64, value: i64) -> i64 { |
-| src/jit.rs | 3936 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_set_ptr( |
-| src/jit.rs | 3972 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_full_set_ptr( |
-| src/jit.rs | 4007 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_variable_float(ctx: *mut VMContext, name_hash: i64) -> f64 { |
-| src/jit.rs | 4053 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable_float(ctx: *mut VMContext, name_hash: i64, value: f64) { |
-| src/jit.rs | 4088 | executable | jit_executable | pub unsafe extern ""C"" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64) -> i64 { |
-| src/jit.rs | 4134 | executable | jit_executable | pub unsafe extern ""C"" fn jit_check_type_float(ctx: *mut VMContext, name_hash: i64) -> i64 { |
-| src/jit.rs | 4180 | executable | jit_executable | pub unsafe extern ""C"" fn jit_push_int(ctx: *mut VMContext, value: i64) -> i64 { |
-| src/jit.rs | 4216 | executable | jit_executable | pub unsafe extern ""C"" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> i64 { |
-| src/jit.rs | 4231 | executable | jit_executable | pub unsafe extern ""C"" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
-| src/jit.rs | 4241 | executable | jit_executable | pub unsafe extern ""C"" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 4248 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i64 { |
-| src/jit.rs | 4262 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_equal( |
-| src/jit.rs | 4281 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) { |
-| src/jit.rs | 4301 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_take_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
-| src/jit.rs | 4327 | executable | jit_executable |     unsafe { jit_set_return_int(ctx as *mut VMContext, value) } |
-| src/jit.rs | 4340 | executable | jit_executable | pub unsafe extern ""C"" fn jit_get_return_int(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 4364 | executable | jit_executable | pub unsafe extern ""C"" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash: i64) -> i64 { |
-| src/jit.rs | 4380 | executable | jit_executable | pub unsafe extern ""C"" fn jit_enter_function(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 4424 | executable | jit_executable | pub unsafe extern ""C"" fn jit_leave_function(ctx: *mut VMContext) { |
-| src/jit.rs | 4465 | executable | jit_executable | pub unsafe extern ""C"" fn jit_call_function( |
-| src/jit.rs | 4586 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dict_get(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 4717 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dict_set(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 5197 | executable | jit_executable |         let (name, names) = unsafe { &*(shape_ptr as *const NativeStructShape) }; |
-| src/jit.rs | 5239 | executable | jit_executable |         let keys = unsafe { &*(keys_ptr as *const Vec<Arc<str>>) }; |
-| src/jit.rs | 5246 | executable | jit_executable |         let owned_keys = unsafe { |
-| src/jit.rs | 12884 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1); |
-| src/jit.rs | 12888 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1); |
-| src/jit.rs | 12893 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 0); |
-| src/jit.rs | 12894 | executable | jit_executable |         unsafe { jit_leave_function(&mut context) }; |
-| src/jit.rs | 13051 | executable | jit_executable |                         let pair = unsafe { |
-| src/jit.rs | 13147 | executable | jit_executable |                         unsafe { |
-| src/jit.rs | 13163 | executable | jit_executable |                         unsafe { |
-| src/jit.rs | 13225 | executable | jit_executable |                 let updated = unsafe { |
-| src/jit.rs | 13242 | executable | jit_executable |             let updated = unsafe { |
-| src/jit.rs | 13278 | executable | jit_executable |                 unsafe { |
-| src/jit.rs | 13427 | executable | jit_executable |                     unsafe { |
-| src/jit.rs | 13452 | executable | jit_executable |                 unsafe { |
+| src/jit.rs | 192 | executable | jit_executable |     unsafe fn refresh_vm_views(&mut self) { |
+| src/jit.rs | 378 | executable | jit_executable |             let vm = unsafe { &mut *(ctx.vm_ptr as *mut crate::vm::VM) }; |
+| src/jit.rs | 431 | executable | jit_executable | pub type CompiledFn = unsafe extern ""C"" fn(*mut VMContext) -> i64; |
+| src/jit.rs | 436 | executable | jit_executable | pub type CompiledFnWithArg = unsafe extern ""C"" fn(*mut VMContext, i64) -> i64; |
+| src/jit.rs | 438 | non_executable | jit_comment_or_doc | /// Invoke a compiled JIT function through one audited unsafe boundary. |
+| src/jit.rs | 456 | executable | jit_executable |     let status = unsafe { compiled_fn(ctx as *mut VMContext) }; |
+| src/jit.rs | 460 | non_executable | jit_comment_or_doc | /// Invoke a single-argument compiled JIT function through one audited unsafe boundary. |
+| src/jit.rs | 481 | executable | jit_executable |     let status = unsafe { compiled_fn(ctx as *mut VMContext, arg) }; |
+| src/jit.rs | 641 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_push(ctx: *mut VMContext, value: i64) { |
+| src/jit.rs | 660 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_pop(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 688 | executable | jit_executable | pub unsafe extern ""C"" fn jit_obj_push_string(ctx: *mut VMContext, ptr: i64, len: i64) -> i64 { |
+| src/jit.rs | 716 | executable | jit_executable | pub unsafe extern ""C"" fn jit_obj_to_vm_stack(ctx: *mut VMContext, handle: i64) -> i64 { |
+| src/jit.rs | 749 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_variable( |
+| src/jit.rs | 882 | executable | jit_executable | pub unsafe extern ""C"" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
+| src/jit.rs | 899 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
+| src/jit.rs | 919 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_dead_local( |
+| src/jit.rs | 951 | executable | jit_executable | pub unsafe extern ""C"" fn jit_take_parameter( |
+| src/jit.rs | 998 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> i64 { |
+| src/jit.rs | 1024 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_operand( |
+| src/jit.rs | 1068 | executable | jit_executable | pub unsafe extern ""C"" fn jit_field_read( |
+| src/jit.rs | 1137 | executable | jit_executable | pub unsafe extern ""C"" fn jit_field_write( |
+| src/jit.rs | 1186 | executable | jit_executable | pub unsafe extern ""C"" fn jit_index_set_result( |
+| src/jit.rs | 1243 | executable | jit_executable | pub unsafe extern ""C"" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64) -> i64 { |
+| src/jit.rs | 1272 | executable | jit_executable | pub unsafe extern ""C"" fn jit_for_next( |
+| src/jit.rs | 1337 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_read( |
+| src/jit.rs | 1352 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_read_cached( |
+| src/jit.rs | 1441 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> i64 { |
+| src/jit.rs | 1461 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_indexed_read( |
+| src/jit.rs | 1500 | executable | jit_executable | pub unsafe extern ""C"" fn jit_indexed_write( |
+| src/jit.rs | 1573 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_pop_rebind( |
+| src/jit.rs | 1772 | executable | jit_executable | pub unsafe extern ""C"" fn jit_guard_append_path( |
+| src/jit.rs | 1816 | executable | jit_executable | pub unsafe extern ""C"" fn jit_update_binding_path( |
+| src/jit.rs | 1841 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_binding_path( |
+| src/jit.rs | 1864 | executable | jit_executable | unsafe fn jit_mutate_binding_path( |
+| src/jit.rs | 2028 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
+| src/jit.rs | 2077 | executable | jit_executable | pub unsafe extern ""C"" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -> i64 { |
+| src/jit.rs | 2090 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_operator( |
+| src/jit.rs | 2145 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 { |
+| src/jit.rs | 2173 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_local_slot( |
+| src/jit.rs | 2211 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable( |
+| src/jit.rs | 2253 | executable | jit_executable | pub unsafe extern ""C"" fn jit_scalar_type_error( |
+| src/jit.rs | 2286 | executable | jit_executable | pub unsafe extern ""C"" fn jit_arithmetic_error( |
+| src/jit.rs | 2310 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_initialization( |
+| src/jit.rs | 2350 | executable | jit_executable | pub unsafe extern ""C"" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 2367 | executable | jit_executable | pub unsafe extern ""C"" fn jit_assign_variable( |
+| src/jit.rs | 2447 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable_from_stack(ctx: *mut VMContext, name_hash: i64) -> i64 { |
+| src/jit.rs | 2497 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_local( |
+| src/jit.rs | 2594 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_result(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 2599 | executable | jit_executable | unsafe fn jit_append_target( |
+| src/jit.rs | 2625 | executable | jit_executable | pub unsafe extern ""C"" fn jit_release_rebind( |
+| src/jit.rs | 2698 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_string_append( |
+| src/jit.rs | 2789 | executable | jit_executable | pub unsafe extern ""C"" fn jit_try_append( |
+| src/jit.rs | 2906 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_const_string_in_place( |
+| src/jit.rs | 2963 | executable | jit_executable | pub unsafe extern ""C"" fn jit_append_const_char_in_place( |
+| src/jit.rs | 3023 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_dict_get( |
+| src/jit.rs | 3186 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_dict_set( |
+| src/jit.rs | 3461 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_int_dict_get( |
+| src/jit.rs | 3544 | executable | jit_executable | pub unsafe extern ""C"" fn jit_local_slot_int_dict_set( |
+| src/jit.rs | 3692 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_unique_ptr(ctx: *mut VMContext, slot_index: i64) -> i64 { |
+| src/jit.rs | 3773 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
+| src/jit.rs | 3832 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
+| src/jit.rs | 3862 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_full_get_ptr(dict_ptr: i64, key: i64) -> i64 { |
+| src/jit.rs | 3889 | executable | jit_executable | pub unsafe extern ""C"" fn jit_int_dict_set_ptr(dict_ptr: i64, key: i64, value: i64) -> i64 { |
+| src/jit.rs | 3960 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_set_ptr( |
+| src/jit.rs | 3996 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dense_int_dict_int_full_set_ptr( |
+| src/jit.rs | 4031 | executable | jit_executable | pub unsafe extern ""C"" fn jit_load_variable_float(ctx: *mut VMContext, name_hash: i64) -> f64 { |
+| src/jit.rs | 4077 | executable | jit_executable | pub unsafe extern ""C"" fn jit_store_variable_float(ctx: *mut VMContext, name_hash: i64, value: f64) { |
+| src/jit.rs | 4112 | executable | jit_executable | pub unsafe extern ""C"" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64) -> i64 { |
+| src/jit.rs | 4158 | executable | jit_executable | pub unsafe extern ""C"" fn jit_check_type_float(ctx: *mut VMContext, name_hash: i64) -> i64 { |
+| src/jit.rs | 4204 | executable | jit_executable | pub unsafe extern ""C"" fn jit_push_int(ctx: *mut VMContext, value: i64) -> i64 { |
+| src/jit.rs | 4240 | executable | jit_executable | pub unsafe extern ""C"" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> i64 { |
+| src/jit.rs | 4255 | executable | jit_executable | pub unsafe extern ""C"" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
+| src/jit.rs | 4265 | executable | jit_executable | pub unsafe extern ""C"" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 4272 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i64 { |
+| src/jit.rs | 4286 | executable | jit_executable | pub unsafe extern ""C"" fn jit_owned_equal( |
+| src/jit.rs | 4305 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) { |
+| src/jit.rs | 4325 | executable | jit_executable | pub unsafe extern ""C"" fn jit_stack_take_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 { |
+| src/jit.rs | 4351 | executable | jit_executable |     unsafe { jit_set_return_int(ctx as *mut VMContext, value) } |
+| src/jit.rs | 4364 | executable | jit_executable | pub unsafe extern ""C"" fn jit_get_return_int(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 4388 | executable | jit_executable | pub unsafe extern ""C"" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash: i64) -> i64 { |
+| src/jit.rs | 4404 | executable | jit_executable | pub unsafe extern ""C"" fn jit_enter_function(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 4448 | executable | jit_executable | pub unsafe extern ""C"" fn jit_leave_function(ctx: *mut VMContext) { |
+| src/jit.rs | 4489 | executable | jit_executable | pub unsafe extern ""C"" fn jit_call_function( |
+| src/jit.rs | 4610 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dict_get(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 4741 | executable | jit_executable | pub unsafe extern ""C"" fn jit_dict_set(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 5221 | executable | jit_executable |         let (name, names) = unsafe { &*(shape_ptr as *const NativeStructShape) }; |
+| src/jit.rs | 5263 | executable | jit_executable |         let keys = unsafe { &*(keys_ptr as *const Vec<Arc<str>>) }; |
+| src/jit.rs | 5270 | executable | jit_executable |         let owned_keys = unsafe { |
+| src/jit.rs | 12908 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1); |
+| src/jit.rs | 12912 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1); |
+| src/jit.rs | 12917 | executable | jit_executable |         assert_eq!(unsafe { jit_enter_function(&mut context) }, 0); |
+| src/jit.rs | 12918 | executable | jit_executable |         unsafe { jit_leave_function(&mut context) }; |
+| src/jit.rs | 13075 | executable | jit_executable |                         let pair = unsafe { |
+| src/jit.rs | 13171 | executable | jit_executable |                         unsafe { |
+| src/jit.rs | 13187 | executable | jit_executable |                         unsafe { |
+| src/jit.rs | 13249 | executable | jit_executable |                 let updated = unsafe { |
+| src/jit.rs | 13266 | executable | jit_executable |             let updated = unsafe { |
+| src/jit.rs | 13302 | executable | jit_executable |                 unsafe { |
+| src/jit.rs | 13451 | executable | jit_executable |                     unsafe { |
 | src/jit.rs | 13476 | executable | jit_executable |                 unsafe { |
-| src/jit.rs | 13574 | executable | jit_executable |                         unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, index, 0) }; |
-| src/jit.rs | 13587 | executable | jit_executable |                 let updated = unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, 200, 0) }; |
-| src/jit.rs | 13678 | executable | jit_executable |             unsafe { |
-| src/jit.rs | 13743 | executable | jit_executable |         assert_eq!(unsafe { jit_loop_dense_view(&mut context, 0) }, 0); |
-| src/jit.rs | 13779 | executable | jit_executable |                 unsafe { |
-| src/jit.rs | 13791 | executable | jit_executable |             unsafe { jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, 7, 0) }, |
-| src/jit.rs | 13799 | executable | jit_executable |             unsafe { jit_indexed_write(&mut context, 1, root, kind, 1, hash as i64, 0, 0, 9, 0) }, |
-| src/jit.rs | 13930 | executable | jit_executable |                     unsafe { jit_indexed_read_cached(&mut context, root, kind, i, ik, pointer) }; |
-| src/jit.rs | 13954 | executable | jit_executable |             unsafe { |
-| src/jit.rs | 14005 | executable | jit_executable |             let result = unsafe { |
-| src/jit.rs | 14036 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 14150 | executable | jit_executable |                 unsafe { jit_append_local(&mut context, 1, payload, kind, 'a' as i64, -1) }, |
-| src/jit.rs | 14159 | executable | jit_executable |         assert_eq!(unsafe { jit_append_local(&mut context, 1, payload, kind, 'b' as i64, -1) }, 0); |
-| src/jit.rs | 14311 | executable | jit_executable |         let root = unsafe { jit_take_parameter(&mut context, hash as i64, 0) }; |
-| src/jit.rs | 14322 | executable | jit_executable |                 unsafe { |
-| src/jit.rs | 14892 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 14926 | executable | jit_executable |                 assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, expected); |
-| src/jit.rs | 14931 | executable | jit_executable |             assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, 0); |
-| src/jit.rs | 14946 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 14960 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
-| src/jit.rs | 14965 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
-| src/jit.rs | 14970 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
-| src/jit.rs | 14973 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0); |
-| src/jit.rs | 14996 | executable | jit_executable |             assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0); |
-| src/jit.rs | 15016 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 15041 | executable | jit_executable |         unsafe { jit_stack_push_scalar(&mut context, 123, 99) }; |
-| src/jit.rs | 15048 | executable | jit_executable |     unsafe extern ""C"" fn owned_lifetime_probe(ctx: *mut VMContext, depth: i64) -> i64 { |
-| src/jit.rs | 15069 | executable | jit_executable |     unsafe extern ""C"" fn owned_standard_probe(ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 15075 | executable | jit_executable |     unsafe extern ""C"" fn owned_direct_probe(ctx: *mut VMContext, depth: i64) -> i64 { |
-| src/jit.rs | 15123 | executable | jit_executable |                         unsafe { |
-| src/jit.rs | 15185 | executable | jit_executable |             unsafe { |
-| src/jit.rs | 15206 | executable | jit_executable |             unsafe { |
-| src/jit.rs | 15226 | executable | jit_executable |             unsafe { |
-| src/jit.rs | 15264 | executable | jit_executable |                     let result = unsafe { |
-| src/jit.rs | 15338 | executable | jit_executable |             unsafe { jit_for_next(&mut ctx, bytes, kind, 1, crate::native_scalar::INTEGER) }, |
-| src/jit.rs | 15345 | executable | jit_executable |             unsafe { jit_for_next(&mut ctx, bytes, kind, index, index_kind) }; |
-| src/jit.rs | 15351 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 15437 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn(_ctx: *mut VMContext) -> i64 { |
-| src/jit.rs | 15447 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn_with_arg(_ctx: *mut VMContext, arg: i64) -> i64 { |
-| src/jit.rs | 15533 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, -1); |
-| src/jit.rs | 15537 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 7); |
-| src/jit.rs | 15540 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9); |
-| src/jit.rs | 15555 | executable | jit_executable |         unsafe { |
-| src/jit.rs | 16665 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 13500 | executable | jit_executable |                 unsafe { |
+| src/jit.rs | 13598 | executable | jit_executable |                         unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, index, 0) }; |
+| src/jit.rs | 13611 | executable | jit_executable |                 let updated = unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, 200, 0) }; |
+| src/jit.rs | 13702 | executable | jit_executable |             unsafe { |
+| src/jit.rs | 13767 | executable | jit_executable |         assert_eq!(unsafe { jit_loop_dense_view(&mut context, 0) }, 0); |
+| src/jit.rs | 13803 | executable | jit_executable |                 unsafe { |
+| src/jit.rs | 13815 | executable | jit_executable |             unsafe { jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, 7, 0) }, |
+| src/jit.rs | 13823 | executable | jit_executable |             unsafe { jit_indexed_write(&mut context, 1, root, kind, 1, hash as i64, 0, 0, 9, 0) }, |
+| src/jit.rs | 13954 | executable | jit_executable |                     unsafe { jit_indexed_read_cached(&mut context, root, kind, i, ik, pointer) }; |
+| src/jit.rs | 13978 | executable | jit_executable |             unsafe { |
+| src/jit.rs | 14029 | executable | jit_executable |             let result = unsafe { |
+| src/jit.rs | 14060 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 14174 | executable | jit_executable |                 unsafe { jit_append_local(&mut context, 1, payload, kind, 'a' as i64, -1) }, |
+| src/jit.rs | 14183 | executable | jit_executable |         assert_eq!(unsafe { jit_append_local(&mut context, 1, payload, kind, 'b' as i64, -1) }, 0); |
+| src/jit.rs | 14335 | executable | jit_executable |         let root = unsafe { jit_take_parameter(&mut context, hash as i64, 0) }; |
+| src/jit.rs | 14346 | executable | jit_executable |                 unsafe { |
+| src/jit.rs | 14916 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 14950 | executable | jit_executable |                 assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, expected); |
+| src/jit.rs | 14955 | executable | jit_executable |             assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, 0); |
+| src/jit.rs | 14970 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 14984 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
+| src/jit.rs | 14989 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
+| src/jit.rs | 14994 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1); |
+| src/jit.rs | 14997 | executable | jit_executable |         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0); |
+| src/jit.rs | 15020 | executable | jit_executable |             assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0); |
+| src/jit.rs | 15040 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 15065 | executable | jit_executable |         unsafe { jit_stack_push_scalar(&mut context, 123, 99) }; |
+| src/jit.rs | 15072 | executable | jit_executable |     unsafe extern ""C"" fn owned_lifetime_probe(ctx: *mut VMContext, depth: i64) -> i64 { |
+| src/jit.rs | 15093 | executable | jit_executable |     unsafe extern ""C"" fn owned_standard_probe(ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 15099 | executable | jit_executable |     unsafe extern ""C"" fn owned_direct_probe(ctx: *mut VMContext, depth: i64) -> i64 { |
+| src/jit.rs | 15147 | executable | jit_executable |                         unsafe { |
+| src/jit.rs | 15209 | executable | jit_executable |             unsafe { |
+| src/jit.rs | 15230 | executable | jit_executable |             unsafe { |
+| src/jit.rs | 15250 | executable | jit_executable |             unsafe { |
+| src/jit.rs | 15288 | executable | jit_executable |                     let result = unsafe { |
+| src/jit.rs | 15362 | executable | jit_executable |             unsafe { jit_for_next(&mut ctx, bytes, kind, 1, crate::native_scalar::INTEGER) }, |
+| src/jit.rs | 15369 | executable | jit_executable |             unsafe { jit_for_next(&mut ctx, bytes, kind, index, index_kind) }; |
+| src/jit.rs | 15375 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 15461 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn(_ctx: *mut VMContext) -> i64 { |
+| src/jit.rs | 15471 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn_with_arg(_ctx: *mut VMContext, arg: i64) -> i64 { |
+| src/jit.rs | 15557 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, -1); |
+| src/jit.rs | 15561 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 7); |
+| src/jit.rs | 15564 | executable | jit_executable |         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9); |
+| src/jit.rs | 15579 | executable | jit_executable |         unsafe { |
+| src/jit.rs | 16689 | executable | jit_executable |         unsafe { |
 | src/module.rs | 966 | non_executable | src_comment_or_string |             ""expected unsafe traversal error, got: {}"", |
 | src/process_lifetime.rs | 29 | executable | src_executable_other |     let job = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) }; |
 | src/process_lifetime.rs | 37 | executable | src_executable_other |     let configured = unsafe { |
