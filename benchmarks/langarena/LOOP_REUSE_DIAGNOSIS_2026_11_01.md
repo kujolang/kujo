@@ -74,3 +74,14 @@ same correctness matrix and measurements; do not weaken checks to force a win.
 The companion bundle preserves all fixture sources, raw outputs, timing/counter
 reports, trace and runners with SHA-256 digests. Full compatibility run
 41273341615 remains pending. This is an owned active next task, not a release claim.
+
+## Callback fallback control
+
+`probes/loop_reuse/callback-condition.kujo` runs a condition callback across three
+300-iteration scans and asserts exactly 903 callback effects. On the pinned
+eb299e0 binary all three runtimes pass; JIT with whole-function compilation
+disabled enters native code once and resumes to VM (zero completed native loops).
+This gives a baseline for detecting excess re-entry with reusable loops. The
+new candidate has not yet been measured with this probe; no regression is claimed
+from source inspection alone. Trace counts and exact side effects are primary
+here, not loaded-host timing.

@@ -1,0 +1,18 @@
+# Isolate fallback re-entry with whole-function JIT disabled by the runner.
+# Count callback effects as well as checking the final loop result.
+mut calls := 0
+func bound(text) {
+    calls += 1
+    return len(text)
+}
+func scan(text) {
+    mut i := 0
+    while i < bound(text) { i += 1 }
+    return i
+}
+let text := repeat("x", 300)
+assert_equal(scan(text), 300)
+assert_equal(scan(text), 300)
+assert_equal(scan(text), 300)
+assert_equal(calls, 903)
+print("PASS 903")
