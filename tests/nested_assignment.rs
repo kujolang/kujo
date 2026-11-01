@@ -219,3 +219,41 @@ fn nested_assignment_falls_back_safely_with_jit_enabled() {
         true,
     );
 }
+
+#[test]
+fn mixed_depth_cache_owner_churn_preserves_snapshots_in_all_runtimes() {
+    for (vm, jit) in [(false, false), (true, false), (true, true)] {
+        run_with_jit(
+            r#"
+struct DepthState { row: array }
+mut arrays := [[0]]
+mut strings := {"row": [0]}
+mut integers := dict()
+integers[-2] = [0]
+mut state := DepthState { row: [0] }
+mut i := 1
+while i <= 1100 {
+    let old_arrays := arrays
+    let old_strings := strings
+    let old_integers := integers
+    let old_state := state
+    arrays[0][-1] = i
+    strings["row"][0] = i
+    integers[-2][0] = i
+    state.row[0] = i
+    assert_equal(old_arrays[0][0], i - 1)
+    assert_equal(old_strings["row"][0], i - 1)
+    assert_equal(old_integers[-2][0], i - 1)
+    assert_equal(old_state.row[0], i - 1)
+    i += 1
+}
+assert_equal(arrays, [[1100]])
+assert_equal(strings["row"], [1100])
+assert_equal(integers[-2], [1100])
+assert_equal(state.row, [1100])
+"#,
+            vm,
+            jit,
+        );
+    }
+}

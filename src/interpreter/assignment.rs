@@ -321,16 +321,18 @@ mod append_ownership_tests {
 // Weak identities invalidate on every Arc::make_mut, including writes outside
 // this module. Bounds may overestimate depth after deletion; only the exact
 // fallback below can reject a write. No cached entry retains a collection payload.
+// Keys are internal Arc identities, never user-provided dictionary keys.
+// Keep the Weak values and all invalidation/retention rules unchanged.
+type DepthIdentityMap<K, V> =
+    std::collections::HashMap<K, V, std::hash::BuildHasherDefault<ahash::AHasher>>;
+
 #[derive(Default)]
 pub(crate) struct DepthCache {
-    structs: std::collections::HashMap<
-        usize,
-        (std::sync::Weak<std::collections::HashMap<String, Value>>, usize),
-    >,
-    arrays: std::collections::HashMap<usize, (std::sync::Weak<Vec<Value>>, usize)>,
-    dictionaries: std::collections::HashMap<usize, (std::sync::Weak<super::DictMap>, usize)>,
-    integer_dictionaries:
-        std::collections::HashMap<usize, (std::sync::Weak<super::IntDictMap>, usize)>,
+    structs:
+        DepthIdentityMap<usize, (std::sync::Weak<std::collections::HashMap<String, Value>>, usize)>,
+    arrays: DepthIdentityMap<usize, (std::sync::Weak<Vec<Value>>, usize)>,
+    dictionaries: DepthIdentityMap<usize, (std::sync::Weak<super::DictMap>, usize)>,
+    integer_dictionaries: DepthIdentityMap<usize, (std::sync::Weak<super::IntDictMap>, usize)>,
     #[cfg(test)]
     scans: usize,
 }
@@ -1708,5 +1710,98 @@ mod checked_removal_node_storage_tests {
         }
         eprintln!("checked removal Arc-node relocation measurements: {measurements:?}");
         assert!(measurements.iter().all(|row| row.3 == (0, 0)), "{measurements:?}");
+    }
+}
+
+#[cfg(test)]
+mod depth_identity_cache_tests {
+    use super::*;
+
+    fn owner(kind: usize) -> Value {
+        match kind {
+            0 => Value::array(vec![Value::Int(1)]),
+            1 => Value::dict([("item".into(), Value::Int(1))].into_iter().collect()),
+            2 => Value::IntDict(Arc::new([(-1, Value::Int(1))].into_iter().collect())),
+            _ => Value::Struct {
+                name: "State".into(),
+                fields: Arc::new([("item".into(), Value::Int(1))].into_iter().collect()),
+            },
+        }
+    }
+
+    fn identity(value: &Value) -> usize {
+        match value {
+            Value::Array(items) => Arc::as_ptr(items) as usize,
+            Value::Dict(items) => Arc::as_ptr(items) as usize,
+            Value::IntDict(items) => Arc::as_ptr(items) as usize,
+            Value::Struct { fields, .. } => Arc::as_ptr(fields) as usize,
+            _ => unreachable!(),
+        }
+    }
+
+    fn host_write(value: &mut Value) {
+        let replacement = Value::array(vec![Value::Int(2)]);
+        match value {
+            Value::Array(items) => Arc::make_mut(items)[0] = replacement,
+            Value::Dict(items) => *Arc::make_mut(items).get_mut("item").unwrap() = replacement,
+            Value::IntDict(items) => *Arc::make_mut(items).get_mut(&-1).unwrap() = replacement,
+            Value::Struct { fields, .. } => {
+                *Arc::make_mut(fields).get_mut("item").unwrap() = replacement;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn external_writes_invalidate_every_owner_kind_with_and_without_snapshots() {
+        for kind in 0..4 {
+            for retained in [false, true] {
+                let mut cache = DepthCache::default();
+                let mut root = owner(kind);
+                assert_eq!(cache.depth(&root), 1);
+                let original_identity = identity(&root);
+                let snapshot = retained.then(|| root.clone());
+                host_write(&mut root);
+                assert_ne!(identity(&root), original_identity);
+                assert_eq!(cache.cached_depth(&root), None);
+                assert_eq!(cache.depth(&root), 2);
+                if let Some(snapshot) = snapshot {
+                    assert_eq!(cache.depth(&snapshot), 1);
+                    assert_eq!(Value::nesting_depth(&snapshot), 1);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn releasing_weak_identity_preserves_unique_storage_for_every_owner_kind() {
+        for kind in 0..4 {
+            let mut cache = DepthCache::default();
+            let mut root = owner(kind);
+            assert_eq!(cache.depth(&root), 1);
+            let original_identity = identity(&root);
+            cache.release_path(&root, &[]);
+            assert_eq!(cache.cached_depth(&root), None);
+            host_write(&mut root);
+            assert_eq!(identity(&root), original_identity);
+            cache.remember_path(&root, &[], 2);
+            assert_eq!(cache.depth(&root), Value::nesting_depth(&root));
+        }
+    }
+
+    #[test]
+    fn mixed_live_owner_publication_clears_at_existing_limit() {
+        let mut cache = DepthCache::default();
+        let owners: Vec<_> = (0..1024).map(|i| owner(i % 4)).collect();
+        for root in &owners {
+            cache.remember_path(root, &[], 1);
+        }
+        assert!(cache.structs.is_empty());
+        assert!(cache.arrays.is_empty());
+        assert!(cache.dictionaries.is_empty());
+        assert!(cache.integer_dictionaries.is_empty());
+        for root in &owners {
+            assert_eq!(cache.depth(root), 1);
+        }
     }
 }
