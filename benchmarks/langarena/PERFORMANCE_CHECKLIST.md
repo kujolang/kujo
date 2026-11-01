@@ -890,9 +890,9 @@ time, resource evidence and limitations for every case and runtime.
 | Matmul::T16 | [ ] | [ ] | [ ] |
 | Base64::Encode | [ ] | [ ] | [ ] |
 | Base64::Decode | [ ] | [ ] | [ ] |
-| Json::Generate | [ ] | [ ] | [ ] |
-| Json::ParseDom | [ ] | [ ] | [ ] |
-| Json::ParseMapping | [ ] | [ ] | [ ] |
+| Json::Generate | [ ] | [ ] | [x] |
+| Json::ParseDom | [ ] | [ ] | [x] |
+| Json::ParseMapping | [ ] | [ ] | [x] |
 | CSV::Parse | [ ] | [ ] | [ ] |
 | Etc::Sieve | [ ] | [ ] | [ ] |
 | Etc::TextRaytracer | [ ] | [ ] | [ ] |
@@ -933,6 +933,7 @@ time, resource evidence and limitations for every case and runtime.
 
 - [x] Recheck all 150 test-size combinations on accepted `fd7b764`; [verified current evidence](NATIVE_FIELD_ABI_FIX_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
 - [x] Verify unchanged production QuickSort and MergeSort in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_SORT_2026_10_31.md). These two cells do not certify the other 148 production combinations or future runtime changes.
+- [x] Verify all three unchanged production JSON workloads in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_JSON_2026_10_31.md). Five JIT production cases are now verified; 145 runtime/case combinations remain open.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
