@@ -121,3 +121,20 @@ Formatting, diff checks and strict inventory generation pass. The safety checker
 still exits 2 with **56 missing contracts across 145 boundaries**. No runtime
 rebuild was needed, and no budget or acceptance criterion changed. Evidence:
 local `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch6.log`.
+
+## Retained metadata, append access and iteration
+
+The seventh batch reviews ten boundaries: retained struct/key metadata reads,
+the dictionary key Arc increment/from-raw pair, append target/result access,
+`jit_for_next`, and four iteration regression call sites. Review traced compiler
+metadata retention and generated pointer emission; checked append binding lookup;
+generator continuation restoration and VM-view refresh; and item, exhaustion,
+byte, invalid-index and invalid-iterable cases. Generator callbacks require
+exclusive VM access without a held environment lock; physical loop execution
+resumes before those callbacks. The broader VM bridge review remains outstanding.
+
+Only comments changed and the stripped-source hash remains identical. Formatting,
+diff checks and strict inventory generation pass. The safety checker still exits
+2 with **46 missing contracts across 145 boundaries**; budgets remain unchanged.
+No runtime rebuild or acceptance claim follows. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch7.log`.

@@ -1285,8 +1285,12 @@ pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64)
 
 /// One normalized iteration step. Kind -4 denotes exhaustion, never a language value.
 #[no_mangle]
-// SAFETY: tagged operands belong to this context. Locked loops resume before
-// generator callbacks; whole-function callbacks use the VM continuation guard.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; generator execution
+//   requires a live exclusive VM and no environment lock or VM/root borrow across
+//   its callback. VM-owned views must be refreshable after continuation restoration.
+// - Postconditions: input operands are cloned; generator callbacks refresh VM views
+//   even on error. Success returns a tagged item or kind -4 exhaustion; errors record.
 pub unsafe extern "C" fn jit_for_next(
     ctx: *mut VMContext,
     object: i64,
@@ -2646,12 +2650,20 @@ pub unsafe extern "C" fn jit_append_local(
 }
 
 #[no_mangle]
-// SAFETY: ctx is the live native context; append published the new binding payload.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and readable; callers read this
+//   field only after successful append publication, without concurrent mutation.
+// - Postconditions: returns the recorded payload (zero for null) without decoding,
+//   dereferencing the payload or transferring ownership.
 pub unsafe extern "C" fn jit_append_result(ctx: *mut VMContext) -> i64 {
     ctx.as_ref().map_or(0, |ctx| ctx.return_value)
 }
 
-// SAFETY: the returned borrow is confined to the live native context.
+// SAFETY:
+// - Preconditions: ctx is exclusive; non-null name/local/slot pointers are live
+//   and aligned, name metadata immutable and target storage exclusively accessible.
+// - Postconditions: returns a checked current-root, named-local or physical-slot
+//   borrow tied to ctx; no callback may invalidate backing storage during that borrow.
 unsafe fn jit_append_target(
     ctx: &mut VMContext,
     location: i64,
@@ -5303,8 +5315,11 @@ pub extern "C" fn jit_make_struct(ctx: *mut VMContext, shape_ptr: i64) -> i64 {
             vm_ctx.runtime_error = Some("Missing native struct metadata".into());
             return 0;
         }
-        // SAFETY: generated code embeds Arc::as_ptr for metadata held by the
-        // compiler for the entire lifetime of its machine code.
+        // SAFETY:
+        // - Preconditions: generated MakeStruct supplies Arc::as_ptr for an aligned
+        //   immutable NativeStructShape retained by JitCompiler throughout execution.
+        // - Postconditions: borrows the retained tuple without consuming its Arc;
+        //   the resulting Value clones names, so no metadata reference escapes.
         let (name, names) = unsafe { &*(shape_ptr as *const NativeStructShape) };
         let Some(start) = stack.len().checked_sub(names.len()) else {
             vm_ctx.runtime_error = Some("Stack underflow".into());
@@ -5344,16 +5359,21 @@ pub extern "C" fn jit_make_dict_with_keys(
             vm_ctx.runtime_error = Some("Missing native dictionary keys".into());
             return 0;
         }
-        // SAFETY: generated code passes Arc::as_ptr, and JitCompiler retains a
-        // strong reference for the lifetime of the machine code. This reads the
-        // Vec allocation, not an Arc wrapper or a temporary bytecode reference.
+        // SAFETY:
+        // - Preconditions: generated MakeDictWithKeys supplies Arc::as_ptr for an
+        //   aligned immutable Vec<Arc<str>> retained strongly by JitCompiler.
+        // - Postconditions: borrows the Vec allocation to check its length without
+        //   consuming the retained Arc or reading an Arc wrapper as a Vec.
         let keys = unsafe { &*(keys_ptr as *const Vec<Arc<str>>) };
         if keys.len() != count || stack.len() < count {
             vm_ctx.runtime_error = Some("Stack underflow".into());
             return 0;
         }
-        // SAFETY: the retained Arc keeps this allocation live. Incrementing
-        // before from_raw creates exactly one owned reference for the new Value.
+        // SAFETY:
+        // - Preconditions: keys_ptr is the same live Arc::as_ptr allocation checked
+        //   above; the compiler's strong owner survives both operations.
+        // - Postconditions: increment then from_raw creates exactly one additional
+        //   owned Arc for the dictionary, preserving the compiler's original owner.
         let owned_keys = unsafe {
             Arc::increment_strong_count(keys_ptr as *const Vec<Arc<str>>);
             Arc::from_raw(keys_ptr as *const Vec<Arc<str>>)
@@ -15440,6 +15460,11 @@ mod tests {
             for _ in 0..count {
                 for index in 0..3 {
                     let original = ctx.owned_roots.duplicate(array, kind).unwrap();
+                    // SAFETY:
+                    // - Preconditions: ctx is live/exclusive and original is a valid
+                    //   array root in its active scope; index is an integer.
+                    // - Postconditions: returns an item or exhaustion without consuming
+                    //   original; the test releases every returned owned item separately.
                     let result = unsafe {
                         jit_for_next(&mut ctx, original, kind, index, crate::native_scalar::INTEGER)
                     };
@@ -15514,6 +15539,10 @@ mod tests {
         ctx.owned_roots.enter().unwrap();
         let (bytes, kind) = ctx.owned_roots.encode(Value::Bytes(Arc::new(vec![0, 255]))).unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx is live/exclusive with an active scope and valid byte
+            //   root; index 1 is within the initialized two-byte vector.
+            // - Postconditions: returns an immediate byte without consuming the root.
             unsafe { jit_for_next(&mut ctx, bytes, kind, 1, crate::native_scalar::INTEGER) },
             255
         );
@@ -15521,12 +15550,20 @@ mod tests {
         for (index, index_kind) in
             [(-1, crate::native_scalar::INTEGER), (1, crate::native_scalar::BOOLEAN)]
         {
+            // SAFETY:
+            // - Preconditions: ctx and byte root remain live; malformed index values
+            //   are passed through the helper's checked kind and bounds contract.
+            // - Postconditions: invalid indexes record errors without raw indexing.
             unsafe { jit_for_next(&mut ctx, bytes, kind, index, index_kind) };
             assert_eq!(
                 ctx.runtime_error.take().as_deref(),
                 Some("ForNext requires a nonnegative index")
             );
         }
+        // SAFETY:
+        // - Preconditions: ctx is live/exclusive; NULL is a valid immediate codec
+        //   kind deliberately used as an unsupported iterable, not an address.
+        // - Postconditions: helper reports a normalized-iterable error without access.
         unsafe {
             jit_for_next(&mut ctx, 0, crate::native_scalar::NULL, 0, crate::native_scalar::INTEGER)
         };
