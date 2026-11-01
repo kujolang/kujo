@@ -9327,6 +9327,26 @@ impl BytecodeTranslator {
         Ok(())
     }
 
+    fn resume_loop_at_pc(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        pc: usize,
+    ) -> Result<(), String> {
+        let ctx = self.ctx_param.ok_or("Missing loop context")?;
+        let prepare = self.loop_resume_prepare_func.ok_or("Missing resume helper")?;
+        let push = self.scalar_push_func.ok_or("Missing resume operand helper")?;
+        let pc = builder.ins().iconst(types::I64, pc as i64);
+        builder.ins().call(prepare, &[ctx, pc]);
+        for value in &self.value_stack {
+            let kind = self.scalar_kind(builder, *value);
+            builder.ins().call(push, &[ctx, *value, kind]);
+        }
+        self.persist_local_slots(builder, true);
+        let status = builder.ins().iconst(types::I64, 2);
+        self.emit_return(builder, status);
+        Ok(())
+    }
+
     fn guard_loop_callback(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -9361,15 +9381,7 @@ impl BytecodeTranslator {
             return Ok(false);
         };
         if depth == 0 {
-            let pc = builder.ins().iconst(types::I64, pc as i64);
-            builder.ins().call(prepare, &[ctx, pc]);
-            for value in &self.value_stack {
-                let kind = self.scalar_kind(builder, *value);
-                builder.ins().call(push, &[ctx, *value, kind]);
-            }
-            self.persist_local_slots(builder, true);
-            let status = builder.ins().iconst(types::I64, 2);
-            self.emit_return(builder, status);
+            self.resume_loop_at_pc(builder, pc)?;
             return Ok(true);
         }
         // A local field opcode has no receiver on the operand stack. Load a
@@ -11102,6 +11114,16 @@ impl JitCompiler {
 
                 // Skip instruction if block is already terminated
                 if block_terminated {
+                    continue;
+                }
+
+                // Each loop exit resumes at its own bytecode target. A normal
+                // condition exit still has its condition to pop; break skips
+                // that cleanup. Never execute the first post-loop instruction
+                // natively and discard its resulting operand stack.
+                if loop_end.is_some_and(|end| pc > end) {
+                    translator.resume_loop_at_pc(&mut builder, pc)?;
+                    block_terminated = true;
                     continue;
                 }
 

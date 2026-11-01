@@ -3237,6 +3237,11 @@ impl VM {
                                         }
 
                                         if let Some(resume_ip) = vm_context.loop_resume_ip {
+                                            if resume_ip > self.ip
+                                                && std::env::var("DEBUG_JIT").is_ok()
+                                            {
+                                                eprintln!("JIT: Execution completed successfully!");
+                                            }
                                             self.ip = resume_ip;
                                             continue;
                                         }

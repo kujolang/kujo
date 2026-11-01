@@ -127,6 +127,51 @@ fn builtin_len_does_not_resume_at_every_iteration() {
 }
 
 #[test]
+fn loop_break_and_condition_exit_preserve_following_operands_and_values() {
+    for limit in [150, 300] {
+        let source = format!(
+            r#"
+            func scan(text) {{
+                mut i := 0
+                mut rows := [[7]]
+                let snapshot := rows
+                while i < len(text) {{
+                    if i == {limit} {{ break }}
+                    i += 1
+                }}
+                rows[0][0] = i
+                assert_equal(snapshot[0][0], 7)
+                return [i, rows]
+            }}
+            let result := scan(repeat("x", 300))
+            assert_equal(result[0], {limit})
+            assert_equal(result[1][0][0], {limit})
+            print("PASS")
+            "#
+        );
+        assert_eq!(check(&source), (1, 1));
+    }
+    // The first post-loop instruction produces the return operand directly.
+    assert_eq!(
+        check(
+            r#"
+        func scan(text) {
+            mut i := 0
+            while i < len(text) {
+                if i == 150 { break }
+                i += 1
+            }
+            return i
+        }
+        assert_equal(scan(repeat("x", 300)), 150)
+        print("PASS")
+    "#
+        ),
+        (1, 1)
+    );
+}
+
+#[test]
 fn builtin_alias_rebound_to_callback_preserves_each_condition_evaluation() {
     check(
         r#"
