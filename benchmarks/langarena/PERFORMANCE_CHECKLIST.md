@@ -869,6 +869,10 @@ defects have separate verified fixes in section 3.
 - [ ] Verify branches, recursion, imports, captures and unwinding.
 - [ ] Tune JIT admission against small-workload compilation costs.
 - [ ] Measure compilation time, code memory and cache lifetimes.
+  [Compiler lifetime diagnostic](JIT_CODE_LIFETIME_2026_11_01.md) confirms retained
+  code mappings after compiler destruction: six controlled macOS observations,
+  1/8/32 distinct pages retained. This is not RSS or a VM lifecycle proof.
+  VM ownership and escaped-pointer lifetime gates remain before reclamation.
 - [ ] Keep JIT opt-in pending reliability/portability acceptance.
 - [ ] Consider architecture changes only if profiles justify them.
 

@@ -1,0 +1,106 @@
+{
+  "identity": {
+    "runtime": "782c712d",
+    "source_manifest_sha256": "3b8d582da1803dfc7dd605616d250548a80ee96d44260e10ad4025a2a76d15ac",
+    "source_files_verified": 1390,
+    "library": "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/.audit-evidence/jit-code-lifetime-2026-11-01/libkujo.rlib",
+    "library_sha256": "e8858e3a68e779090beb9253d5ad23bc77992ce9aa9208dd775d4ce216a70fd9",
+    "library_provenance": "Copied from target/release/deps/libkujo-0204a58eed7d01d2.rlib produced by completed explicit candidate CLI build; all frozen source/test/build/vendor hashes match accepted runtime.",
+    "sources": {
+      "benchmarks/langarena/probes/jit_code_lifetime.rs": "8dadc001b9876fb5f464bb2541cc0b3649512cd865f6f59a5d94ab7930ec2a4a",
+      "Cargo.lock": "d7550237221e8fb2294d352f1e9f66e01a626212c8cfd42a4bb511f2d6204e39",
+      "src/jit.rs": "876a98021c31fc4dc1d2ace4e78e56a39a159852bc3097d63a11f79bf7e87103",
+      "src/vm.rs": "78151a2a1bc66b7a69dc952802eb156f679b35b1ab658038b6c02f1c7b7c89c0"
+    },
+    "scope": "macOS mapping query diagnostic; no stale code invocation, no runtime edit, not RSS or production speed evidence",
+    "query": "mach_vm_region with containing-region bounds and returned-port release",
+    "rejected_control": "mincore returned success after munmap; negative control failed, so no retention conclusion from that executable",
+    "executable_sha256": "36d081182b1a27f0a006f022ba19e14ce09aad2b369933a7322d862659cd59e2"
+  },
+  "runs": [
+    {
+      "repeat": 0,
+      "exit": 0,
+      "result": {
+        "compilers": 1,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 1,
+        "distinct_code_pages": 1,
+        "retained_code_pages": 1,
+        "mapped_bytes_lower_bound": 4096
+      }
+    },
+    {
+      "repeat": 0,
+      "exit": 0,
+      "result": {
+        "compilers": 8,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 8,
+        "distinct_code_pages": 8,
+        "retained_code_pages": 8,
+        "mapped_bytes_lower_bound": 32768
+      }
+    },
+    {
+      "repeat": 0,
+      "exit": 0,
+      "result": {
+        "compilers": 32,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 32,
+        "distinct_code_pages": 32,
+        "retained_code_pages": 32,
+        "mapped_bytes_lower_bound": 131072
+      }
+    },
+    {
+      "repeat": 1,
+      "exit": 0,
+      "result": {
+        "compilers": 1,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 1,
+        "distinct_code_pages": 1,
+        "retained_code_pages": 1,
+        "mapped_bytes_lower_bound": 4096
+      }
+    },
+    {
+      "repeat": 1,
+      "exit": 0,
+      "result": {
+        "compilers": 8,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 8,
+        "distinct_code_pages": 8,
+        "retained_code_pages": 8,
+        "mapped_bytes_lower_bound": 32768
+      }
+    },
+    {
+      "repeat": 1,
+      "exit": 0,
+      "result": {
+        "compilers": 32,
+        "page_size": 4096,
+        "control_mapped": true,
+        "control_unmapped": true,
+        "immediate_retained": 32,
+        "distinct_code_pages": 32,
+        "retained_code_pages": 32,
+        "mapped_bytes_lower_bound": 131072
+      }
+    }
+  ]
+}
