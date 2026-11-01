@@ -295,3 +295,18 @@ Validation: rustc --test compiled the complete dependency-free
 all three tests pass, including deterministic generation and exact budgets.
 Formatting, strict generation, the 145-boundary JIT checker and diff checks pass.
 The full Cargo compatibility gate still must run on the committed revision.
+
+## Full gate after budget review
+
+Run 41273341615 at de8a42d3 passed all five prerequisite jobs. Its full release
+job 124752053505 completed the no-fail-fast Cargo test stage with one failing
+test: generated_todo_triage_artifact_is_fresh_and_matches_generator_output.
+The reviewed contract comments moved JIT TODO line references; the checked-in
+triage report had not been regenerated. The unsafe inventory tests passed.
+
+Regeneration changes only eleven source line references and the Markdown date;
+marker text, classification, owners, buckets and total 25 markers are unchanged.
+The exact failing Rust test was compiled with the existing release chrono
+artifact and CARGO_MANIFEST_DIR pointing to this worktree, then passed locally.
+Formatting and diff checks pass. Full gate acceptance still requires the next
+committed revision's workflow; this targeted result does not substitute for it.
