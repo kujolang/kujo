@@ -2056,7 +2056,11 @@ unsafe fn jit_mutate_binding_path(
 
 /// A locked loop must return to bytecode before invoking user callbacks.
 #[no_mangle]
-// SAFETY: ctx and roots are live; this only borrows an operand, never calls user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; tagged operands
+//   use this activation's root codec and loop_environment_ptr marks locked loops.
+// - Postconditions: returns whether bytecode resumption is required; invalid
+//   roots record an error. No environment pointer is dereferenced or user code run.
 pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     if ctx.loop_environment_ptr.is_null() {
@@ -2104,8 +2108,12 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: the loop owns ctx/stack. The translator then marshals its complete
-// operand stack and persists locals before returning to the VM at this exact PC.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   is a live exclusive Vec<Value>. loop_stack_base preserves the enclosing VM
+//   prefix; pc is the intended bytecode continuation in the current chunk.
+// - Postconditions: checked pc is recorded and the loop suffix truncated; callers
+//   must rebuild all operands and persist locals before returning to that PC.
 pub unsafe extern "C" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     let Some(stack) = ctx.stack_ptr.as_mut() else { return 1 };
@@ -2172,8 +2180,10 @@ pub unsafe extern "C" fn jit_owned_operator(
 /// Load an immediate value and publish its kind from the active VM local slots.
 #[no_mangle]
 // SAFETY:
-// - `ctx` must point to a live VMContext for the duration of the call.
-// - The helper only reads a bounds-checked slot through the VM-owned vector pointer.
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   local_slots_ptr addresses the active VM frame's live readable Vec<Value>.
+// - Postconditions: a bounds-checked slot is cloned into the root codec and its
+//   kind published; errors set runtime_error. Physical slots remain unchanged.
 pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
@@ -2201,7 +2211,11 @@ pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> 
 
 /// Persist a tagged value without consuming its live SSA root.
 #[no_mangle]
-// SAFETY: ctx and its local-slot vector remain live and exclusively borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   local_slots_ptr addresses the active VM frame's live exclusive Vec<Value>.
+// - Postconditions: the operand is cloned before checked slot replacement and
+//   its root survives; failure preserves existing errors and returns zero.
 pub unsafe extern "C" fn jit_store_local_slot(
     ctx: *mut VMContext,
     slot: i64,
@@ -4463,8 +4477,13 @@ pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash:
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Its optional VM and name pointers
-// remain valid throughout the enclosing native invocation.
+// SAFETY:
+// - Preconditions: ctx and non-null VM/stack pointers are live and aligned;
+//   ctx/VM are exclusive, stack readable, cancellation satisfies jit_runtime_failed.
+//   Non-null call_name_ptr spans call_name_len immutable initialized bytes within
+//   one allocation, with length <= isize::MAX; no VM borrow overlaps VM access.
+// - Postconditions: success acquires depth/root scope and records a stack base;
+//   failure records an error and rolls back any depth acquired by this call.
 pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if !ctx.task_cancellation.is_null() && jit_runtime_failed(ctx) != 0 {
@@ -4507,8 +4526,12 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
 }
 
 #[no_mangle]
-// SAFETY: ctx and its optional VM remain live and exclusively borrowed; this
-// pairs with one successful native-function entry on every generated exit path.
+// SAFETY:
+// - Preconditions: ctx and non-null VM/stack pointers are live, aligned and
+//   exclusively accessible; no VM borrow overlaps VM access. Each call pairs
+//   with one successful native-function entry, in nested exit order.
+// - Postconditions: an owned return is promoted on success; roots and stack suffix
+//   are unwound, depth released, and ownership errors recorded without hiding errors.
 pub unsafe extern "C" fn jit_leave_function(ctx: *mut VMContext) {
     if let Some(ctx) = ctx.as_mut() {
         if ctx.runtime_error.is_none()
@@ -12969,16 +12992,32 @@ mod tests {
             VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
         context.task_cancellation = &cancelled;
         context.runtime_error = Some("original failure".into());
+        // SAFETY:
+        // - Preconditions: context is exclusive; cancelled is live and aligned;
+        //   all other nested pointers are null and no native entry is active.
+        // - Postconditions: cancelled entry preserves the original error and depth.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
         assert_eq!(context.runtime_error.as_deref(), Some("original failure"));
         assert_eq!(context.native_call_depth, 0);
         context.runtime_error = None;
+        // SAFETY:
+        // - Preconditions: the same live context and cancellation flag are exclusive;
+        //   the prior failed entry acquired no native depth or root scope.
+        // - Postconditions: cancellation is reported without acquiring an entry.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
         assert_eq!(context.runtime_error.as_deref(), Some("Task was cancelled"));
         assert_eq!(context.native_call_depth, 0);
         context.runtime_error = None;
         cancelled.store(false, std::sync::atomic::Ordering::Release);
+        // SAFETY:
+        // - Preconditions: context and uncancelled flag remain live; optional VM,
+        //   stack and name pointers are null, so no external storage is accessed.
+        // - Postconditions: success acquires one native depth and root scope.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 0);
+        // SAFETY:
+        // - Preconditions: the immediately preceding entry succeeded; context is
+        //   exclusive and no references to its roots span this matching exit.
+        // - Postconditions: the single acquired scope and depth are released.
         unsafe { jit_leave_function(&mut context) };
         assert_eq!(context.native_call_depth, 0);
         assert!(context.runtime_error.is_none());

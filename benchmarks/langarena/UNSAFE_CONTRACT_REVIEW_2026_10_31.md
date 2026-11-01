@@ -86,3 +86,21 @@ inventory generation pass. The safety checker still exits 2 with **80 missing
 contracts across 145 boundaries**; no budget change or runtime acceptance follows.
 Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch4.log`.
+
+## Loop continuation, locals and native entry/exit contracts
+
+The fifth batch covers `jit_loop_resume_guard`, `jit_loop_resume_prepare`,
+`jit_load_local_slot`, `jit_store_local_slot`, `jit_enter_function`, and
+`jit_leave_function`, plus four unsafe calls in the cancellation/entry-balance
+regression. Review checked the generated loop stack reconstruction protocol,
+bounds-checked physical slot access, native entry rollback, matched generated
+exits, owned return promotion, and caller-retained cancellation/name lifetimes.
+The tests keep context and atomic flag live, verify that failed entries acquire
+no depth, and pair the successful entry with exactly one leave.
+
+Comments alone changed, preserving the stripped-source hash above. Formatting,
+diff checks and strict inventory generation pass. The safety checker still exits
+2, now with **70 missing contracts across 145 boundaries**. VM bridges and
+remaining boundaries still require review; budgets and acceptance are unchanged.
+Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch5.log`.
