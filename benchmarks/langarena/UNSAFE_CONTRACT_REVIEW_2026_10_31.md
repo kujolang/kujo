@@ -154,3 +154,26 @@ diff checks and strict inventory generation pass. The safety checker still exits
 2 with **34 missing contracts across 145 boundaries**. Budgets and runtime
 acceptance remain unchanged. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch8.log`.
+
+## Nested mutation, rebinding and VM depth-cache transfer
+
+The ninth batch reviews seven JIT helpers: append-path eligibility, update/append
+path wrappers and their shared mutation helper, release-before-rebind, and
+guarded string/collection append. Review traced compiler-retained shapes,
+checked operand-buffer size/alignment and initialization, consumed versus cloned
+operands, exception-handler visibility, guarded snapshot restoration and global
+mutation locking. No callback runs while synchronous path mutation owns its
+depth cache or borrows a destination.
+
+The two VM depth-cache transfer functions and their unsafe field-access blocks
+were also reviewed. `addr_of_mut!` addresses only the cache field; take/restore
+move owned caches without retaining a reference to the VM or its disjoint fields.
+Other VM bridges remain outstanding.
+
+Only comments changed. Stripped JIT source retains the hash above; stripped VM
+source is identical before/after with SHA-256
+`db745fa3703f1d1807dad634c00c6e9bc9fea850e3d0f90c924b61cd99295b57`.
+Formatting, diff checks and strict inventory generation pass. The JIT checker
+still exits 2 with **27 missing contracts across 145 boundaries**. Budgets remain
+unchanged. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch9.log`.

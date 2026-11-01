@@ -1808,7 +1808,11 @@ pub unsafe extern "C" fn jit_try_pop_rebind(
 
 /// Inspect builtin identity and operand types without retaining artificial aliases.
 #[no_mangle]
-// SAFETY: live exclusive context and live operand handles; no callbacks.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; operand identities
+//   use its native root codec, with current-frame operands for mutable inspection.
+// - Postconditions: reports eligible builtin/type combinations without retaining
+//   aliases or mutating values; invalid identities record an error. No callback runs.
 pub unsafe extern "C" fn jit_guard_append_path(
     ctx: *mut VMContext,
     original: i64,
@@ -1850,9 +1854,12 @@ pub unsafe extern "C" fn jit_guard_append_path(
 
 /// Checked nested mutation uses retained path metadata and a tagged operand array.
 #[no_mangle]
-// SAFETY: shape points to compiler-retained metadata; operands points to generated
-// stack storage containing one payload/kind pair for every dynamic index followed
-// by the assigned value. Neither allocation escapes this synchronous helper.
+// SAFETY:
+// - Preconditions: ctx, backing maps/slots/VM and shape satisfy jit_mutate_binding_path;
+//   operands is aligned initialized storage for every dynamic-index payload/kind
+//   pair followed by one assigned-value pair, with checked representable byte length.
+// - Postconditions: forwards the non-append mutation; synchronous borrows do not
+//   escape and errors are recorded under the shared mutation contract.
 pub unsafe extern "C" fn jit_update_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -1877,7 +1884,12 @@ pub unsafe extern "C" fn jit_update_binding_path(
 }
 
 #[no_mangle]
-// SAFETY: same retained metadata contract, with indices followed by original/item/callable pairs.
+// SAFETY:
+// - Preconditions: ctx, backing maps/slots/VM and shape satisfy jit_mutate_binding_path;
+//   aligned initialized operands contain dynamic-index pairs followed by original,
+//   item and callable pairs, with checked representable byte length.
+// - Postconditions: forwards append mutation; original/item may be consumed into
+//   the update while their root slots remain releasable, including on error.
 pub unsafe extern "C" fn jit_append_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -1901,6 +1913,13 @@ pub unsafe extern "C" fn jit_append_binding_path(
     )
 }
 
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live, aligned and
+//   exclusive; names/shape are immutable, shape compiler-retained. operands spans
+//   2*(dynamic indices + (append ? 3 : 1)) initialized i64s within isize::MAX bytes.
+//   VM cache access is exclusive; a non-null loop environment is already locked.
+// - Postconditions: checked destination mutation restores the depth cache; errors
+//   record. No callback or pointer escape occurs; consumed root slots stay releasable.
 unsafe fn jit_mutate_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -2702,6 +2721,12 @@ unsafe fn jit_append_target(
 
 /// Release only a local snapshot invisible to a same-invocation exception handler.
 #[no_mangle]
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable, VM readable without overlap.
+//   Private native-function locals have no same-invocation exception handler.
+// - Postconditions: only a mutable matching local snapshot may be cleared after
+//   callable/handler checks; operand roots survive, errors record, no callback runs.
 pub unsafe extern "C" fn jit_release_rebind(
     ctx: *mut VMContext,
     location: i64,
@@ -2773,8 +2798,12 @@ pub unsafe extern "C" fn jit_release_rebind(
 
 /// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
 #[no_mangle]
-// SAFETY: context, maps and roots are exclusively borrowed by this invocation.
-// The VM global helper is called only outside a locked native-loop environment.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable and roots use this activation.
+//   A loop environment is already locked; VM global access has no held lock/borrow.
+// - Postconditions: guarded string rebinding consumes the snapshot on success,
+//   restores it on fallback, and records ownership errors. No user callback runs.
 pub unsafe extern "C" fn jit_try_string_append(
     ctx: *mut VMContext,
     location: i64,
@@ -2864,8 +2893,12 @@ pub unsafe extern "C" fn jit_try_string_append(
 
 /// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
 #[no_mangle]
-// SAFETY: context, maps and roots are exclusively borrowed by this invocation.
-// The VM global helper is called only outside a locked native-loop environment.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable and roots use this activation.
+//   A loop environment is already locked; VM global access has no held lock/borrow.
+// - Postconditions: guarded collection rebinding consumes the snapshot on success,
+//   restores it on fallback, and records ownership errors. No user callback runs.
 pub unsafe extern "C" fn jit_try_append(
     ctx: *mut VMContext,
     location: i64,

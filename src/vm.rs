@@ -8646,19 +8646,34 @@ impl VM {
     /// Temporarily transfer only the cache field, without borrowing other VM
     /// fields referenced by the native context. No user callback may run while
     /// the synchronous path helper owns this cache.
+    // SAFETY:
+    // - Preconditions: vm is non-null, aligned and live; its path_depth_valid field
+    //   is exclusively accessible. Disjoint VM fields may be borrowed separately.
+    // - Postconditions: moves the cache out, replacing it with an empty cache;
+    //   no reference to the VM or its fields escapes.
     pub(crate) unsafe fn take_native_path_depth_cache(
         vm: *mut Self,
     ) -> crate::interpreter::assignment::DepthCache {
-        // SAFETY: caller supplies a live VM exclusively executing this helper.
+        // SAFETY:
+        // - Preconditions: caller provides exclusive access to this live cache field;
+        //   addr_of_mut forms no reference to the enclosing VM or disjoint fields.
+        // - Postconditions: mem::take moves the cache without retaining its field borrow.
         unsafe { std::mem::take(&mut *std::ptr::addr_of_mut!((*vm).path_depth_valid)) }
     }
 
+    // SAFETY:
+    // - Preconditions: vm is the same live aligned VM from the matching take;
+    //   cache access is exclusive, target borrows ended, and no user callback ran.
+    // - Postconditions: replaces the temporary cache with the owned result without
+    //   accessing other VM fields or retaining borrowed pointers.
     pub(crate) unsafe fn restore_native_path_depth_cache(
         vm: *mut Self,
         cache: crate::interpreter::assignment::DepthCache,
     ) {
-        // SAFETY: same live VM; the helper has ended all target borrows and has
-        // not invoked user code since taking this field.
+        // SAFETY:
+        // - Preconditions: the matching take/restore contract grants exclusive access
+        //   to this live field; addr_of_mut does not borrow the enclosing VM.
+        // - Postconditions: the owned cache is installed and no reference escapes.
         unsafe { *std::ptr::addr_of_mut!((*vm).path_depth_valid) = cache };
     }
 
