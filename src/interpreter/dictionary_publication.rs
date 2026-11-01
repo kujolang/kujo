@@ -767,9 +767,6 @@ impl DictionaryManyPublication {
     pub(super) fn name(&self) -> &str {
         &self.name
     }
-    pub(super) fn contains_key(&self, key: &str) -> bool {
-        self.base.contains_key(key)
-    }
     pub(super) fn get(&self, key: &str) -> Option<Value> {
         self.writes.get(key).map(|value| value.into_value()).or_else(|| self.base.get(key).cloned())
     }
@@ -1030,7 +1027,7 @@ mod many_tests {
             pending.record(&i.to_string(), &Value::Bool(true));
         }
         pending.record("0", &Value::Null);
-        assert!(!pending.contains_key("missing"));
+        assert!(pending.get("missing").is_none());
         assert!(matches!(pending.get("01"), Some(Value::Int(999))));
         let (_, current) = pending.publish(Some(&mut owner));
         let Value::Dict(current) = current else { unreachable!() };

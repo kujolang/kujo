@@ -10,6 +10,8 @@ use std::sync::{Arc, OnceLock};
 static NEXT_CODE_ID: AtomicU64 = AtomicU64::new(1);
 
 fn next_code_id() -> u64 {
+    // `try_update` requires Rust 1.95; retain its equivalent spelling for our 1.89 MSRV.
+    #[allow(deprecated)]
     NEXT_CODE_ID
         .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
         .expect("bytecode identity space exhausted")
