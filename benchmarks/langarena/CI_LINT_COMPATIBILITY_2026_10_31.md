@@ -25,3 +25,10 @@ Replace `(width + 2) / 3` with `width.div_ceil(3)` for the count of mutable
 fixture bindings. This preserves the existing fixture counts while avoiding
 the intermediate addition. The next CI run must verify this revision; the
 previous run is not a Clippy pass.
+
+Run `41262046030` then reached binary-target dead-code diagnostics for three
+standalone public JIT compilation entrypoints. The binary compiles its own private
+`jit` module and now uses specialized VM entrypoints; the library still exports
+the standalone methods, including integration-test consumers. Preserve that API
+with method-local dead-code annotations explaining the target distinction.
+No method body, caller, or global lint setting changes.

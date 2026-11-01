@@ -10417,6 +10417,7 @@ impl JitCompiler {
     }
 
     /// Compile a bytecode chunk to native code
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile(&mut self, chunk: &BytecodeChunk, offset: usize) -> Result<CompiledFn, String> {
         self.compile_with_options(chunk, offset, None, None)
     }
@@ -11166,6 +11167,7 @@ impl JitCompiler {
 
     /// Compile an entire function to native code
     /// Returns a compiled function pointer that can be called directly
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile_function(
         &mut self,
         chunk: &BytecodeChunk,
@@ -12098,6 +12100,7 @@ impl JitCompiler {
     }
 
     /// Compile a function and return enhanced info including direct-arg variant if eligible
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile_function_with_info(
         &mut self,
         chunk: &BytecodeChunk,
