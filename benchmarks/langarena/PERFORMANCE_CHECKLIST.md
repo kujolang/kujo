@@ -847,6 +847,7 @@ defects have separate verified fixes in section 3.
 
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
+  [Paired depth-cache hash experiment](DEPTH_CACHE_HASH_COMPARISON_2026_11_01.md) passes 336 observations, cold construction and layout checks. It qualifies for an isolated runtime candidate; runtime/workload acceptance remains open.
   [Depth-cache component baseline](DEPTH_CACHE_CONTROLS_2026_11_01.md) verifies 72 observations and snapshot/invalidation controls on extracted accepted-source methods. Alternative mechanisms and whole-runtime acceptance remain open.
 - [ ] Preserve integer/Boolean/float/error semantics.
 - [ ] Verify branches, recursion, imports, captures and unwinding.

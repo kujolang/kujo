@@ -5679,5 +5679,13 @@
     "operations": 7200000,
     "scope": "Root-only cached lookup/release/remember with real Values; no full depth traversal or assignment.",
     "next": "Paired mechanism comparison, then complete runtime semantic and workload gates before acceptance."
+  },
+  "depth_cache_hash_comparison_2026_11_01": {
+    "status": "component_candidate_qualified_runtime_acceptance_pending",
+    "report": "DEPTH_CACHE_HASH_COMPARISON_2026_11_01.md",
+    "observations": 336,
+    "cold_observations": 14,
+    "semantic_control_runs": 14,
+    "next": "Isolated runtime change plus all-runtime semantic and whole-workload gates."
   }
 }
