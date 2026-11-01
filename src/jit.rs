@@ -10516,6 +10516,7 @@ impl JitCompiler {
     }
 
     /// Check if JIT should compile this function based on execution count
+    #[allow(dead_code)] // Public legacy admission API; VM loops use chunk-scoped admission.
     pub fn should_compile(&mut self, offset: usize) -> bool {
         if !self.enabled {
             return false;

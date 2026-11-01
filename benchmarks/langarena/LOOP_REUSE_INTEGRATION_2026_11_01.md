@@ -19,3 +19,10 @@ must be attributed to their exact commits, not this merge. Verify the final
 combined CLI across VM/interpreter/JIT and all 150 test-size benchmarks, including
 repeated native execution and callback fallback costs. No acceptance, production
 coverage or competitive speed claim is established here.
+
+Integration run 41276926940 exposed one CLI Clippy error: `should_compile`
+became unused after VM loop admission moved to chunk-scoped state. Retain this
+public legacy API and its existing unit tests with a narrow dead-code allowance,
+matching the adjacent legacy inspection APIs. This changes no runtime behavior.
+The original run remains evidence for 6551a57a only; the lint correction needs
+its own combined gate before acceptance.
