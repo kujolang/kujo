@@ -904,8 +904,8 @@ time, resource evidence and limitations for every case and runtime.
 | Etc::GameOfLife | [ ] | [ ] | [ ] |
 | Etc::Words | [ ] | [ ] | [ ] |
 | Etc::LogParser | [ ] | [ ] | [ ] |
-| Template::Regex | [ ] | [ ] | [ ] |
-| Template::Parse | [ ] | [ ] | [ ] |
+| Template::Regex | [ ] | [ ] | [x] |
+| Template::Parse | [ ] | [ ] | [x] |
 | Sort::Quick | [ ] | [ ] | [x] |
 | Sort::Merge | [ ] | [ ] | [x] |
 | Sort::Self | [ ] | [ ] | [ ] |
@@ -939,7 +939,8 @@ time, resource evidence and limitations for every case and runtime.
 - [x] Verify all three unchanged production JSON workloads in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_JSON_2026_10_31.md). Coverage at that milestone: five JIT production cases; 145 combinations pending.
 - [x] Verify all three production JSON workloads in VM and interpreter: [cross-runtime evidence](ACCEPTED_PRODUCTION_JSON_PARITY_2026_10_31.md). Coverage at that milestone: 11/150; 139 combinations pending.
 - [x] Verify production CSV parsing in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_CSV_PARITY_2026_10_31.md). Coverage at that milestone: 14/150; 136 combinations pending.
-- [x] Verify production Base64 encoding and decoding in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_BASE64_PARITY_2026_10_31.md). Current production coverage: 20/150; 130 combinations remain.
+- [x] Verify production Base64 encoding and decoding in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_BASE64_PARITY_2026_10_31.md). Coverage at that milestone: 20/150; 130 combinations pending.
+- [x] Verify both production template workloads in JIT: [checksum/resource evidence](ACCEPTED_PRODUCTION_TEMPLATE_JIT_2026_10_31.md). Current production coverage: 22/150; 128 combinations remain.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.

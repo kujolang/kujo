@@ -65,8 +65,9 @@ fn cli_run_with_jit_opt_in_reports_unsupported_regions_without_disabling_jit() {
     write_fixture(
         &file,
         r#"
-values := [1, 2, 3]
-assert(values[1] == 2, "unexpected value")
+mut count := 0
+while count < 3 { count += 1 }
+assert_equal(count, 3)
 "#,
     );
 
@@ -80,8 +81,12 @@ assert(values[1] == 2, "unexpected value")
     );
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("JIT opt-in requested"));
+    assert!(stderr.contains("JIT opt-in requested"), "{stderr}");
     assert!(stderr.contains("unsupported opcode"));
+    assert!(
+        stderr.contains("DefineGlobal"),
+        "fixture must exercise an unsupported surface: {stderr}"
+    );
     assert!(stderr.contains("unsupported bytecode regions will use the VM"));
     assert!(!stderr.contains("without JIT"));
 }
@@ -94,6 +99,8 @@ fn cli_run_with_jit_opt_in_accepts_supported_surface_without_warning() {
         &file,
         r#"
 assert((2 + 3) * 4 == 20, "arithmetic mismatch")
+values := [1, 2, 3]
+assert(values[1] == 2, "unexpected value")
 "#,
     );
 
@@ -108,6 +115,7 @@ assert((2 + 3) * 4 == 20, "arithmetic mismatch")
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
     assert!(!stderr.contains("not JIT-compatible"));
+    assert!(!stderr.contains("JIT opt-in requested"), "{stderr}");
 }
 
 #[test]
