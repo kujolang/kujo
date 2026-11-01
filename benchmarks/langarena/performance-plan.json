@@ -5689,18 +5689,18 @@
     "next": "Isolated runtime change plus all-runtime semantic and whole-workload gates."
   },
   "depth_cache_runtime_candidate_2026_11_01": {
-    "status": "targeted_regressions_and_all150_passed_not_accepted",
+    "status": "regressions_all150_and_ci_passed_not_accepted",
     "candidate_commit": "9fb0ed705c59a8da6c6eab36e9f50c3a0722f728",
     "report": "DEPTH_CACHE_CANDIDATE_REGRESSIONS_2026_11_01.md",
     "passed": 1467,
     "ignored": 8,
     "ci_run": 41287402564,
     "remaining": [
-      "broad CI",
       "paired workloads",
       "integration decision"
     ],
     "checksum_cases": 150,
-    "memory_retention_review": "unchanged ownership and publication policy; empty-object layout measured; whole-process RSS unmeasured"
+    "memory_retention_review": "unchanged ownership and publication policy; empty-object layout measured; whole-process RSS unmeasured",
+    "ci_jobs_passed": 7
   }
 }
