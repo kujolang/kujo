@@ -5712,5 +5712,11 @@
     "runtime_commit": "55e2f6836dac3016c3446a7477022c09a4ab47d7",
     "report": "ACCEPTED_DEPTH_PROFILES_2026_11_01.md",
     "next": "Isolate pre-invocation debug environment lookup cost; preserve post-callback flag visibility."
+  },
+  "debug_call_environment_2026_11_01": {
+    "status": "component_verified_runtime_candidate_pending",
+    "report": "DEBUG_CALL_ENVIRONMENT_2026_11_01.md",
+    "observations": 70,
+    "transition_controls": 50
   }
 }
