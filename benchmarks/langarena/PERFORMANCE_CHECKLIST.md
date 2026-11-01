@@ -847,6 +847,7 @@ defects have separate verified fixes in section 3.
 
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
+  Candidate `9fb0ed70` passes [1,467 local regressions](DEPTH_CACHE_CANDIDATE_REGRESSIONS_2026_11_01.md), including new all-runtime snapshot coverage. Checksum matrix, broad CI and workload acceptance remain pending; accepted runtime is unchanged.
   [Paired depth-cache hash experiment](DEPTH_CACHE_HASH_COMPARISON_2026_11_01.md) passes 336 observations, cold construction and layout checks. It qualifies for an isolated runtime candidate; runtime/workload acceptance remains open.
   [Depth-cache component baseline](DEPTH_CACHE_CONTROLS_2026_11_01.md) verifies 72 observations and snapshot/invalidation controls on extracted accepted-source methods. Alternative mechanisms and whole-runtime acceptance remain open.
 - [ ] Preserve integer/Boolean/float/error semantics.
