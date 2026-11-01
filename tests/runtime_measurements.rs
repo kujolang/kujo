@@ -194,19 +194,38 @@ fn native_entry_measurements_distinguish_execution_from_owned_argument_dispatche
     let (output, measured) = run(&owned_calls, &["--jit"]);
     assert!(output.status.success());
     let counts = &measured["counters"];
+    // Owned arguments now enter native functions through the owned-value ABI.
+    // The dispatch count still includes the first compilation retry.
+    assert_eq!(counts["jit_native_function_entries"], 101);
+    assert_eq!(counts["jit_native_boundary_entries"], 101);
+    assert_eq!(counts["jit_call_dispatches"], 201);
+    assert_eq!(counts["jit_owned_argument_dispatches"], 201);
+
+    // Exception handlers keep this function in the VM. Ownership alone is no
+    // longer a reason for fallback, so retain a separate genuine fallback case.
+    let fallback_calls = format!(
+        "func identity(x) {{ try {{ return x }} except err {{ return [0] }} }}\n{}",
+        "assert_equal(identity([1]),[1])\n".repeat(200)
+    );
+    let (output, measured) = run(&fallback_calls, &["--jit"]);
+    assert!(output.status.success());
+    let counts = &measured["counters"];
     assert_eq!(counts["jit_native_function_entries"], 0);
     assert_eq!(counts["jit_native_boundary_entries"], 0);
     assert_eq!(counts["jit_call_dispatches"], 200);
     assert_eq!(counts["jit_owned_argument_dispatches"], 200);
 
-    let (_, measured) = run(&float_calls, &[]);
-    for key in [
-        "jit_native_function_entries",
-        "jit_native_boundary_entries",
-        "jit_call_dispatches",
-        "jit_owned_argument_dispatches",
-    ] {
-        assert_eq!(measured["counters"][key], 0);
+    for source in [&float_calls, &owned_calls, &fallback_calls] {
+        let (output, measured) = run(source, &[]);
+        assert!(output.status.success());
+        for key in [
+            "jit_native_function_entries",
+            "jit_native_boundary_entries",
+            "jit_call_dispatches",
+            "jit_owned_argument_dispatches",
+        ] {
+            assert_eq!(measured["counters"][key], 0);
+        }
     }
 }
 

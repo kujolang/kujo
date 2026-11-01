@@ -19,12 +19,7 @@ Clean-host comparisons remain pending.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest accepted runtime `fd7b764`: 150/150 test-size checksums across VM,
-  interpreter and JIT ([native field ABI verification](NATIVE_FIELD_ABI_FIX_2026_10_31.md)).
-  Subsequent experimental candidates are not accepted baselines.
-- [x] Latest accepted-runtime gate: 1,309 library passes, eight existing manual
-  ignores, and 15 targeted integration passes. This is not a rerun of the full
-  integration corpus; earlier broader gates retain their own source identities.
+- [x] Latest accepted runtime `348a6270`: all 150 test-size checksums, Mac 1,349 and Linux 1,350 library/targeted integration passes, plus full Linux workflow acceptance. See [loop final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md). Eight existing manual ignores remain. Historical production evidence retains its earlier source identity.
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
@@ -748,6 +743,8 @@ environment materialization remain open; the reproduced captured-state reentry
 defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
+
+- [x] Accept reusable chunk-scoped loops and bounded callback fallback on `348a6270`; [final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md) records correctness, structural counters and paired local timings. This supersedes the earlier loop-admission pending status below; broader work remains open.
 
 - [x] Reproduce the [template parser loop-admission gap](TEMPLATE_LOOP_ADMISSION_2026_10_31.md) on accepted `fd7b764`: VM/interpreter/JIT return correct results, but nested loop compilation reports inconsistent operand-stack depths and falls back. Fixing the control-flow handling and proving native loop execution remain open; callback guards and stack validation must be preserved.
 - [x] Isolate [loop-condition versus body-call admission](TEMPLATE_LOOP_CONTROLS_2026_10_31.md): 18 runtime checks verify six controls. Condition calls fail admission; precomputed bounds and body calls enter native loops. The effectful condition preserves 301 calls, ruling out general call hoisting as a repair. Runtime fix remains open.

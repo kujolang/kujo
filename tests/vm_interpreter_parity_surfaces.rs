@@ -57,6 +57,35 @@ fn vm_env_with_builtins() -> Arc<Mutex<Environment>> {
     Arc::new(Mutex::new(interp.env))
 }
 
+#[cfg(not(feature = "runtime-jit"))]
+#[test]
+fn hot_loops_keep_vm_semantics_when_jit_is_requested_in_a_disabled_build() {
+    let code = r#"
+        func grow(input) {
+            mut rows := input
+            mut i := 0
+            while i < 300 { rows[0][0] += 1 i += 1 }
+            return rows
+        }
+        let original := [[7]]
+        let first := grow(original)
+        let second := grow(original)
+        assert_equal(first[0][0], 307)
+        assert_equal(second[0][0], 307)
+        assert_equal(original[0][0], 7)
+    "#;
+    assert!(interpreter_error(code).is_none());
+    for requested in [false, true] {
+        let mut parser = Parser::new(tokenize(code).unwrap());
+        let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+        let mut vm = VM::new();
+        vm.set_globals(vm_env_with_builtins());
+        vm.set_jit_enabled(requested);
+        assert!(matches!(vm.execute_until_suspend(chunk).unwrap(), VmExecutionResult::Completed));
+        assert_eq!(vm.jit_stats().compiled_functions, 0);
+    }
+}
+
 fn assert_interpreter_and_vm_error_contains(script: &str, expected: &str) {
     let interp_error =
         interpreter_error(script).expect("expected interpreter execution to report an error");

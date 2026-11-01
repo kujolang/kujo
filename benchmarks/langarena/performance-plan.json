@@ -5647,5 +5647,15 @@
     "integration_passes": 414,
     "test_size_checksums": 150,
     "limits": "Required linear membership traversal remains; broader sections 3/4 open. Local RSS uncertainty retained; no elapsed-speed claim."
+  },
+  "loop_reuse_acceptance_2026_11_01": {
+    "status": "accepted",
+    "runtime_commit": "348a62700179e59beccaefddc7ed4da30992d67b",
+    "report": "LOOP_REUSE_FINAL_REVIEW_2026_11_01.md",
+    "checksums": 150,
+    "mac_passes": 1349,
+    "linux_passes": 1350,
+    "paired_observations": 108,
+    "remaining": "Broader performance objective remains open; clean-host comparisons pending. Historical production checks do not certify this revision."
   }
 }

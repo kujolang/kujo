@@ -11,6 +11,15 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse compiled loops across repeated calls with chunk-scoped admission and
+  cache identities, retaining collection-specialization checks on each entry.
+  Include these loop sites and compiled variants in public JIT statistics, and
+  invalidate affected loop variants when profiling removes a specialization.
+  Preserve JIT-disabled builds and VM fallback through matching loop-admission
+  stubs, including hot-loop snapshot checks when native execution is requested.
+  Bound repeated native fallback attempts with per-loop retry backoff; successful
+  native completion restores immediate reuse without permanently blocking a loop.
+
 - Bound eligible repeated array-write reservations by up to eight distinct
   proven constant destinations, preserving value semantics, negative aliases,
   snapshots and ordered error publication with conservative fallback.

@@ -7,6 +7,47 @@ on:
   pull_request:
 
 jobs:
+  loop-condition-regressions:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Record source and toolchain
+        run: |
+          git rev-parse HEAD > loop-condition-source.txt
+          rustc --version --verbose >> loop-condition-source.txt
+          sha256sum src/jit.rs tests/jit_loop_condition_calls.rs >> loop-condition-source.txt
+      - name: Verify formatting
+        run: cargo fmt --check
+      - name: Test library and loop contracts
+        run: |
+          cargo test --release --locked --no-fail-fast --message-format=json --lib \
+            --test jit_loop_condition_calls \
+            --test jit_loop_collection_contracts \
+            --test jit_loop_field_methods \
+            --test jit_loop_owned_rebinding \
+            --test jit_callback_assignment \
+            --test jit_callback_promotion \
+            --test jit_callback_depth \
+            --test jit_error_propagation > loop-condition-tests.log 2>&1
+      - name: Preserve verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: loop-condition-verification-linux
+          retention-days: 7
+          path: |
+            loop-condition-source.txt
+            loop-condition-tests.log
+
   release-gate-minimal-smoke:
     runs-on: ubuntu-latest
 
@@ -44,7 +85,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        # Collect independent target failures in one run; all remain fatal.
+        run: cargo clippy --keep-going --all-targets --all-features -- -D warnings
 
   msrv:
     runs-on: ubuntu-latest

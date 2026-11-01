@@ -1150,7 +1150,27 @@ fn run_and_capture_with_optional_tmp_dir(
     }
     command.env(SSG_PROFILE_ASYNC_ENV, if profile_async { "1" } else { "0" });
 
-    let output = command.output().map_err(|e| format!("Failed to run '{}': {}", program, e))?;
+    // A parallel fork can briefly inherit a writable fixture descriptor. Linux
+    // refuses exec until that descriptor closes. Retry only failed starts, never
+    // a child that executed and returned an error, and keep the wait bounded.
+    #[cfg(target_os = "linux")]
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(250);
+    let output = loop {
+        match command.output() {
+            Ok(output) => break output,
+            #[cfg(target_os = "linux")]
+            Err(error)
+                if error.raw_os_error() == Some(libc::ETXTBSY)
+                    && std::time::Instant::now() < deadline =>
+            {
+                std::thread::sleep(
+                    std::time::Duration::from_millis(10)
+                        .min(deadline.saturating_duration_since(std::time::Instant::now())),
+                );
+            }
+            Err(error) => return Err(format!("Failed to run '{}': {}", program, error)),
+        }
+    };
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -1403,6 +1423,49 @@ mod tests {
         let mut perms = fs::metadata(path).expect("stub metadata should resolve").permissions();
         perms.set_mode(0o755);
         fs::set_permissions(path, perms).expect("stub executable should be chmod +x");
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn ssg_busy_executable_start_is_bounded_and_preserves_child_failures() {
+        let directory = unique_test_dir("busy_executable");
+        let program = directory.join("program.sh");
+        write_stub_executable(&program, "#!/bin/sh\necho invoked >> count\necho ready\n");
+        let writer = fs::OpenOptions::new().write(true).open(&program).unwrap();
+        let error = Command::new(&program).output().unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::ETXTBSY));
+
+        let call = || {
+            run_and_capture_with_optional_tmp_dir(
+                program.to_str().unwrap(),
+                &[],
+                &directory,
+                None,
+                false,
+            )
+        };
+        let started = std::time::Instant::now();
+        assert!(call().unwrap_err().contains("busy"));
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        assert!(!directory.join("count").exists());
+
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(30));
+            drop(writer);
+        });
+        let result = call();
+        release.join().unwrap();
+        assert_eq!(result.unwrap().trim(), "ready");
+        assert_eq!(fs::read_to_string(directory.join("count")).unwrap(), "invoked\n");
+
+        write_stub_executable(
+            &program,
+            "#!/bin/sh\necho failed >> count\necho child-failure >&2\nexit 7\n",
+        );
+        let error = call().unwrap_err();
+        assert!(error.contains("Some(7)"), "{error}");
+        assert!(error.contains("child-failure"), "{error}");
+        assert_eq!(fs::read_to_string(directory.join("count")).unwrap(), "invoked\nfailed\n");
     }
 
     fn stats(

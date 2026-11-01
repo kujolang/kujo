@@ -184,6 +184,11 @@ impl NativeStackBases {
 
 impl VMContext {
     /// Refresh only VM-owned views; this function's named-local map is separately owned.
+    // SAFETY:
+    // - Preconditions: any non-null vm_ptr is a live, exclusively accessible VM;
+    //   no references into its globals/slots survive the refresh operation.
+    // - Postconditions: eligible VM-owned pointers reference the VM's current
+    //   containers; loop-environment and separately owned local views stay intact.
     unsafe fn refresh_vm_views(&mut self) {
         if !self.vm_owned_views || !self.loop_environment_ptr.is_null() {
             return;
@@ -869,8 +874,11 @@ pub unsafe extern "C" fn jit_load_variable(
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. The root store validates the
-// operand identity and creates a distinct root in the current activation.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusively accessible;
+//   its root store belongs to the current native activation.
+// - Postconditions: validated owned operands receive a distinct root; immediate
+//   payloads retain their codec semantics. Invalid roots set runtime_error.
 pub unsafe extern "C" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     match ctx.owned_roots.duplicate(value, kind) {
@@ -883,8 +891,11 @@ pub unsafe extern "C" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Only a validated current-scope
-// root can be released; payloads are never treated as raw pointers.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusively accessible;
+//   its root store belongs to the current native activation.
+// - Postconditions: the codec releases validated owned roots without interpreting
+//   payloads as pointers; errors set runtime_error and return a failure status.
 pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     match ctx.owned_roots.release(value, kind) {
@@ -899,8 +910,12 @@ pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, ki
 /// Remove a dead binding. Whole-function contexts borrow the caller's slot
 /// vector, so only loop contexts may clear a physical VM local slot.
 #[no_mangle]
-// SAFETY: context maps and (for loop contexts) local slots remain exclusively
-// borrowed for this call. Validate the slot before changing either container.
+// SAFETY:
+// - Preconditions: ctx and non-null map/slot pointers are aligned and live;
+//   mutated maps/slots are exclusive, and the name map remains immutable.
+//   clear_vm_slot is requested only for a VM-owned loop slot vector.
+// - Postconditions: validated slots are cleared and the named binding removed;
+//   absent names/slots report an error before their corresponding mutation.
 pub unsafe extern "C" fn jit_release_dead_local(
     ctx: *mut VMContext,
     slot: usize,
@@ -927,9 +942,12 @@ pub unsafe extern "C" fn jit_release_dead_local(
 
 /// Transfer a named parameter into the active native frame.
 #[no_mangle]
-// SAFETY: ctx and its local/name maps remain live and exclusively borrowed.
-// Parameter initialization runs after native frame entry. Transfer the local
-// value into that frame's roots rather than retaining an artificial COW alias.
+// SAFETY:
+// - Preconditions: ctx and non-null local/name maps are aligned and live;
+//   locals and roots are exclusive, names immutable, and native frame entry
+//   precedes parameter initialization.
+// - Postconditions: the selected argument or named binding transfers into the
+//   active frame's codec; return_value_kind describes success, errors are recorded.
 pub unsafe extern "C" fn jit_take_parameter(
     ctx: *mut VMContext,
     name_hash: i64,
@@ -972,8 +990,11 @@ pub unsafe extern "C" fn jit_take_parameter(
 
 /// Load a retained immutable literal through the ordinary owned-value codec.
 #[no_mangle]
-// SAFETY: generated code passes a Value allocation retained by JitCompiler for
-// the lifetime of the machine code. ctx is live and exclusively borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusive; nonzero pointer
+//   addresses an aligned immutable Value retained by JitCompiler for this call.
+// - Postconditions: the literal is cloned into the active frame's codec without
+//   transferring its allocation; missing literals/codec failures record an error.
 pub unsafe extern "C" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
@@ -995,8 +1016,11 @@ pub unsafe extern "C" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> 
 
 /// Load a named operand without leaving hidden values on the VM stack.
 #[no_mangle]
-// SAFETY: ctx and the referenced name/local/global maps remain live for this
-// call. Values are cloned through their ordinary ownership contract, not pointers.
+// SAFETY:
+// - Preconditions: ctx is null or aligned, live and exclusive; non-null name,
+//   local and global maps are aligned, live and immutable during lookup.
+// - Postconditions: a resolved value is cloned into the active frame's codec;
+//   missing names/values and codec failures record errors, not fabricated pointers.
 pub unsafe extern "C" fn jit_load_operand(
     ctx: *mut VMContext,
     name_hash: i64,
@@ -1039,8 +1063,12 @@ pub unsafe extern "C" fn jit_load_operand(
 
 /// Resolve a native field through the VM contract, preserving legacy receivers.
 #[no_mangle]
-// SAFETY: ctx is exclusive; name_ptr points into compiler-retained Arc<String>
-// metadata. Global lookup uses the already-borrowed map and never locks the VM.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name_ptr
+//   addresses compiler-retained immutable String metadata. Global maps are live
+//   and readable; a non-null receiver stack is live and exclusively mutable.
+// - Postconditions: success returns a tagged value and may push a hidden receiver;
+//   errors set runtime_error. Input roots remain owned; no user callback runs.
 pub unsafe extern "C" fn jit_field_read(
     ctx: *mut VMContext,
     object: i64,
@@ -1108,8 +1136,12 @@ pub unsafe extern "C" fn jit_field_read(
 
 /// Consume a field-write operand through the canonical VM contract.
 #[no_mangle]
-// SAFETY: context roots are exclusive, and name_ptr is compiler-retained metadata.
-// This operation invokes no user callbacks. Operand slots remain live for release.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name_ptr
+//   addresses immutable String metadata retained by the compiler for this call.
+// - Postconditions: the value is cloned before consuming the object into an
+//   updated root; consumed slots remain releasable. Errors set runtime_error,
+//   including after consumption; no user callbacks or pointer escape occur.
 pub unsafe extern "C" fn jit_field_write(
     ctx: *mut VMContext,
     object: i64,
@@ -1157,8 +1189,13 @@ pub unsafe extern "C" fn jit_field_write(
 
 /// Consume generic indexed replacement operands using the VM's exact contract.
 #[no_mangle]
-// SAFETY: ctx owns the tagged roots for this activation. The key-cache callback
-// performs no user calls; consumed root slots remain live for generated release.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null vm_ptr
+//   addresses its live VM, exclusively accessible during integer-key caching.
+//   Operand roots belong to this native activation; no VM borrow spans the call.
+// - Postconditions: index/value are cloned before consuming the object; consumed
+//   slots stay releasable. Success returns a tagged root; errors set runtime_error.
+//   The key-cache callback invokes no user code and retains no borrowed pointer.
 pub unsafe extern "C" fn jit_index_set_result(
     ctx: *mut VMContext,
     object: i64,
@@ -1215,7 +1252,12 @@ pub unsafe extern "C" fn jit_index_set_result(
 
 /// Match Call's argument suffix after an immediately preceding FieldGet.
 #[no_mangle]
-// SAFETY: ctx and its stack are exclusive. No pointers or references escape.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>. Generated callers supply Call's
+//   argument suffix and the pending receiver flag from the preceding field read.
+// - Postconditions: the pending flag is cleared; a checked suffix is reordered
+//   in place, or runtime_error records underflow. No references escape.
 pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if !std::mem::take(&mut ctx.field_receiver_pending) {
@@ -1243,8 +1285,12 @@ pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64)
 
 /// One normalized iteration step. Kind -4 denotes exhaustion, never a language value.
 #[no_mangle]
-// SAFETY: tagged operands belong to this context. Locked loops resume before
-// generator callbacks; whole-function callbacks use the VM continuation guard.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; generator execution
+//   requires a live exclusive VM and no environment lock or VM/root borrow across
+//   its callback. VM-owned views must be refreshable after continuation restoration.
+// - Postconditions: input operands are cloned; generator callbacks refresh VM views
+//   even on error. Success returns a tagged item or kind -4 exhaustion; errors record.
 pub unsafe extern "C" fn jit_for_next(
     ctx: *mut VMContext,
     object: i64,
@@ -1308,8 +1354,12 @@ pub unsafe extern "C" fn jit_for_next(
 
 /// Read tagged operands using the VM's indexing and error contracts.
 #[no_mangle]
-// SAFETY: ctx is a live exclusive context. Decode validated root handles rather
-// than treating payloads as pointers; no borrow or pointer escapes this call.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive, with an active
+//   root store. Tagged operands use that store's codec, not raw object pointers.
+// - Postconditions: success returns an immediate or independently rooted value;
+//   input roots are preserved. Invalid handles/indexes set runtime_error;
+//   no borrowed reference escapes and no user callback runs.
 pub unsafe extern "C" fn jit_indexed_read(
     ctx: *mut VMContext,
     object: i64,
@@ -1323,8 +1373,13 @@ pub unsafe extern "C" fn jit_indexed_read(
 
 /// Read with a stack-local root-slot hint. The hint never bypasses handle checks.
 #[no_mangle]
-// SAFETY: ctx is live/exclusive; cache is null or points to an aligned initialized
-// OwnedReadCache in the active generated stack frame, separate from ctx storage.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; nonzero cache
+//   addresses an initialized, exclusive OwnedReadCache in the active generated
+//   stack frame, disjoint from ctx and its root store.
+// - Postconditions: cache hints are updated only after validating handle/liveness;
+//   success returns a tagged value, errors set runtime_error. Input roots survive;
+//   no cache pointer or borrowed value escapes and no user callback runs.
 pub unsafe extern "C" fn jit_indexed_read_cached(
     ctx: *mut VMContext,
     object: i64,
@@ -1411,9 +1466,12 @@ fn indexed_read(
 
 /// Expose unique dense integer storage through an explicit native ABI.
 #[no_mangle]
-// SAFETY: ctx and its physical slots are exclusively borrowed by this loop.
-// Box addresses remain stable; the caller refreshes the view after every helper
-// write. Only a unique dense integer vector admits raw in-bounds native access.
+// SAFETY:
+// - Preconditions: ctx and non-null physical slots are live, aligned and exclusive.
+//   Generated users bounds-check accesses and refresh/discard cached views after
+//   any operation changing storage/ownership; views never outlive this loop context.
+// - Postconditions: only a unique dense integer vector exposes a boxed stable view;
+//   invalid/shared slots return zero. Data remains valid only under those obligations.
 pub unsafe extern "C" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     let Ok(slot) = usize::try_from(slot) else { return 0 };
@@ -1433,7 +1491,12 @@ pub unsafe extern "C" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> 
 }
 
 #[no_mangle]
-// SAFETY: context slots stay live; no callback runs while the object is borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null physical
+//   local_slots_ptr addresses the current loop's live, readable Vec<Value>.
+// - Postconditions: slot/index checks precede access; success returns a tagged
+//   result, errors set runtime_error. Input roots and slot values are preserved;
+//   no callback runs while borrowing the object and no reference escapes.
 pub unsafe extern "C" fn jit_loop_indexed_read(
     ctx: *mut VMContext,
     slot: i64,
@@ -1471,8 +1534,12 @@ pub unsafe extern "C" fn jit_loop_indexed_read(
 
 /// Mutate the callee binding through the VM's indexed-write contract.
 #[no_mangle]
-// SAFETY: ctx maps and roots are live and exclusively borrowed. Decode operand
-// handles before borrowing the destination; mutation never invokes user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name,
+//   local-map and slot pointers remain live. Names are immutable and destination
+//   storage exclusive; tagged operands use this activation's root codec.
+// - Postconditions: binding/operand checks precede destination lookup; cloned inputs
+//   retain roots. VM indexed-write semantics apply and errors record; no callback runs.
 pub unsafe extern "C" fn jit_indexed_write(
     ctx: *mut VMContext,
     location: i64,
@@ -1544,8 +1611,13 @@ pub unsafe extern "C" fn jit_indexed_write(
 
 /// Conditional pop/remove rebinding. A fallback preserves evaluated call operands.
 #[no_mangle]
-// SAFETY: retained path metadata and tagged operand storage are live; target,
-// dead-pair and operand roots belong to this context. No user callback runs here.
+// SAFETY:
+// - Preconditions: ctx/backing maps, slots and VM are live, aligned and exclusive;
+//   names/shape are immutable. For argc 1/2, operands spans 2*(dynamic indices+argc+1)
+//   initialized aligned i64s within isize::MAX bytes. The pair target is dead storage.
+//   Loop environments are already locked; VM global access has no held lock/borrow.
+// - Postconditions: guards preserve fallback operands, success roots the pair;
+//   cache is restored and errors record. Consumed slots stay releasable; no callback runs.
 pub unsafe extern "C" fn jit_try_pop_rebind(
     ctx: *mut VMContext,
     location: i64,
@@ -1744,7 +1816,11 @@ pub unsafe extern "C" fn jit_try_pop_rebind(
 
 /// Inspect builtin identity and operand types without retaining artificial aliases.
 #[no_mangle]
-// SAFETY: live exclusive context and live operand handles; no callbacks.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; operand identities
+//   use its native root codec, with current-frame operands for mutable inspection.
+// - Postconditions: reports eligible builtin/type combinations without retaining
+//   aliases or mutating values; invalid identities record an error. No callback runs.
 pub unsafe extern "C" fn jit_guard_append_path(
     ctx: *mut VMContext,
     original: i64,
@@ -1786,9 +1862,12 @@ pub unsafe extern "C" fn jit_guard_append_path(
 
 /// Checked nested mutation uses retained path metadata and a tagged operand array.
 #[no_mangle]
-// SAFETY: shape points to compiler-retained metadata; operands points to generated
-// stack storage containing one payload/kind pair for every dynamic index followed
-// by the assigned value. Neither allocation escapes this synchronous helper.
+// SAFETY:
+// - Preconditions: ctx, backing maps/slots/VM and shape satisfy jit_mutate_binding_path;
+//   operands is aligned initialized storage for every dynamic-index payload/kind
+//   pair followed by one assigned-value pair, with checked representable byte length.
+// - Postconditions: forwards the non-append mutation; synchronous borrows do not
+//   escape and errors are recorded under the shared mutation contract.
 pub unsafe extern "C" fn jit_update_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -1813,7 +1892,12 @@ pub unsafe extern "C" fn jit_update_binding_path(
 }
 
 #[no_mangle]
-// SAFETY: same retained metadata contract, with indices followed by original/item/callable pairs.
+// SAFETY:
+// - Preconditions: ctx, backing maps/slots/VM and shape satisfy jit_mutate_binding_path;
+//   aligned initialized operands contain dynamic-index pairs followed by original,
+//   item and callable pairs, with checked representable byte length.
+// - Postconditions: forwards append mutation; original/item may be consumed into
+//   the update while their root slots remain releasable, including on error.
 pub unsafe extern "C" fn jit_append_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -1837,6 +1921,13 @@ pub unsafe extern "C" fn jit_append_binding_path(
     )
 }
 
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live, aligned and
+//   exclusive; names/shape are immutable, shape compiler-retained. operands spans
+//   2*(dynamic indices + (append ? 3 : 1)) initialized i64s within isize::MAX bytes.
+//   VM cache access is exclusive; a non-null loop environment is already locked.
+// - Postconditions: checked destination mutation restores the depth cache; errors
+//   record. No callback or pointer escape occurs; consumed root slots stay releasable.
 unsafe fn jit_mutate_binding_path(
     ctx: *mut VMContext,
     location: i64,
@@ -2000,7 +2091,11 @@ unsafe fn jit_mutate_binding_path(
 
 /// A locked loop must return to bytecode before invoking user callbacks.
 #[no_mangle]
-// SAFETY: ctx and roots are live; this only borrows an operand, never calls user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; tagged operands
+//   use this activation's root codec and loop_environment_ptr marks locked loops.
+// - Postconditions: returns whether bytecode resumption is required; invalid
+//   roots record an error. No environment pointer is dereferenced or user code run.
 pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     if ctx.loop_environment_ptr.is_null() {
@@ -2009,6 +2104,19 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
     if kind == -1 {
         return 1;
     } // A Call instruction can enter arbitrary user code.
+    if kind == -4 {
+        // Only the actual argument-only builtin is safe under the loop's
+        // environment lock. A user function named `len` must still resume in
+        // the VM, and aliases of the builtin must retain the same behavior.
+        return match ctx.owned_roots.borrow_owned(value) {
+            Ok(Value::NativeFunction(name)) if name == "len" => 0,
+            Ok(_) => 1,
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                1
+            }
+        };
+    }
     if kind == -3 {
         return match ctx.owned_roots.clone_value(value, crate::native_owned::OWNED) {
             Ok(Value::BytecodeGenerator { .. }) => 1,
@@ -2048,8 +2156,12 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: the loop owns ctx/stack. The translator then marshals its complete
-// operand stack and persists locals before returning to the VM at this exact PC.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   is a live exclusive Vec<Value>. loop_stack_base preserves the enclosing VM
+//   prefix; pc is the intended bytecode continuation in the current chunk.
+// - Postconditions: checked pc is recorded and the loop suffix truncated; callers
+//   must rebuild all operands and persist locals before returning to that PC.
 pub unsafe extern "C" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     let Some(stack) = ctx.stack_ptr.as_mut() else { return 1 };
@@ -2061,8 +2173,12 @@ pub unsafe extern "C" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -
 
 /// Execute owned operators through the reference VM, including method dispatch.
 #[no_mangle]
-// SAFETY: ctx and its VM are live for this call. Clone operands before entering
-// VM callbacks so no root-store borrow or global lock spans user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null vm_ptr
+//   addresses its live exclusive VM. No environment lock or VM/root borrow may
+//   span user callbacks, and VM-owned views must support refresh after reentry.
+// - Postconditions: operands are cloned before dispatch; views refresh on success
+//   or failure. Success roots the result; errors record without consuming input roots.
 pub unsafe extern "C" fn jit_owned_operator(
     ctx: *mut VMContext,
     operation: i64,
@@ -2116,8 +2232,10 @@ pub unsafe extern "C" fn jit_owned_operator(
 /// Load an immediate value and publish its kind from the active VM local slots.
 #[no_mangle]
 // SAFETY:
-// - `ctx` must point to a live VMContext for the duration of the call.
-// - The helper only reads a bounds-checked slot through the VM-owned vector pointer.
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   local_slots_ptr addresses the active VM frame's live readable Vec<Value>.
+// - Postconditions: a bounds-checked slot is cloned into the root codec and its
+//   kind published; errors set runtime_error. Physical slots remain unchanged.
 pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
@@ -2145,7 +2263,11 @@ pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> 
 
 /// Persist a tagged value without consuming its live SSA root.
 #[no_mangle]
-// SAFETY: ctx and its local-slot vector remain live and exclusively borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   local_slots_ptr addresses the active VM frame's live exclusive Vec<Value>.
+// - Postconditions: the operand is cloned before checked slot replacement and
+//   its root survives; failure preserves existing errors and returns zero.
 pub unsafe extern "C" fn jit_store_local_slot(
     ctx: *mut VMContext,
     slot: i64,
@@ -2225,7 +2347,10 @@ pub unsafe extern "C" fn jit_store_variable(
 
 /// Raise a scalar operand type error on the cold side of a native type guard.
 #[no_mangle]
-// SAFETY: ctx points to the live, exclusively borrowed compiled-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context.
+// - Postconditions: a non-null context receives a scalar-type diagnostic;
+//   operation and kind tags are checked, no payload is dereferenced, and 1 returns.
 pub unsafe extern "C" fn jit_scalar_type_error(
     ctx: *mut VMContext,
     operation: i64,
@@ -2258,7 +2383,10 @@ pub unsafe extern "C" fn jit_scalar_type_error(
 
 /// Construct the canonical arithmetic error only on a failed native guard.
 #[no_mangle]
-// SAFETY: ctx points to the active exclusively borrowed compiled-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context.
+// - Postconditions: a non-null context receives the checked arithmetic error or
+//   invalid-guard diagnostic; operands remain integers, and failure status 1 returns.
 pub unsafe extern "C" fn jit_arithmetic_error(
     ctx: *mut VMContext,
     operation: i64,
@@ -2281,8 +2409,12 @@ pub unsafe extern "C" fn jit_arithmetic_error(
 
 /// Read/update physical loop-local initialization, or construct a readonly error.
 #[no_mangle]
-// SAFETY: ctx belongs to the active native call. Physical state access performs
-// no callbacks and does not acquire the environment lock held by native loops.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null names are
+//   live immutable metadata. Physical flag access requires a live exclusive VM
+//   with no overlapping borrow; slot identifies the current VM call frame.
+// - Postconditions: bounds-checked flags are read/marked or a readonly diagnostic
+//   is recorded. No callback or environment-lock acquisition occurs.
 pub unsafe extern "C" fn jit_local_initialization(
     ctx: *mut VMContext,
     slot: i64,
@@ -2321,8 +2453,12 @@ pub unsafe extern "C" fn jit_local_initialization(
 
 /// Report a pending error or task cancellation across a native boundary.
 #[no_mangle]
-// SAFETY: ctx points to the live, exclusively borrowed native-call context;
-// its optional cancellation pointer is backed by the enclosing task's live Arc.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   task_cancellation points to an aligned AtomicBool retained by the task's Arc
+//   throughout this call (or equivalent caller-owned lifetime in tests).
+// - Postconditions: cancellation is read atomically and may install an error;
+//   an existing error is preserved. Returns whether execution has failed.
 pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if ctx
@@ -2338,8 +2474,12 @@ pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
 /// Assign a named scalar binding from a compiled function (0 success, 1 error).
 /// Declared locals use slots; unresolved names must retain runtime global lookup.
 #[no_mangle]
-// SAFETY: ctx and its local/name maps belong to the active compiled call. The VM
-// pointer is live and no globals lock is held by whole-function entry points.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/VM are live and aligned; ctx and
+//   mutated maps are exclusive, names immutable. Loop environment access owns its
+//   lock; VM assignment has no held globals lock or overlapping VM borrow.
+// - Postconditions: clones the operand and uses checked environment assignment
+//   where available; roots survive, errors record, and no user callback runs.
 pub unsafe extern "C" fn jit_assign_variable(
     ctx: *mut VMContext,
     name_hash: i64,
@@ -2467,9 +2607,13 @@ pub unsafe extern "C" fn jit_store_variable_from_stack(ctx: *mut VMContext, name
 /// local, or physical loop slot. Returns zero on success, one on error, or two
 /// when a locked loop must resume in the VM before invoking a struct operator.
 #[no_mangle]
-// SAFETY: ctx and referenced maps/slots are live and exclusively borrowed. A
-// string pointer refers to an Arc retained by JitCompiler; a negative length
-// denotes a validated Unicode scalar instead. No pointer or borrow escapes.
+// SAFETY:
+// - Preconditions: ctx and backing maps/slots/VM satisfy jit_append_target; for
+//   nonnegative length, suffix spans that many immutable initialized bytes in one
+//   retained allocation, length <= isize::MAX. Callbacks require exclusive VM access
+//   without held environment locks or VM/root borrows; length -1 is a character.
+// - Postconditions: validates UTF-8/scalars, appends or resumes locked loops before
+//   callbacks, refreshes callback views and publishes results/errors; no pointer escapes.
 pub unsafe extern "C" fn jit_append_local(
     ctx: *mut VMContext,
     location: i64,
@@ -2566,12 +2710,20 @@ pub unsafe extern "C" fn jit_append_local(
 }
 
 #[no_mangle]
-// SAFETY: ctx is the live native context; append published the new binding payload.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and readable; callers read this
+//   field only after successful append publication, without concurrent mutation.
+// - Postconditions: returns the recorded payload (zero for null) without decoding,
+//   dereferencing the payload or transferring ownership.
 pub unsafe extern "C" fn jit_append_result(ctx: *mut VMContext) -> i64 {
     ctx.as_ref().map_or(0, |ctx| ctx.return_value)
 }
 
-// SAFETY: the returned borrow is confined to the live native context.
+// SAFETY:
+// - Preconditions: ctx is exclusive; non-null name/local/slot pointers are live
+//   and aligned, name metadata immutable and target storage exclusively accessible.
+// - Postconditions: returns a checked current-root, named-local or physical-slot
+//   borrow tied to ctx; no callback may invalidate backing storage during that borrow.
 unsafe fn jit_append_target(
     ctx: &mut VMContext,
     location: i64,
@@ -2598,6 +2750,12 @@ unsafe fn jit_append_target(
 
 /// Release only a local snapshot invisible to a same-invocation exception handler.
 #[no_mangle]
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable, VM readable without overlap.
+//   Private native-function locals have no same-invocation exception handler.
+// - Postconditions: only a mutable matching local snapshot may be cleared after
+//   callable/handler checks; operand roots survive, errors record, no callback runs.
 pub unsafe extern "C" fn jit_release_rebind(
     ctx: *mut VMContext,
     location: i64,
@@ -2669,8 +2827,12 @@ pub unsafe extern "C" fn jit_release_rebind(
 
 /// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
 #[no_mangle]
-// SAFETY: context, maps and roots are exclusively borrowed by this invocation.
-// The VM global helper is called only outside a locked native-loop environment.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable and roots use this activation.
+//   A loop environment is already locked; VM global access has no held lock/borrow.
+// - Postconditions: guarded string rebinding consumes the snapshot on success,
+//   restores it on fallback, and records ownership errors. No user callback runs.
 pub unsafe extern "C" fn jit_try_string_append(
     ctx: *mut VMContext,
     location: i64,
@@ -2760,8 +2922,12 @@ pub unsafe extern "C" fn jit_try_string_append(
 
 /// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
 #[no_mangle]
-// SAFETY: context, maps and roots are exclusively borrowed by this invocation.
-// The VM global helper is called only outside a locked native-loop environment.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/slots/VM are live and aligned;
+//   ctx/destinations are exclusive, names immutable and roots use this activation.
+//   A loop environment is already locked; VM global access has no held lock/borrow.
+// - Postconditions: guarded collection rebinding consumes the snapshot on success,
+//   restores it on fallback, and records ownership errors. No user callback runs.
 pub unsafe extern "C" fn jit_try_append(
     ctx: *mut VMContext,
     location: i64,
@@ -4227,7 +4393,11 @@ pub unsafe extern "C" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> 
 
 /// Preserve scalar type information across the native calling convention.
 #[no_mangle]
-// SAFETY: ctx is the live, exclusively borrowed native-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context;
+//   callers supply the native return ABI's payload and matching kind.
+// - Postconditions: non-null ctx records the payload/kind and marks a return;
+//   no payload is dereferenced or root transferred. Null returns failure status 1.
 pub unsafe extern "C" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     ctx.return_value = value;
@@ -4237,14 +4407,21 @@ pub unsafe extern "C" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: ctx points to the live native-call context.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and readable without concurrent
+//   mutation for this call.
+// - Postconditions: returns the recorded kind (zero for null) without mutation,
+//   decoding, ownership transfer or escaping references.
 pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
     ctx.as_ref().map_or(0, |ctx| ctx.return_value_kind)
 }
 
 #[no_mangle]
-// SAFETY: ctx is a live, exclusively borrowed native context. The payload is
-// validated as a root identity before borrowing its Value; no raw address is used.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive, with its root store
+//   accessible for this call. The payload denotes a root identity, not an address.
+// - Postconditions: a validated value is inspected without consuming its root;
+//   invalid handles set runtime_error. Returns truth as 0/1; no reference escapes.
 pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     match ctx.owned_roots.owned_truth(payload) {
@@ -4257,8 +4434,11 @@ pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Owned operands are validated
-// store identities, borrowed only for this call; scalar payloads are decoded.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; tagged operands
+//   use this context's root identities or immediate scalar encoding.
+// - Postconditions: validated operands are compared without consuming roots;
+//   invalid kinds/handles set runtime_error. No reference escapes or callback runs.
 pub unsafe extern "C" fn jit_owned_equal(
     ctx: *mut VMContext,
     left: i64,
@@ -4277,7 +4457,11 @@ pub unsafe extern "C" fn jit_owned_equal(
 }
 
 #[no_mangle]
-// SAFETY: ctx and its stack are live and exclusively borrowed for this call.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>, disjoint from the context/root store.
+// - Postconditions: a validated operand is cloned onto the stack without consuming
+//   its root; codec failures set runtime_error. Null context/stack performs no push.
 pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
         if let Some(stack) = ctx.stack_ptr.as_mut() {
@@ -4296,8 +4480,12 @@ pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, 
 /// Transfer a consumed operand into the VM stack. Borrowed/peek operations
 /// continue using jit_stack_push_scalar; this helper invalidates an owned root.
 #[no_mangle]
-// SAFETY: ctx and stack are live and exclusive. Owned payloads must belong to
-// the current activation; the root store validates this before moving a value.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>, disjoint from the context/root store.
+//   Callers stop using consumed operands after successful transfer.
+// - Postconditions: validated current-frame roots move onto the stack and become
+//   invalid; scalars decode by value. Missing stack/codec errors report failure.
 pub unsafe extern "C" fn jit_stack_take_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     let Some(stack) = ctx.stack_ptr.as_mut() else {
@@ -4375,8 +4563,13 @@ pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash:
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Its optional VM and name pointers
-// remain valid throughout the enclosing native invocation.
+// SAFETY:
+// - Preconditions: ctx and non-null VM/stack pointers are live and aligned;
+//   ctx/VM are exclusive, stack readable, cancellation satisfies jit_runtime_failed.
+//   Non-null call_name_ptr spans call_name_len immutable initialized bytes within
+//   one allocation, with length <= isize::MAX; no VM borrow overlaps VM access.
+// - Postconditions: success acquires depth/root scope and records a stack base;
+//   failure records an error and rolls back any depth acquired by this call.
 pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if !ctx.task_cancellation.is_null() && jit_runtime_failed(ctx) != 0 {
@@ -4419,8 +4612,12 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
 }
 
 #[no_mangle]
-// SAFETY: ctx and its optional VM remain live and exclusively borrowed; this
-// pairs with one successful native-function entry on every generated exit path.
+// SAFETY:
+// - Preconditions: ctx and non-null VM/stack pointers are live, aligned and
+//   exclusively accessible; no VM borrow overlaps VM access. Each call pairs
+//   with one successful native-function entry, in nested exit order.
+// - Postconditions: an owned return is promoted on success; roots and stack suffix
+//   are unwound, depth released, and ownership errors recorded without hiding errors.
 pub unsafe extern "C" fn jit_leave_function(ctx: *mut VMContext) {
     if let Some(ctx) = ctx.as_mut() {
         if ctx.runtime_error.is_none()
@@ -5192,8 +5389,11 @@ pub extern "C" fn jit_make_struct(ctx: *mut VMContext, shape_ptr: i64) -> i64 {
             vm_ctx.runtime_error = Some("Missing native struct metadata".into());
             return 0;
         }
-        // SAFETY: generated code embeds Arc::as_ptr for metadata held by the
-        // compiler for the entire lifetime of its machine code.
+        // SAFETY:
+        // - Preconditions: generated MakeStruct supplies Arc::as_ptr for an aligned
+        //   immutable NativeStructShape retained by JitCompiler throughout execution.
+        // - Postconditions: borrows the retained tuple without consuming its Arc;
+        //   the resulting Value clones names, so no metadata reference escapes.
         let (name, names) = unsafe { &*(shape_ptr as *const NativeStructShape) };
         let Some(start) = stack.len().checked_sub(names.len()) else {
             vm_ctx.runtime_error = Some("Stack underflow".into());
@@ -5233,16 +5433,21 @@ pub extern "C" fn jit_make_dict_with_keys(
             vm_ctx.runtime_error = Some("Missing native dictionary keys".into());
             return 0;
         }
-        // SAFETY: generated code passes Arc::as_ptr, and JitCompiler retains a
-        // strong reference for the lifetime of the machine code. This reads the
-        // Vec allocation, not an Arc wrapper or a temporary bytecode reference.
+        // SAFETY:
+        // - Preconditions: generated MakeDictWithKeys supplies Arc::as_ptr for an
+        //   aligned immutable Vec<Arc<str>> retained strongly by JitCompiler.
+        // - Postconditions: borrows the Vec allocation to check its length without
+        //   consuming the retained Arc or reading an Arc wrapper as a Vec.
         let keys = unsafe { &*(keys_ptr as *const Vec<Arc<str>>) };
         if keys.len() != count || stack.len() < count {
             vm_ctx.runtime_error = Some("Stack underflow".into());
             return 0;
         }
-        // SAFETY: the retained Arc keeps this allocation live. Incrementing
-        // before from_raw creates exactly one owned reference for the new Value.
+        // SAFETY:
+        // - Preconditions: keys_ptr is the same live Arc::as_ptr allocation checked
+        //   above; the compiler's strong owner survives both operations.
+        // - Postconditions: increment then from_raw creates exactly one additional
+        //   owned Arc for the dictionary, preserving the compiler's original owner.
         let owned_keys = unsafe {
             Arc::increment_strong_count(keys_ptr as *const Vec<Arc<str>>);
             Arc::from_raw(keys_ptr as *const Vec<Arc<str>>)
@@ -5273,6 +5478,9 @@ pub struct JitCompiler {
 
     /// Execution counter for hot path detection
     execution_counts: HashMap<usize, usize>,
+    loop_execution_counts: HashMap<(u64, usize, usize), LoopAdmission>,
+    blocked_loop_sites: HashSet<(u64, usize, usize)>,
+    compiled_loop_cache: HashMap<LoopCacheKey, CompiledFn>,
 
     /// Cache of compiled functions (bytecode offset -> native function)
     compiled_cache: HashMap<usize, CompiledFn>,
@@ -9314,6 +9522,26 @@ impl BytecodeTranslator {
         Ok(())
     }
 
+    fn resume_loop_at_pc(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        pc: usize,
+    ) -> Result<(), String> {
+        let ctx = self.ctx_param.ok_or("Missing loop context")?;
+        let prepare = self.loop_resume_prepare_func.ok_or("Missing resume helper")?;
+        let push = self.scalar_push_func.ok_or("Missing resume operand helper")?;
+        let pc = builder.ins().iconst(types::I64, pc as i64);
+        builder.ins().call(prepare, &[ctx, pc]);
+        for value in &self.value_stack {
+            let kind = self.scalar_kind(builder, *value);
+            builder.ins().call(push, &[ctx, *value, kind]);
+        }
+        self.persist_local_slots(builder, true);
+        let status = builder.ins().iconst(types::I64, 2);
+        self.emit_return(builder, status);
+        Ok(())
+    }
+
     fn guard_loop_callback(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -9335,7 +9563,8 @@ impl BytecodeTranslator {
             | OpCode::GreaterEqual
             | OpCode::ForNext(_) => 2,
             OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _) => 1,
-            OpCode::Call(_) | OpCode::Return | OpCode::ReturnNone => 0,
+            OpCode::Call(_) => 1,
+            OpCode::Return | OpCode::ReturnNone => 0,
             _ => return Ok(false),
         };
         let (Some(ctx), Some(guard), Some(prepare), Some(push)) = (
@@ -9347,15 +9576,7 @@ impl BytecodeTranslator {
             return Ok(false);
         };
         if depth == 0 {
-            let pc = builder.ins().iconst(types::I64, pc as i64);
-            builder.ins().call(prepare, &[ctx, pc]);
-            for value in &self.value_stack {
-                let kind = self.scalar_kind(builder, *value);
-                builder.ins().call(push, &[ctx, *value, kind]);
-            }
-            self.persist_local_slots(builder, true);
-            let status = builder.ins().iconst(types::I64, 2);
-            self.emit_return(builder, status);
+            self.resume_loop_at_pc(builder, pc)?;
             return Ok(true);
         }
         // A local field opcode has no receiver on the operand stack. Load a
@@ -9382,11 +9603,18 @@ impl BytecodeTranslator {
         let proceed = builder.create_block();
         let inspect = builder.create_block();
         let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
-        builder.ins().brif(owned, inspect, &[], proceed, &[]);
+        // Non-callable immediates must resume for the ordinary VM diagnostic.
+        // For calls, retain a conditional continuation even when the observed
+        // callable requires resume. Its normal stack effect gives subsequent
+        // bytecode blocks a valid stack shape instead of the pre-call operands.
+        let immediate_target =
+            if matches!(instruction, OpCode::Call(_)) { resume } else { proceed };
+        builder.ins().brif(owned, inspect, &[], immediate_target, &[]);
         builder.seal_block(inspect);
         builder.switch_to_block(inspect);
-        let guard_kind = if matches!(instruction, OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _))
-        {
+        let guard_kind = if matches!(instruction, OpCode::Call(_)) {
+            builder.ins().iconst(types::I64, -4)
+        } else if matches!(instruction, OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _)) {
             builder.ins().iconst(types::I64, -2)
         } else if matches!(instruction, OpCode::ForNext(_)) {
             builder.ins().iconst(types::I64, -3)
@@ -9882,6 +10110,21 @@ impl BytecodeTranslator {
     }
 }
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+struct LoopCacheKey {
+    code: u64,
+    start: usize,
+    end: usize,
+    dense_slots: Vec<usize>,
+}
+
+#[derive(Default)]
+struct LoopAdmission {
+    executions: usize,
+    retry_delay: u16,
+    remaining: u16,
+}
+
 impl JitCompiler {
     fn retain_literal_values(&mut self, chunk: &BytecodeChunk) -> HashMap<usize, Arc<Value>> {
         chunk
@@ -10004,6 +10247,7 @@ impl JitCompiler {
             ("jit_try_append", 11, true),
             ("jit_release_rebind", 9, true),
             ("jit_stack_pop", 1, true),
+            ("jit_call_function", 3, true),
             ("jit_make_struct", 2, true),
             ("jit_make_array", 2, true),
             ("jit_prepare_field_call", 2, true),
@@ -10057,6 +10301,7 @@ impl JitCompiler {
                 "jit_try_append" => translator.try_append_func = Some(function),
                 "jit_release_rebind" => translator.release_rebind_func = Some(function),
                 "jit_stack_pop" => translator.stack_pop_func = Some(function),
+                "jit_call_function" => translator.call_func = Some(function),
                 "jit_make_struct" => translator.make_struct_func = Some(function),
                 "jit_make_array" => translator.make_array_func = Some(function),
                 "jit_prepare_field_call" => translator.field_call_func = Some(function),
@@ -10235,6 +10480,9 @@ impl JitCompiler {
             module,
             ctx: codegen::Context::new(),
             execution_counts: HashMap::new(),
+            loop_execution_counts: HashMap::new(),
+            blocked_loop_sites: HashSet::new(),
+            compiled_loop_cache: HashMap::new(),
             compiled_cache: HashMap::new(),
             enabled: true,
             cancellation_checks,
@@ -10250,7 +10498,49 @@ impl JitCompiler {
         })
     }
 
+    pub(crate) fn is_chunk_loop_blocked(&self, code: u64, start: usize, end: usize) -> bool {
+        self.blocked_loop_sites.contains(&(code, start, end))
+    }
+
+    pub(crate) fn block_chunk_loop(&mut self, code: u64, start: usize, end: usize) {
+        self.blocked_loop_sites.insert((code, start, end));
+    }
+
+    // Cached loops remain eligible on subsequent invocations. The VM repeats
+    // dynamic collection admission before selecting a compiled specialization.
+    pub(crate) fn should_execute_chunk_loop(
+        &mut self,
+        code: u64,
+        start: usize,
+        end: usize,
+    ) -> bool {
+        if !self.enabled {
+            return false;
+        }
+        let state = self.loop_execution_counts.entry((code, start, end)).or_default();
+        state.executions = state.executions.saturating_add(1);
+        if state.remaining > 0 {
+            state.remaining -= 1;
+            return false;
+        }
+        state.executions >= JIT_THRESHOLD
+    }
+
+    pub(crate) fn record_loop_exit(&mut self, code: u64, start: usize, end: usize, fallback: bool) {
+        let state = self.loop_execution_counts.entry((code, start, end)).or_default();
+        if fallback {
+            // Retry dynamic guards, but do not pay native setup every VM iteration.
+            // Bounded delay allows a changed callable/representation to recover.
+            state.retry_delay = (state.retry_delay.saturating_mul(2)).clamp(1, 256);
+            state.remaining = state.retry_delay;
+        } else {
+            state.retry_delay = 0;
+            state.remaining = 0;
+        }
+    }
+
     /// Check if JIT should compile this function based on execution count
+    #[allow(dead_code)] // Public legacy admission API; VM loops use chunk-scoped admission.
     pub fn should_compile(&mut self, offset: usize) -> bool {
         if !self.enabled {
             return false;
@@ -10262,10 +10552,12 @@ impl JitCompiler {
         *count >= JIT_THRESHOLD && !self.compiled_cache.contains_key(&offset)
     }
 
+    #[allow(dead_code)] // Legacy offset-only inspection API; VM uses chunk-scoped loop state.
     pub fn is_loop_jit_blocked(&self, offset: usize) -> bool {
         self.loop_jit_blacklist.contains(&offset)
     }
 
+    #[allow(dead_code)] // Legacy offset-only inspection API; VM uses chunk-scoped loop state.
     pub fn mark_loop_jit_blocked(&mut self, offset: usize) {
         self.loop_jit_blacklist.insert(offset);
     }
@@ -10417,6 +10709,7 @@ impl JitCompiler {
     }
 
     /// Compile a bytecode chunk to native code
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile(&mut self, chunk: &BytecodeChunk, offset: usize) -> Result<CompiledFn, String> {
         self.compile_with_options(chunk, offset, None, None)
     }
@@ -10429,7 +10722,19 @@ impl JitCompiler {
         loop_end: usize,
         int_dict_slots: std::collections::HashSet<usize>,
     ) -> Result<CompiledFn, String> {
-        self.compile_with_options(chunk, offset, Some(int_dict_slots), Some(loop_end))
+        let mut dense_slots: Vec<_> = int_dict_slots.iter().copied().collect();
+        dense_slots.sort_unstable();
+        let key =
+            LoopCacheKey { code: chunk.code_identity(), start: offset, end: loop_end, dense_slots };
+        if let Some(compiled) = self.compiled_loop_cache.get(&key) {
+            measurement::add(Metric::JitCacheHits, 1);
+            return Ok(*compiled);
+        }
+        measurement::add(Metric::JitCacheMisses, 1);
+        let compiled =
+            self.compile_with_options(chunk, offset, Some(int_dict_slots), Some(loop_end))?;
+        self.compiled_loop_cache.insert(key, compiled);
+        Ok(compiled)
     }
 
     fn compile_with_options(
@@ -10454,10 +10759,13 @@ impl JitCompiler {
         sig.params.push(AbiParam::new(types::I64)); // Stack pointer
         sig.returns.push(AbiParam::new(types::I64)); // Return value (0 = success)
 
-        let func_id = self
-            .module
-            .declare_function(&format!("kujo_jit_{}", offset), Linkage::Local, &sig)
-            .map_err(|e| format!("Failed to declare function: {}", e))?;
+        let func_id = if loop_end.is_some() {
+            // Different chunks and collection specializations may share bytecode offsets.
+            self.module.declare_anonymous_function(&sig)
+        } else {
+            self.module.declare_function(&format!("kujo_jit_{}", offset), Linkage::Local, &sig)
+        }
+        .map_err(|e| format!("Failed to declare function: {}", e))?;
 
         self.ctx.func.signature = sig;
 
@@ -11082,6 +11390,16 @@ impl JitCompiler {
                     continue;
                 }
 
+                // Each loop exit resumes at its own bytecode target. A normal
+                // condition exit still has its condition to pop; break skips
+                // that cleanup. Never execute the first post-loop instruction
+                // natively and discard its resulting operand stack.
+                if loop_end.is_some_and(|end| pc > end) {
+                    translator.resume_loop_at_pc(&mut builder, pc)?;
+                    block_terminated = true;
+                    continue;
+                }
+
                 if std::env::var("DEBUG_JIT").is_ok() {
                     eprintln!(
                         "JIT: Translating PC {} {:?} (stack depth {})",
@@ -11159,13 +11477,16 @@ impl JitCompiler {
         let compiled_fn = compiled_fn_from_code_ptr(code_ptr);
 
         // Cache it
-        self.compiled_cache.insert(offset, compiled_fn);
+        if loop_end.is_none() {
+            self.compiled_cache.insert(offset, compiled_fn);
+        }
 
         Ok(compiled_fn)
     }
 
     /// Compile an entire function to native code
     /// Returns a compiled function pointer that can be called directly
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile_function(
         &mut self,
         chunk: &BytecodeChunk,
@@ -12098,6 +12419,7 @@ impl JitCompiler {
     }
 
     /// Compile a function and return enhanced info including direct-arg variant if eligible
+    #[allow(dead_code)] // Public library API; the binary uses specialized VM entrypoints.
     pub fn compile_function_with_info(
         &mut self,
         chunk: &BytecodeChunk,
@@ -12829,6 +13151,9 @@ impl JitCompiler {
             if profile.should_despecialize() {
                 // Remove from cache to force recompilation with generic code
                 self.compiled_cache.remove(&offset);
+                // The public profiling API is offset-scoped. Every loop variant
+                // that consumed this profile must recompile without its guards.
+                self.compiled_loop_cache.retain(|key, _| key.start != offset);
                 profile.specialized_types.clear();
                 profile.guard_successes = 0;
                 profile.guard_failures = 0;
@@ -12847,8 +13172,8 @@ impl JitCompiler {
     #[allow(dead_code)] // Future runtime reporting/benchmark plumbing consumes this accessor.
     pub fn stats(&self) -> JitStats {
         JitStats {
-            total_functions: self.execution_counts.len(),
-            compiled_functions: self.compiled_cache.len(),
+            total_functions: self.execution_counts.len() + self.loop_execution_counts.len(),
+            compiled_functions: self.compiled_cache.len() + self.compiled_loop_cache.len(),
             enabled: self.enabled,
         }
     }
@@ -12878,16 +13203,32 @@ mod tests {
             VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
         context.task_cancellation = &cancelled;
         context.runtime_error = Some("original failure".into());
+        // SAFETY:
+        // - Preconditions: context is exclusive; cancelled is live and aligned;
+        //   all other nested pointers are null and no native entry is active.
+        // - Postconditions: cancelled entry preserves the original error and depth.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
         assert_eq!(context.runtime_error.as_deref(), Some("original failure"));
         assert_eq!(context.native_call_depth, 0);
         context.runtime_error = None;
+        // SAFETY:
+        // - Preconditions: the same live context and cancellation flag are exclusive;
+        //   the prior failed entry acquired no native depth or root scope.
+        // - Postconditions: cancellation is reported without acquiring an entry.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 1);
         assert_eq!(context.runtime_error.as_deref(), Some("Task was cancelled"));
         assert_eq!(context.native_call_depth, 0);
         context.runtime_error = None;
         cancelled.store(false, std::sync::atomic::Ordering::Release);
+        // SAFETY:
+        // - Preconditions: context and uncancelled flag remain live; optional VM,
+        //   stack and name pointers are null, so no external storage is accessed.
+        // - Postconditions: success acquires one native depth and root scope.
         assert_eq!(unsafe { jit_enter_function(&mut context) }, 0);
+        // SAFETY:
+        // - Preconditions: the immediately preceding entry succeeded; context is
+        //   exclusive and no references to its roots span this matching exit.
+        // - Postconditions: the single acquired scope and depth are released.
         unsafe { jit_leave_function(&mut context) };
         assert_eq!(context.native_call_depth, 0);
         assert!(context.runtime_error.is_none());
@@ -13045,6 +13386,12 @@ mod tests {
                             operands.extend([key, key_kind]);
                         }
                         operands.extend([function, function_kind]);
+                        // SAFETY:
+                        // - Preconditions: ctx/names/shape and initialized operand
+                        //   buffer stay live; arity matches its pairs, roots are current,
+                        //   and old_pair is deliberately dead before the fresh result.
+                        // - Postconditions: success roots the pair and preserves saved
+                        //   snapshots; consumed operand slots remain releasable.
                         let pair = unsafe {
                             jit_try_pop_rebind(
                                 &mut ctx,
@@ -13141,6 +13488,11 @@ mod tests {
                     let item = if bytes { Value::Bytes(Arc::new(vec![1])) } else { Value::Int(1) };
                     let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: ctx and all current roots are live; callable
+                        //   is the builtin matching the array/byte fixture.
+                        // - Postconditions: guard checks identity/types without aliases
+                        //   or mutation, leaving every root available for the append.
                         unsafe {
                             jit_guard_append_path(
                                 &mut ctx,
@@ -13157,6 +13509,11 @@ mod tests {
                     let operands =
                         [original, original_kind, item, item_kind, function, function_kind];
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: immutable one-field shape/names and six-i64
+                        //   operand buffer remain live; ctx/current roots are exclusive.
+                        // - Postconditions: checked append preserves the saved snapshot
+                        //   and leaves consumed operand slots valid for release.
                         unsafe {
                             jit_append_binding_path(
                                 &mut ctx,
@@ -13219,6 +13576,10 @@ mod tests {
                 ctx.owned_roots.encode(Value::Struct { name: "Box".into(), fields }).unwrap();
             let name = String::from("item");
             for value in 1..=count {
+                // SAFETY:
+                // - Preconditions: ctx/current root and immutable String metadata
+                //   remain live; value is an immediate integer and no borrow spans call.
+                // - Postconditions: returns the updated root; old slot stays releasable.
                 let updated = unsafe {
                     jit_field_write(&mut ctx, object, kind, value, 0, &name as *const String as i64)
                 };
@@ -13236,6 +13597,10 @@ mod tests {
                 }
             }
             let saved = ctx.owned_roots.clone_value(object, kind).unwrap();
+            // SAFETY:
+            // - Preconditions: same live context/root/name; saved independently owns
+            //   the old shared value and no references into roots span the write.
+            // - Postconditions: copy-on-write preserves saved while returning a new root.
             let updated = unsafe {
                 jit_field_write(&mut ctx, object, kind, 999, 0, &name as *const String as i64)
             };
@@ -13270,8 +13635,12 @@ mod tests {
             let (payload, kind) = context.owned_roots.encode(root).unwrap();
             let shape = vec![None, None];
             let operands = [0, 0, 0, 0, value, 0];
-            // SAFETY: the VM, context, shape and operands are live for this synchronous call.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: VM/cache and ctx are exclusive; names/shape remain
+                //   live, with two dynamic indices plus value in six aligned i64s.
+                // - Postconditions: synchronous mutation restores the VM depth cache;
+                //   immutable binding metadata rejects the write without mutation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13419,8 +13788,12 @@ mod tests {
             let shape = vec![None, None];
             for i in 0..repetitions {
                 let operands = [0, 0, 0, 0, i, 0];
-                // SAFETY: shape, tagged operands and context live through the helper call.
                 assert_eq!(
+                    // SAFETY:
+                    // - Preconditions: ctx/names/current root and two-index shape
+                    //   stay live; six aligned i64s initialize both indices and value.
+                    // - Postconditions: checked nested write retains valid root slots;
+                    //   pointer comparisons occur only after helper borrows end.
                     unsafe {
                         jit_update_binding_path(
                             &mut context,
@@ -13444,8 +13817,11 @@ mod tests {
             }
             let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
             let operands = [0, 0, 0, 0, 999, 0];
-            // SAFETY: same live roots and tagged operand array, with a retained snapshot.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: same live ctx/shape/six-i64 buffer, with a separate
+                //   snapshot root and no outstanding destination borrow.
+                // - Postconditions: checked write detaches shared rows for isolation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13468,8 +13844,11 @@ mod tests {
             let Value::Array(rows) = saved else { panic!() };
             let Value::Array(row) = &rows[0] else { panic!() };
             assert!(matches!(row[0],Value::Int(n) if n == repetitions - 1));
-            // SAFETY: unchanged input lifetime; rejected write must not mutate either row.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: all backing storage remains live; binding kind 1
+                //   deliberately requests the checked immutable-binding rejection.
+                // - Postconditions: error is recorded before destination mutation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13566,8 +13945,12 @@ mod tests {
                 let initial = pointer(&seed);
                 let (mut root, kind) = ctx.owned_roots.encode(seed).unwrap();
                 for index in 0..repetitions {
-                    // SAFETY: all operands are live native roots or tagged integers.
                     let updated =
+                        // SAFETY:
+                        // - Preconditions: ctx/current root are live and exclusive;
+                        //   index/value are tagged integers, with index 0 in bounds.
+                        // - Postconditions: updated root is returned and consumed old
+                        //   slot remains releasable; pointer comparison follows the call.
                         unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, index, 0) };
                     assert!(ctx.runtime_error.is_none(), "{:?}", ctx.runtime_error);
                     assert_eq!(ctx.owned_roots.storage_state().1, 2);
@@ -13581,6 +13964,10 @@ mod tests {
                 }
                 let saved = ctx.owned_roots.clone_value(root, kind).unwrap();
                 // A genuine retained snapshot must force isolation.
+                // SAFETY:
+                // - Preconditions: ctx/root remain live; saved owns a separate shared
+                //   value, and index/value are valid immediate operands.
+                // - Postconditions: updated result detaches while saved remains intact.
                 let updated = unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, 200, 0) };
                 ctx.owned_roots.release(root, kind).unwrap();
                 assert_ne!(
@@ -13671,7 +14058,11 @@ mod tests {
             let (object, kind) = ctx.owned_roots.encode(seed).unwrap();
             let (value, value_kind) =
                 ctx.owned_roots.encode(levels.last().unwrap().clone()).unwrap();
-            // SAFETY: all handles belong to this active context.
+            // SAFETY:
+            // - Preconditions: ctx and both encoded roots remain live in the active
+            //   scope; over-deep data is an owned Value, not an invalid pointer.
+            // - Postconditions: depth failure records an error and leaves saved seed
+            //   unchanged; scope cleanup handles any consumed operand slots.
             unsafe {
                 jit_index_set_result(&mut ctx, object, kind, 0, 0, value, value_kind);
             }
@@ -13736,7 +14127,10 @@ mod tests {
             assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
         }
         let snapshot = slots[0].clone();
-        // SAFETY: live slot/context; shared vectors must never expose mutable data.
+        // SAFETY:
+        // - Preconditions: context and slot storage remain live; snapshot keeps the
+        //   vector shared, and no cached data pointer is dereferenced by this call.
+        // - Postconditions: helper rejects shared storage instead of exposing a view.
         assert_eq!(unsafe { jit_loop_dense_view(&mut context, 0) }, 0);
         assert!(
             matches!(snapshot, Value::DenseIntDictIntFull(values) if values.as_slice() == [1,99])
@@ -13771,8 +14165,12 @@ mod tests {
             _ => unreachable!(),
         };
         for i in 0..1000 {
-            // SAFETY: live exclusive context and a current-scope array root.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: context/name map remain live and exclusive during
+                //   each call; root belongs to the active scope and index is in bounds.
+                // - Postconditions: mutates through checked VM semantics; pointer is
+                //   compared only after the call, without retaining a borrowed Value.
                 unsafe {
                     jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
                 },
@@ -13783,16 +14181,22 @@ mod tests {
             );
         }
         let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
-        // SAFETY: same context; the snapshot must force normal copy-on-write.
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: context/name map and root remain live; the duplicate
+            //   snapshot is a separate root, with no active borrow across the write.
+            // - Postconditions: VM copy-on-write preserves the snapshot's old value.
             unsafe { jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, 7, 0) },
             0
         );
         assert!(
             matches!(context.owned_roots.clone_value(snapshot, kind).unwrap(), Value::Array(values) if matches!(values[0], Value::Int(999)))
         );
-        // SAFETY: immutable metadata must reject mutation before touching the root.
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: context/name map and current root are live; binding
+            //   kind 1 deliberately exercises the immutable-binding check.
+            // - Postconditions: rejection records an error before destination mutation.
             unsafe { jit_indexed_write(&mut context, 1, root, kind, 1, hash as i64, 0, 0, 9, 0) },
             1
         );
@@ -13922,8 +14326,12 @@ mod tests {
                 let expected = VM::get_indexed_value(&object, &index);
                 let (i, ik) = context.owned_roots.encode(index).unwrap();
                 context.runtime_error = None;
-                // SAFETY: context/cache are live and disjoint; operands are rooted.
                 let result =
+                    // SAFETY:
+                    // - Preconditions: context and initialized stack-local cache are
+                    //   live, aligned and disjoint; operand identities remain rooted.
+                    // - Postconditions: cached reads validate identities and return
+                    //   checked values/errors without consuming the operand roots.
                     unsafe { jit_indexed_read_cached(&mut context, root, kind, i, ik, pointer) };
                 match expected {
                     Ok(value) => {
@@ -13947,7 +14355,10 @@ mod tests {
             }
             context.owned_roots.release(root, kind).unwrap();
             context.runtime_error = None;
-            // SAFETY: cache remains live; stale root must fail before value access.
+            // SAFETY:
+            // - Preconditions: context/cache remain live and disjoint; the retired
+            //   root identity deliberately exercises cached lookup validation.
+            // - Postconditions: stale lookup fails before accessing the retired Value.
             unsafe {
                 jit_indexed_read_cached(&mut context, root, kind, 0, 0, pointer);
             }
@@ -13998,7 +14409,11 @@ mod tests {
             let expected = VM::get_indexed_value(&array, &index);
             let (index_payload, index_kind) = context.owned_roots.encode(index.clone()).unwrap();
             context.runtime_error = None;
-            // SAFETY: validated operands remain rooted in live nested frames.
+            // SAFETY:
+            // - Preconditions: ctx is exclusive; source root remains live in its
+            //   parent scope and index operands remain live in the nested scope.
+            // - Postconditions: checked read preserves input roots and returns a
+            //   separately rooted result or the canonical index diagnostic.
             let result = unsafe {
                 jit_indexed_read(&mut context, object, object_kind, index_payload, index_kind)
             };
@@ -14029,7 +14444,10 @@ mod tests {
         context.owned_roots.leave().unwrap();
         context.owned_roots.release(object, object_kind).unwrap();
         context.runtime_error = None;
-        // SAFETY: context remains live; stale handles must be rejected, never dereferenced.
+        // SAFETY:
+        // - Preconditions: ctx remains live/exclusive; retired object is a codec
+        //   identity deliberately passed to validated lookup, not a raw address.
+        // - Postconditions: stale lookup records an error before Value access.
         unsafe {
             jit_indexed_read(&mut context, object, object_kind, 0, 0);
         }
@@ -14142,8 +14560,12 @@ mod tests {
             _ => unreachable!(),
         };
         for _ in 0..1000 {
-            // SAFETY: live exclusive context; negative length denotes a character.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: context/current root are live and exclusive; length
+                //   -1 selects checked character mode, so suffix is not a pointer.
+                // - Postconditions: appends the character; pointer comparison occurs
+                //   afterward without retaining a borrow across the helper.
                 unsafe { jit_append_local(&mut context, 1, payload, kind, 'a' as i64, -1) },
                 0
             );
@@ -14152,7 +14574,10 @@ mod tests {
             );
         }
         let snapshot = context.owned_roots.duplicate(payload, kind).unwrap();
-        // SAFETY: same validated context and current-scope root.
+        // SAFETY:
+        // - Preconditions: context and current root remain live; snapshot is a
+        //   separate root and the suffix uses checked character mode.
+        // - Postconditions: append detaches shared storage and preserves the snapshot.
         assert_eq!(unsafe { jit_append_local(&mut context, 1, payload, kind, 'b' as i64, -1) }, 0);
         assert!(
             matches!(context.owned_roots.clone_value(snapshot, kind).unwrap(), Value::Str(text) if text.len() == 1001 && text.ends_with('a'))
@@ -14304,7 +14729,11 @@ mod tests {
         let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
         context.var_names_ptr = &mut names;
         context.owned_roots.enter().unwrap();
-        // SAFETY: live exclusive context, name map and parameter binding.
+        // SAFETY:
+        // - Preconditions: context, immutable names and parameter map remain live;
+        //   an active root scope receives the binding, with no outstanding map borrow.
+        // - Postconditions: the named parameter moves into a root, preserving backing
+        //   storage; pointer is compared later and never dereferenced directly.
         let root = unsafe { jit_take_parameter(&mut context, hash as i64, 0) };
         let kind = context.return_value_kind;
         assert!(context.runtime_error.is_none());
@@ -14314,8 +14743,12 @@ mod tests {
             _ => panic!("parameter lost its array type"),
         }
         for i in 0..128 {
-            // SAFETY: current-scope root and mutable parameter metadata.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: transferred root is live/current, names remain
+                //   valid and binding metadata allows the checked in-bounds write.
+                // - Postconditions: VM mutation preserves unique backing storage;
+                //   no reference into the root store survives the call.
                 unsafe {
                     jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
                 },
@@ -14885,7 +15318,11 @@ mod tests {
         let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
         context.var_names_ptr = &mut names;
         context.local_slots_ptr = &mut slots;
-        // SAFETY: all pointers refer to live, exclusively borrowed containers.
+        // SAFETY:
+        // - Preconditions: context, names, locals and slots remain live; each
+        //   helper has exclusive access and assertions borrow only between calls.
+        // - Postconditions: checked removal distinguishes callee maps from physical
+        //   slots; the out-of-range slot fails before either binding is removed.
         unsafe {
             assert_eq!(jit_release_dead_local(&mut context, 0, hash, 0), 0);
             assert!(!locals.contains_key("dead"));
@@ -14919,12 +15356,18 @@ mod tests {
             let (payload, kind) = context.owned_roots.encode(value).unwrap();
             let state = context.owned_roots.storage_state();
             for _ in 0..1000 {
-                // SAFETY: context and root remain live for every call.
+                // SAFETY:
+                // - Preconditions: context is exclusive and the encoded root stays
+                //   live in the entered scope for every inspection.
+                // - Postconditions: truth inspection does not consume or duplicate roots.
                 assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, expected);
                 assert_eq!(context.owned_roots.storage_state(), state);
             }
             context.owned_roots.take_value(payload, kind).unwrap();
-            // SAFETY: stale identities are checked, never dereferenced as pointers.
+            // SAFETY:
+            // - Preconditions: context is live/exclusive; payload is a retired codec
+            //   identity deliberately supplied to the validating lookup helper.
+            // - Postconditions: stale identity reports an error without pointer access.
             assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, 0);
             assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
         }
@@ -14939,7 +15382,11 @@ mod tests {
         let name = String::from("to_int");
         let pointer = name.as_ptr();
         let (payload, kind) = context.owned_roots.encode(Value::NativeFunction(name)).unwrap();
-        // SAFETY: live exclusive stack/context; root ownership is checked by helper.
+        // SAFETY:
+        // - Preconditions: context and separate stack are live/exclusive during calls;
+        //   payload starts as a current-frame root. pointer is compared, never read.
+        // - Postconditions: transfer consumes the root; deliberate reuse/invalid kind
+        //   exercises checked errors without another push or raw payload dereference.
         unsafe {
             assert_eq!(jit_stack_take_scalar(&mut context, payload, kind), 0);
             assert!(matches!(&stack[0], Value::NativeFunction(name) if name.as_ptr() == pointer));
@@ -14954,19 +15401,35 @@ mod tests {
         let (payload, kind) = context.owned_roots.encode(Value::Array(saved.clone())).unwrap();
         context.owned_roots.enter().unwrap();
         // A callee with no physical roots must not take a caller's operand.
+        // SAFETY:
+        // - Preconditions: context/stack remain live; the outer-frame identity is
+        //   supplied deliberately to the helper's current-frame validation.
+        // - Postconditions: rejection leaves the root and stack unchanged.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert_eq!(stack.len(), 1);
         assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
         // Also reject caller roots after the nested frame has physical storage.
         context.owned_roots.encode(Value::NativeFunction("len".into())).unwrap();
+        // SAFETY:
+        // - Preconditions: live context/stack are exclusive; payload still belongs
+        //   to the outer scope and the nested scope now has a distinct physical frame.
+        // - Postconditions: checked ownership rejection preserves the caller's root.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert_eq!(stack.len(), 1);
         assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
         context.owned_roots.leave().unwrap();
         context.stack_ptr = std::ptr::null_mut();
+        // SAFETY:
+        // - Preconditions: context remains live/exclusive; null stack is explicitly
+        //   supported by the helper and the root is current after the nested leave.
+        // - Postconditions: missing-stack failure precedes root consumption.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert!(context.runtime_error.take().unwrap().contains("requires a stack"));
         context.stack_ptr = &mut stack;
+        // SAFETY:
+        // - Preconditions: the restored pointer addresses the live separate stack;
+        //   the current-frame root survived all preceding rejected transfers.
+        // - Postconditions: ownership moves once into the stack; saved Arc remains valid.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
         let Value::Array(mut changed) = stack.pop().unwrap() else { panic!("array lost") };
         assert!(Arc::ptr_eq(&changed, &saved));
@@ -14990,6 +15453,10 @@ mod tests {
             Value::Float(f64::from_bits(0x7ff8_0000_0000_0123)),
         ] {
             let (payload, kind) = crate::native_scalar::encode(&value).unwrap();
+            // SAFETY:
+            // - Preconditions: context/stack are live and exclusive; the scalar codec
+            //   supplied valid immediate bits and kind, requiring no owned root frame.
+            // - Postconditions: decoded value is pushed without creating owned roots.
             assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
             let actual = stack.pop().unwrap();
             if let (Value::Float(a), Value::Float(b)) = (&value, &actual) {
@@ -15009,7 +15476,11 @@ mod tests {
         let mut stack = vec![Value::Array(original.clone())];
         let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
         context.owned_roots.enter().unwrap();
-        // SAFETY: the context and its exclusive stack pointer remain live.
+        // SAFETY:
+        // - Preconditions: context and separate stack stay live, with exclusive access
+        //   during helpers; the entered root scope covers pop and both cloned pushes.
+        // - Postconditions: snapshots keep their backing values; the deliberate stale
+        //   push after scope exit fails validation without changing the stack.
         unsafe {
             let payload = jit_stack_pop(&mut context);
             let kind = context.return_value_kind;
@@ -15034,14 +15505,21 @@ mod tests {
     fn native_stack_boundary_rejects_invalid_kinds() {
         let mut stack = Vec::new();
         let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
-        // SAFETY: context has a live exclusive stack pointer.
+        // SAFETY:
+        // - Preconditions: context and separate stack are live/exclusive; invalid
+        //   kind 99 is deliberately passed to the checked scalar/root codec.
+        // - Postconditions: helper records InvalidKind without pushing a value.
         unsafe { jit_stack_push_scalar(&mut context, 123, 99) };
         assert!(stack.is_empty());
         assert!(context.runtime_error.unwrap().contains("InvalidKind"));
     }
 
-    // SAFETY: test callers supply a live context with initialized local values;
-    // recursion stays within the normal native depth guard and retains no pointers.
+    // SAFETY:
+    // - Preconditions: callers provide a live exclusive context and readable locals
+    //   containing input/scratch; enclosing invocation owns the outer root scope.
+    //   Nested pointers satisfy native entry's contract; locals remain live in recursion.
+    // - Postconditions: each successful entry has one leave; results promote through
+    //   nested scopes, failure retains a diagnostic, and no borrowed pointer escapes.
     unsafe extern "C" fn owned_lifetime_probe(ctx: *mut VMContext, depth: i64) -> i64 {
         if jit_enter_function(ctx) != 0 {
             return 1;
@@ -15062,13 +15540,20 @@ mod tests {
         status
     }
 
-    // SAFETY: forwards the same validated test context to the direct-arg probe.
+    // SAFETY:
+    // - Preconditions: ctx satisfies owned_lifetime_probe's live context/local-map
+    //   and enclosing invocation requirements.
+    // - Postconditions: forwards the status after three recursive levels, retaining
+    //   the probe's balanced cleanup and owned-return promotion.
     unsafe extern "C" fn owned_standard_probe(ctx: *mut VMContext) -> i64 {
         owned_lifetime_probe(ctx, 3)
     }
 
-    // SAFETY: same live test context as owned_lifetime_probe; the direct ABI
-    // returns the payload itself, not the standard ABI's success status.
+    // SAFETY:
+    // - Preconditions: non-null ctx satisfies owned_lifetime_probe's context/local
+    //   requirements and remains readable after the nested probe returns.
+    // - Postconditions: success returns the recorded payload for the direct ABI;
+    //   failure returns status. The probe owns cleanup and no reference escapes.
     unsafe extern "C" fn owned_direct_probe(ctx: *mut VMContext, depth: i64) -> i64 {
         let status = owned_lifetime_probe(ctx, depth);
         if status == 0 {
@@ -15117,6 +15602,11 @@ mod tests {
                     };
                     let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: ctx and distinct target/original/item roots
+                        //   remain live; builtin identity matches the array/byte fixture.
+                        // - Postconditions: guarded append consumes the operand snapshot,
+                        //   preserves saved values and leaves operand slots releasable.
                         unsafe {
                             jit_try_append(
                                 &mut ctx,
@@ -15179,6 +15669,10 @@ mod tests {
             })
             .unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx and current roots are live; immutable flag 0
+            //   exercises the helper's early checked rejection without a VM pointer.
+            // - Postconditions: no root is cleared or consumed.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,
@@ -15200,6 +15694,10 @@ mod tests {
         let (different, _) =
             ctx.owned_roots.encode(Value::Array(Arc::new(vec![Value::Int(2)]))).unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx/current roots remain live; different denotes a
+            //   distinct valid array allocation and the callable is ordinary bytecode.
+            // - Postconditions: storage mismatch leaves the target binding unchanged.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,
@@ -15220,6 +15718,11 @@ mod tests {
             Value::Array(_)
         ));
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx/current target and matching original are live;
+            //   standalone fixture has no VM exception handler or outstanding borrow.
+            // - Postconditions: only the matching mutable target becomes Null;
+            //   original retains ownership of the array and remains readable.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,
@@ -15258,6 +15761,11 @@ mod tests {
             for _ in 0..count {
                 for index in 0..3 {
                     let original = ctx.owned_roots.duplicate(array, kind).unwrap();
+                    // SAFETY:
+                    // - Preconditions: ctx is live/exclusive and original is a valid
+                    //   array root in its active scope; index is an integer.
+                    // - Postconditions: returns an item or exhaustion without consuming
+                    //   original; the test releases every returned owned item separately.
                     let result = unsafe {
                         jit_for_next(&mut ctx, original, kind, index, crate::native_scalar::INTEGER)
                     };
@@ -15332,6 +15840,10 @@ mod tests {
         ctx.owned_roots.enter().unwrap();
         let (bytes, kind) = ctx.owned_roots.encode(Value::Bytes(Arc::new(vec![0, 255]))).unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx is live/exclusive with an active scope and valid byte
+            //   root; index 1 is within the initialized two-byte vector.
+            // - Postconditions: returns an immediate byte without consuming the root.
             unsafe { jit_for_next(&mut ctx, bytes, kind, 1, crate::native_scalar::INTEGER) },
             255
         );
@@ -15339,12 +15851,20 @@ mod tests {
         for (index, index_kind) in
             [(-1, crate::native_scalar::INTEGER), (1, crate::native_scalar::BOOLEAN)]
         {
+            // SAFETY:
+            // - Preconditions: ctx and byte root remain live; malformed index values
+            //   are passed through the helper's checked kind and bounds contract.
+            // - Postconditions: invalid indexes record errors without raw indexing.
             unsafe { jit_for_next(&mut ctx, bytes, kind, index, index_kind) };
             assert_eq!(
                 ctx.runtime_error.take().as_deref(),
                 Some("ForNext requires a nonnegative index")
             );
         }
+        // SAFETY:
+        // - Preconditions: ctx is live/exclusive; NULL is a valid immediate codec
+        //   kind deliberately used as an unsupported iterable, not an address.
+        // - Postconditions: helper reports a normalized-iterable error without access.
         unsafe {
             jit_for_next(&mut ctx, 0, crate::native_scalar::NULL, 0, crate::native_scalar::INTEGER)
         };
@@ -15472,6 +15992,50 @@ mod tests {
     }
 
     #[test]
+    fn loop_admission_counts_and_blocks_are_chunk_scoped() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let first = BytecodeChunk::new().code_identity();
+        let second = BytecodeChunk::new().code_identity();
+        assert_ne!(first, second);
+        for _ in 0..JIT_THRESHOLD - 1 {
+            assert!(!compiler.should_execute_chunk_loop(first, 0, 10));
+        }
+        assert!(compiler.should_execute_chunk_loop(first, 0, 10));
+        assert!(compiler.should_execute_chunk_loop(first, 0, 10));
+        assert!(!compiler.should_execute_chunk_loop(second, 0, 10));
+        compiler.block_chunk_loop(first, 0, 10);
+        assert!(compiler.is_chunk_loop_blocked(first, 0, 10));
+        assert!(!compiler.is_chunk_loop_blocked(second, 0, 10));
+        assert!(!compiler.is_chunk_loop_blocked(first, 0, 11));
+    }
+
+    #[test]
+    fn loop_fallback_retries_are_bounded_scoped_and_recoverable() {
+        let mut compiler = JitCompiler::new().unwrap();
+        for code in [1, 2] {
+            for end in [10, 20] {
+                for _ in 0..JIT_THRESHOLD {
+                    compiler.should_execute_chunk_loop(code, 0, end);
+                }
+            }
+        }
+        for delay in [1, 2, 4, 8, 16, 32, 64, 128, 256, 256] {
+            compiler.record_loop_exit(1, 0, 10, true);
+            assert!(compiler.should_execute_chunk_loop(2, 0, 10));
+            assert!(compiler.should_execute_chunk_loop(1, 0, 20));
+            for _ in 0..delay {
+                assert!(!compiler.should_execute_chunk_loop(1, 0, 10));
+            }
+            assert!(compiler.should_execute_chunk_loop(1, 0, 10));
+        }
+        compiler.record_loop_exit(1, 0, 10, false);
+        assert!(compiler.should_execute_chunk_loop(1, 0, 10));
+        compiler.record_loop_exit(1, 0, 10, true);
+        assert!(!compiler.should_execute_chunk_loop(1, 0, 10));
+        assert!(compiler.should_execute_chunk_loop(1, 0, 10));
+    }
+
+    #[test]
     fn test_hot_path_detection() {
         let mut compiler = JitCompiler::new().unwrap();
 
@@ -15507,6 +16071,49 @@ mod tests {
     }
 
     #[test]
+    fn loop_statistics_include_reuse_and_mutated_code_identity() {
+        let mut parser = crate::parser::Parser::new(
+            crate::lexer::tokenize("func scan(n) { mut i := 0 while i < n { i += 1 } return i }")
+                .unwrap(),
+        );
+        let script = crate::compiler::Compiler::new().compile(&parser.parse()).unwrap();
+        let mut chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some(chunk.as_ref().clone()),
+                _ => None,
+            })
+            .unwrap();
+        let (end, start) = chunk
+            .instructions
+            .iter()
+            .enumerate()
+            .find_map(|(pc, op)| match op {
+                OpCode::JumpBack(start) => Some((pc, *start)),
+                _ => None,
+            })
+            .unwrap();
+        let mut compiler = JitCompiler::new().unwrap();
+        compiler.should_execute_chunk_loop(chunk.code_identity(), start, end);
+        assert_eq!(compiler.stats().total_functions, 1);
+        assert_eq!(compiler.stats().compiled_functions, 0);
+        let first =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        let reused =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_eq!(first as usize, reused as usize);
+        assert_eq!(compiler.stats().compiled_functions, 1);
+        chunk.name = Some("renamed".into());
+        compiler.should_execute_chunk_loop(chunk.code_identity(), start, end);
+        let changed =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_ne!(first as usize, changed as usize);
+        assert_eq!(compiler.stats().total_functions, 2);
+        assert_eq!(compiler.stats().compiled_functions, 2);
+    }
+
+    #[test]
     fn test_jit_stats() {
         let compiler = JitCompiler::new().unwrap();
         let stats = compiler.stats();
@@ -15525,15 +16132,24 @@ mod tests {
         let mut globals = std::collections::HashMap::new();
         let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
         context.var_names_ptr = &mut names;
-        // SAFETY: every context pointer references live, exclusively owned test
-        // storage, and the helper neither retains pointers nor invokes code.
+        // SAFETY:
+        // - Preconditions: context, names and separate local/global/stack containers
+        //   remain live, with exclusive helper access and immutable name metadata.
+        // - Postconditions: builtin resolution pushes its callable without retaining
+        //   pointers or invoking it; subsequent assertions borrow after the call.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, -1);
         assert!(matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "bit_and"));
         globals.insert("bit_and".into(), Value::Int(7));
-        // SAFETY: same live context/storage as above.
+        // SAFETY:
+        // - Preconditions: all test containers remain live; global insertion ended
+        //   before this exclusive helper access and names remain unchanged.
+        // - Postconditions: global shadowing returns an immediate without a stack push.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 7);
         locals.insert("bit_and".into(), Value::Int(9));
-        // SAFETY: same live context/storage as above.
+        // SAFETY:
+        // - Preconditions: all test containers remain live; local insertion ended
+        //   before this exclusive helper access and names remain unchanged.
+        // - Postconditions: local shadowing returns an immediate without a stack push.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9);
         assert!(stack.is_empty());
     }
@@ -15548,7 +16164,11 @@ mod tests {
         let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
         context.var_names_ptr = &mut names;
         context.owned_roots.enter().unwrap();
-        // SAFETY: context maps and stack remain live and exclusively borrowed.
+        // SAFETY:
+        // - Preconditions: context, names and separate maps/stack remain live;
+        //   maps change only between helper calls and a root scope is active.
+        // - Postconditions: tagged loads transfer results through roots rather than
+        //   the physical stack; invalid name lookup is checked before map access.
         unsafe {
             let payload = jit_load_operand(&mut context, hash as i64, 0);
             let value = context.owned_roots.take_value(payload, context.return_value_kind).unwrap();
@@ -16011,6 +16631,20 @@ mod tests {
         compiler.record_type(offset, 12345, &Value::Int(1));
         compiler.compiled_cache.insert(offset, dummy_compiled_fn as CompiledFn);
 
+        // Multiple chunks and dense-slot variants can consume the same public
+        // offset profile. Keep an unrelated offset to detect overly broad clearing.
+        for (code, start, dense_slots) in [
+            (1, offset, vec![]),
+            (1, offset, vec![0]),
+            (2, offset, vec![]),
+            (1, offset + 1, vec![]),
+        ] {
+            compiler.compiled_loop_cache.insert(
+                LoopCacheKey { code, start, end: 10, dense_slots },
+                dummy_compiled_fn as CompiledFn,
+            );
+        }
+
         // Record mostly successes, then failures
         for _ in 0..90 {
             compiler.record_guard_success(offset);
@@ -16024,6 +16658,8 @@ mod tests {
 
         // Should have cleared cache (happened when threshold was crossed)
         assert!(!compiler.compiled_cache.contains_key(&offset), "Should remove from cache");
+        assert_eq!(compiler.compiled_loop_cache.len(), 1);
+        assert!(compiler.compiled_loop_cache.keys().all(|key| key.start == offset + 1));
         let profile = compiler.get_specialization(offset).expect("Profile should exist");
         assert_eq!(profile.specialized_types.len(), 0, "Should clear specializations");
 

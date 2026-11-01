@@ -154,10 +154,16 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // precedes resuming the owned suspended child's initial thread. Termination
     // uses the retained job handle. One test site waits on an owned descendant
     // process handle. No raw handle is inherited or adopted more than once.
+    // Performance-era review is recorded in
+    // benchmarks/langarena/UNSAFE_CONTRACT_REVIEW_2026_10_31.md: +100 JIT sites,
+    // +15 VM bridge/test sites and +55 integration instrumentation sites.
+    // Scope/metadata lifetimes, callback restoration and owned root identities
+    // were reviewed; allocator accounting was made non-panicking on overflow.
+    // Counts include declarations and test blocks, not just production operations.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 99,
-        "executable unsafe budget changed: expected 99, got {executable_count}"
+        executable_count, 269,
+        "executable unsafe budget changed: expected 269, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -196,13 +202,24 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         ("src/process_lifetime.rs", 4),
         ("src/interpreter/native_functions/process_job_windows.rs", 12),
         ("tests/process_lifetime_contracts.rs", 4),
+        ("src/vm.rs", 15),
+        ("tests/bytecode_call_profile.rs", 8),
+        ("tests/jit_boolean_returns.rs", 1),
+        ("tests/jit_checked_arithmetic.rs", 3),
+        ("tests/jit_global_assignment.rs", 1),
+        ("tests/jit_immediate_values.rs", 1),
+        ("tests/jit_short_circuit.rs", 2),
+        ("tests/json_serialization_profile.rs", 8),
+        ("tests/native_call_transfer.rs", 13),
+        ("tests/native_read_allocation.rs", 9),
+        ("tests/scalar_append_allocation.rs", 9),
     ] {
         let count = csv
             .lines()
             .skip(1)
             .filter(|line| line.contains(&format!("\"{path}\"")) && line.contains("\"executable\""))
             .count();
-        assert_eq!(count, expected, "review any new process-lifetime FFI site in {path}");
+        assert_eq!(count, expected, "review any new boundary in {path}");
     }
     let jit_executable_count = csv
         .lines()
@@ -210,8 +227,8 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .filter(|line| line.contains("\"src/jit.rs\"") && line.contains("\"executable\""))
         .count();
 
-    assert!(
-        jit_executable_count <= 47,
-        "jit executable unsafe budget regression: expected <= 47, got {jit_executable_count}"
+    assert_eq!(
+        jit_executable_count, 147,
+        "jit executable unsafe budget changed: expected 147, got {jit_executable_count}"
     );
 }

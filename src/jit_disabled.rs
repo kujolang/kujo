@@ -175,6 +175,31 @@ impl JitCompiler {
         "JIT support is disabled in this build (enable the 'runtime-jit' feature)".to_string()
     }
 
+    // Shared VM loop dispatch must remain available without native code support.
+    pub(crate) fn is_chunk_loop_blocked(&self, _code: u64, _start: usize, _end: usize) -> bool {
+        true
+    }
+
+    pub(crate) fn block_chunk_loop(&mut self, _code: u64, _start: usize, _end: usize) {}
+
+    pub(crate) fn record_loop_exit(
+        &mut self,
+        _code: u64,
+        _start: usize,
+        _end: usize,
+        _fallback: bool,
+    ) {
+    }
+
+    pub(crate) fn should_execute_chunk_loop(
+        &mut self,
+        _code: u64,
+        _start: usize,
+        _end: usize,
+    ) -> bool {
+        false
+    }
+
     pub fn should_compile(&mut self, offset: usize) -> bool {
         let count = self.execution_counts.entry(offset).or_insert(0);
         *count += 1;
