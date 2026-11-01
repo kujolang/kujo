@@ -61,3 +61,18 @@ moves to the supported-surface test, which now explicitly rejects the warning.
 All four CLI execution contracts pass against the frozen accepted executable
 above, using a standalone `rustc --test` build of this std-only integration suite.
 No runtime behavior or warning policy changed; the full CI gate remains required.
+
+The next full gate, `d0f9e9a` run `41266978042` / job `124733309399`,
+passed the corrected CLI suite and failed a stale measurement expectation:
+owned-array identity calls were expected never to enter native code. The accepted
+runtime's owned-value ABI now executes them natively. Reproduction on the frozen
+accepted binary verifies 101 native function/boundary entries and 201 owned
+argument dispatches (including compilation retry) for 200 calls. A separate
+identity function containing an exception handler genuinely falls back: 200 owned
+dispatches and zero native entries. Float calls retain 101 entries/201 dispatches
+and zero owned dispatches. All four counters are zero without JIT for all three
+fixtures. Plain and measured runs have identical exit status, stdout and stderr.
+The regression now covers all three cases; no measurement implementation changes.
+The complete ten-test measurement integration suite passes against that same
+accepted executable, including schema validation and measured/plain parity,
+compiled with `runtime-jit` enabled and the existing release dependency artifacts.
