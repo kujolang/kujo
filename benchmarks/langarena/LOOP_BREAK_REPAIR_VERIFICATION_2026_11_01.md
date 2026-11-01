@@ -23,7 +23,10 @@ names match the Mac suites. This is correctness evidence, not speed evidence.
 
 The companion compressed JSON bundle preserves the source manifest, Mac log,
 test identities, template report and Linux source/log/verification with SHA-256
-checksums. The fresh 150-case checksum matrix is still pending, as are paired
+checksums. The fresh 150-case checksum matrix passed all 50 cases in each of VM,
+interpreter and JIT. Independent verification checked exact checksum and summary
+lines, ordered case/config inventory, runtime/binary provenance, exit zero, no
+output truncation, and unchanged source/binary hashes. Still pending are paired
 cost measurements and the separate full compatibility gate. These partial
 passes do not establish final acceptance. Accepted runtime remains
 `fd7b7646e8adf99d1a798302ef9a18978e4c330d`; clean-host comparisons remain pending.
