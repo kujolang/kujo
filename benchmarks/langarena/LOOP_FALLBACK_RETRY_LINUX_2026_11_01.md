@@ -23,7 +23,16 @@ The companion `loop-fallback-retry-linux-2026-11-01.json.gz` preserves 21
 digest-verified artifacts: native source/log/membership records, parity receipts,
 and the two before-control fixtures with all three runtimes' raw outputs.
 
-The current Mac release test build and full release gate remain pending.
+The full release gate is now verified: job 124766558577 and all seven jobs in
+run 41278373023 succeeded on the exact candidate revision. The complete log
+contains all ten required command receipts, no failed Cargo summaries, and both
+Kujo fixture modes reporting 150 passed, zero failed and eleven skipped each.
+These repository fixtures are distinct from the LangArena checksum matrix.
+The additional `loop-fallback-release-2026-11-01.json.gz` preserves five
+digest-verified run/job/log/verification artifacts. Optional benchmark smoke was
+not enabled; skipped optional tools do not become verified gates.
+
+The current Mac release test build remains pending.
 Acceptance additionally requires the final pinned CLI, identical callback and
 paired cost probes, and the unchanged 150-checksum matrix. Accepted runtime
 remains `fd7b764`; no production or competitor speed claim is established here.
