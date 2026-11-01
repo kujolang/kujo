@@ -128,7 +128,8 @@ fn native_call_transfer_has_bounded_allocations() {
                 let mut ctx =
                     kujo::jit::VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
                 ctx.vm_ptr = &mut vm as *mut _ as *mut std::ffi::c_void;
-                // Caller-owned views remain live; callback does not own this stack.
+                // SAFETY: caller-owned views and the exclusive VM remain live; the
+                // callback does not own this independent stack.
                 unsafe {
                     assert_eq!(
                         kujo::jit::jit_call_function(&mut ctx, std::ptr::null(), arity as i64),
@@ -164,6 +165,7 @@ fn native_call_transfer_has_bounded_allocations() {
 use kujo::jit::{jit_call_function, VMContext};
 #[test]
 fn malformed_native_calls_preserve_stack_contracts() {
+    // SAFETY: null context is explicitly rejected before any dereference.
     unsafe {
         assert_eq!(jit_call_function(std::ptr::null_mut(), std::ptr::null(), 0), 1);
     }
@@ -178,6 +180,8 @@ fn malformed_native_calls_preserve_stack_contracts() {
         let mut stack: Vec<_> = values.into_iter().map(Value::Int).collect();
         let mut globals = HashMap::new();
         let mut ctx = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+        // SAFETY: initialized stack/context storage remains live and exclusive.
+        // Malformed counts exercise checked stack operations, not invalid pointers.
         unsafe {
             assert_eq!(jit_call_function(&mut ctx, std::ptr::null(), count), code);
         }
@@ -188,6 +192,7 @@ fn malformed_native_calls_preserve_stack_contracts() {
         println!("PASS count={count} code={code}");
     }
     let mut ctx = VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+    // SAFETY: live context has a null stack, rejected before stack dereference.
     unsafe {
         assert_eq!(jit_call_function(&mut ctx, std::ptr::null(), 0), 2);
     }
