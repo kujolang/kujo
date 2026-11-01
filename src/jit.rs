@@ -15015,7 +15015,11 @@ mod tests {
         let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
         context.var_names_ptr = &mut names;
         context.local_slots_ptr = &mut slots;
-        // SAFETY: all pointers refer to live, exclusively borrowed containers.
+        // SAFETY:
+        // - Preconditions: context, names, locals and slots remain live; each
+        //   helper has exclusive access and assertions borrow only between calls.
+        // - Postconditions: checked removal distinguishes callee maps from physical
+        //   slots; the out-of-range slot fails before either binding is removed.
         unsafe {
             assert_eq!(jit_release_dead_local(&mut context, 0, hash, 0), 0);
             assert!(!locals.contains_key("dead"));
@@ -15049,12 +15053,18 @@ mod tests {
             let (payload, kind) = context.owned_roots.encode(value).unwrap();
             let state = context.owned_roots.storage_state();
             for _ in 0..1000 {
-                // SAFETY: context and root remain live for every call.
+                // SAFETY:
+                // - Preconditions: context is exclusive and the encoded root stays
+                //   live in the entered scope for every inspection.
+                // - Postconditions: truth inspection does not consume or duplicate roots.
                 assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, expected);
                 assert_eq!(context.owned_roots.storage_state(), state);
             }
             context.owned_roots.take_value(payload, kind).unwrap();
-            // SAFETY: stale identities are checked, never dereferenced as pointers.
+            // SAFETY:
+            // - Preconditions: context is live/exclusive; payload is a retired codec
+            //   identity deliberately supplied to the validating lookup helper.
+            // - Postconditions: stale identity reports an error without pointer access.
             assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, 0);
             assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
         }
@@ -15069,7 +15079,11 @@ mod tests {
         let name = String::from("to_int");
         let pointer = name.as_ptr();
         let (payload, kind) = context.owned_roots.encode(Value::NativeFunction(name)).unwrap();
-        // SAFETY: live exclusive stack/context; root ownership is checked by helper.
+        // SAFETY:
+        // - Preconditions: context and separate stack are live/exclusive during calls;
+        //   payload starts as a current-frame root. pointer is compared, never read.
+        // - Postconditions: transfer consumes the root; deliberate reuse/invalid kind
+        //   exercises checked errors without another push or raw payload dereference.
         unsafe {
             assert_eq!(jit_stack_take_scalar(&mut context, payload, kind), 0);
             assert!(matches!(&stack[0], Value::NativeFunction(name) if name.as_ptr() == pointer));
@@ -15084,19 +15098,35 @@ mod tests {
         let (payload, kind) = context.owned_roots.encode(Value::Array(saved.clone())).unwrap();
         context.owned_roots.enter().unwrap();
         // A callee with no physical roots must not take a caller's operand.
+        // SAFETY:
+        // - Preconditions: context/stack remain live; the outer-frame identity is
+        //   supplied deliberately to the helper's current-frame validation.
+        // - Postconditions: rejection leaves the root and stack unchanged.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert_eq!(stack.len(), 1);
         assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
         // Also reject caller roots after the nested frame has physical storage.
         context.owned_roots.encode(Value::NativeFunction("len".into())).unwrap();
+        // SAFETY:
+        // - Preconditions: live context/stack are exclusive; payload still belongs
+        //   to the outer scope and the nested scope now has a distinct physical frame.
+        // - Postconditions: checked ownership rejection preserves the caller's root.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert_eq!(stack.len(), 1);
         assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
         context.owned_roots.leave().unwrap();
         context.stack_ptr = std::ptr::null_mut();
+        // SAFETY:
+        // - Preconditions: context remains live/exclusive; null stack is explicitly
+        //   supported by the helper and the root is current after the nested leave.
+        // - Postconditions: missing-stack failure precedes root consumption.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
         assert!(context.runtime_error.take().unwrap().contains("requires a stack"));
         context.stack_ptr = &mut stack;
+        // SAFETY:
+        // - Preconditions: the restored pointer addresses the live separate stack;
+        //   the current-frame root survived all preceding rejected transfers.
+        // - Postconditions: ownership moves once into the stack; saved Arc remains valid.
         assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
         let Value::Array(mut changed) = stack.pop().unwrap() else { panic!("array lost") };
         assert!(Arc::ptr_eq(&changed, &saved));
@@ -15120,6 +15150,10 @@ mod tests {
             Value::Float(f64::from_bits(0x7ff8_0000_0000_0123)),
         ] {
             let (payload, kind) = crate::native_scalar::encode(&value).unwrap();
+            // SAFETY:
+            // - Preconditions: context/stack are live and exclusive; the scalar codec
+            //   supplied valid immediate bits and kind, requiring no owned root frame.
+            // - Postconditions: decoded value is pushed without creating owned roots.
             assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
             let actual = stack.pop().unwrap();
             if let (Value::Float(a), Value::Float(b)) = (&value, &actual) {
@@ -15139,7 +15173,11 @@ mod tests {
         let mut stack = vec![Value::Array(original.clone())];
         let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
         context.owned_roots.enter().unwrap();
-        // SAFETY: the context and its exclusive stack pointer remain live.
+        // SAFETY:
+        // - Preconditions: context and separate stack stay live, with exclusive access
+        //   during helpers; the entered root scope covers pop and both cloned pushes.
+        // - Postconditions: snapshots keep their backing values; the deliberate stale
+        //   push after scope exit fails validation without changing the stack.
         unsafe {
             let payload = jit_stack_pop(&mut context);
             let kind = context.return_value_kind;
@@ -15164,14 +15202,21 @@ mod tests {
     fn native_stack_boundary_rejects_invalid_kinds() {
         let mut stack = Vec::new();
         let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
-        // SAFETY: context has a live exclusive stack pointer.
+        // SAFETY:
+        // - Preconditions: context and separate stack are live/exclusive; invalid
+        //   kind 99 is deliberately passed to the checked scalar/root codec.
+        // - Postconditions: helper records InvalidKind without pushing a value.
         unsafe { jit_stack_push_scalar(&mut context, 123, 99) };
         assert!(stack.is_empty());
         assert!(context.runtime_error.unwrap().contains("InvalidKind"));
     }
 
-    // SAFETY: test callers supply a live context with initialized local values;
-    // recursion stays within the normal native depth guard and retains no pointers.
+    // SAFETY:
+    // - Preconditions: callers provide a live exclusive context and readable locals
+    //   containing input/scratch; enclosing invocation owns the outer root scope.
+    //   Nested pointers satisfy native entry's contract; locals remain live in recursion.
+    // - Postconditions: each successful entry has one leave; results promote through
+    //   nested scopes, failure retains a diagnostic, and no borrowed pointer escapes.
     unsafe extern "C" fn owned_lifetime_probe(ctx: *mut VMContext, depth: i64) -> i64 {
         if jit_enter_function(ctx) != 0 {
             return 1;
@@ -15192,13 +15237,20 @@ mod tests {
         status
     }
 
-    // SAFETY: forwards the same validated test context to the direct-arg probe.
+    // SAFETY:
+    // - Preconditions: ctx satisfies owned_lifetime_probe's live context/local-map
+    //   and enclosing invocation requirements.
+    // - Postconditions: forwards the status after three recursive levels, retaining
+    //   the probe's balanced cleanup and owned-return promotion.
     unsafe extern "C" fn owned_standard_probe(ctx: *mut VMContext) -> i64 {
         owned_lifetime_probe(ctx, 3)
     }
 
-    // SAFETY: same live test context as owned_lifetime_probe; the direct ABI
-    // returns the payload itself, not the standard ABI's success status.
+    // SAFETY:
+    // - Preconditions: non-null ctx satisfies owned_lifetime_probe's context/local
+    //   requirements and remains readable after the nested probe returns.
+    // - Postconditions: success returns the recorded payload for the direct ABI;
+    //   failure returns status. The probe owns cleanup and no reference escapes.
     unsafe extern "C" fn owned_direct_probe(ctx: *mut VMContext, depth: i64) -> i64 {
         let status = owned_lifetime_probe(ctx, depth);
         if status == 0 {

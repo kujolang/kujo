@@ -104,3 +104,20 @@ diff checks and strict inventory generation pass. The safety checker still exits
 remaining boundaries still require review; budgets and acceptance are unchanged.
 Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch5.log`.
+
+## Ownership regression call-site contracts
+
+The sixth batch reviews fourteen unsafe test boundaries: dead-local removal;
+live/retired truth inspection; consuming transfers with reused handles, invalid
+kinds, outer-frame ownership and missing stacks; immediate bit preservation;
+snapshot-preserving stack marshaling; and three recursive owned-lifetime probes.
+Test-owned containers remain live, helper access is exclusive, and assertions
+inspect them only between calls. Deliberately invalid codec identities exercise
+checked errors rather than invalid raw pointers. Recursive probes preserve the
+entry/leave pairing and promote results through their enclosing invocation.
+
+This is comment-only review: the stripped-source hash remains unchanged.
+Formatting, diff checks and strict inventory generation pass. The safety checker
+still exits 2 with **56 missing contracts across 145 boundaries**. No runtime
+rebuild was needed, and no budget or acceptance criterion changed. Evidence:
+local `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch6.log`.
