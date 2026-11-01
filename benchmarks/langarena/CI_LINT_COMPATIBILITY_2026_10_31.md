@@ -50,3 +50,14 @@ without compiling locally during production benchmarking. All 150 repository
 fixtures matched snapshots in both VM and interpreter; this fixture inventory
 is distinct from the 50 LangArena workloads. Freshness limits and classification
 rules remain unchanged. The refreshed revision still requires its full CI gate.
+
+The full gate on `e67a936` (run `41265321279`, job `124728414564`)
+passed the SSG startup regression and reached `jit_execution_contract`, where
+an old fixture still expected array literals/indexing to trigger a JIT warning.
+Those operations are supported by the accepted runtime. The warning fixture now
+uses an explicitly mutable top-level binding (`DefineGlobal`) and verifies that
+exact unsupported opcode while retaining successful VM fallback. Array coverage
+moves to the supported-surface test, which now explicitly rejects the warning.
+All four CLI execution contracts pass against the frozen accepted executable
+above, using a standalone `rustc --test` build of this std-only integration suite.
+No runtime behavior or warning policy changed; the full CI gate remains required.
