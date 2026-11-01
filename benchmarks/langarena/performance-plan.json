@@ -5697,9 +5697,10 @@
     "ci_run": 41287402564,
     "remaining": [
       "broad CI",
-      "paired workloads and memory/retention review",
+      "paired workloads",
       "integration decision"
     ],
-    "checksum_cases": 150
+    "checksum_cases": 150,
+    "memory_retention_review": "unchanged ownership and publication policy; empty-object layout measured; whole-process RSS unmeasured"
   }
 }
