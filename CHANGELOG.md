@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse compiled loops across repeated calls with chunk-scoped admission and
+  cache identities, retaining collection-specialization checks on each entry.
+
 - Bound eligible repeated array-write reservations by up to eight distinct
   proven constant destinations, preserving value semantics, negative aliases,
   snapshots and ordered error publication with conservative fallback.

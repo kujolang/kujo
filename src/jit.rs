@@ -5286,6 +5286,9 @@ pub struct JitCompiler {
 
     /// Execution counter for hot path detection
     execution_counts: HashMap<usize, usize>,
+    loop_execution_counts: HashMap<(u64, usize, usize), usize>,
+    blocked_loop_sites: HashSet<(u64, usize, usize)>,
+    compiled_loop_cache: HashMap<LoopCacheKey, CompiledFn>,
 
     /// Cache of compiled functions (bytecode offset -> native function)
     compiled_cache: HashMap<usize, CompiledFn>,
@@ -9915,6 +9918,14 @@ impl BytecodeTranslator {
     }
 }
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+struct LoopCacheKey {
+    code: u64,
+    start: usize,
+    end: usize,
+    dense_slots: Vec<usize>,
+}
+
 impl JitCompiler {
     fn retain_literal_values(&mut self, chunk: &BytecodeChunk) -> HashMap<usize, Arc<Value>> {
         chunk
@@ -10270,6 +10281,9 @@ impl JitCompiler {
             module,
             ctx: codegen::Context::new(),
             execution_counts: HashMap::new(),
+            loop_execution_counts: HashMap::new(),
+            blocked_loop_sites: HashSet::new(),
+            compiled_loop_cache: HashMap::new(),
             compiled_cache: HashMap::new(),
             enabled: true,
             cancellation_checks,
@@ -10285,6 +10299,30 @@ impl JitCompiler {
         })
     }
 
+    pub(crate) fn is_chunk_loop_blocked(&self, code: u64, start: usize, end: usize) -> bool {
+        self.blocked_loop_sites.contains(&(code, start, end))
+    }
+
+    pub(crate) fn block_chunk_loop(&mut self, code: u64, start: usize, end: usize) {
+        self.blocked_loop_sites.insert((code, start, end));
+    }
+
+    // Cached loops remain eligible on subsequent invocations. The VM repeats
+    // dynamic collection admission before selecting a compiled specialization.
+    pub(crate) fn should_execute_chunk_loop(
+        &mut self,
+        code: u64,
+        start: usize,
+        end: usize,
+    ) -> bool {
+        if !self.enabled {
+            return false;
+        }
+        let count = self.loop_execution_counts.entry((code, start, end)).or_insert(0);
+        *count = count.saturating_add(1);
+        *count >= JIT_THRESHOLD
+    }
+
     /// Check if JIT should compile this function based on execution count
     pub fn should_compile(&mut self, offset: usize) -> bool {
         if !self.enabled {
@@ -10297,10 +10335,12 @@ impl JitCompiler {
         *count >= JIT_THRESHOLD && !self.compiled_cache.contains_key(&offset)
     }
 
+    #[allow(dead_code)] // Legacy offset-only inspection API; VM uses chunk-scoped loop state.
     pub fn is_loop_jit_blocked(&self, offset: usize) -> bool {
         self.loop_jit_blacklist.contains(&offset)
     }
 
+    #[allow(dead_code)] // Legacy offset-only inspection API; VM uses chunk-scoped loop state.
     pub fn mark_loop_jit_blocked(&mut self, offset: usize) {
         self.loop_jit_blacklist.insert(offset);
     }
@@ -10464,7 +10504,19 @@ impl JitCompiler {
         loop_end: usize,
         int_dict_slots: std::collections::HashSet<usize>,
     ) -> Result<CompiledFn, String> {
-        self.compile_with_options(chunk, offset, Some(int_dict_slots), Some(loop_end))
+        let mut dense_slots: Vec<_> = int_dict_slots.iter().copied().collect();
+        dense_slots.sort_unstable();
+        let key =
+            LoopCacheKey { code: chunk.code_identity(), start: offset, end: loop_end, dense_slots };
+        if let Some(compiled) = self.compiled_loop_cache.get(&key) {
+            measurement::add(Metric::JitCacheHits, 1);
+            return Ok(*compiled);
+        }
+        measurement::add(Metric::JitCacheMisses, 1);
+        let compiled =
+            self.compile_with_options(chunk, offset, Some(int_dict_slots), Some(loop_end))?;
+        self.compiled_loop_cache.insert(key, compiled);
+        Ok(compiled)
     }
 
     fn compile_with_options(
@@ -10489,10 +10541,13 @@ impl JitCompiler {
         sig.params.push(AbiParam::new(types::I64)); // Stack pointer
         sig.returns.push(AbiParam::new(types::I64)); // Return value (0 = success)
 
-        let func_id = self
-            .module
-            .declare_function(&format!("kujo_jit_{}", offset), Linkage::Local, &sig)
-            .map_err(|e| format!("Failed to declare function: {}", e))?;
+        let func_id = if loop_end.is_some() {
+            // Different chunks and collection specializations may share bytecode offsets.
+            self.module.declare_anonymous_function(&sig)
+        } else {
+            self.module.declare_function(&format!("kujo_jit_{}", offset), Linkage::Local, &sig)
+        }
+        .map_err(|e| format!("Failed to declare function: {}", e))?;
 
         self.ctx.func.signature = sig;
 
@@ -11204,7 +11259,9 @@ impl JitCompiler {
         let compiled_fn = compiled_fn_from_code_ptr(code_ptr);
 
         // Cache it
-        self.compiled_cache.insert(offset, compiled_fn);
+        if loop_end.is_none() {
+            self.compiled_cache.insert(offset, compiled_fn);
+        }
 
         Ok(compiled_fn)
     }
@@ -15514,6 +15571,24 @@ mod tests {
     fn test_jit_compiler_creation() {
         let compiler = JitCompiler::new();
         assert!(compiler.is_ok(), "JIT compiler should be created successfully");
+    }
+
+    #[test]
+    fn loop_admission_counts_and_blocks_are_chunk_scoped() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let first = BytecodeChunk::new().code_identity();
+        let second = BytecodeChunk::new().code_identity();
+        assert_ne!(first, second);
+        for _ in 0..JIT_THRESHOLD - 1 {
+            assert!(!compiler.should_execute_chunk_loop(first, 0, 10));
+        }
+        assert!(compiler.should_execute_chunk_loop(first, 0, 10));
+        assert!(compiler.should_execute_chunk_loop(first, 0, 10));
+        assert!(!compiler.should_execute_chunk_loop(second, 0, 10));
+        compiler.block_chunk_loop(first, 0, 10);
+        assert!(compiler.is_chunk_loop_blocked(first, 0, 10));
+        assert!(!compiler.is_chunk_loop_blocked(second, 0, 10));
+        assert!(!compiler.is_chunk_loop_blocked(first, 0, 11));
     }
 
     #[test]

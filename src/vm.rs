@@ -2928,14 +2928,14 @@ impl VM {
                         .jit_compiler
                         .as_ref()
                         .expect("JIT compiler initialized when JIT is enabled")
-                        .is_loop_jit_blocked(jump_target)
+                        .is_chunk_loop_blocked(self.chunk.code_identity(), jump_target, self.ip)
                     {
                         // Loop is known to be incompatible with JIT
                     } else if self
                         .jit_compiler
                         .as_mut()
                         .expect("JIT compiler initialized when JIT is enabled")
-                        .should_compile(jump_target)
+                        .should_execute_chunk_loop(self.chunk.code_identity(), jump_target, self.ip)
                     {
                         // PRE-SCAN: Check if loop contains only supported opcodes
                         // This prevents compilation failures and maintains correctness
@@ -3066,7 +3066,11 @@ impl VM {
                                 self.jit_compiler
                                     .as_mut()
                                     .expect("JIT compiler initialized when JIT is enabled")
-                                    .mark_loop_jit_blocked(jump_target);
+                                    .block_chunk_loop(
+                                        self.chunk.code_identity(),
+                                        jump_target,
+                                        self.ip,
+                                    );
                             } else {
                                 // Try to compile this hot loop
                                 // IMPORTANT: Compile from the loop START (jump_target), not from the JumpBack!
@@ -3273,7 +3277,11 @@ impl VM {
                                         self.jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
-                                            .mark_loop_jit_blocked(jump_target);
+                                            .block_chunk_loop(
+                                                self.chunk.code_identity(),
+                                                jump_target,
+                                                self.ip,
+                                            );
                                     }
                                 }
                             }
@@ -3289,7 +3297,7 @@ impl VM {
                             self.jit_compiler
                                 .as_mut()
                                 .expect("JIT compiler initialized when JIT is enabled")
-                                .mark_loop_jit_blocked(jump_target);
+                                .block_chunk_loop(self.chunk.code_identity(), jump_target, self.ip);
                         }
                     }
                 }

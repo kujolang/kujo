@@ -285,3 +285,58 @@ fn non_callable_replacement_resumes_for_vm_error() {
         true,
     );
 }
+
+#[test]
+fn repeated_calls_reuse_loops_without_crossing_chunk_identity() {
+    let source = r#"
+        func first(text) {
+            mut i := 0
+            mut total := 0
+            while i < len(text) { total += 1 i += 1 }
+            return total
+        }
+        func second(text) {
+            mut i := 0
+            mut total := 0
+            while i < len(text) { total += 2 i += 1 }
+            return total
+        }
+        mut round := 0
+        while round < 3 {
+            assert_equal(first(repeat("x", 300)), 300)
+            assert_equal(second(repeat("x", 300)), 600)
+            round += 1
+        }
+        print("PASS")
+    "#;
+    assert_eq!(check(source), (6, 6));
+}
+
+#[test]
+fn reused_loop_keeps_nested_snapshots_across_collection_shapes() {
+    let source = r#"
+        func bump(rows) {
+            mut current := rows
+            mut i := 0
+            while i < 300 { current[0][0] += 1 i += 1 }
+            return current
+        }
+        let array := [[0]]
+        mut dictionary := dict()
+        dictionary[0] = [0]
+        mut inner := dict()
+        inner[0] = 0
+        let nested_dictionary := [inner]
+        let first := bump(array)
+        let second := bump(dictionary)
+        let third := bump(nested_dictionary)
+        assert_equal(first[0][0], 300)
+        assert_equal(second[0][0], 300)
+        assert_equal(third[0][0], 300)
+        assert_equal(array[0][0], 0)
+        assert_equal(dictionary[0][0], 0)
+        assert_equal(nested_dictionary[0][0], 0)
+        print("PASS")
+    "#;
+    assert_eq!(check(source), (3, 3));
+}
