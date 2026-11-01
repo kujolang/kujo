@@ -12931,6 +12931,9 @@ impl JitCompiler {
             if profile.should_despecialize() {
                 // Remove from cache to force recompilation with generic code
                 self.compiled_cache.remove(&offset);
+                // The public profiling API is offset-scoped. Every loop variant
+                // that consumed this profile must recompile without its guards.
+                self.compiled_loop_cache.retain(|key, _| key.start != offset);
                 profile.specialized_types.clear();
                 profile.guard_successes = 0;
                 profile.guard_failures = 0;
@@ -16174,6 +16177,20 @@ mod tests {
         compiler.record_type(offset, 12345, &Value::Int(1));
         compiler.compiled_cache.insert(offset, dummy_compiled_fn as CompiledFn);
 
+        // Multiple chunks and dense-slot variants can consume the same public
+        // offset profile. Keep an unrelated offset to detect overly broad clearing.
+        for (code, start, dense_slots) in [
+            (1, offset, vec![]),
+            (1, offset, vec![0]),
+            (2, offset, vec![]),
+            (1, offset + 1, vec![]),
+        ] {
+            compiler.compiled_loop_cache.insert(
+                LoopCacheKey { code, start, end: 10, dense_slots },
+                dummy_compiled_fn as CompiledFn,
+            );
+        }
+
         // Record mostly successes, then failures
         for _ in 0..90 {
             compiler.record_guard_success(offset);
@@ -16187,6 +16204,8 @@ mod tests {
 
         // Should have cleared cache (happened when threshold was crossed)
         assert!(!compiler.compiled_cache.contains_key(&offset), "Should remove from cache");
+        assert_eq!(compiler.compiled_loop_cache.len(), 1);
+        assert!(compiler.compiled_loop_cache.keys().all(|key| key.start == offset + 1));
         let profile = compiler.get_specialization(offset).expect("Profile should exist");
         assert_eq!(profile.specialized_types.len(), 0, "Should clear specializations");
 

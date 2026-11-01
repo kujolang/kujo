@@ -13,7 +13,8 @@ This file records user-visible changes to Kujo, following
 
 - Reuse compiled loops across repeated calls with chunk-scoped admission and
   cache identities, retaining collection-specialization checks on each entry.
-  Include these loop sites and compiled variants in public JIT statistics.
+  Include these loop sites and compiled variants in public JIT statistics, and
+  invalidate affected loop variants when profiling removes a specialization.
 
 - Bound eligible repeated array-write reservations by up to eight distinct
   proven constant destinations, preserving value semantics, negative aliases,
