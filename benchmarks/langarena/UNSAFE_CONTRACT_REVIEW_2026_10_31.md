@@ -35,3 +35,20 @@ Remaining review includes the other JIT boundaries, VM pointer bridges,
 test-only FFI/allocation instrumentation, and precise module budgets. The
 existing inventory test must remain failing until that review supports an
 explicit update; the current performance candidates remain unaccepted.
+
+## Field and indexed-replacement contracts
+
+The second batch covers `jit_field_read`, `jit_field_write`,
+`jit_index_set_result`, and `jit_prepare_field_call`. Review traced compiler
+retention of field-name `Arc<String>` allocations, generated operand release,
+canonical VM field/index operations, integer-key caching, and checked receiver
+suffix reordering. Contracts distinguish cloned inputs from consumed root slots,
+including errors after consumption, and require valid exclusive VM access for
+key caching. This does not replace the outstanding VM bridge review.
+
+Only comments changed; the same stripped-source hash above remains identical.
+Formatting, diff checks and strict inventory generation pass. The safety checker
+still exits 2, with **92 missing contracts across 145 boundaries**. Inventory
+budgets remain unchanged; no runtime rebuild or full CI rerun is warranted for
+these comments alone. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch2.log`.

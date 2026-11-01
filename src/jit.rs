@@ -1063,8 +1063,12 @@ pub unsafe extern "C" fn jit_load_operand(
 
 /// Resolve a native field through the VM contract, preserving legacy receivers.
 #[no_mangle]
-// SAFETY: ctx is exclusive; name_ptr points into compiler-retained Arc<String>
-// metadata. Global lookup uses the already-borrowed map and never locks the VM.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name_ptr
+//   addresses compiler-retained immutable String metadata. Global maps are live
+//   and readable; a non-null receiver stack is live and exclusively mutable.
+// - Postconditions: success returns a tagged value and may push a hidden receiver;
+//   errors set runtime_error. Input roots remain owned; no user callback runs.
 pub unsafe extern "C" fn jit_field_read(
     ctx: *mut VMContext,
     object: i64,
@@ -1132,8 +1136,12 @@ pub unsafe extern "C" fn jit_field_read(
 
 /// Consume a field-write operand through the canonical VM contract.
 #[no_mangle]
-// SAFETY: context roots are exclusive, and name_ptr is compiler-retained metadata.
-// This operation invokes no user callbacks. Operand slots remain live for release.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name_ptr
+//   addresses immutable String metadata retained by the compiler for this call.
+// - Postconditions: the value is cloned before consuming the object into an
+//   updated root; consumed slots remain releasable. Errors set runtime_error,
+//   including after consumption; no user callbacks or pointer escape occur.
 pub unsafe extern "C" fn jit_field_write(
     ctx: *mut VMContext,
     object: i64,
@@ -1181,8 +1189,13 @@ pub unsafe extern "C" fn jit_field_write(
 
 /// Consume generic indexed replacement operands using the VM's exact contract.
 #[no_mangle]
-// SAFETY: ctx owns the tagged roots for this activation. The key-cache callback
-// performs no user calls; consumed root slots remain live for generated release.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null vm_ptr
+//   addresses its live VM, exclusively accessible during integer-key caching.
+//   Operand roots belong to this native activation; no VM borrow spans the call.
+// - Postconditions: index/value are cloned before consuming the object; consumed
+//   slots stay releasable. Success returns a tagged root; errors set runtime_error.
+//   The key-cache callback invokes no user code and retains no borrowed pointer.
 pub unsafe extern "C" fn jit_index_set_result(
     ctx: *mut VMContext,
     object: i64,
@@ -1239,7 +1252,12 @@ pub unsafe extern "C" fn jit_index_set_result(
 
 /// Match Call's argument suffix after an immediately preceding FieldGet.
 #[no_mangle]
-// SAFETY: ctx and its stack are exclusive. No pointers or references escape.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>. Generated callers supply Call's
+//   argument suffix and the pending receiver flag from the preceding field read.
+// - Postconditions: the pending flag is cleared; a checked suffix is reordered
+//   in place, or runtime_error records underflow. No references escape.
 pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if !std::mem::take(&mut ctx.field_receiver_pending) {
