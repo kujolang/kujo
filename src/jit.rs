@@ -2009,6 +2009,19 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
     if kind == -1 {
         return 1;
     } // A Call instruction can enter arbitrary user code.
+    if kind == -4 {
+        // Only the actual argument-only builtin is safe under the loop's
+        // environment lock. A user function named `len` must still resume in
+        // the VM, and aliases of the builtin must retain the same behavior.
+        return match ctx.owned_roots.borrow_owned(value) {
+            Ok(Value::NativeFunction(name)) if name == "len" => 0,
+            Ok(_) => 1,
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                1
+            }
+        };
+    }
     if kind == -3 {
         return match ctx.owned_roots.clone_value(value, crate::native_owned::OWNED) {
             Ok(Value::BytecodeGenerator { .. }) => 1,
@@ -9335,7 +9348,8 @@ impl BytecodeTranslator {
             | OpCode::GreaterEqual
             | OpCode::ForNext(_) => 2,
             OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _) => 1,
-            OpCode::Call(_) | OpCode::Return | OpCode::ReturnNone => 0,
+            OpCode::Call(_) => 1,
+            OpCode::Return | OpCode::ReturnNone => 0,
             _ => return Ok(false),
         };
         let (Some(ctx), Some(guard), Some(prepare), Some(push)) = (
@@ -9382,11 +9396,18 @@ impl BytecodeTranslator {
         let proceed = builder.create_block();
         let inspect = builder.create_block();
         let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
-        builder.ins().brif(owned, inspect, &[], proceed, &[]);
+        // Non-callable immediates must resume for the ordinary VM diagnostic.
+        // For calls, retain a conditional continuation even when the observed
+        // callable requires resume. Its normal stack effect gives subsequent
+        // bytecode blocks a valid stack shape instead of the pre-call operands.
+        let immediate_target =
+            if matches!(instruction, OpCode::Call(_)) { resume } else { proceed };
+        builder.ins().brif(owned, inspect, &[], immediate_target, &[]);
         builder.seal_block(inspect);
         builder.switch_to_block(inspect);
-        let guard_kind = if matches!(instruction, OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _))
-        {
+        let guard_kind = if matches!(instruction, OpCode::Call(_)) {
+            builder.ins().iconst(types::I64, -4)
+        } else if matches!(instruction, OpCode::FieldGet(_) | OpCode::FieldGetLocal(_, _)) {
             builder.ins().iconst(types::I64, -2)
         } else if matches!(instruction, OpCode::ForNext(_)) {
             builder.ins().iconst(types::I64, -3)
