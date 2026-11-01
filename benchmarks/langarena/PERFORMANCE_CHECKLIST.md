@@ -744,6 +744,13 @@ defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
+- [ ] Review the checked-assignment validation candidate `568dc612` for acceptance.
+  [Regression evidence](CHECKED_VALIDATION_REGRESSIONS_2026_11_01.md) reproduces
+  duplicate validation and verifies the narrow fix with 1,343 passing release
+  tests, eight existing ignores and all 150 unchanged test-size checksums.
+  Workload comparison and remaining Linux CI gates are pending; the accepted
+  runtime remains `55e2f683`.
+
 - [x] Accept reusable chunk-scoped loops and bounded callback fallback on `348a6270`; [final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md) records correctness, structural counters and paired local timings. This supersedes the earlier loop-admission pending status below; broader work remains open.
 
 - [x] Reproduce the [template parser loop-admission gap](TEMPLATE_LOOP_ADMISSION_2026_10_31.md) on accepted `fd7b764`: VM/interpreter/JIT return correct results, but nested loop compilation reports inconsistent operand-stack depths and falls back. Fixing the control-flow handling and proving native loop execution remain open; callback guards and stack validation must be preserved.
