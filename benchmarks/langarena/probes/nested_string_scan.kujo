@@ -1,0 +1,22 @@
+func scan(text) {
+    func unused_closure() { return 0 }
+    mut i := 0
+    mut total := 0
+    while i < len(text) {
+        if text[i] == "{" {
+            mut j := i + 1
+            while j < len(text) {
+                if text[j] == "}" { break }
+                j += 1
+            }
+            total += j - i
+        }
+        i += 1
+    }
+    return total
+}
+mut text := ""
+mut n := 0
+while n < 100 { text += "{x}" n += 1 }
+assert_equal(scan(text), 200)
+print("nested scan: OK 200")
