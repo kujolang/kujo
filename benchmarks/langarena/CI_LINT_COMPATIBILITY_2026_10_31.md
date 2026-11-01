@@ -76,3 +76,10 @@ The regression now covers all three cases; no measurement implementation changes
 The complete ten-test measurement integration suite passes against that same
 accepted executable, including schema validation and measured/plain parity,
 compiled with `runtime-jit` enabled and the existing release dependency artifacts.
+
+The full gate now uses `cargo test --no-fail-fast` so independent failing test
+targets are collected in the same run. No tests are excluded and no failure is
+suppressed. Shell syntax validation passes. A controlled command-stub check in
+both default and logged output modes confirms Cargo exit 101 remains the gate's
+exit status and subsequent gate commands do not execute. This avoids repeated
+full CI rounds revealing only the next stale integration expectation.

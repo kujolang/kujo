@@ -64,7 +64,8 @@ if [[ "${mode}" == "full" ]]; then
   run_cmd bash scripts/repo_hygiene_audit.sh
   run_cmd cargo fmt --check
   run_cmd cargo clippy --all-targets --all-features -- -D warnings
-  run_cmd cargo test
+  # Collect every failing test target in one run; Cargo still fails the gate.
+  run_cmd cargo test --no-fail-fast
   run_cmd cargo test --test native_api_security_boundaries
   run_cmd cargo test --test package_module_workflow_integration
   run_cmd cargo test --test vm_interpreter_parity_surfaces
