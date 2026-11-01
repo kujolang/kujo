@@ -57,7 +57,7 @@ export func factory() {{
     std::fs::write(directory.path().join("owner.kujo"), owner).unwrap();
     let width = width * scopes;
     let original = width * (width - 1) / 2;
-    let mutable = (width + 2) / 3;
+    let mutable = width.div_ceil(3);
     let main = format!(
         r#"
 from owner import factory

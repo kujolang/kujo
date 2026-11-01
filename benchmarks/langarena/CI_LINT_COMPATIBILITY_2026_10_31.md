@@ -18,3 +18,10 @@ binary. It makes no performance claim and does not change release gate settings.
 Formatting and diff checks are local; MSRV, Clippy, and regression results must be
 reviewed from this branch's CI before integration. No validation pass is implied
 by committing the candidate.
+
+Follow-up: run `41261682361` passed formatting and Rust 1.89 checking, then
+Clippy reached an additional test-only warning in `capture_budget_contracts`.
+Replace `(width + 2) / 3` with `width.div_ceil(3)` for the count of mutable
+fixture bindings. This preserves the existing fixture counts while avoiding
+the intermediate addition. The next CI run must verify this revision; the
+previous run is not a Clippy pass.
