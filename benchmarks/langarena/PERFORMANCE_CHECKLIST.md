@@ -778,6 +778,7 @@ defects have separate verified fixes in section 3.
   candidate measurement and semantic regression gates remain open.
 
 - [ ] Refresh per-benchmark native execution/fallback evidence.
+  Latest [accepted-loop census](ACCEPTED_LOOP_CENSUS_2026_11_01.md) verifies all 100 VM/JIT checksum cases and event inventories on `348a6270`. Precise CPU attribution remains open; old profiles do not certify this revision.
   [Current census](RUNTIME_CENSUS_2026_10_31.md) verifies all 100 VM/JIT test-size
   checksums and exact event inventories. Every JIT case records native entries;
   this does not establish native CPU-time coverage. Six post-warmup samples pass,

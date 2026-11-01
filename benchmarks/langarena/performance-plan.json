@@ -5657,5 +5657,12 @@
     "linux_passes": 1350,
     "paired_observations": 108,
     "remaining": "Broader performance objective remains open; clean-host comparisons pending. Historical production checks do not certify this revision."
+  },
+  "accepted_loop_census_2026_11_01": {
+    "status": "event_counts_verified_cpu_attribution_open",
+    "runtime_commit": "348a62700179e59beccaefddc7ed4da30992d67b",
+    "checksum_runs": 100,
+    "report": "ACCEPTED_LOOP_CENSUS_2026_11_01.md",
+    "remaining": "Current-source symbolized attribution, compilation/cache tradeoffs, full production and clean-host comparisons"
   }
 }
