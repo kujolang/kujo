@@ -3,15 +3,27 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "runtime-jit")]
 #[test]
 fn loop_call_lowering_registers_runtime_helper() {
-    use kujo::bytecode::OpCode;
+    use kujo::bytecode::{Constant, OpCode};
     use kujo::jit::JitCompiler;
     use kujo::{compiler::Compiler, lexer, parser::Parser};
 
     // Compile without executing: the loop's guarded Call continuation must have
     // its runtime helper even when an observed callable would resume in the VM.
-    let mut parser =
-        Parser::new(lexer::tokenize("mut i := 0 while i < 200 { i += len(\"x\") }").unwrap());
-    let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+    // Function-local loops use local slots, matching the VM's admitted path.
+    // Top-level loops contain scope opcodes and are deliberately not admitted.
+    let mut parser = Parser::new(
+        lexer::tokenize("func scan() { mut i := 0 while i < 200 { i += len(\"x\") } return i }")
+            .unwrap(),
+    );
+    let script = Compiler::new().compile(&parser.parse()).unwrap();
+    let chunk = script
+        .constants
+        .iter()
+        .find_map(|constant| match constant {
+            Constant::Function(chunk) => Some(chunk.as_ref()),
+            _ => None,
+        })
+        .expect("fixture must contain a compiler-generated function");
     let (end, start) = chunk
         .instructions
         .iter()
@@ -22,9 +34,9 @@ fn loop_call_lowering_registers_runtime_helper() {
         })
         .expect("fixture must contain a compiler-generated loop");
     assert!(chunk.instructions[start..end].iter().any(|op| matches!(op, OpCode::Call(1))));
-    JitCompiler::new()
-        .unwrap()
-        .compile_loop_with_int_dicts(&chunk, start, end, Default::default())
+    let mut jit = JitCompiler::new().unwrap();
+    assert!(jit.can_compile_loop(chunk, start, end), "fixture must meet VM loop admission");
+    jit.compile_loop_with_int_dicts(chunk, start, end, Default::default())
         .expect("loop Call must lower with the standard runtime helper");
 }
 
