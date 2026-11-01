@@ -10,6 +10,39 @@ fn run(source: &str, vm: bool) {
 }
 
 #[test]
+fn checked_writes_preserve_snapshots_and_recover_after_invalid_paths() {
+    for (vm, jit) in [(false, false), (true, false), (true, true)] {
+        run_with_jit(
+            r#"
+            struct State { rows: array }
+            func exercise() {
+                mut state := State { rows: [{"values": [7, 8]}] }
+                mut i := 0
+                while i < 40 {
+                    let snapshot := state
+                    state.rows[0]["values"][-1] = i
+                    assert_equal(snapshot.rows[0]["values"][0], 7)
+                    if i == 0 { assert_equal(snapshot.rows[0]["values"][-1], 8) }
+                    else { assert_equal(snapshot.rows[0]["values"][-1], i - 1) }
+                    let before_error := state
+                    mut caught := false
+                    try { state.rows[0]["values"][5] = 99 } except err { caught = true }
+                    assert(caught)
+                    assert_equal(state.rows, before_error.rows)
+                    state.rows[0]["values"][0] = 7
+                    i += 1
+                }
+                assert_equal(state.rows[0]["values"], [7, 39])
+            }
+            exercise()
+            "#,
+            vm,
+            jit,
+        );
+    }
+}
+
+#[test]
 fn cached_nested_writes_preserve_snapshots_and_external_mutations() {
     for vm in [false, true] {
         run(

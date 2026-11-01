@@ -97,6 +97,8 @@ pub(crate) fn update(mut root: Value, path: &[Access], value: Value) -> Result<V
 /// Validate the complete path before touching any container. Afterwards writes
 /// cannot fail, so unique array rows can be edited without a rollback snapshot.
 pub(crate) fn validate(root: &Value, path: &[Access], value: &Value) -> Result<(), String> {
+    #[cfg(test)]
+    validation_traversal_tests::VISITS.with(|visits| visits.set(visits.get() + 1));
     let Some((access, rest)) = path.split_first() else { return Ok(()) };
     match (root, access) {
         (Value::Array(items), Access::Index(Value::Int(index))) => {
@@ -516,7 +518,9 @@ pub(crate) fn update_checked(
     let limit = crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
     let bound = if bound <= limit {
         cache.release_path(root, path);
-        update_in_place(root, path, value)?;
+        // The path was validated above. Depth-cache bookkeeping only releases
+        // weak references; it cannot change the root or invalidate that check.
+        write(root, path, value)?;
         bound
     } else {
         // Host/native inputs can already be too deep. Check the proposed result
@@ -1802,6 +1806,43 @@ mod depth_identity_cache_tests {
         assert!(cache.integer_dictionaries.is_empty());
         for root in &owners {
             assert_eq!(cache.depth(root), 1);
+        }
+    }
+}
+
+#[cfg(test)]
+mod validation_traversal_tests {
+    use super::*;
+    thread_local! { pub(super) static VISITS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) }; }
+
+    #[test]
+    fn checked_assignment_validates_each_path_once() {
+        for depth in [1usize, 4, 16] {
+            for shared in [false, true] {
+                let mut root = Value::Int(7);
+                for _ in 0..depth {
+                    root = Value::array(vec![root]);
+                }
+                let snapshot = shared.then(|| root.clone());
+                let path = vec![Access::Index(Value::Int(0)); depth];
+                let mut cache = DepthCache::default();
+                VISITS.with(|v| v.set(0));
+                update_checked(&mut root, &path, Value::Int(9), &mut cache).unwrap();
+                let visits = VISITS.with(std::cell::Cell::get);
+                assert_eq!(visits, depth + 1, "depth={depth} shared={shared}");
+                let leaf = |mut value: &Value| {
+                    for _ in 0..depth {
+                        let Value::Array(items) = value else { panic!("array") };
+                        value = &items[0];
+                    }
+                    let Value::Int(n) = value else { panic!("integer") };
+                    *n
+                };
+                assert_eq!(leaf(&root), 9);
+                if let Some(snapshot) = snapshot {
+                    assert_eq!(leaf(&snapshot), 7);
+                }
+            }
         }
     }
 }
