@@ -12949,8 +12949,8 @@ impl JitCompiler {
     #[allow(dead_code)] // Future runtime reporting/benchmark plumbing consumes this accessor.
     pub fn stats(&self) -> JitStats {
         JitStats {
-            total_functions: self.execution_counts.len(),
-            compiled_functions: self.compiled_cache.len(),
+            total_functions: self.execution_counts.len() + self.loop_execution_counts.len(),
+            compiled_functions: self.compiled_cache.len() + self.compiled_loop_cache.len(),
             enabled: self.enabled,
         }
     }
@@ -15624,6 +15624,49 @@ mod tests {
         for _ in 0..JIT_THRESHOLD {
             compiler.should_compile(0);
         }
+    }
+
+    #[test]
+    fn loop_statistics_include_reuse_and_mutated_code_identity() {
+        let mut parser = crate::parser::Parser::new(
+            crate::lexer::tokenize("func scan(n) { mut i := 0 while i < n { i += 1 } return i }")
+                .unwrap(),
+        );
+        let script = crate::compiler::Compiler::new().compile(&parser.parse()).unwrap();
+        let mut chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some(chunk.as_ref().clone()),
+                _ => None,
+            })
+            .unwrap();
+        let (end, start) = chunk
+            .instructions
+            .iter()
+            .enumerate()
+            .find_map(|(pc, op)| match op {
+                OpCode::JumpBack(start) => Some((pc, *start)),
+                _ => None,
+            })
+            .unwrap();
+        let mut compiler = JitCompiler::new().unwrap();
+        compiler.should_execute_chunk_loop(chunk.code_identity(), start, end);
+        assert_eq!(compiler.stats().total_functions, 1);
+        assert_eq!(compiler.stats().compiled_functions, 0);
+        let first =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        let reused =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_eq!(first as usize, reused as usize);
+        assert_eq!(compiler.stats().compiled_functions, 1);
+        chunk.name = Some("renamed".into());
+        compiler.should_execute_chunk_loop(chunk.code_identity(), start, end);
+        let changed =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_ne!(first as usize, changed as usize);
+        assert_eq!(compiler.stats().total_functions, 2);
+        assert_eq!(compiler.stats().compiled_functions, 2);
     }
 
     #[test]
