@@ -52,3 +52,21 @@ still exits 2, with **92 missing contracts across 145 boundaries**. Inventory
 budgets remain unchanged; no runtime rebuild or full CI rerun is warranted for
 these comments alone. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch2.log`.
+
+## Read, error and return contracts
+
+The third batch covers `jit_indexed_read`, `jit_indexed_read_cached`,
+`jit_loop_indexed_read`, `jit_scalar_type_error`, `jit_arithmetic_error`,
+`jit_runtime_failed`, `jit_set_return_scalar`, and `jit_return_scalar_kind`.
+Review checked preserved input roots and independently rooted read results,
+physical loop-slot lifetimes, cache handle/liveness checks, generated 16-byte
+cache initialization with 8-byte alignment, immediate scalar decoding, checked
+arithmetic diagnostics, and cancellation-pointer retention by task ownership.
+Return helpers record/read tags without transferring owned roots.
+
+Executable source remains identical under the same comment-stripping check;
+formatting, diff checks and strict inventory generation pass. The safety checker
+still exits 2, now with **84 missing contracts across 145 boundaries**. This is
+partial contract review, not runtime acceptance. Budgets remain unchanged and
+no runtime rebuild was needed. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch3.log`.

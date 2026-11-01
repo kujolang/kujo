@@ -1350,8 +1350,12 @@ pub unsafe extern "C" fn jit_for_next(
 
 /// Read tagged operands using the VM's indexing and error contracts.
 #[no_mangle]
-// SAFETY: ctx is a live exclusive context. Decode validated root handles rather
-// than treating payloads as pointers; no borrow or pointer escapes this call.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive, with an active
+//   root store. Tagged operands use that store's codec, not raw object pointers.
+// - Postconditions: success returns an immediate or independently rooted value;
+//   input roots are preserved. Invalid handles/indexes set runtime_error;
+//   no borrowed reference escapes and no user callback runs.
 pub unsafe extern "C" fn jit_indexed_read(
     ctx: *mut VMContext,
     object: i64,
@@ -1365,8 +1369,13 @@ pub unsafe extern "C" fn jit_indexed_read(
 
 /// Read with a stack-local root-slot hint. The hint never bypasses handle checks.
 #[no_mangle]
-// SAFETY: ctx is live/exclusive; cache is null or points to an aligned initialized
-// OwnedReadCache in the active generated stack frame, separate from ctx storage.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; nonzero cache
+//   addresses an initialized, exclusive OwnedReadCache in the active generated
+//   stack frame, disjoint from ctx and its root store.
+// - Postconditions: cache hints are updated only after validating handle/liveness;
+//   success returns a tagged value, errors set runtime_error. Input roots survive;
+//   no cache pointer or borrowed value escapes and no user callback runs.
 pub unsafe extern "C" fn jit_indexed_read_cached(
     ctx: *mut VMContext,
     object: i64,
@@ -1475,7 +1484,12 @@ pub unsafe extern "C" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> 
 }
 
 #[no_mangle]
-// SAFETY: context slots stay live; no callback runs while the object is borrowed.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null physical
+//   local_slots_ptr addresses the current loop's live, readable Vec<Value>.
+// - Postconditions: slot/index checks precede access; success returns a tagged
+//   result, errors set runtime_error. Input roots and slot values are preserved;
+//   no callback runs while borrowing the object and no reference escapes.
 pub unsafe extern "C" fn jit_loop_indexed_read(
     ctx: *mut VMContext,
     slot: i64,
@@ -2267,7 +2281,10 @@ pub unsafe extern "C" fn jit_store_variable(
 
 /// Raise a scalar operand type error on the cold side of a native type guard.
 #[no_mangle]
-// SAFETY: ctx points to the live, exclusively borrowed compiled-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context.
+// - Postconditions: a non-null context receives a scalar-type diagnostic;
+//   operation and kind tags are checked, no payload is dereferenced, and 1 returns.
 pub unsafe extern "C" fn jit_scalar_type_error(
     ctx: *mut VMContext,
     operation: i64,
@@ -2300,7 +2317,10 @@ pub unsafe extern "C" fn jit_scalar_type_error(
 
 /// Construct the canonical arithmetic error only on a failed native guard.
 #[no_mangle]
-// SAFETY: ctx points to the active exclusively borrowed compiled-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context.
+// - Postconditions: a non-null context receives the checked arithmetic error or
+//   invalid-guard diagnostic; operands remain integers, and failure status 1 returns.
 pub unsafe extern "C" fn jit_arithmetic_error(
     ctx: *mut VMContext,
     operation: i64,
@@ -2363,8 +2383,12 @@ pub unsafe extern "C" fn jit_local_initialization(
 
 /// Report a pending error or task cancellation across a native boundary.
 #[no_mangle]
-// SAFETY: ctx points to the live, exclusively borrowed native-call context;
-// its optional cancellation pointer is backed by the enclosing task's live Arc.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null
+//   task_cancellation points to an aligned AtomicBool retained by the task's Arc
+//   throughout this call (or equivalent caller-owned lifetime in tests).
+// - Postconditions: cancellation is read atomically and may install an error;
+//   an existing error is preserved. Returns whether execution has failed.
 pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     if ctx
@@ -4269,7 +4293,11 @@ pub unsafe extern "C" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> 
 
 /// Preserve scalar type information across the native calling convention.
 #[no_mangle]
-// SAFETY: ctx is the live, exclusively borrowed native-call context.
+// SAFETY:
+// - Preconditions: ctx is null or points to a live, aligned, exclusive context;
+//   callers supply the native return ABI's payload and matching kind.
+// - Postconditions: non-null ctx records the payload/kind and marks a return;
+//   no payload is dereferenced or root transferred. Null returns failure status 1.
 pub unsafe extern "C" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     ctx.return_value = value;
@@ -4279,7 +4307,11 @@ pub unsafe extern "C" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, 
 }
 
 #[no_mangle]
-// SAFETY: ctx points to the live native-call context.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and readable without concurrent
+//   mutation for this call.
+// - Postconditions: returns the recorded kind (zero for null) without mutation,
+//   decoding, ownership transfer or escaping references.
 pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
     ctx.as_ref().map_or(0, |ctx| ctx.return_value_kind)
 }
