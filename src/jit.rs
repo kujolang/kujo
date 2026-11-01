@@ -4317,8 +4317,11 @@ pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
 }
 
 #[no_mangle]
-// SAFETY: ctx is a live, exclusively borrowed native context. The payload is
-// validated as a root identity before borrowing its Value; no raw address is used.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive, with its root store
+//   accessible for this call. The payload denotes a root identity, not an address.
+// - Postconditions: a validated value is inspected without consuming its root;
+//   invalid handles set runtime_error. Returns truth as 0/1; no reference escapes.
 pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     match ctx.owned_roots.owned_truth(payload) {
@@ -4331,8 +4334,11 @@ pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i
 }
 
 #[no_mangle]
-// SAFETY: ctx is live and exclusively borrowed. Owned operands are validated
-// store identities, borrowed only for this call; scalar payloads are decoded.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; tagged operands
+//   use this context's root identities or immediate scalar encoding.
+// - Postconditions: validated operands are compared without consuming roots;
+//   invalid kinds/handles set runtime_error. No reference escapes or callback runs.
 pub unsafe extern "C" fn jit_owned_equal(
     ctx: *mut VMContext,
     left: i64,
@@ -4351,7 +4357,11 @@ pub unsafe extern "C" fn jit_owned_equal(
 }
 
 #[no_mangle]
-// SAFETY: ctx and its stack are live and exclusively borrowed for this call.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>, disjoint from the context/root store.
+// - Postconditions: a validated operand is cloned onto the stack without consuming
+//   its root; codec failures set runtime_error. Null context/stack performs no push.
 pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
         if let Some(stack) = ctx.stack_ptr.as_mut() {
@@ -4370,8 +4380,12 @@ pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, 
 /// Transfer a consumed operand into the VM stack. Borrowed/peek operations
 /// continue using jit_stack_push_scalar; this helper invalidates an owned root.
 #[no_mangle]
-// SAFETY: ctx and stack are live and exclusive. Owned payloads must belong to
-// the current activation; the root store validates this before moving a value.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null stack_ptr
+//   addresses a live exclusive Vec<Value>, disjoint from the context/root store.
+//   Callers stop using consumed operands after successful transfer.
+// - Postconditions: validated current-frame roots move onto the stack and become
+//   invalid; scalars decode by value. Missing stack/codec errors report failure.
 pub unsafe extern "C" fn jit_stack_take_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     let Some(stack) = ctx.stack_ptr.as_mut() else {

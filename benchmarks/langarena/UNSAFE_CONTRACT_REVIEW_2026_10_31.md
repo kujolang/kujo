@@ -70,3 +70,19 @@ still exits 2, now with **84 missing contracts across 145 boundaries**. This is
 partial contract review, not runtime acceptance. Budgets remain unchanged and
 no runtime rebuild was needed. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch3.log`.
+
+## Root inspection and stack transfer contracts
+
+The fourth batch covers `jit_owned_truth`, `jit_owned_equal`,
+`jit_stack_push_scalar`, and `jit_stack_take_scalar`. Review followed validated
+root lookup, immediate decoding, equality/truth inspection, current-frame
+ownership checks, and generated consuming Call versus borrowing/peek marshaling.
+Contracts distinguish a cloned operand whose root survives from a transferred
+operand whose root must no longer be used, and require the VM stack allocation
+to be disjoint from context/root storage.
+
+The stripped-source hash remains unchanged. Formatting, diff checks and strict
+inventory generation pass. The safety checker still exits 2 with **80 missing
+contracts across 145 boundaries**; no budget change or runtime acceptance follows.
+Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch4.log`.
