@@ -45,6 +45,9 @@ one redundant validation wrapper with its already-validated writer; the counter
 is test-only. No new cache, retained owner, allocation, benchmark shortcut or
 weakened check is introduced. The exact-depth repair fallback is unchanged.
 
+Integrated as `782c712d`; all 1,390 frozen source/test/build/vendor files match
+the tested candidate. Formatting and whitespace checks pass after integration.
+
 This decision accepts removal of demonstrated redundant work; it does not claim
 the observed elapsed-time losses are resolved. The VM and interpreter timing
 losses require controlled-host follow-up before a speed claim. Repeating the same

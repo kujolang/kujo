@@ -744,13 +744,15 @@ defects have separate verified fixes in section 3.
 
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
-- [ ] Review the checked-assignment validation candidate `568dc612` for acceptance.
+- [x] Accept checked-assignment validation candidate `568dc612`, integrated as `782c712d`.
   [Regression evidence](CHECKED_VALIDATION_REGRESSIONS_2026_11_01.md) reproduces
   duplicate validation and verifies the narrow fix with 1,343 passing release
   tests, eight existing ignores and all 150 unchanged test-size checksums.
   All seven Linux CI jobs pass, including 1,354 optimized test passes and 299
-  parity executions. Workload comparison and review remain pending; the accepted
-  runtime remains `55e2f683`.
+  parity executions. All 72 workload observations are independently verified and
+  [reviewed](CHECKED_VALIDATION_WORKLOADS_2026_11_01.md). Loaded-laptop VM and
+  interpreter timing losses remain explicit clean-host follow-up; acceptance
+  removes structurally proven duplicate work without claiming an overall speedup.
 
 - [x] Accept reusable chunk-scoped loops and bounded callback fallback on `348a6270`; [final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md) records correctness, structural counters and paired local timings. This supersedes the earlier loop-admission pending status below; broader work remains open.
 

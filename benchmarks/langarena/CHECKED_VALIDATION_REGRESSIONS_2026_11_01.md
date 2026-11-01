@@ -1,9 +1,11 @@
 # Checked-assignment validation candidate, 2026-11-01
 
 Candidate `568dc6127556984833617b3cd64914a2307420a2` removes a duplicate path
-validation from `update_checked`. It is pushed separately and is **not yet
-accepted or integrated**. Matching workload measurements and review are pending.
-All seven Linux CI jobs passed. The accepted runtime remains `55e2f683`.
+validation from `update_checked`. It is accepted and integrated as `782c712d`
+after the [completed workload review](CHECKED_VALIDATION_WORKLOADS_2026_11_01.md).
+All seven Linux CI jobs passed. All 1,390 frozen source/test/build/vendor files
+match the integrated tree. This is the new accepted runtime; broader performance
+and clean-host acceptance remain open.
 
 ## Reproduction and change
 
@@ -40,8 +42,9 @@ The [19-artifact evidence bundle](checked-validation-regressions-2026-11-01.json
 contains the failing baseline, passing regression logs, source/binary/commit
 bindings, checksum reports and verifier. Every embedded artifact hash was checked
 after compression. These are correctness and structural results, not a
-production-size or elapsed-speed claim. Loaded-host before/after measurements
-are still running; clean-host competitive comparisons remain pending.
+production-size or elapsed-speed claim. All 72 loaded-host before/after
+observations are now verified and reviewed in the linked report; clean-host
+competitive comparisons remain pending.
 
 ## Linux CI
 
