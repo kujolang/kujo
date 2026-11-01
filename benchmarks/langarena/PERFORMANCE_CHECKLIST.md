@@ -872,7 +872,10 @@ defects have separate verified fixes in section 3.
   [Compiler lifetime diagnostic](JIT_CODE_LIFETIME_2026_11_01.md) confirms retained
   code mappings after compiler destruction: six controlled macOS observations,
   1/8/32 distinct pages retained. This is not RSS or a VM lifecycle proof.
-  VM ownership and escaped-pointer lifetime gates remain before reclamation.
+  [VM lifecycle baseline](VM_CODE_LIFETIME_2026_11_01.md) now confirms the
+  retention across VM destruction: six JIT observations grow by one executable
+  page per instance; six VM-only controls stay flat. Ownership audit is recorded;
+  regression and candidate reclamation acceptance gates remain open.
 - [ ] Keep JIT opt-in pending reliability/portability acceptance.
 - [ ] Consider architecture changes only if profiles justify them.
 
