@@ -26,3 +26,13 @@ public legacy API and its existing unit tests with a narrow dead-code allowance,
 matching the adjacent legacy inspection APIs. This changes no runtime behavior.
 The original run remains evidence for 6551a57a only; the lint correction needs
 its own combined gate before acceptance.
+
+The corrected f1a59839 run 41277198605 passed Clippy, formatting and MSRV, but
+parity job 124761681840 reproduced a JIT-disabled compilation failure: the shared
+VM references three chunk-scoped admission methods absent from `jit_disabled.rs`.
+Matching disabled stubs now always reject native loop admission. A regression in
+the existing no-JIT parity suite runs repeated hot nested-array updates with JIT
+requested both off and on, checking snapshots and zero compiled functions.
+The fixture passes the pinned eb299e0 VM/interpreter as a syntax/semantics control;
+that control does not validate the new stubs. The repaired no-JIT build and test
+remain subject to the next immutable CI gate.
