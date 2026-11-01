@@ -40,3 +40,19 @@ rustc --edition=2021 -O -C lto=thin benchmarks/langarena/probes/vm_code_lifetime
 /tmp/vm-code-lifetime 32 vm
 /tmp/vm-code-lifetime 32 jit
 ```
+
+## Baseline regression gate
+
+The release library gate finished with two semantic controls passing and exactly
+one intended failure: `vm_drop_unmaps_its_compiled_entry` reports “VM-owned code
+mapping must be reclaimed.” Exit status is 101. The mapping test runs in an
+isolated child process so unrelated parallel tests cannot reuse a freed address.
+The JIT-toggle and surviving-value/function/snapshot controls pass on the baseline.
+The accepted runtime prefix is byte-identical; only the regression module was
+appended. The [three-artifact baseline bundle](vm-code-lifetime-baseline-tests-2026-11-01.json.gz)
+preserves the regression source, full log and source/executable identities.
+
+The VM-only reclamation candidate is now applied in an isolated worktree, with
+an additional assertion that the surviving function is recovered from restored
+snapshot globals. Targeted and full-library gates are pending; this report does
+not accept or integrate that runtime change.
