@@ -888,8 +888,8 @@ time, resource evidence and limitations for every case and runtime.
 | Matmul::T4 | [ ] | [ ] | [ ] |
 | Matmul::T8 | [ ] | [ ] | [ ] |
 | Matmul::T16 | [ ] | [ ] | [ ] |
-| Base64::Encode | [ ] | [ ] | [ ] |
-| Base64::Decode | [ ] | [ ] | [ ] |
+| Base64::Encode | [x] | [x] | [x] |
+| Base64::Decode | [x] | [x] | [x] |
 | Json::Generate | [x] | [x] | [x] |
 | Json::ParseDom | [x] | [x] | [x] |
 | Json::ParseMapping | [x] | [x] | [x] |
@@ -935,7 +935,8 @@ time, resource evidence and limitations for every case and runtime.
 - [x] Verify unchanged production QuickSort and MergeSort in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_SORT_2026_10_31.md). These two cells do not certify the other 148 production combinations or future runtime changes.
 - [x] Verify all three unchanged production JSON workloads in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_JSON_2026_10_31.md). Coverage at that milestone: five JIT production cases; 145 combinations pending.
 - [x] Verify all three production JSON workloads in VM and interpreter: [cross-runtime evidence](ACCEPTED_PRODUCTION_JSON_PARITY_2026_10_31.md). Coverage at that milestone: 11/150; 139 combinations pending.
-- [x] Verify production CSV parsing in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_CSV_PARITY_2026_10_31.md). Current production coverage: 14/150; 136 combinations remain.
+- [x] Verify production CSV parsing in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_CSV_PARITY_2026_10_31.md). Coverage at that milestone: 14/150; 136 combinations pending.
+- [x] Verify production Base64 encoding and decoding in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_BASE64_PARITY_2026_10_31.md). Current production coverage: 20/150; 130 combinations remain.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
