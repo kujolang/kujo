@@ -17,6 +17,8 @@ This file records user-visible changes to Kujo, following
   invalidate affected loop variants when profiling removes a specialization.
   Preserve JIT-disabled builds and VM fallback through matching loop-admission
   stubs, including hot-loop snapshot checks when native execution is requested.
+  Bound repeated native fallback attempts with per-loop retry backoff; successful
+  native completion restores immediate reuse without permanently blocking a loop.
 
 - Bound eligible repeated array-write reservations by up to eight distinct
   proven constant destinations, preserving value semantics, negative aliases,

@@ -5478,7 +5478,7 @@ pub struct JitCompiler {
 
     /// Execution counter for hot path detection
     execution_counts: HashMap<usize, usize>,
-    loop_execution_counts: HashMap<(u64, usize, usize), usize>,
+    loop_execution_counts: HashMap<(u64, usize, usize), LoopAdmission>,
     blocked_loop_sites: HashSet<(u64, usize, usize)>,
     compiled_loop_cache: HashMap<LoopCacheKey, CompiledFn>,
 
@@ -10118,6 +10118,13 @@ struct LoopCacheKey {
     dense_slots: Vec<usize>,
 }
 
+#[derive(Default)]
+struct LoopAdmission {
+    executions: usize,
+    retry_delay: u16,
+    remaining: u16,
+}
+
 impl JitCompiler {
     fn retain_literal_values(&mut self, chunk: &BytecodeChunk) -> HashMap<usize, Arc<Value>> {
         chunk
@@ -10510,9 +10517,26 @@ impl JitCompiler {
         if !self.enabled {
             return false;
         }
-        let count = self.loop_execution_counts.entry((code, start, end)).or_insert(0);
-        *count = count.saturating_add(1);
-        *count >= JIT_THRESHOLD
+        let state = self.loop_execution_counts.entry((code, start, end)).or_default();
+        state.executions = state.executions.saturating_add(1);
+        if state.remaining > 0 {
+            state.remaining -= 1;
+            return false;
+        }
+        state.executions >= JIT_THRESHOLD
+    }
+
+    pub(crate) fn record_loop_exit(&mut self, code: u64, start: usize, end: usize, fallback: bool) {
+        let state = self.loop_execution_counts.entry((code, start, end)).or_default();
+        if fallback {
+            // Retry dynamic guards, but do not pay native setup every VM iteration.
+            // Bounded delay allows a changed callable/representation to recover.
+            state.retry_delay = (state.retry_delay.saturating_mul(2)).clamp(1, 256);
+            state.remaining = state.retry_delay;
+        } else {
+            state.retry_delay = 0;
+            state.remaining = 0;
+        }
     }
 
     /// Check if JIT should compile this function based on execution count
@@ -15983,6 +16007,32 @@ mod tests {
         assert!(compiler.is_chunk_loop_blocked(first, 0, 10));
         assert!(!compiler.is_chunk_loop_blocked(second, 0, 10));
         assert!(!compiler.is_chunk_loop_blocked(first, 0, 11));
+    }
+
+    #[test]
+    fn loop_fallback_retries_are_bounded_scoped_and_recoverable() {
+        let mut compiler = JitCompiler::new().unwrap();
+        for code in [1, 2] {
+            for end in [10, 20] {
+                for _ in 0..JIT_THRESHOLD {
+                    compiler.should_execute_chunk_loop(code, 0, end);
+                }
+            }
+        }
+        for delay in [1, 2, 4, 8, 16, 32, 64, 128, 256, 256] {
+            compiler.record_loop_exit(1, 0, 10, true);
+            assert!(compiler.should_execute_chunk_loop(2, 0, 10));
+            assert!(compiler.should_execute_chunk_loop(1, 0, 20));
+            for _ in 0..delay {
+                assert!(!compiler.should_execute_chunk_loop(1, 0, 10));
+            }
+            assert!(compiler.should_execute_chunk_loop(1, 0, 10));
+        }
+        compiler.record_loop_exit(1, 0, 10, false);
+        assert!(compiler.should_execute_chunk_loop(1, 0, 10));
+        compiler.record_loop_exit(1, 0, 10, true);
+        assert!(!compiler.should_execute_chunk_loop(1, 0, 10));
+        assert!(compiler.should_execute_chunk_loop(1, 0, 10));
     }
 
     #[test]

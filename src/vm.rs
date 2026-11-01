@@ -3241,6 +3241,12 @@ impl VM {
                                         }
 
                                         if let Some(resume_ip) = vm_context.loop_resume_ip {
+                                            self.jit_compiler.as_mut().unwrap().record_loop_exit(
+                                                self.chunk.code_identity(),
+                                                jump_target,
+                                                self.ip,
+                                                resume_ip <= self.ip,
+                                            );
                                             if resume_ip > self.ip
                                                 && std::env::var("DEBUG_JIT").is_ok()
                                             {
@@ -3263,6 +3269,12 @@ impl VM {
 
                                         // The JIT function executed the loop completely
                                         // Skip past the entire compiled loop range (including exit block)
+                                        self.jit_compiler.as_mut().unwrap().record_loop_exit(
+                                            self.chunk.code_identity(),
+                                            jump_target,
+                                            self.ip,
+                                            false,
+                                        );
                                         self.ip = loop_exit_ip;
                                         continue;
                                     }

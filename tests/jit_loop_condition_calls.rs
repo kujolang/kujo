@@ -44,6 +44,56 @@ fn check(source: &str) -> (usize, usize) {
     check_result(source, "PASS", false)
 }
 
+#[test]
+fn repeated_callback_fallback_has_bounded_native_reentry() {
+    let (entries, completed) = check_result(
+        r#"
+        mut calls := 0
+        func bound(text) { calls += 1 return len(text) }
+        func scan(text) {
+            mut i := 0
+            while i < bound(text) { i += 1 }
+            return i
+        }
+        let text := repeat("x", 300)
+        assert_equal(scan(text), 300)
+        assert_equal(scan(text), 300)
+        assert_equal(scan(text), 300)
+        assert_equal(calls, 903)
+        print("PASS")
+        "#,
+        "PASS",
+        false,
+    );
+    assert!(entries <= 12, "repeated fallback entered native code {entries} times");
+    assert_eq!(completed, 0);
+}
+
+#[test]
+fn callback_fallback_recovers_after_rebinding_to_builtin() {
+    let (entries, completed) = check(
+        r#"
+        mut calls := 0
+        func bound(text) { calls += 1 return len(text) }
+        mut limit := bound
+        func scan(text) {
+            mut i := 0
+            while i < limit(text) { i += 1 }
+            return i
+        }
+        let text := repeat("x", 600)
+        assert_equal(scan(text), 600)
+        limit = len
+        assert_equal(scan(text), 600)
+        assert_equal(scan(text), 600)
+        assert_equal(calls, 601)
+        print("PASS")
+        "#,
+    );
+    assert!(entries <= 14, "repeated fallback entered native code {entries} times");
+    assert_eq!(completed, 2, "native execution must recover in later calls");
+}
+
 fn check_result(source: &str, expected_stdout: &str, non_callable_error: bool) -> (usize, usize) {
     let directory = tempfile::tempdir().unwrap();
     let source_path = directory.path().join("condition.kujo");

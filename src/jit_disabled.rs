@@ -182,6 +182,15 @@ impl JitCompiler {
 
     pub(crate) fn block_chunk_loop(&mut self, _code: u64, _start: usize, _end: usize) {}
 
+    pub(crate) fn record_loop_exit(
+        &mut self,
+        _code: u64,
+        _start: usize,
+        _end: usize,
+        _fallback: bool,
+    ) {
+    }
+
     pub(crate) fn should_execute_chunk_loop(
         &mut self,
         _code: u64,
