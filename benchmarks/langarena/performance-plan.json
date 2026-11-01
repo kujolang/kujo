@@ -5714,9 +5714,10 @@
     "next": "Isolate pre-invocation debug environment lookup cost; preserve post-callback flag visibility."
   },
   "debug_call_environment_2026_11_01": {
-    "status": "component_verified_runtime_candidate_pending",
+    "status": "not_accepted_preserve_environment_observation_points",
     "report": "DEBUG_CALL_ENVIRONMENT_2026_11_01.md",
     "observations": 70,
-    "transition_controls": 50
+    "transition_controls": 50,
+    "reason": "Entry reuse changes concurrent-writer pre-call diagnostic interleavings; isolated speed does not establish semantic equivalence."
   }
 }
