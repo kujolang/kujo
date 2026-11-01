@@ -177,3 +177,24 @@ Formatting, diff checks and strict inventory generation pass. The JIT checker
 still exits 2 with **27 missing contracts across 145 boundaries**. Budgets remain
 unchanged. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch9.log`.
+
+## Dense views, append payloads and read-cache tests
+
+The tenth batch reviews seven boundaries: `jit_loop_dense_view`,
+`jit_append_local`, the shared-dense-view rejection test, two cached-read tests
+and two append tests. Review traced unique-storage admission, explicit boxed
+data/length layout, generated bounds checks, helper-write refresh and loop
+admission exclusions for direct local loads/replacements. The view contract
+explicitly requires callers to discard or refresh it when storage/ownership
+changes; a stable box alone does not make its data pointer permanently valid.
+
+Append contracts distinguish retained byte ranges from checked character mode
+and preserve callback resumption/refresh requirements. Tests keep initialized
+cache storage disjoint from context roots, reject stale identities, and compare
+backing pointers only after helper borrows have ended.
+
+Executable source remains identical under the same stripped-source check.
+Formatting, diff checks and strict inventory generation pass. The JIT checker
+still exits 2 with **20 missing contracts across 145 boundaries**. Budgets and
+runtime acceptance remain unchanged. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch10.log`.

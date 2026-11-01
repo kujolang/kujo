@@ -1466,9 +1466,12 @@ fn indexed_read(
 
 /// Expose unique dense integer storage through an explicit native ABI.
 #[no_mangle]
-// SAFETY: ctx and its physical slots are exclusively borrowed by this loop.
-// Box addresses remain stable; the caller refreshes the view after every helper
-// write. Only a unique dense integer vector admits raw in-bounds native access.
+// SAFETY:
+// - Preconditions: ctx and non-null physical slots are live, aligned and exclusive.
+//   Generated users bounds-check accesses and refresh/discard cached views after
+//   any operation changing storage/ownership; views never outlive this loop context.
+// - Postconditions: only a unique dense integer vector exposes a boxed stable view;
+//   invalid/shared slots return zero. Data remains valid only under those obligations.
 pub unsafe extern "C" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     let Ok(slot) = usize::try_from(slot) else { return 0 };
@@ -2582,9 +2585,13 @@ pub unsafe extern "C" fn jit_store_variable_from_stack(ctx: *mut VMContext, name
 /// local, or physical loop slot. Returns zero on success, one on error, or two
 /// when a locked loop must resume in the VM before invoking a struct operator.
 #[no_mangle]
-// SAFETY: ctx and referenced maps/slots are live and exclusively borrowed. A
-// string pointer refers to an Arc retained by JitCompiler; a negative length
-// denotes a validated Unicode scalar instead. No pointer or borrow escapes.
+// SAFETY:
+// - Preconditions: ctx and backing maps/slots/VM satisfy jit_append_target; for
+//   nonnegative length, suffix spans that many immutable initialized bytes in one
+//   retained allocation, length <= isize::MAX. Callbacks require exclusive VM access
+//   without held environment locks or VM/root borrows; length -1 is a character.
+// - Postconditions: validates UTF-8/scalars, appends or resumes locked loops before
+//   callbacks, refreshes callback views and publishes results/errors; no pointer escapes.
 pub unsafe extern "C" fn jit_append_local(
     ctx: *mut VMContext,
     location: i64,
@@ -13931,7 +13938,10 @@ mod tests {
             assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
         }
         let snapshot = slots[0].clone();
-        // SAFETY: live slot/context; shared vectors must never expose mutable data.
+        // SAFETY:
+        // - Preconditions: context and slot storage remain live; snapshot keeps the
+        //   vector shared, and no cached data pointer is dereferenced by this call.
+        // - Postconditions: helper rejects shared storage instead of exposing a view.
         assert_eq!(unsafe { jit_loop_dense_view(&mut context, 0) }, 0);
         assert!(
             matches!(snapshot, Value::DenseIntDictIntFull(values) if values.as_slice() == [1,99])
@@ -14127,8 +14137,12 @@ mod tests {
                 let expected = VM::get_indexed_value(&object, &index);
                 let (i, ik) = context.owned_roots.encode(index).unwrap();
                 context.runtime_error = None;
-                // SAFETY: context/cache are live and disjoint; operands are rooted.
                 let result =
+                    // SAFETY:
+                    // - Preconditions: context and initialized stack-local cache are
+                    //   live, aligned and disjoint; operand identities remain rooted.
+                    // - Postconditions: cached reads validate identities and return
+                    //   checked values/errors without consuming the operand roots.
                     unsafe { jit_indexed_read_cached(&mut context, root, kind, i, ik, pointer) };
                 match expected {
                     Ok(value) => {
@@ -14152,7 +14166,10 @@ mod tests {
             }
             context.owned_roots.release(root, kind).unwrap();
             context.runtime_error = None;
-            // SAFETY: cache remains live; stale root must fail before value access.
+            // SAFETY:
+            // - Preconditions: context/cache remain live and disjoint; the retired
+            //   root identity deliberately exercises cached lookup validation.
+            // - Postconditions: stale lookup fails before accessing the retired Value.
             unsafe {
                 jit_indexed_read_cached(&mut context, root, kind, 0, 0, pointer);
             }
@@ -14347,8 +14364,12 @@ mod tests {
             _ => unreachable!(),
         };
         for _ in 0..1000 {
-            // SAFETY: live exclusive context; negative length denotes a character.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: context/current root are live and exclusive; length
+                //   -1 selects checked character mode, so suffix is not a pointer.
+                // - Postconditions: appends the character; pointer comparison occurs
+                //   afterward without retaining a borrow across the helper.
                 unsafe { jit_append_local(&mut context, 1, payload, kind, 'a' as i64, -1) },
                 0
             );
@@ -14357,7 +14378,10 @@ mod tests {
             );
         }
         let snapshot = context.owned_roots.duplicate(payload, kind).unwrap();
-        // SAFETY: same validated context and current-scope root.
+        // SAFETY:
+        // - Preconditions: context and current root remain live; snapshot is a
+        //   separate root and the suffix uses checked character mode.
+        // - Postconditions: append detaches shared storage and preserves the snapshot.
         assert_eq!(unsafe { jit_append_local(&mut context, 1, payload, kind, 'b' as i64, -1) }, 0);
         assert!(
             matches!(context.owned_roots.clone_value(snapshot, kind).unwrap(), Value::Str(text) if text.len() == 1001 && text.ends_with('a'))
