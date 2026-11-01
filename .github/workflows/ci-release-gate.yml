@@ -44,7 +44,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        # Collect independent target failures in one run; all remain fatal.
+        run: cargo clippy --keep-going --all-targets --all-features -- -D warnings
 
   msrv:
     runs-on: ubuntu-latest

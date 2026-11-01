@@ -32,3 +32,8 @@ standalone public JIT compilation entrypoints. The binary compiles its own priva
 the standalone methods, including integration-test consumers. Preserve that API
 with method-local dead-code annotations explaining the target distinction.
 No method body, caller, or global lint setting changes.
+
+Clippy now uses Cargo's `--keep-going` to collect independent target failures
+in the same run. `--all-targets`, `--all-features`, and `-D warnings` remain
+required, and any failure still fails the job. This avoids serial CI cycles
+that each reveal one additional target's diagnostics.
