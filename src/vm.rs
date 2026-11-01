@@ -8620,9 +8620,17 @@ impl VM {
 
     /// Borrow only the pool field: native helpers can hold a disjoint stack
     /// reference while transferring its argument suffix. No callback runs here.
+    /// SAFETY: Access is restricted to the argument pool field.
+    /// Preconditions: vm is non-null, aligned and live; its pool is exclusively
+    /// accessible, contains only empty buffers, and has no outstanding borrow.
+    /// Postconditions: returns an independently owned empty buffer with capacity
+    /// for count values; no reference into the VM or pool escapes.
     #[cfg(feature = "runtime-jit")]
     pub(crate) unsafe fn take_native_arguments(vm: *mut Self, count: usize) -> Vec<Value> {
-        // SAFETY: caller supplies a live VM, with exclusive access to this pool.
+        // SAFETY: the caller satisfies this function's field-access contract.
+        // Preconditions: the live VM's pool is exclusively accessible; other
+        // borrowed VM fields are disjoint from native_argument_pool.
+        // Postconditions: this borrow ends before the owned buffer is returned.
         let pool = unsafe { &mut *std::ptr::addr_of_mut!((*vm).native_argument_pool) };
         let mut arguments = pool.pop().unwrap_or_default();
         debug_assert!(arguments.is_empty());

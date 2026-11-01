@@ -222,3 +222,17 @@ the SHA-256 above; these comments required no runtime rebuild. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch11.log`.
 The executable unsafe inventory remains 269 versus budget 99, and JIT 147 versus
 ceiling 47. Neither budget has changed; remaining review must precede its update.
+
+## VM argument pool boundary
+
+Reviewed the argument-pool extraction declaration and its field-only raw-pointer
+access. The caller must supply a live aligned VM and exclusive access to the
+pool, whose recycled buffers are empty. Extraction returns owned storage; it
+does not retain a VM reference or invoke callbacks. Other VM fields can remain
+borrowed only when disjoint from the pool. The implementation uses addr_of_mut
+to avoid creating an intermediate reference to the whole VM.
+
+Only comments changed; stripped executable VM source retains SHA-256
+`db745fa3703f1d1807dad634c00c6e9bc9fea850e3d0f90c924b61cd99295b57`. Formatting, diff checks and strict inventory generation pass.
+Remaining VM test call sites and integration-test instrumentation still require
+review; inventory limits remain unchanged.
