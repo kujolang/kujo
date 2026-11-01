@@ -830,7 +830,7 @@ defects have separate verified fixes in section 3.
   1,309 library and 15 targeted integration tests pass (eight existing manual
   library ignores). These are local helper results, not end-to-end speed scores.
 - [ ] Identify hot unsupported operations and expensive transitions.
-  [Current-source profiles](ACCEPTED_LOOP_PROFILES_2026_11_01.md) now verify six samples on accepted `348a6270`. Dispatch, indexed ownership and depth-cache maintenance remain reachable. Next: isolate depth-cache cost with invalidation/snapshot controls; precise native CPU coverage remains open.
+  [Current-source profiles](ACCEPTED_LOOP_PROFILES_2026_11_01.md) now verify six samples on accepted `348a6270`. Dispatch, indexed ownership and depth-cache maintenance remain reachable. Depth-cache isolation and its narrow hashing fix are complete below; precise native CPU coverage remains open.
   [Refreshed attribution](CURRENT_KERNEL_ATTRIBUTION_2026_10_31.md) verifies six
   symbolized profiles directly linked to accepted `26105f4`. Dispatch/opcode
   cloning, indexed ownership and debug environment lookups remain visible. A
@@ -847,9 +847,9 @@ defects have separate verified fixes in section 3.
 
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
-  Candidate `9fb0ed70` passes [1,467 local regressions](DEPTH_CACHE_CANDIDATE_REGRESSIONS_2026_11_01.md), including new all-runtime snapshot coverage. All 150 test-size checksums also pass independent verification. All seven Linux CI jobs pass. Workload acceptance remains pending; accepted runtime is unchanged.
-  [Paired depth-cache hash experiment](DEPTH_CACHE_HASH_COMPARISON_2026_11_01.md) passes 336 observations, cold construction and layout checks. It qualifies for an isolated runtime candidate; runtime/workload acceptance remains open.
-  [Depth-cache component baseline](DEPTH_CACHE_CONTROLS_2026_11_01.md) verifies 72 observations and snapshot/invalidation controls on extracted accepted-source methods. Alternative mechanisms and whole-runtime acceptance remain open.
+  Accepted `55e2f683` (tested candidate `9fb0ed70`) passes [1,467 local regressions](DEPTH_CACHE_CANDIDATE_REGRESSIONS_2026_11_01.md), including new all-runtime snapshot coverage. All 150 test-size checksums also pass independent verification. All seven Linux CI jobs pass. All 72 paired workload observations pass the [acceptance review](DEPTH_CACHE_WORKLOAD_COMPARISON_2026_11_01.md). Integrated source matches all 890 tested manifest files. Loaded-host speed observations are diagnostic only.
+  [Paired depth-cache hash experiment](DEPTH_CACHE_HASH_COMPARISON_2026_11_01.md) passes 336 observations, cold construction and layout checks. The isolated candidate is now accepted after semantic and workload gates.
+  [Depth-cache component baseline](DEPTH_CACHE_CONTROLS_2026_11_01.md) verifies 72 observations and snapshot/invalidation controls on extracted accepted-source methods. The paired hash alternative and narrow runtime acceptance are recorded above.
 - [ ] Preserve integer/Boolean/float/error semantics.
 - [ ] Verify branches, recursion, imports, captures and unwinding.
 - [ ] Tune JIT admission against small-workload compilation costs.

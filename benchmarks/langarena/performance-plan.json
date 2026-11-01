@@ -5689,18 +5689,22 @@
     "next": "Isolated runtime change plus all-runtime semantic and whole-workload gates."
   },
   "depth_cache_runtime_candidate_2026_11_01": {
-    "status": "regressions_all150_and_ci_passed_not_accepted",
+    "status": "accepted_integrated",
     "candidate_commit": "9fb0ed705c59a8da6c6eab36e9f50c3a0722f728",
     "report": "DEPTH_CACHE_CANDIDATE_REGRESSIONS_2026_11_01.md",
     "passed": 1467,
     "ignored": 8,
     "ci_run": 41287402564,
     "remaining": [
-      "paired workloads",
-      "integration decision"
+
     ],
     "checksum_cases": 150,
     "memory_retention_review": "unchanged ownership and publication policy; empty-object layout measured; whole-process RSS unmeasured",
-    "ci_jobs_passed": 7
+    "ci_jobs_passed": 7,
+    "integrated_commit": "55e2f6836dac3016c3446a7477022c09a4ab47d7",
+    "workload_observations": 72,
+    "workload_report": "DEPTH_CACHE_WORKLOAD_COMPARISON_2026_11_01.md",
+    "integrated_source_manifest_files": 890,
+    "limits": "Loaded-host observations only. Broader section 5, production-size matrix and clean-host comparisons remain open."
   }
 }
