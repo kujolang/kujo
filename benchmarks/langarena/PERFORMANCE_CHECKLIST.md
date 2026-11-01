@@ -830,6 +830,7 @@ defects have separate verified fixes in section 3.
   1,309 library and 15 targeted integration tests pass (eight existing manual
   library ignores). These are local helper results, not end-to-end speed scores.
 - [ ] Identify hot unsupported operations and expensive transitions.
+  [Current-source profiles](ACCEPTED_LOOP_PROFILES_2026_11_01.md) now verify six samples on accepted `348a6270`. Dispatch, indexed ownership and depth-cache maintenance remain reachable. Next: isolate depth-cache cost with invalidation/snapshot controls; precise native CPU coverage remains open.
   [Refreshed attribution](CURRENT_KERNEL_ATTRIBUTION_2026_10_31.md) verifies six
   symbolized profiles directly linked to accepted `26105f4`. Dispatch/opcode
   cloning, indexed ownership and debug environment lookups remain visible. A
