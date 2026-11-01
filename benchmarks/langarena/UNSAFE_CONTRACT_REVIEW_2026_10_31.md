@@ -138,3 +138,19 @@ diff checks and strict inventory generation pass. The safety checker still exits
 2 with **46 missing contracts across 145 boundaries**; budgets remain unchanged.
 No runtime rebuild or acceptance claim follows. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch7.log`.
+
+## Indexed mutation, callback and binding contracts
+
+The eighth batch reviews twelve boundaries: `jit_indexed_write`,
+`jit_owned_operator`, `jit_local_initialization`, three indexed-write tests,
+parameter-transfer/load mutation, and four named-load/shadowing test sites.
+Review traced operand cloning before destination borrowing, mutability checks,
+VM indexed-write behavior, callback view refresh, physical initialization flags,
+and named-parameter ownership transfer. Test map edits occur between helper
+calls; retained pointers are compared rather than dereferenced after mutation.
+
+Comments alone changed; the stripped-source hash remains identical. Formatting,
+diff checks and strict inventory generation pass. The safety checker still exits
+2 with **34 missing contracts across 145 boundaries**. Budgets and runtime
+acceptance remain unchanged. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch8.log`.

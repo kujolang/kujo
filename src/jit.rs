@@ -1531,8 +1531,12 @@ pub unsafe extern "C" fn jit_loop_indexed_read(
 
 /// Mutate the callee binding through the VM's indexed-write contract.
 #[no_mangle]
-// SAFETY: ctx maps and roots are live and exclusively borrowed. Decode operand
-// handles before borrowing the destination; mutation never invokes user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null name,
+//   local-map and slot pointers remain live. Names are immutable and destination
+//   storage exclusive; tagged operands use this activation's root codec.
+// - Postconditions: binding/operand checks precede destination lookup; cloned inputs
+//   retain roots. VM indexed-write semantics apply and errors record; no callback runs.
 pub unsafe extern "C" fn jit_indexed_write(
     ctx: *mut VMContext,
     location: i64,
@@ -2129,8 +2133,12 @@ pub unsafe extern "C" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -
 
 /// Execute owned operators through the reference VM, including method dispatch.
 #[no_mangle]
-// SAFETY: ctx and its VM are live for this call. Clone operands before entering
-// VM callbacks so no root-store borrow or global lock spans user code.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null vm_ptr
+//   addresses its live exclusive VM. No environment lock or VM/root borrow may
+//   span user callbacks, and VM-owned views must support refresh after reentry.
+// - Postconditions: operands are cloned before dispatch; views refresh on success
+//   or failure. Success roots the result; errors record without consuming input roots.
 pub unsafe extern "C" fn jit_owned_operator(
     ctx: *mut VMContext,
     operation: i64,
@@ -2361,8 +2369,12 @@ pub unsafe extern "C" fn jit_arithmetic_error(
 
 /// Read/update physical loop-local initialization, or construct a readonly error.
 #[no_mangle]
-// SAFETY: ctx belongs to the active native call. Physical state access performs
-// no callbacks and does not acquire the environment lock held by native loops.
+// SAFETY:
+// - Preconditions: ctx is null or live, aligned and exclusive; non-null names are
+//   live immutable metadata. Physical flag access requires a live exclusive VM
+//   with no overlapping borrow; slot identifies the current VM call frame.
+// - Postconditions: bounds-checked flags are read/marked or a readonly diagnostic
+//   is recorded. No callback or environment-lock acquisition occurs.
 pub unsafe extern "C" fn jit_local_initialization(
     ctx: *mut VMContext,
     slot: i64,
@@ -13921,8 +13933,12 @@ mod tests {
             _ => unreachable!(),
         };
         for i in 0..1000 {
-            // SAFETY: live exclusive context and a current-scope array root.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: context/name map remain live and exclusive during
+                //   each call; root belongs to the active scope and index is in bounds.
+                // - Postconditions: mutates through checked VM semantics; pointer is
+                //   compared only after the call, without retaining a borrowed Value.
                 unsafe {
                     jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
                 },
@@ -13933,16 +13949,22 @@ mod tests {
             );
         }
         let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
-        // SAFETY: same context; the snapshot must force normal copy-on-write.
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: context/name map and root remain live; the duplicate
+            //   snapshot is a separate root, with no active borrow across the write.
+            // - Postconditions: VM copy-on-write preserves the snapshot's old value.
             unsafe { jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, 7, 0) },
             0
         );
         assert!(
             matches!(context.owned_roots.clone_value(snapshot, kind).unwrap(), Value::Array(values) if matches!(values[0], Value::Int(999)))
         );
-        // SAFETY: immutable metadata must reject mutation before touching the root.
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: context/name map and current root are live; binding
+            //   kind 1 deliberately exercises the immutable-binding check.
+            // - Postconditions: rejection records an error before destination mutation.
             unsafe { jit_indexed_write(&mut context, 1, root, kind, 1, hash as i64, 0, 0, 9, 0) },
             1
         );
@@ -14454,7 +14476,11 @@ mod tests {
         let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
         context.var_names_ptr = &mut names;
         context.owned_roots.enter().unwrap();
-        // SAFETY: live exclusive context, name map and parameter binding.
+        // SAFETY:
+        // - Preconditions: context, immutable names and parameter map remain live;
+        //   an active root scope receives the binding, with no outstanding map borrow.
+        // - Postconditions: the named parameter moves into a root, preserving backing
+        //   storage; pointer is compared later and never dereferenced directly.
         let root = unsafe { jit_take_parameter(&mut context, hash as i64, 0) };
         let kind = context.return_value_kind;
         assert!(context.runtime_error.is_none());
@@ -14464,8 +14490,12 @@ mod tests {
             _ => panic!("parameter lost its array type"),
         }
         for i in 0..128 {
-            // SAFETY: current-scope root and mutable parameter metadata.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: transferred root is live/current, names remain
+                //   valid and binding metadata allows the checked in-bounds write.
+                // - Postconditions: VM mutation preserves unique backing storage;
+                //   no reference into the root store survives the call.
                 unsafe {
                     jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
                 },
@@ -15744,15 +15774,24 @@ mod tests {
         let mut globals = std::collections::HashMap::new();
         let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
         context.var_names_ptr = &mut names;
-        // SAFETY: every context pointer references live, exclusively owned test
-        // storage, and the helper neither retains pointers nor invokes code.
+        // SAFETY:
+        // - Preconditions: context, names and separate local/global/stack containers
+        //   remain live, with exclusive helper access and immutable name metadata.
+        // - Postconditions: builtin resolution pushes its callable without retaining
+        //   pointers or invoking it; subsequent assertions borrow after the call.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, -1);
         assert!(matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "bit_and"));
         globals.insert("bit_and".into(), Value::Int(7));
-        // SAFETY: same live context/storage as above.
+        // SAFETY:
+        // - Preconditions: all test containers remain live; global insertion ended
+        //   before this exclusive helper access and names remain unchanged.
+        // - Postconditions: global shadowing returns an immediate without a stack push.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 7);
         locals.insert("bit_and".into(), Value::Int(9));
-        // SAFETY: same live context/storage as above.
+        // SAFETY:
+        // - Preconditions: all test containers remain live; local insertion ended
+        //   before this exclusive helper access and names remain unchanged.
+        // - Postconditions: local shadowing returns an immediate without a stack push.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9);
         assert!(stack.is_empty());
     }
@@ -15767,7 +15806,11 @@ mod tests {
         let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
         context.var_names_ptr = &mut names;
         context.owned_roots.enter().unwrap();
-        // SAFETY: context maps and stack remain live and exclusively borrowed.
+        // SAFETY:
+        // - Preconditions: context, names and separate maps/stack remain live;
+        //   maps change only between helper calls and a root scope is active.
+        // - Postconditions: tagged loads transfer results through roots rather than
+        //   the physical stack; invalid name lookup is checked before map access.
         unsafe {
             let payload = jit_load_operand(&mut context, hash as i64, 0);
             let value = context.owned_roots.take_value(payload, context.return_value_kind).unwrap();
