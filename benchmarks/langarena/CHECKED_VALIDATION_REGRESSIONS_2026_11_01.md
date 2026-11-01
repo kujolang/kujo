@@ -2,8 +2,8 @@
 
 Candidate `568dc6127556984833617b3cd64914a2307420a2` removes a duplicate path
 validation from `update_checked`. It is pushed separately and is **not yet
-accepted or integrated**. Matching workload measurements and the remaining Linux
-CI gates are pending. The accepted runtime remains `55e2f683`.
+accepted or integrated**. Matching workload measurements and review are pending.
+All seven Linux CI jobs passed. The accepted runtime remains `55e2f683`.
 
 ## Reproduction and change
 
@@ -42,3 +42,19 @@ bindings, checksum reports and verifier. Every embedded artifact hash was checke
 after compression. These are correctness and structural results, not a
 production-size or elapsed-speed claim. Loaded-host before/after measurements
 are still running; clean-host competitive comparisons remain pending.
+
+## Linux CI
+
+Run `41294338964` completed successfully on the exact candidate commit. All seven
+jobs passed: formatting, Clippy, minimum Rust version, parity, minimal release
+smoke, optimized library/callback regressions and the full release gate.
+The optimized artifact records 1,354 passes and eight existing ignores across
+nine suites, including the new traversal regression. Parity logs verify 299
+executions across eight suites with default and no-JIT configurations. The full
+release log confirms both new regressions ran successfully.
+
+The [nine-artifact CI bundle](checked-validation-ci-2026-11-01.json.gz) preserves
+run/job identities, optimized test source and log, full release and parity logs,
+and verification receipts. Suite totals, observed test names, candidate SHA and
+artifact hashes were checked. This completes CI for this candidate, without
+closing workload review or the broader performance checklist.
