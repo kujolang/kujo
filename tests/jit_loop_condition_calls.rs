@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio};
 
-#[cfg(feature = "jit")]
+#[cfg(feature = "runtime-jit")]
 #[test]
 fn loop_call_lowering_registers_runtime_helper() {
     use kujo::bytecode::{BytecodeChunk, Constant, OpCode};
