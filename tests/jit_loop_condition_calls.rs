@@ -3,25 +3,28 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "runtime-jit")]
 #[test]
 fn loop_call_lowering_registers_runtime_helper() {
-    use kujo::bytecode::{BytecodeChunk, Constant, OpCode};
+    use kujo::bytecode::OpCode;
     use kujo::jit::JitCompiler;
+    use kujo::{compiler::Compiler, lexer, parser::Parser};
 
     // Compile without executing: the loop's guarded Call continuation must have
     // its runtime helper even when an observed callable would resume in the VM.
-    let mut chunk = BytecodeChunk::new();
-    chunk.constants = vec![Constant::String("text".into())];
-    for instruction in [
-        OpCode::LoadConst(0),
-        OpCode::LoadVar("len".into()),
-        OpCode::Call(1),
-        OpCode::Pop,
-        OpCode::JumpBack(0),
-    ] {
-        chunk.emit(instruction);
-    }
+    let mut parser =
+        Parser::new(lexer::tokenize("mut i := 0 while i < 200 { i += len(\"x\") }").unwrap());
+    let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+    let (end, start) = chunk
+        .instructions
+        .iter()
+        .enumerate()
+        .find_map(|(pc, instruction)| match instruction {
+            OpCode::JumpBack(start) => Some((pc, *start)),
+            _ => None,
+        })
+        .expect("fixture must contain a compiler-generated loop");
+    assert!(chunk.instructions[start..end].iter().any(|op| matches!(op, OpCode::Call(1))));
     JitCompiler::new()
         .unwrap()
-        .compile_loop_with_int_dicts(&chunk, 0, 4, Default::default())
+        .compile_loop_with_int_dicts(&chunk, start, end, Default::default())
         .expect("loop Call must lower with the standard runtime helper");
 }
 
