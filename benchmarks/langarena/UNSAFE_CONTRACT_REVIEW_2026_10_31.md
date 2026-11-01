@@ -251,3 +251,20 @@ unchanged. Formatting, strict inventory, JIT contract and diff checks pass.
 Integration allocator review found ordinary counter addition can panic on
 overflow in checked builds; non-panicking accounting is required before accepting
 the budget update. No inventory limit has changed.
+
+## Non-panicking allocation accounting
+
+The five counting allocators now saturate allocation and byte counters instead
+of using ordinary addition. Diagnostic accounting must not unwind from a
+GlobalAlloc callback. Each file has a regression that initializes counters near
+usize::MAX, records an allocation, disables tracking, resets counters and checks
+saturation. Production runtime source is unchanged.
+
+Validation compiled the exact accounting definitions and new regression from
+each test file into standalone rustc test harnesses, avoiding contention with
+the active release build. All five pass. Restoring the old additions in the
+bytecode harness reproduces `attempt to add with overflow` (exit 101). Formatting
+and diff checks pass. These isolated checks do not replace execution of the full
+integration targets in the compatibility gate, which remains pending. Inventory
+limits are unchanged. Saturation remains above the allocation-budget thresholds;
+it cannot turn an over-budget observation into a passing small count.

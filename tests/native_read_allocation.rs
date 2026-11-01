@@ -19,10 +19,26 @@ struct CountingAllocator;
 fn record(bytes: usize) {
     let _ = TRACK.try_with(|enabled| {
         if enabled.get() {
-            ALLOCATIONS.with(|count| count.set(count.get() + 1));
-            REQUESTED_BYTES.with(|count| count.set(count.get() + bytes));
+            ALLOCATIONS.with(|count| count.set(count.get().saturating_add(1)));
+            REQUESTED_BYTES.with(|count| count.set(count.get().saturating_add(bytes)));
         }
     });
+}
+
+// Allocator callbacks must not unwind, even when diagnostic counters fill.
+#[test]
+fn allocation_accounting_saturates_without_unwinding() {
+    ALLOCATIONS.with(|value| value.set(usize::MAX));
+    REQUESTED_BYTES.with(|value| value.set(usize::MAX - 1));
+    TRACK.with(|value| value.set(true));
+    record(2);
+    TRACK.with(|value| value.set(false));
+    let allocations = ALLOCATIONS.with(Cell::get);
+    let bytes = REQUESTED_BYTES.with(Cell::get);
+    ALLOCATIONS.with(|value| value.set(0));
+    REQUESTED_BYTES.with(|value| value.set(0));
+    assert_eq!(allocations, usize::MAX);
+    assert_eq!(bytes, usize::MAX);
 }
 
 // SAFETY: all allocation operations delegate unchanged to System. Accounting
