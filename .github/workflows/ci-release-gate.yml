@@ -29,7 +29,7 @@ jobs:
         run: cargo fmt --check
       - name: Test library and loop contracts
         run: |
-          cargo test --release --locked --message-format=json --lib \
+          cargo test --release --locked --no-fail-fast --message-format=json --lib \
             --test jit_loop_condition_calls \
             --test jit_loop_collection_contracts \
             --test jit_loop_field_methods \

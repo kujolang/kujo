@@ -1,5 +1,30 @@
 use std::process::{Command, Stdio};
 
+#[cfg(feature = "jit")]
+#[test]
+fn loop_call_lowering_registers_runtime_helper() {
+    use kujo::bytecode::{BytecodeChunk, Constant, OpCode};
+    use kujo::jit::JitCompiler;
+
+    // Compile without executing: the loop's guarded Call continuation must have
+    // its runtime helper even when an observed callable would resume in the VM.
+    let mut chunk = BytecodeChunk::new();
+    chunk.constants = vec![Constant::String("text".into())];
+    for instruction in [
+        OpCode::LoadConst(0),
+        OpCode::LoadVar("len".into()),
+        OpCode::Call(1),
+        OpCode::Pop,
+        OpCode::JumpBack(0),
+    ] {
+        chunk.emit(instruction);
+    }
+    JitCompiler::new()
+        .unwrap()
+        .compile_loop_with_int_dicts(&chunk, 0, 4, Default::default())
+        .expect("loop Call must lower with the standard runtime helper");
+}
+
 fn check(source: &str) -> (usize, usize) {
     check_result(source, "PASS", false)
 }
