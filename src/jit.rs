@@ -1611,8 +1611,13 @@ pub unsafe extern "C" fn jit_indexed_write(
 
 /// Conditional pop/remove rebinding. A fallback preserves evaluated call operands.
 #[no_mangle]
-// SAFETY: retained path metadata and tagged operand storage are live; target,
-// dead-pair and operand roots belong to this context. No user callback runs here.
+// SAFETY:
+// - Preconditions: ctx/backing maps, slots and VM are live, aligned and exclusive;
+//   names/shape are immutable. For argc 1/2, operands spans 2*(dynamic indices+argc+1)
+//   initialized aligned i64s within isize::MAX bytes. The pair target is dead storage.
+//   Loop environments are already locked; VM global access has no held lock/borrow.
+// - Postconditions: guards preserve fallback operands, success roots the pair;
+//   cache is restored and errors record. Consumed slots stay releasable; no callback runs.
 pub unsafe extern "C" fn jit_try_pop_rebind(
     ctx: *mut VMContext,
     location: i64,
@@ -2456,8 +2461,12 @@ pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
 /// Assign a named scalar binding from a compiled function (0 success, 1 error).
 /// Declared locals use slots; unresolved names must retain runtime global lookup.
 #[no_mangle]
-// SAFETY: ctx and its local/name maps belong to the active compiled call. The VM
-// pointer is live and no globals lock is held by whole-function entry points.
+// SAFETY:
+// - Preconditions: ctx and non-null backing maps/VM are live and aligned; ctx and
+//   mutated maps are exclusive, names immutable. Loop environment access owns its
+//   lock; VM assignment has no held globals lock or overlapping VM borrow.
+// - Postconditions: clones the operand and uses checked environment assignment
+//   where available; roots survive, errors record, and no user callback runs.
 pub unsafe extern "C" fn jit_assign_variable(
     ctx: *mut VMContext,
     name_hash: i64,
@@ -13247,6 +13256,12 @@ mod tests {
                             operands.extend([key, key_kind]);
                         }
                         operands.extend([function, function_kind]);
+                        // SAFETY:
+                        // - Preconditions: ctx/names/shape and initialized operand
+                        //   buffer stay live; arity matches its pairs, roots are current,
+                        //   and old_pair is deliberately dead before the fresh result.
+                        // - Postconditions: success roots the pair and preserves saved
+                        //   snapshots; consumed operand slots remain releasable.
                         let pair = unsafe {
                             jit_try_pop_rebind(
                                 &mut ctx,
@@ -13343,6 +13358,11 @@ mod tests {
                     let item = if bytes { Value::Bytes(Arc::new(vec![1])) } else { Value::Int(1) };
                     let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: ctx and all current roots are live; callable
+                        //   is the builtin matching the array/byte fixture.
+                        // - Postconditions: guard checks identity/types without aliases
+                        //   or mutation, leaving every root available for the append.
                         unsafe {
                             jit_guard_append_path(
                                 &mut ctx,
@@ -13359,6 +13379,11 @@ mod tests {
                     let operands =
                         [original, original_kind, item, item_kind, function, function_kind];
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: immutable one-field shape/names and six-i64
+                        //   operand buffer remain live; ctx/current roots are exclusive.
+                        // - Postconditions: checked append preserves the saved snapshot
+                        //   and leaves consumed operand slots valid for release.
                         unsafe {
                             jit_append_binding_path(
                                 &mut ctx,
@@ -13421,6 +13446,10 @@ mod tests {
                 ctx.owned_roots.encode(Value::Struct { name: "Box".into(), fields }).unwrap();
             let name = String::from("item");
             for value in 1..=count {
+                // SAFETY:
+                // - Preconditions: ctx/current root and immutable String metadata
+                //   remain live; value is an immediate integer and no borrow spans call.
+                // - Postconditions: returns the updated root; old slot stays releasable.
                 let updated = unsafe {
                     jit_field_write(&mut ctx, object, kind, value, 0, &name as *const String as i64)
                 };
@@ -13438,6 +13467,10 @@ mod tests {
                 }
             }
             let saved = ctx.owned_roots.clone_value(object, kind).unwrap();
+            // SAFETY:
+            // - Preconditions: same live context/root/name; saved independently owns
+            //   the old shared value and no references into roots span the write.
+            // - Postconditions: copy-on-write preserves saved while returning a new root.
             let updated = unsafe {
                 jit_field_write(&mut ctx, object, kind, 999, 0, &name as *const String as i64)
             };
@@ -13472,8 +13505,12 @@ mod tests {
             let (payload, kind) = context.owned_roots.encode(root).unwrap();
             let shape = vec![None, None];
             let operands = [0, 0, 0, 0, value, 0];
-            // SAFETY: the VM, context, shape and operands are live for this synchronous call.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: VM/cache and ctx are exclusive; names/shape remain
+                //   live, with two dynamic indices plus value in six aligned i64s.
+                // - Postconditions: synchronous mutation restores the VM depth cache;
+                //   immutable binding metadata rejects the write without mutation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13621,8 +13658,12 @@ mod tests {
             let shape = vec![None, None];
             for i in 0..repetitions {
                 let operands = [0, 0, 0, 0, i, 0];
-                // SAFETY: shape, tagged operands and context live through the helper call.
                 assert_eq!(
+                    // SAFETY:
+                    // - Preconditions: ctx/names/current root and two-index shape
+                    //   stay live; six aligned i64s initialize both indices and value.
+                    // - Postconditions: checked nested write retains valid root slots;
+                    //   pointer comparisons occur only after helper borrows end.
                     unsafe {
                         jit_update_binding_path(
                             &mut context,
@@ -13646,8 +13687,11 @@ mod tests {
             }
             let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
             let operands = [0, 0, 0, 0, 999, 0];
-            // SAFETY: same live roots and tagged operand array, with a retained snapshot.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: same live ctx/shape/six-i64 buffer, with a separate
+                //   snapshot root and no outstanding destination borrow.
+                // - Postconditions: checked write detaches shared rows for isolation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13670,8 +13714,11 @@ mod tests {
             let Value::Array(rows) = saved else { panic!() };
             let Value::Array(row) = &rows[0] else { panic!() };
             assert!(matches!(row[0],Value::Int(n) if n == repetitions - 1));
-            // SAFETY: unchanged input lifetime; rejected write must not mutate either row.
             assert_eq!(
+                // SAFETY:
+                // - Preconditions: all backing storage remains live; binding kind 1
+                //   deliberately requests the checked immutable-binding rejection.
+                // - Postconditions: error is recorded before destination mutation.
                 unsafe {
                     jit_update_binding_path(
                         &mut context,
@@ -13768,8 +13815,12 @@ mod tests {
                 let initial = pointer(&seed);
                 let (mut root, kind) = ctx.owned_roots.encode(seed).unwrap();
                 for index in 0..repetitions {
-                    // SAFETY: all operands are live native roots or tagged integers.
                     let updated =
+                        // SAFETY:
+                        // - Preconditions: ctx/current root are live and exclusive;
+                        //   index/value are tagged integers, with index 0 in bounds.
+                        // - Postconditions: updated root is returned and consumed old
+                        //   slot remains releasable; pointer comparison follows the call.
                         unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, index, 0) };
                     assert!(ctx.runtime_error.is_none(), "{:?}", ctx.runtime_error);
                     assert_eq!(ctx.owned_roots.storage_state().1, 2);
@@ -13783,6 +13834,10 @@ mod tests {
                 }
                 let saved = ctx.owned_roots.clone_value(root, kind).unwrap();
                 // A genuine retained snapshot must force isolation.
+                // SAFETY:
+                // - Preconditions: ctx/root remain live; saved owns a separate shared
+                //   value, and index/value are valid immediate operands.
+                // - Postconditions: updated result detaches while saved remains intact.
                 let updated = unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, 200, 0) };
                 ctx.owned_roots.release(root, kind).unwrap();
                 assert_ne!(
@@ -13873,7 +13928,11 @@ mod tests {
             let (object, kind) = ctx.owned_roots.encode(seed).unwrap();
             let (value, value_kind) =
                 ctx.owned_roots.encode(levels.last().unwrap().clone()).unwrap();
-            // SAFETY: all handles belong to this active context.
+            // SAFETY:
+            // - Preconditions: ctx and both encoded roots remain live in the active
+            //   scope; over-deep data is an owned Value, not an invalid pointer.
+            // - Postconditions: depth failure records an error and leaves saved seed
+            //   unchanged; scope cleanup handles any consumed operand slots.
             unsafe {
                 jit_index_set_result(&mut ctx, object, kind, 0, 0, value, value_kind);
             }
@@ -14220,7 +14279,11 @@ mod tests {
             let expected = VM::get_indexed_value(&array, &index);
             let (index_payload, index_kind) = context.owned_roots.encode(index.clone()).unwrap();
             context.runtime_error = None;
-            // SAFETY: validated operands remain rooted in live nested frames.
+            // SAFETY:
+            // - Preconditions: ctx is exclusive; source root remains live in its
+            //   parent scope and index operands remain live in the nested scope.
+            // - Postconditions: checked read preserves input roots and returns a
+            //   separately rooted result or the canonical index diagnostic.
             let result = unsafe {
                 jit_indexed_read(&mut context, object, object_kind, index_payload, index_kind)
             };
@@ -14251,7 +14314,10 @@ mod tests {
         context.owned_roots.leave().unwrap();
         context.owned_roots.release(object, object_kind).unwrap();
         context.runtime_error = None;
-        // SAFETY: context remains live; stale handles must be rejected, never dereferenced.
+        // SAFETY:
+        // - Preconditions: ctx remains live/exclusive; retired object is a codec
+        //   identity deliberately passed to validated lookup, not a raw address.
+        // - Postconditions: stale lookup records an error before Value access.
         unsafe {
             jit_indexed_read(&mut context, object, object_kind, 0, 0);
         }
@@ -15406,6 +15472,11 @@ mod tests {
                     };
                     let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
                     assert_eq!(
+                        // SAFETY:
+                        // - Preconditions: ctx and distinct target/original/item roots
+                        //   remain live; builtin identity matches the array/byte fixture.
+                        // - Postconditions: guarded append consumes the operand snapshot,
+                        //   preserves saved values and leaves operand slots releasable.
                         unsafe {
                             jit_try_append(
                                 &mut ctx,
@@ -15468,6 +15539,10 @@ mod tests {
             })
             .unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx and current roots are live; immutable flag 0
+            //   exercises the helper's early checked rejection without a VM pointer.
+            // - Postconditions: no root is cleared or consumed.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,
@@ -15489,6 +15564,10 @@ mod tests {
         let (different, _) =
             ctx.owned_roots.encode(Value::Array(Arc::new(vec![Value::Int(2)]))).unwrap();
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx/current roots remain live; different denotes a
+            //   distinct valid array allocation and the callable is ordinary bytecode.
+            // - Postconditions: storage mismatch leaves the target binding unchanged.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,
@@ -15509,6 +15588,11 @@ mod tests {
             Value::Array(_)
         ));
         assert_eq!(
+            // SAFETY:
+            // - Preconditions: ctx/current target and matching original are live;
+            //   standalone fixture has no VM exception handler or outstanding borrow.
+            // - Postconditions: only the matching mutable target becomes Null;
+            //   original retains ownership of the array and remains readable.
             unsafe {
                 jit_release_rebind(
                     &mut ctx,

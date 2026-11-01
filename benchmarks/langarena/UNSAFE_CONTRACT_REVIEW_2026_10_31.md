@@ -1,5 +1,11 @@
 # Performance-era unsafe contract review
 
+Current checkpoint: the strict JIT contract checker passes all 145 checked
+boundaries with zero missing contracts. Executable source is unchanged by this
+review. Remaining VM bridges, integration-test instrumentation and the explicit
+unsafe inventory budget review are still open; the full release gate is not yet
+accepted. Passing the comment-schema checker is not a universal memory-safety proof.
+
 Full gate `41268768044`, job `124738718845`, collected all test targets and
 failed the unsafe inventory budget: 269 executable matches versus the recorded
 99. The JIT-specific ceiling also remains 47 versus 147 current matches.
@@ -198,3 +204,21 @@ Formatting, diff checks and strict inventory generation pass. The JIT checker
 still exits 2 with **20 missing contracts across 145 boundaries**. Budgets and
 runtime acceptance remain unchanged. Evidence: local
 `.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch10.log`.
+
+## Pop/assignment helpers and remaining JIT regression contracts
+
+The eleventh batch reviews the final twenty missing boundaries: pop/remove
+rebinding and named assignment helpers, plus eighteen call sites covering nested
+append/write, field replacement, depth errors, indexed reads/replacement,
+snapshots, and guarded release/rebinding. Review traced compiler-generated pop
+operand arity and aligned buffers, fresh/dead pair storage, fallback preservation,
+checked binding environments, and scope-owned test fixtures. Error cases use
+validated identities and initialized Values rather than invalid raw pointers.
+
+The strict JIT checker now **passes: 145 checked boundaries, zero missing
+contracts**. Formatting, diff checks and strict inventory generation pass.
+Stripped executable JIT source remains identical to the pre-review source with
+the SHA-256 above; these comments required no runtime rebuild. Evidence: local
+`.audit-evidence/ci-lint-compatibility-2026-10-31/jit-safety-contracts-batch11.log`.
+The executable unsafe inventory remains 269 versus budget 99, and JIT 147 versus
+ceiling 47. Neither budget has changed; remaining review must precede its update.
