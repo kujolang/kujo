@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reduce internal depth-cache hashing overhead while retaining weak-reference
+  invalidation, snapshot isolation and existing cache retention bounds.
+
 - Reuse compiled loops across repeated calls with chunk-scoped admission and
   cache identities, retaining collection-specialization checks on each entry.
   Include these loop sites and compiled variants in public JIT statistics, and
