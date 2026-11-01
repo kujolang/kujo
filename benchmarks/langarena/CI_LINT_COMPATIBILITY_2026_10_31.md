@@ -37,3 +37,16 @@ Clippy now uses Cargo's `--keep-going` to collect independent target failures
 in the same run. `--all-targets`, `--all-features`, and `-D warnings` remain
 required, and any failure still fails the job. This avoids serial CI cycles
 that each reveal one additional target's diagnostics.
+
+All five prerequisite jobs passed on `5391aee`. Its full release gate then failed
+the three generated-artifact freshness tests: the committed inventories were
+11–13 days old against a seven-day limit. Regenerated the unsafe and TODO
+inventories with their strict generators; repeat generation matched both Markdown
+and CSV byte for byte (299 unsafe matches, zero unknown classifications; 25 TODO
+markers, zero unclassified). Refreshed the mismatch inventory using the frozen
+accepted `fd7b764` executable, SHA-256
+`45b21be67fe946d54cabaa5be20f67b4ab26414135afb2a3c5a55af1b672393f`,
+without compiling locally during production benchmarking. All 150 repository
+fixtures matched snapshots in both VM and interpreter; this fixture inventory
+is distinct from the 50 LangArena workloads. Freshness limits and classification
+rules remain unchanged. The refreshed revision still requires its full CI gate.
