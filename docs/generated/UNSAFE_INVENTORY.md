@@ -221,15 +221,15 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/vm.rs | 8669 | executable | vm_executable |         unsafe { std::mem::take(&mut *std::ptr::addr_of_mut!((*vm).path_depth_valid)) } |
 | src/vm.rs | 8677 | executable | vm_executable |     pub(crate) unsafe fn restore_native_path_depth_cache( |
 | src/vm.rs | 8685 | executable | vm_executable |         unsafe { *std::ptr::addr_of_mut!((*vm).path_depth_valid) = cache }; |
-| src/vm.rs | 10305 | executable | vm_executable |                 assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0); |
-| src/vm.rs | 10321 | executable | vm_executable |                 unsafe { |
-| src/vm.rs | 10343 | executable | vm_executable |                 unsafe { jit_leave_function(&mut ctx) }; |
-| src/vm.rs | 10400 | executable | vm_executable |             let result = unsafe { |
-| src/vm.rs | 11115 | executable | vm_executable |         let first = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11117 | executable | vm_executable |         let second = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11120 | executable | vm_executable |         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11145 | executable | vm_executable |         assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0); |
-| src/vm.rs | 11157 | executable | vm_executable |             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) }; |
+| src/vm.rs | 10308 | executable | vm_executable |                 assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0); |
+| src/vm.rs | 10328 | executable | vm_executable |                 unsafe { |
+| src/vm.rs | 10353 | executable | vm_executable |                 unsafe { jit_leave_function(&mut ctx) }; |
+| src/vm.rs | 10414 | executable | vm_executable |             let result = unsafe { |
+| src/vm.rs | 11129 | executable | vm_executable |         let first = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11132 | executable | vm_executable |         let second = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11136 | executable | vm_executable |         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11161 | executable | vm_executable |         assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0); |
+| src/vm.rs | 11175 | executable | vm_executable |             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) }; |
 | tests/benchmark_publication_policy_contract.rs | 58 | non_executable | test_comment_or_string |             ""retired launch-unsafe artifact should stay removed: {path}"" |
 | tests/bytecode_call_profile.rs | 24 | non_executable | test_comment_or_string | unsafe impl GlobalAlloc for CountingAllocator { |
 | tests/bytecode_call_profile.rs | 25 | executable | test_executable |     unsafe fn alloc(&self, layout: Layout) -> *mut u8 { |

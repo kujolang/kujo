@@ -2,7 +2,7 @@
 
 Current checkpoint: the strict JIT contract checker passes all 145 checked
 boundaries with zero missing contracts. Executable source is unchanged by this
-review. Remaining VM bridges, integration-test instrumentation and the explicit
+review. Integration-test instrumentation and the explicit
 unsafe inventory budget review are still open; the full release gate is not yet
 accepted. Passing the comment-schema checker is not a universal memory-safety proof.
 
@@ -236,3 +236,18 @@ Only comments changed; stripped executable VM source retains SHA-256
 `db745fa3703f1d1807dad634c00c6e9bc9fea850e3d0f90c924b61cd99295b57`. Formatting, diff checks and strict inventory generation pass.
 Remaining VM test call sites and integration-test instrumentation still require
 review; inventory limits remain unchanged.
+
+## VM regression call-site review
+
+Completed review of the remaining VM test boundaries: native entry/rebind/exit,
+generator restoration, argument buffer extraction and the builtin call bridge.
+Fixtures keep contexts and pointed-to storage alive without overlapping borrows,
+pair successful activations, and use validated root identities. The generator
+fixture deliberately relocates views but does not dereference them before the
+helper refreshes them; no environment lock spans its callback.
+
+Comments now state these caller obligations. Stripped VM executable source is
+unchanged. Formatting, strict inventory, JIT contract and diff checks pass.
+Integration allocator review found ordinary counter addition can panic on
+overflow in checked builds; non-panicking accounting is required before accepting
+the budget update. No inventory limit has changed.

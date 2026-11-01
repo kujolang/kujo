@@ -10302,6 +10302,9 @@ mod tests {
                 &mut vm as *mut VM as *mut std::ffi::c_void,
             );
             if native {
+                // SAFETY: ctx and its exclusive VM remain live; other views are null.
+                // Preconditions: no VM borrow spans entry, and no cancellation/name pointer is set.
+                // Postconditions: successful entry is paired with leave below.
                 assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0);
             } else {
                 ctx.owned_roots.enter().unwrap();
@@ -10318,6 +10321,10 @@ mod tests {
                 })
                 .unwrap();
             assert_eq!(
+                // SAFETY: roots and the exclusive VM belong to this live context.
+                // Preconditions: location 1 uses validated current-scope root identities;
+                // the private native frame has no same-invocation handler.
+                // Postconditions: the operand root survives any eligible snapshot release.
                 unsafe {
                     jit_release_rebind(
                         &mut ctx,
@@ -10340,6 +10347,9 @@ mod tests {
             assert_eq!(strong, if native { 1 } else { 2 }, "native={native}");
             assert_eq!(vm.exception_handlers.len(), 1);
             if native {
+                // SAFETY: the live context/VM have no outstanding helper borrow.
+                // Preconditions: native entry above succeeded exactly once.
+                // Postconditions: that activation and its owned roots are released.
                 unsafe { jit_leave_function(&mut ctx) };
             } else {
                 ctx.owned_roots.leave().unwrap();
@@ -10397,6 +10407,10 @@ mod tests {
 
             ctx.owned_roots.enter().unwrap();
             let (generator, kind) = ctx.owned_roots.encode(generator).unwrap();
+            // SAFETY: the generator root and exclusive VM remain live for this callback.
+            // Preconditions: no environment lock is held; deliberately stale VM views
+            // are not dereferenced before generator restoration refreshes them.
+            // Postconditions: success and error paths both replace the stale views.
             let result = unsafe {
                 jit_for_next(&mut ctx, generator, kind, 0, crate::native_scalar::INTEGER)
             };
@@ -11114,9 +11128,11 @@ mod tests {
         // SAFETY: exclusive VM with no native execution or outstanding pool borrow.
         let first = unsafe { VM::take_native_arguments(&mut vm, 3) };
         let pointer = first.as_ptr();
+        // SAFETY: first owns its buffer; it holds no borrow into the exclusive pool.
         let second = unsafe { VM::take_native_arguments(&mut vm, 3) };
         assert_ne!(pointer, second.as_ptr(), "active buffers must not alias");
         VM::recycle_native_arguments(&mut vm.native_argument_pool, first);
+        // SAFETY: recycling finished; the live pool has no outstanding borrow.
         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) };
         assert_eq!(reused.as_ptr(), pointer);
         assert!(reused.is_empty());
@@ -11154,6 +11170,8 @@ mod tests {
     fn builtin_argument_buffer_recycles_on_success_and_error() {
         let mut vm = VM::new();
         for name in ["len", "dict"] {
+            // SAFETY: VM and its pool are exclusively held; the prior call returned
+            // before the next extraction, and extracted buffers are independently owned.
             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) };
             let pointer = args.as_ptr();
             let array = Arc::new(vec![Value::Int(7)]);
