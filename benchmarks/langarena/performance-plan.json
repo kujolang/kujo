@@ -5671,5 +5671,13 @@
     "checksum_samples": 6,
     "report": "ACCEPTED_LOOP_PROFILES_2026_11_01.md",
     "next": "Isolate depth-cache maintenance costs while preserving weak-reference invalidation and value semantics."
+  },
+  "depth_cache_controls_2026_11_01": {
+    "status": "baseline_verified_no_runtime_change",
+    "report": "DEPTH_CACHE_CONTROLS_2026_11_01.md",
+    "observations": 72,
+    "operations": 7200000,
+    "scope": "Root-only cached lookup/release/remember with real Values; no full depth traversal or assignment.",
+    "next": "Paired mechanism comparison, then complete runtime semantic and workload gates before acceptance."
   }
 }

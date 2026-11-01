@@ -847,6 +847,7 @@ defects have separate verified fixes in section 3.
 
 - [ ] Extend compiled execution for demonstrated hot paths.
 - [ ] Reduce measured guard/dispatch overhead safely.
+  [Depth-cache component baseline](DEPTH_CACHE_CONTROLS_2026_11_01.md) verifies 72 observations and snapshot/invalidation controls on extracted accepted-source methods. Alternative mechanisms and whole-runtime acceptance remain open.
 - [ ] Preserve integer/Boolean/float/error semantics.
 - [ ] Verify branches, recursion, imports, captures and unwinding.
 - [ ] Tune JIT admission against small-workload compilation costs.
