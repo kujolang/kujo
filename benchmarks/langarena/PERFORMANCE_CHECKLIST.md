@@ -750,6 +750,7 @@ defects have separate verified fixes in section 3.
 ## 5. Compiled execution (dispatch and local-field fixes verified; broader work open)
 
 - [x] Reproduce the [template parser loop-admission gap](TEMPLATE_LOOP_ADMISSION_2026_10_31.md) on accepted `fd7b764`: VM/interpreter/JIT return correct results, but nested loop compilation reports inconsistent operand-stack depths and falls back. Fixing the control-flow handling and proving native loop execution remain open; callback guards and stack validation must be preserved.
+- [x] Isolate [loop-condition versus body-call admission](TEMPLATE_LOOP_CONTROLS_2026_10_31.md): 18 runtime checks verify six controls. Condition calls fail admission; precomputed bounds and body calls enter native loops. The effectful condition preserves 301 calls, ruling out general call hoisting as a repair. Runtime fix remains open.
 
 - [x] Evaluate root-table hash mixing: [rejected helper tradeoff](NATIVE_ROOT_HASH_REJECTED_2026_10_31.md). Correctness and all 150 test-size checksums pass, but all 48 scalar pairs regress despite large owned-row improvements. The follow-up is recorded below; no speedup is accepted from this experiment.
 - [x] Verify the [direct-borrow revision](NATIVE_ROOT_DIRECT_READ_2026_10_31.md): all 150 checksums and 1,311 library plus 48 targeted integration tests pass. Cached stable scalar reads return near baseline, but uncached scalar reads still regress. This revision is not accepted.
