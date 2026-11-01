@@ -893,7 +893,7 @@ time, resource evidence and limitations for every case and runtime.
 | Json::Generate | [x] | [x] | [x] |
 | Json::ParseDom | [x] | [x] | [x] |
 | Json::ParseMapping | [x] | [x] | [x] |
-| CSV::Parse | [ ] | [ ] | [ ] |
+| CSV::Parse | [x] | [x] | [x] |
 | Etc::Sieve | [ ] | [ ] | [ ] |
 | Etc::TextRaytracer | [ ] | [ ] | [ ] |
 | Etc::NeuralNet | [ ] | [ ] | [ ] |
@@ -933,8 +933,9 @@ time, resource evidence and limitations for every case and runtime.
 
 - [x] Recheck all 150 test-size combinations on accepted `fd7b764`; [verified current evidence](NATIVE_FIELD_ABI_FIX_2026_10_31.md). Repeat for later runtime changes. Production coverage remains separate.
 - [x] Verify unchanged production QuickSort and MergeSort in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_SORT_2026_10_31.md). These two cells do not certify the other 148 production combinations or future runtime changes.
-- [x] Verify all three unchanged production JSON workloads in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_JSON_2026_10_31.md). Five JIT production cases are now verified; 145 runtime/case combinations remain open.
-- [x] Verify all three production JSON workloads in VM and interpreter: [cross-runtime evidence](ACCEPTED_PRODUCTION_JSON_PARITY_2026_10_31.md). Current production coverage: 11/150; 139 combinations remain.
+- [x] Verify all three unchanged production JSON workloads in JIT on `fd7b764`: [checksum/resource evidence](ACCEPTED_PRODUCTION_JSON_2026_10_31.md). Coverage at that milestone: five JIT production cases; 145 combinations pending.
+- [x] Verify all three production JSON workloads in VM and interpreter: [cross-runtime evidence](ACCEPTED_PRODUCTION_JSON_PARITY_2026_10_31.md). Coverage at that milestone: 11/150; 139 combinations pending.
+- [x] Verify production CSV parsing in VM, interpreter and JIT: [cross-runtime evidence](ACCEPTED_PRODUCTION_CSV_PARITY_2026_10_31.md). Current production coverage: 14/150; 136 combinations remain.
 - [ ] Complete unchanged production in VM, interpreter and JIT separately.
 - [ ] Preserve timeout/failure/cancellation distinctions.
 - [ ] Use final-candidate evidence rather than substitute old passes.
