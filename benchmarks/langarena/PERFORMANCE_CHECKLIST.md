@@ -11,6 +11,11 @@ Current runtime optimization work is in section 5. The string-cache dispatch
 candidate has completed local verification and is deferred to clean-host review.
 Clean-host comparisons remain pending.
 
+The user froze accepted improvements on 2026-11-02 for a proposed checkpoint.
+See [checkpoint review](CHECKPOINT_REVIEW_2026_11_02.md) for exact identities,
+release checks and the comparison protocol. The pending VM memory candidate is
+excluded; no further optimization, tagging or publishing precedes that review.
+
 ## Completed foundation
 
 - [x] Local port and checksum runner for all 50 benchmarks.
