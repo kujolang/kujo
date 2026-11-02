@@ -89,6 +89,26 @@ passed. The earlier NeuralNet VM slowdown did not reproduce consistently locally
 ## 3. Allocation and call-frame fixes (verified fixes; remaining work explicit)
 
 ### Current round: remaining work and next review cutoff (2026-10-29)
+Review boundary clarified on 2026-11-02 after the usage-limit interruption:
+**zero additional fix rounds are required for the bounded section 3/4 cutoff.**
+The four residual categories in the final review remain broader requirements,
+not a newly authorized endless sequence of section 3/4 fixes. Current work is
+one section 5 issue: VM-owned JIT code lifetime. Its next checkpoint is an
+accept/reject review after (1) correcting the lifetime test oracle, (2) targeted,
+semantic, runtime and before/after resource gates, and (3) evidence review and
+commit/push of accepted changes. Additional failures can require iteration;
+this does not silently add unrelated optimizations to that checkpoint. Clean-host
+comparisons remain separate and pending. Report the outcome before moving to
+another optimization.
+
+The first candidate passed two semantic controls but failed an overly strict
+unmapping assertion. Pinned Cranelift's non-Windows allocator path removes
+execute permission and calls `alloc::dealloc`; freed addresses may remain mapped.
+A corrected executable-lifetime gate is pending. Removing execute permission
+alone is not a complete allocator/RSS reclamation measurement; retain the
+before/after resource gate. The pinned Windows path has a separate deallocation
+limitation, so no universal platform reclamation claim is accepted here.
+
 
 Capture-storage admission is accepted in `342a653`. The [verified report](CAPTURE_STORAGE_BUDGETS_2026_10_31.md) records 3,784 strict allocation pairs, 5,784 semantic checks, all 150 test-size checksums and explicit live-heap/RSS tradeoff review. Aggregate capacity, long-name and multi-scope copying penalties are removed in the measured cases. Repeated-array reservation is now accepted in `1ed1866`; [verified results](REPEATED_ARRAY_FIX_2026_10_31.md) include 3,832 strict allocation pairs, 5,856 semantic observations, 150 checksums and explicit boundary/RSS review. The [final representation/combined-candidate review](SECTIONS_3_4_REVIEW_2026_10_31.md) is complete. This reproduced-fix sequence is accepted; broader capture traversal/fallback, fresh-snapshot representation and unsupported-proof costs remain explicit. Sections 3/4 are not claimed universally complete. Historical open entries below retain their original evidence; they do not imply the capture boundary defect is still unfixed.
 
