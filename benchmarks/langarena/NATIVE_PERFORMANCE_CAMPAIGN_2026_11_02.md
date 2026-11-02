@@ -27,7 +27,7 @@ outcome or a reason to weaken Kujo semantics.
 | Area | Required outcome | State |
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
-| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | 51/51 baseline call-scaling controls pass; attribution and implementation pending |
+| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | 51 entry controls, 18 native census controls and 102 baseline samples pass; guarded call implementation pending |
 | 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Pending |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
@@ -101,6 +101,10 @@ arguments, argument buffers and root pools are already implemented.
 the accepted CLI across all three runtimes. They cover scalar arities 0–4 and
 array arities 1–4 at three widths, with snapshots retained. These are correctness
 entry controls, not measured speed or proof of the future optimized call path.
+The [call baseline](NATIVE_CALL_BASELINE_2026_11_02.md) adds verified native-entry
+count deltas and uninstrumented arity/width measurements. Read-only calls do not
+show width-proportional copies; remaining dispatch/ownership transfer is the
+next hypothesis to isolate. No call optimization is implemented yet.
 
 Independent-session, production, memory and clean-host gates remain open for the
 broader campaign. No candidate from the read-region experiment is accepted.

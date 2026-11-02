@@ -14,7 +14,9 @@ add 768 owned-argument dispatches; scalar configurations add zero. All eighteen
 instrumented controls pass. The census demonstrates native participation and
 remaining dispatch, not CPU-time share or a speedup. Raw counters and source
 identities are in `../native-call-entry-census-2026-11-02.json.gz`.
-Uninstrumented scaling measurements remain pending.
+[Uninstrumented baseline scaling](../NATIVE_CALL_BASELINE_2026_11_02.md) now
+verifies 102 samples. Candidate timing and optimized-path verification remain
+pending.
 
 `KIND` is `scalar` or `array`. Scalar arities are 0–4; array arities are 1–4.
 Each kernel iteration calls the corresponding named target once. Targets return
