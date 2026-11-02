@@ -1,0 +1,61 @@
+# Diagnostic only; keep setup/warmup/assertions outside the measured kernel.
+# CASE WIDTH READ_GROUPS verify|measure. Each group performs eight reads.
+let options := args()
+assert_equal(len(options), 4)
+let selected := options[0]
+let width := to_int(options[1])
+let groups := to_int(options[2])
+let mode := options[3]
+assert(width > 0 && groups > 0)
+assert(mode == "verify" || mode == "measure")
+
+func repeated_reads(values, key, count) {
+    mut total := 0
+    mut i := 0
+    while i < count {
+        total += values[key] + values[key] + values[key] + values[key] +
+                 values[key] + values[key] + values[key] + values[key]
+        i += 1
+    }
+    return total
+}
+
+mut values := []
+mut key := 0
+mut expected := 56 * groups
+mut i := 0
+if selected == "integer-array" || selected == "negative-array" || selected == "bytes" {
+    while i < width { values = push(values, 7) i += 1 }
+    if selected == "negative-array" { key = -1 }
+    if selected == "bytes" { values = bytes(values) }
+} else if selected == "float-array" {
+    while i < width { values = push(values, 1.5) i += 1 }
+    expected = 12.0 * groups
+} else if selected == "integer-dictionary" {
+    values = {}
+    # Negative keys retain sparse integer dictionary behavior.
+    while i < width { values[-i - 1] = 7 i += 1 }
+    key = -1
+} else if selected == "string-dictionary" {
+    values = {}
+    while i < width { values[str(i)] = 7 i += 1 }
+    key = "0"
+} else {
+    assert(false, "unknown diagnostic case")
+}
+let snapshot := values
+let warm := repeated_reads(values, key, groups)
+assert_equal(warm, expected)
+if mode == "verify" {
+    assert_equal(repeated_reads(values, key, groups), expected)
+    assert_equal(values, snapshot)
+    print("native-region-scaling: OK")
+} else {
+    let started := time_ns()
+    let result := repeated_reads(values, key, groups)
+    let elapsed := time_ns() - started
+    assert_equal(result, expected)
+    assert_equal(values, snapshot)
+    print("@region_ns " + str(elapsed))
+    print("native-region-scaling: OK")
+}
