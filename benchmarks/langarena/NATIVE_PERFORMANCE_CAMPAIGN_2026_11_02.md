@@ -89,3 +89,21 @@ is stripped; sampling it alone cannot resolve the runtime/helper boundaries the
 first experiment needs. The harness is diagnostic, not a replacement competitive
 binary. Confirm all outputs and source identity; collect uninstrumented CLI
 before/after timings separately. No runtime optimization is accepted yet.
+
+### Entry controls established
+
+`probes/native-region-contracts.kujo` passes on the frozen accepted CLI in VM,
+interpreter and JIT modes. It covers repeated same-array reads, negative indices,
+callee replacement with a retained snapshot, scalar/owned/type transitions,
+nested result mutation, Unicode fallback, invalid accesses and post-error reads.
+The JIT measurement receipt records native participation; it does not establish
+future region-specialization coverage or a timing win. Runs overlap the baseline
+build and are correctness-only. The interpreter CLI rejects `--measurements`, so
+its verification uses exact stdout and exit status instead.
+
+`native-region-contracts-2026-11-02.json.gz` retains source, collector, three
+successful runtime outcomes and the supported VM/JIT metric receipts, with every
+embedded hash verified. All implementation and candidate acceptance gates remain
+open. Baseline build/profiling state is in
+`.audit-evidence/native-performance-campaign-2026-11-02/state.json`; poll the live
+process/session before attempting any restart.

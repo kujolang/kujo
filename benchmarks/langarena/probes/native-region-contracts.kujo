@@ -1,0 +1,53 @@
+# Semantic entry controls for native read regions; not a speed benchmark.
+# Keep callback/ownership transitions outside any borrowed native view.
+func region_read(values, index) {
+    return values[index]
+}
+func region_sum(values) {
+    return values[0] + values[1] + values[2]
+}
+func region_replace(values) {
+    mut next := values
+    next[0] = 99
+    return next
+}
+func region_contracts() {
+    mut values := [3, 5, 7]
+    let saved := values
+    mut total := 0
+    mut i := 0
+    while i < 300 {
+        total += region_read(values, 0)
+        assert_equal(region_sum(values), 15)
+        assert_equal(region_read(values, -1), 7)
+        i += 1
+    }
+    assert_equal(total, 900)
+    values = region_replace(values)
+    assert_equal(region_read(values, 0), 99)
+    assert_equal(region_sum(values), 111)
+    assert_equal(region_sum(saved), 15)
+    assert_equal(region_read(saved, 0), 3)
+    values = [1.5, "owned", [9]]
+    assert_equal(region_read(values, 0), 1.5)
+    assert_equal(region_read(values, 1), "owned")
+    mut child := region_read(values, 2)
+    child[0] = 42
+    assert_equal(values[2][0], 9)
+    assert_equal(child[0], 42)
+    values = [false, null]
+    assert_equal(region_read(values, 0), false)
+    assert_equal(region_read(values, -1), null)
+    assert_equal(region_read("é🙂", 1), "🙂")
+    mut errors := 0
+    try { region_read([], 0) } except error { errors += 1 }
+    try { region_read([1], -2) } except error { errors += 1 }
+    try { region_read([1], 1) } except error { errors += 1 }
+    assert_equal(errors, 3)
+    # A failed access must leave earlier values and snapshots readable.
+    assert_equal(region_read(saved, 1), 5)
+    assert_equal(region_read(child, 0), 42)
+    return errors + total
+}
+assert_equal(region_contracts(), 903)
+print("native-region-contracts: OK")
