@@ -27,7 +27,7 @@ outcome or a reason to weaken Kujo semantics.
 | Area | Required outcome | State |
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
-| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | Pending |
+| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | 51/51 baseline call-scaling controls pass; attribution and implementation pending |
 | 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Pending |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
@@ -96,6 +96,11 @@ marshalling. Use the frozen accepted CLI: local target/release artifacts still
 contain the rejected candidate until explicitly rebuilt. Preserve value semantics,
 dynamic rebinding, errors and frame/cancellation contracts. Existing positional
 arguments, argument buffers and root pools are already implemented.
+
+[Call-scaling entry controls](probes/NATIVE_CALL_SCALING.md) pass 51/51 cases on
+the accepted CLI across all three runtimes. They cover scalar arities 0–4 and
+array arities 1–4 at three widths, with snapshots retained. These are correctness
+entry controls, not measured speed or proof of the future optimized call path.
 
 Independent-session, production, memory and clean-host gates remain open for the
 broader campaign. No candidate from the read-region experiment is accepted.

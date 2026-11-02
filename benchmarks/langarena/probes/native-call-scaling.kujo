@@ -1,0 +1,74 @@
+# Diagnostic only: KIND ARITY WIDTH CALLS verify|measure.
+# Setup, warmup and result/snapshot assertions are outside the timed kernel.
+let options := args()
+assert_equal(len(options), 5)
+let kind := options[0]
+let arity := to_int(options[1])
+let width := to_int(options[2])
+let calls := to_int(options[3])
+let mode := options[4]
+assert(kind == "scalar" || kind == "array")
+assert(arity >= 0 && arity <= 4 && width > 0 && calls > 0)
+assert(kind != "array" || arity > 0)
+assert(mode == "verify" || mode == "measure")
+
+func target0() { return 7 }
+func target1(a) { return a }
+func target2(a, b) { return a }
+func target3(a, b, c) { return a }
+func target4(a, b, c, d) { return a }
+
+func run0(value, count) {
+    mut result := 7
+    mut i := 0
+    while i < count { result = target0() i += 1 }
+    return result
+}
+func run1(value, count) {
+    mut result := value
+    mut i := 0
+    while i < count { result = target1(value) i += 1 }
+    return result
+}
+func run2(value, count) {
+    mut result := value
+    mut i := 0
+    while i < count { result = target2(value, value) i += 1 }
+    return result
+}
+func run3(value, count) {
+    mut result := value
+    mut i := 0
+    while i < count { result = target3(value, value, value) i += 1 }
+    return result
+}
+func run4(value, count) {
+    mut result := value
+    mut i := 0
+    while i < count { result = target4(value, value, value, value) i += 1 }
+    return result
+}
+
+mut value := 7
+if kind == "array" {
+    value = []
+    mut i := 0
+    while i < width { value = push(value, 7) i += 1 }
+}
+let snapshot := value
+let runner := [run0, run1, run2, run3, run4][arity]
+# Cross the existing 100-call admission threshold before measuring the target.
+assert_equal(runner(value, 128), value)
+if mode == "verify" {
+    assert_equal(runner(value, calls), value)
+    assert_equal(value, snapshot)
+    print("native-call-scaling: OK")
+} else {
+    let started := time_ns()
+    let result := runner(value, calls)
+    let elapsed := time_ns() - started
+    assert_equal(result, value)
+    assert_equal(value, snapshot)
+    print("@call_ns " + str(elapsed))
+    print("native-call-scaling: OK")
+}
