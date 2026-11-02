@@ -9,9 +9,10 @@ production result, independent-session replication or clean-host measurement.
 ## Result and decision
 
 The sole hypothesis revision did **not establish repeatable target improvement**.
-Do not accept or describe this candidate as a performance fix. The fallback
-scaling sweep completes the diagnostic record before the candidate is removed;
-it cannot substitute a synthetic win for missing target-workload gains. No third
+Do not accept or describe this candidate as a performance fix. The
+[fallback sweep and rejection](ARRAY_REGION_REJECTED_2026_11_02.md) complete the
+record, and the candidate is removed. Synthetic gains do not replace missing
+target-workload gains. No third
 tactical revision is authorized by this experiment's delivery limit. The broader
 direct-native-access area remains open, and the next bounded experiment is call
 overhead after this experiment closes.

@@ -26,7 +26,7 @@ outcome or a reason to weaken Kujo semantics.
 
 | Area | Required outcome | State |
 | --- | --- | --- |
-| 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Attribution/design in progress |
+| 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
 | 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | Pending |
 | 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Pending |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
@@ -83,41 +83,22 @@ remain pending until that evidence exists.
 
 ## Current next action
 
-The first array-view candidate passed 150/150 all-runtime test-size checksums;
-see [correctness evidence](ARRAY_REGION_CORRECTNESS_2026_11_02.md). Its 54-sample
-[pilot](ARRAY_REGION_PILOT_2026_11_02.md) is complete: QuickSort and MergeSort
-JIT results are mixed, NeuralNet JIT is promising, and shifting VM controls
-prevent a clean performance conclusion. No runtime optimization is accepted.
+The tactical array-region experiment is [closed and rejected](ARRAY_REGION_REJECTED_2026_11_02.md).
+Its first candidate and sole revision passed their correctness gates but did not
+establish repeatable target gains. The revision's 504-sample sweep consistently
+slowed byte/dictionary fallback paths despite array microbenchmark gains. The
+unaccepted runtime/changelog edits are removed; all 1,390 frozen identities again
+match the accepted baseline. Semantic fixtures and all negative evidence remain.
+Do not begin a third tactical revision or mark the native-access area complete.
 
-The one permitted revision restores the accepted validated root-slot hint on
-view refresh and generic fallback. The borrowed array pointer still expires at
-every existing barrier; only the liveness-checked slot hint survives. A new
-unit regression compares repeated invalidated reads and dictionary fallback
-against an uncached lookup control, and checks rejected access after root release.
-The enlarged generated stack record is fully initialized. This revision still
-uses a Rust helper and does not satisfy the broader direct-native-access goal.
+The next bounded experiment targets known-callee owned calls and remaining VM
+marshalling. Use the frozen accepted CLI: local target/release artifacts still
+contain the rejected candidate until explicitly rebuilt. Preserve value semantics,
+dynamic rebinding, errors and frame/cancellation contracts. Existing positional
+arguments, argument buffers and root pools are already implemented.
 
-Release unit validation passed: three selected region tests, then 93 JIT tests
-(seven ignored) and 20 ownership tests. Results belong in local evidence
-`region-v2-unit-retry.log` and `region-v2/{jit-units,ownership-units}.log`.
-The initial `region-v2-unit.log` records a test-only
-dictionary hasher type mismatch; the fixture now uses the runtime's inferred
-integer-dictionary map type. The first candidate's executable/library are preserved as
-`region-v1-kujo` and `region-v1-libkujo.rlib` beside that log. The source-bound
-original `region-v2-gates.rb` pipeline passed its test commands but rejected
-Cargo's replacement of the CLI during integration. The preserved comparison
-binary now separately passes the unchanged integration test and all 150 checksum
-controls; see [revised correctness receipt](ARRAY_REGION_V2_CORRECTNESS_2026_11_02.md).
-Its terminal gate is `region-v2-release-checks/state.json`. The original failed
-identity gate remains intact. [Seven-round target measurements](ARRAY_REGION_V2_COMPARISON_2026_11_02.md)
-completed under `region-v2-comparison-b`: all 126 samples verify, but the revised
-candidate did not establish repeatable target gains and must not be accepted.
-Attempt `a` records a wrapper output-directory error before samples. The queued
-504-sample fallback sweep runs separately under `region-v2-scaling-a`; finish
-that diagnostic record, then remove the unaccepted candidate and close this
-tactical experiment. Do not begin a third tactical hypothesis revision.
-Do not reuse the first candidate's passing results as proof for revised source.
-Independent-session, production, memory and clean-host gates remain open.
+Independent-session, production, memory and clean-host gates remain open for the
+broader campaign. No candidate from the read-region experiment is accepted.
 
 ### Entry controls established
 
