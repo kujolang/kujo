@@ -83,12 +83,13 @@ remain pending until that evidence exists.
 
 ## Current next action
 
-Rebuild a source-bound accepted library from the existing cache, then link the
-existing symbolized diagnostic harness and sample after warmup. The accepted CLI
-is stripped; sampling it alone cannot resolve the runtime/helper boundaries the
-first experiment needs. The harness is diagnostic, not a replacement competitive
-binary. Confirm all outputs and source identity; collect uninstrumented CLI
-before/after timings separately. No runtime optimization is accepted yet.
+The source-bound library build and six symbolized VM/JIT profiles are complete;
+see [baseline attribution](NATIVE_BASELINE_PROFILES_2026_11_02.md). All six
+checksums and 1,390 source hashes were independently rechecked. The 19-file
+archive preserves raw evidence. Implement the first guarded-access experiment
+against the existing borrowed/cached read path, proving view validity and actual
+helper elimination. Collect uninstrumented CLI before/after timings separately.
+No runtime optimization is accepted yet.
 
 ### Entry controls established
 
@@ -107,3 +108,15 @@ embedded hash verified. All implementation and candidate acceptance gates remain
 open. Baseline build/profiling state is in
 `.audit-evidence/native-performance-campaign-2026-11-02/state.json`; poll the live
 process/session before attempting any restart.
+
+### Research recommendation corrected during source review
+
+The area-2 suggestion to reuse the first pre-call `DEBUG_JIT_CALL` lookup is
+**not admitted** under behavior preservation. The existing
+[debug environment disposition](DEBUG_CALL_ENVIRONMENT_2026_11_01.md) explicitly
+rejects it: concurrent writers can change the second pre-call diagnostic
+independently, even when the post-callback read remains. This is stronger evidence
+than the supplied report's recommendation. Preserve all existing observation
+points unless a separate contract change is explicitly approved. The broader
+known-callee/marshalling experiment remains open; a debug-lookup cleanup would not
+complete it in any event.
