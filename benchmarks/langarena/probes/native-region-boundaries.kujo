@@ -1,0 +1,47 @@
+# Cold/hot mixed-index fallback and operator-callback controls.
+# The two reads keep the same local root eligible for region reuse.
+func pair(values, index) {
+    let first := values[0]
+    return [first, values[index]]
+}
+
+mut callbacks := 0
+mut shared := [3, 5]
+struct Callback {
+    value: int,
+    func op_add(other) {
+        callbacks += 1
+        shared[0] = 99
+        return value + other.value
+    }
+}
+func with_operator(values, operation) {
+    let first := values[0]
+    let added := operation + operation
+    return first + values[1] + added
+}
+
+let snapshot := shared
+let operation := Callback { value: 7 }
+mut i := 0
+while i < 220 {
+    assert_equal(pair([1, 2, 3], -1), [1, 3])
+    assert_equal(pair([1.5, "owned", false, null, [9]], 1), [1.5, "owned"])
+    assert_equal(pair([1.5, "owned", false, null, [9]], 2), [1.5, false])
+    assert_equal(pair([1.5, "owned", false, null, [9]], 3), [1.5, null])
+    assert_equal(pair([1.5, "owned", false, null, [9]], 4), [1.5, [9]])
+    assert_equal(pair("é🙂", 1), ["é", "🙂"])
+    assert_equal(with_operator(snapshot, operation), 22)
+    i += 1
+}
+assert_equal(callbacks, 220)
+assert_equal(snapshot, [3, 5])
+assert_equal(shared, [99, 5])
+
+mut errors := 0
+try { pair([1, 2], 2) } except error { errors += 1 }
+try { pair([1, 2], -3) } except error { errors += 1 }
+try { pair([], 0) } except error { errors += 1 }
+assert_equal(errors, 3)
+assert_equal(pair([5, 7], -1), [5, 7])
+print("native-region-boundaries: OK")
