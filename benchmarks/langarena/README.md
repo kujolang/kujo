@@ -79,8 +79,9 @@ roundtrip, AST, and value-semantics cases in both runtimes.
   coordinate structs. Kujo does not have Crystal's direct typed JSON decoder;
   checksum equivalence alone does not settle benchmark comparability.
 - `Hash::SHA256` ports upstream's custom toy hash, not standard SHA-256.
-- Graph and maze priority queues preserve upstream's exact heap behavior,
-  including its pop ordering, because changing it changes traversal behavior.
+- Graph and maze priority queues preserve the upstream Crystal implementation's
+  heap behavior, including its pop ordering. This does not imply equivalent heap
+  work in Rust or Goose; see the [graph ordering audit](GRAPH_ORDER_AUDIT_2026_11_02.md).
 - A passing `test.json` run proves those exact checksum workloads only. It does
   not establish production `run.json` performance, memory limits, or acceptance.
 - This runner checks correctness; upstream timing/start protocol, language
