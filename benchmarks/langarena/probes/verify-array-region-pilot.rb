@@ -3,6 +3,8 @@ require 'json'
 require 'digest'
 root = File.expand_path(ARGV.fetch(0))
 identity = JSON.parse(File.read(root + '/region-pilot-identities.json'))
+rounds = identity.fetch('rounds')
+raise 'invalid round count' unless rounds.is_a?(Integer) && rounds > 0 && rounds.odd? && rounds <= 99
 identity.fetch('files').each { |path, hash| raise "identity drift: #{path}" unless Digest::SHA256.file(path).hexdigest == hash }
 languages = ['Baseline VM', 'Baseline JIT', 'Latest VM', 'Latest JIT', 'Rust', 'Goose']
 config = JSON.parse(File.read('benchmarks/langarena/test.json'))
@@ -13,15 +15,17 @@ end
 {'quick' => 'Sort::Quick', 'merge' => 'Sort::Merge', 'neural' => 'Etc::NeuralNet'}.each do |slug, name|
   directory = root + '/region-pilot-' + slug
   manifest = JSON.parse(File.read(directory + '/samples.json'))
-  raise 'rounds' unless manifest['rounds'] == 3 && manifest['result_files'].size == 18
-  raise 'duplicate evidence' unless manifest['result_files'].uniq.size == 18
+  raise 'rounds' unless manifest['rounds'] == rounds && manifest['result_files'].size == rounds * 6
+  raise 'duplicate evidence' unless manifest['result_files'].uniq.size == rounds * 6
   expected_binaries = {
     'Baseline VM' => '.audit-evidence/checkpoint-2026-11-02/frozen/checkpoint-kujo',
     'Baseline JIT' => '.audit-evidence/checkpoint-2026-11-02/frozen/checkpoint-kujo',
-    'Latest VM' => 'target/release/kujo', 'Latest JIT' => 'target/release/kujo',
+    'Latest VM' => identity.fetch('candidate_binary', 'target/release/kujo'),
+    'Latest JIT' => identity.fetch('candidate_binary', 'target/release/kujo'),
     'Rust' => '.audit-evidence/checkpoint-2026-11-02/frozen/rust-benchmarks',
     'Goose' => '.audit-evidence/checkpoint-2026-11-02/frozen/goose-benchmarks'
   }
+  raise 'unbound candidate binary' unless identity.fetch('files').key?(expected_binaries.fetch('Latest JIT'))
   raise 'binary coverage' unless manifest['binaries'].keys.sort == languages.sort
   expected_binaries.each { |language, path| raise 'binary mapping' unless File.realpath(manifest['binaries'][language]) == File.realpath(path) }
   raise 'resource platform' unless manifest['resource_measurement'] && manifest['resource_platform'] == 'Darwin'
@@ -58,7 +62,7 @@ end
     raise 'timer mismatch' unless seconds == row['measured_seconds'] && seconds.finite? && seconds > 0
   end
   modes = %w[VM JIT].to_h do |mode|
-    ratios = (1..3).map do |round|
+    ratios = (1..rounds).map do |round|
       before = rows.find { |r| r['round'] == round && r['language'] == "Baseline #{mode}" }
       after = rows.find { |r| r['round'] == round && r['language'] == "Latest #{mode}" }
       before['measured_seconds'] / after['measured_seconds']
@@ -71,5 +75,5 @@ end
   end
   summary << {benchmark: name, pairs: modes, variants: timings}
 end
-File.write(root + '/region-pilot-verified.json', JSON.pretty_generate({status: 'passed', samples: 54, scope: 'Three-round local screening; no statistical significance, independent-session or clean-host claim; competitors have millisecond-rounded loop times', results: summary}) + "\n")
+File.write(root + '/region-pilot-verified.json', JSON.pretty_generate({status: 'passed', samples: rounds * 18, scope: "#{rounds}-round local screening; no statistical significance, independent-session or clean-host claim; competitors have millisecond-rounded loop times", results: summary}) + "\n")
 puts JSON.pretty_generate(summary.map { |row| {benchmark: row[:benchmark], pairs: row[:pairs]} })

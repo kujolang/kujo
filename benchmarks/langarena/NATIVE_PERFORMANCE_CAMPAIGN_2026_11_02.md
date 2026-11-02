@@ -109,9 +109,13 @@ Cargo's replacement of the CLI during integration. The preserved comparison
 binary now separately passes the unchanged integration test and all 150 checksum
 controls; see [revised correctness receipt](ARRAY_REGION_V2_CORRECTNESS_2026_11_02.md).
 Its terminal gate is `region-v2-release-checks/state.json`. The original failed
-identity gate remains intact. Seven-round paired target measurements follow
-under `region-v2-comparison-b` with builds stopped; attempt `a` records a wrapper
-output-directory error before samples, not a runtime failure or score.
+identity gate remains intact. [Seven-round target measurements](ARRAY_REGION_V2_COMPARISON_2026_11_02.md)
+completed under `region-v2-comparison-b`: all 126 samples verify, but the revised
+candidate did not establish repeatable target gains and must not be accepted.
+Attempt `a` records a wrapper output-directory error before samples. The queued
+504-sample fallback sweep runs separately under `region-v2-scaling-a`; finish
+that diagnostic record, then remove the unaccepted candidate and close this
+tactical experiment. Do not begin a third tactical hypothesis revision.
 Do not reuse the first candidate's passing results as proof for revised source.
 Independent-session, production, memory and clean-host gates remain open.
 
