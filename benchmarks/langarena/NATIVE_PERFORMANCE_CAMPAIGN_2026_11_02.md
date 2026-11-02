@@ -83,13 +83,37 @@ remain pending until that evidence exists.
 
 ## Current next action
 
-The source-bound library build and six symbolized VM/JIT profiles are complete;
-see [baseline attribution](NATIVE_BASELINE_PROFILES_2026_11_02.md). All six
-checksums and 1,390 source hashes were independently rechecked. The 19-file
-archive preserves raw evidence. Implement the first guarded-access experiment
-against the existing borrowed/cached read path, proving view validity and actual
-helper elimination. Collect uninstrumented CLI before/after timings separately.
-No runtime optimization is accepted yet.
+The first array-view candidate passed 150/150 all-runtime test-size checksums;
+see [correctness evidence](ARRAY_REGION_CORRECTNESS_2026_11_02.md). Its 54-sample
+[pilot](ARRAY_REGION_PILOT_2026_11_02.md) is complete: QuickSort and MergeSort
+JIT results are mixed, NeuralNet JIT is promising, and shifting VM controls
+prevent a clean performance conclusion. No runtime optimization is accepted.
+
+The one permitted revision restores the accepted validated root-slot hint on
+view refresh and generic fallback. The borrowed array pointer still expires at
+every existing barrier; only the liveness-checked slot hint survives. A new
+unit regression compares repeated invalidated reads and dictionary fallback
+against an uncached lookup control, and checks rejected access after root release.
+The enlarged generated stack record is fully initialized. This revision still
+uses a Rust helper and does not satisfy the broader direct-native-access goal.
+
+Release unit validation passed: three selected region tests, then 93 JIT tests
+(seven ignored) and 20 ownership tests. Results belong in local evidence
+`region-v2-unit-retry.log` and `region-v2/{jit-units,ownership-units}.log`.
+The initial `region-v2-unit.log` records a test-only
+dictionary hasher type mismatch; the fixture now uses the runtime's inferred
+integer-dictionary map type. The first candidate's executable/library are preserved as
+`region-v1-kujo` and `region-v1-libkujo.rlib` beside that log. The source-bound
+original `region-v2-gates.rb` pipeline passed its test commands but rejected
+Cargo's replacement of the CLI during integration. The preserved comparison
+binary now separately passes the unchanged integration test and all 150 checksum
+controls; see [revised correctness receipt](ARRAY_REGION_V2_CORRECTNESS_2026_11_02.md).
+Its terminal gate is `region-v2-release-checks/state.json`. The original failed
+identity gate remains intact. Seven-round paired target measurements follow
+under `region-v2-comparison-b` with builds stopped; attempt `a` records a wrapper
+output-directory error before samples, not a runtime failure or score.
+Do not reuse the first candidate's passing results as proof for revised source.
+Independent-session, production, memory and clean-host gates remain open.
 
 ### Entry controls established
 
@@ -120,3 +144,28 @@ than the supplied report's recommendation. Preserve all existing observation
 points unless a separate contract change is explicitly approved. The broader
 known-callee/marshalling experiment remains open; a debug-lookup cleanup would not
 complete it in any event.
+
+### First candidate in verification: borrowed array views
+
+The unaccepted candidate uses an activation-local array-buffer view at repeated
+local reads. It retains no extra Arc and checks bounds and index kinds on every
+access. Rebinding the owning local, mutations, calls and unknown instructions
+invalidate the view; dynamic arithmetic operators invalidate on their owned
+branch because they can call user code. A whitelist fails closed for new opcodes.
+The existing generic path supplies non-array/non-integer and error behavior.
+
+This candidate still calls a Rust element-read helper. It tests whether removing
+repeated root-slot validation and array extraction is material; it does **not**
+prove direct generated scalar loads, complete native collection specialization,
+or Rust/Goose parity. If whole-workload gains are absent, reject this tactic rather
+than declaring the broader area complete. The frozen accepted library is retained
+alongside its symbolized harness for subsequent paired diagnostics.
+
+New verification covers write/append/call/replacement transitions, retained
+snapshots and loop reads in all engines. Test-only counters require generated
+region participation and one validation for repeated uninterrupted reads. The
+expanded semantic fixture passes on the accepted CLI in all three engines.
+Candidate tests/build, negative-index and mixed fallback path coverage, paired
+timing, memory checks and all-50 gates remain pending. No speed claim or accepted
+runtime commit exists. Candidate hashes and test process receipts live under
+`.audit-evidence/native-performance-campaign-2026-11-02/region-*`.
