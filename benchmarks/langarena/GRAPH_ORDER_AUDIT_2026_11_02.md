@@ -31,12 +31,15 @@ Fixed-seed small undirected graphs produce three differing expansion traces;
 one produces return values **2 versus 3**. The Kujo return values are independently
 asserted by executing the unchanged graph functions in all three engines.
 These graphs deliberately cover shapes outside the official generator's chain
-backbone. Rust and Goose executables have **not** been run on these controls;
-their comparator results are model evidence backed by pinned source review.
+backbone. A subsequent standalone oracle executes the unchanged pinned Rust
+`heuristic` and `a_star_shortest_path` methods plus their original `Node` ordering.
+It confirms all three model results: `2,2,3`, versus Kujo's `2,2,2`. Goose remains
+source-reviewed only. The oracle is a correctness check, not a competitive binary.
 
 The official `test.json` graph is checked separately. Full ordered adjacency
 generated from seed 42 matches the model in all three Kujo modes, and both queue
-models produce the same ten-entry expansion trace and result **9**. Thus the
+models produce the same ten-entry expansion trace and result **9**; the executed
+Rust oracle independently returns **9**. Thus the
 official checksum can pass while the queue implementations differ. This audit
 does not claim an observed official-test result or traversal mismatch.
 
@@ -56,7 +59,7 @@ edge arena with resized slices, and Kujo nested value arrays. These mechanisms
 do not establish allocation counts or elapsed-time attribution.
 
 Production inputs have 500,000 vertices, 20 possible jumps and jump length 1,000.
-Their full traces and actual competitor executions remain pending. Do not use
+Their full traces and production competitor executions remain pending. Do not use
 the tiny control to estimate production heap cost or to change official inputs.
 
 ## Disposition and reproduction
@@ -75,5 +78,9 @@ a chain-backbone-only search found no differing traces and motivated the explici
 labeled broader graph controls.
 
 `graph-order-audit-2026-11-02.json.gz` preserves the runner, generated fixture and
-three-mode report with per-file SHA-256 checks. These checks are separate from
+three-mode report, plus the Rust oracle source, build log, report and runner,
+with per-file SHA-256 checks. The Rust report binds its original input report,
+pinned source, compiler version and binary hash. Run
+`probes/verify-graph-rust.rb UPSTREAM GRAPH_REPORT NEW_OUTPUT_DIRECTORY` to repeat
+the four Rust controls after other builds stop. These checks are separate from
 official all-50 checksum and performance gates.
