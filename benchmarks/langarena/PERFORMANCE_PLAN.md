@@ -5,6 +5,15 @@ preserving Kujo's language contracts. Beating both languages on every workload i
 a target to test, not a guarantee. This document explains the execution order;
 [performance-plan.json](performance-plan.json) tracks all 50 cases and evidence.
 
+**Current campaign:** following the 2026-11-02 checkpoint review, the user
+authorized the [native performance campaign](NATIVE_PERFORMANCE_CAMPAIGN_2026_11_02.md).
+That ledger tracks the eight implementation areas, all-50 port equivalence,
+production and clean-host validation, and architecture work. The first three
+experiments are a delivery sequence, not the full objective. The evidence below
+and `performance-plan.json` retain their recorded revision boundaries; they do
+not certify the current unaccepted candidate. The earlier sections 3/4 cutoff
+remains closed, and no release or maintainer contact is authorized by this campaign.
+
 ## Current evidence and limits
 
 - **Array-owned row publication (`1c3acd4`).**

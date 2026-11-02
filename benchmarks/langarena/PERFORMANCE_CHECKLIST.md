@@ -1,20 +1,29 @@
 # Kujo performance implementation checklist
 
-Reviewed scope: 2026-10-26. This is the human-readable tracker for
+**Current work:** the user authorized the new
+[native performance campaign](NATIVE_PERFORMANCE_CAMPAIGN_2026_11_02.md) after
+reviewing the 2026-11-02 checkpoint and performance investigation. Use that ledger
+for current done/pending status across all eight areas and the remaining all-50,
+production, clean-host and architecture gates. Candidate acceptance requires
+the evidence specified in that ledger. The completed sections 3/4 cutoff below
+stays closed.
+
+Historical reviewed scope: 2026-10-26. This is the human-readable tracker for
 `performance-plan.json`. Check a box only when its stated gate has evidence.
 Historical passes do not certify a later runtime revision. A timeout is incomplete,
 and a stopped case is cancelled, not failed. Sections 1 and 2 have completed their
 available local diagnosis. The bounded sections 3/4 fix sequence and review cutoff
 are complete; zero additional rounds are required for that cutoff. Broader
 requirements remain partially proved, as recorded in the dispositions below.
-Current runtime optimization work is in section 5. The string-cache dispatch
+At that cutoff, runtime optimization work was in section 5. The string-cache dispatch
 candidate has completed local verification and is deferred to clean-host review.
 Clean-host comparisons remain pending.
 
 The user froze accepted improvements on 2026-11-02 for a proposed checkpoint.
 See [checkpoint review](CHECKPOINT_REVIEW_2026_11_02.md) for exact identities,
 release checks and the comparison protocol. The pending VM memory candidate is
-excluded; no further optimization, tagging or publishing precedes that review.
+excluded. That review preceded authorization of the separate campaign above;
+tagging and publishing remain outside its authorized scope.
 
 ## Completed foundation
 
@@ -24,7 +33,7 @@ excluded; no further optimization, tagging or publishing precedes that review.
 - [x] Callback reuse, module-cache ownership and native code-identity fixes.
 - [x] JIT arithmetic/type/error/assignment guards and broader native operations.
 - [x] Worker JIT policy and cancellation propagation fixes.
-- [x] Latest accepted runtime `348a6270`: all 150 test-size checksums, Mac 1,349 and Linux 1,350 library/targeted integration passes, plus full Linux workflow acceptance. See [loop final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md). Eight existing manual ignores remain. Historical production evidence retains its earlier source identity.
+- [x] Recorded runtime `348a6270`: all 150 test-size checksums, Mac 1,349 and Linux 1,350 library/targeted integration passes, plus full Linux workflow acceptance. See [loop final review](LOOP_REUSE_FINAL_REVIEW_2026_11_01.md). Eight existing manual ignores remain. Historical production evidence retains its earlier source identity; the later checkpoint and active campaign have their own identities and gates.
 - [x] One six-variant all-50 comparison (`nonleaf-comparison-all50-2026-10-25.json`).
 - [x] Linux/Windows 21-runtime/3-static release corpus and pinned-source audit
   (`nonleaf-platform-partial-2026-10-25.json`). This is not LangArena production.
