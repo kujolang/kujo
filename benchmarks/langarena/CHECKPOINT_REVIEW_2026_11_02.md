@@ -33,7 +33,7 @@ Generated `port.kujo` in the fresh checkout matches the existing port exactly.
 | Interpreter language test suite | Fresh local 150/150 pass, 11 skips |
 | Linux CI | Archived run `41294338964`, head `568dc6127556984833617b3cd64914a2307420a2`: seven successful jobs; nine archived artifact hashes independently checked |
 | CI applicability | No differences in runtime, tests, Cargo manifests/lockfile, build script, vendor, scripts or workflows between CI head and checkpoint |
-| Optimized library coverage | Archived identical-source CI: 1,354 passed, eight existing ignores |
+| Optimized regression coverage | Archived identical-source CI: 1,354 passed across nine suites, eight existing ignores |
 | Fresh complete macOS build/release gate | **Pending**: only about 1.5–1.7 GiB free disk at preflight; no build or deletion attempted |
 | New-version artifacts/platform install verification | **Pending**; no version change or release performed |
 | Clean-host performance | **Pending**; user has no dedicated host yet |
@@ -73,4 +73,8 @@ not equalize changing background load, thermal throttling, memory pressure or
 runtime-specific sensitivity. Large repeated gaps remain evidence of real
 performance differences; small changes require controlled-host confirmation.
 
-Results are pending completion and independent raw-output verification.
+Results are complete and independently verified: [all-50 comparison](CHECKPOINT_COMPARISON_2026_11_02.md).
+All 350 samples each passed for checkpoint VM, checkpoint JIT, Rust and Goose.
+Original VM passed 350; original JIT passed 119 and failed 231. The driver exited
+4 because of those historical baseline failures; none were hidden or speed-scored.
+No fresh runtime changes were made. Release checks remain pending as listed above.
