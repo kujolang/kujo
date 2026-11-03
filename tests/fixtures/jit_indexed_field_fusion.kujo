@@ -1,0 +1,33 @@
+struct FusionItem { value: any }
+func read_field(items, index) { return items[index].value }
+func missing_field(items, index) { return items[index].missing }
+func transit(input) {
+    mut items := [FusionItem { value: input }]
+    let prior := items
+    let result := read_field(items, -1)
+    items[0].value = 99
+    assert_equal(prior[0].value, input)
+    return result
+}
+func roundtrip(items, value) { items[0].send(value) return items[0].receive() }
+let channels := [channel()]
+mut n := 0
+while n < 160 {
+    for value in [null, true, 9007199254740993, -0.0, 1.25, "hello", [1, 2], {"a": [3]}, bytes([0, 255])] {
+        assert_equal(transit(value), value)
+    }
+    assert_equal(roundtrip(channels, n), n)
+    mut returned := transit([1, 2])
+    returned[0] = 7
+    assert_equal(returned, [7, 2])
+    assert_equal(read_field({"a": FusionItem { value: 8 }}, "a"), 8)
+    mut caught := 0
+    for index in [2, -2, "bad", null] {
+        try { read_field([FusionItem { value: 1 }], index) } except error { caught += 1 }
+    }
+    try { missing_field([FusionItem { value: 1 }], 0) } except error { caught += 1 }
+    try { read_field([7], 0) } except error { caught += 1 }
+    assert_equal(caught, 6)
+    n += 1
+}
+print("indexed-field-transfer: OK")

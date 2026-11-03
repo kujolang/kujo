@@ -54,6 +54,8 @@ fn run(source: &str, extra: &[&str]) -> (Output, Value) {
         "jit_native_function_entries",
         "jit_call_dispatches",
         "jit_owned_argument_dispatches",
+        "jit_indexed_field_fast_reads",
+        "jit_indexed_field_fallback_reads",
     ] {
         legacy["counters"].as_object_mut().unwrap().remove(key);
     }
@@ -223,6 +225,8 @@ fn native_entry_measurements_distinguish_execution_from_owned_argument_dispatche
             "jit_native_boundary_entries",
             "jit_call_dispatches",
             "jit_owned_argument_dispatches",
+            "jit_indexed_field_fast_reads",
+            "jit_indexed_field_fallback_reads",
         ] {
             assert_eq!(measured["counters"][key], 0);
         }

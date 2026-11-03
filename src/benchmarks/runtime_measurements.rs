@@ -46,6 +46,8 @@ metrics! {
     JitNativeFunctionEntries => "jit_native_function_entries",
     JitCallDispatches => "jit_call_dispatches",
     JitOwnedArgumentDispatches => "jit_owned_argument_dispatches",
+    JitIndexedFieldFast => "jit_indexed_field_fast_reads",
+    JitIndexedFieldFallback => "jit_indexed_field_fallback_reads",
     JitCompileEntries => "jit_compile_entries",
     JitCompileWallNs => "jit_compile_inclusive_wall_ns",
     JitCacheHits => "jit_cache_lookup_hits",

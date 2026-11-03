@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Experimental implementation branch: fuse adjacent whole-function array index and
+  scalar struct field reads with checked fallback; preserve independent owned
+  results and method receivers. Add optional fixed measurement counters for fast
+  reads and fallback attempts. Performance acceptance remains pending.
+
 - Experimental implementation branch: transfer native SSA local-store operands
   when the following instruction discards them, avoiding a duplicate owned root.
   Benchmark and full regression acceptance remain pending; no speed claim yet.

@@ -1371,6 +1371,62 @@ pub unsafe extern "C" fn jit_indexed_read(
     indexed_read(ctx, object, object_kind, index, index_kind, None)
 }
 
+/// Fuse an indexed read and an immediately following stored scalar field read.
+#[no_mangle]
+// SAFETY:
+// - Preconditions: ctx/root storage satisfy jit_indexed_read; field_ptr is null
+//   or points to live immutable compiler-retained String metadata. No concurrent
+//   mutation or overlapping mutable borrow exists during this call.
+// - Postconditions: the fast path borrows only within this operation and returns
+//   an immediate scalar, never a pointer/view. All other cases run the original
+//   checked helpers in order, including receiver handling and root cleanup.
+pub unsafe extern "C" fn jit_indexed_field_read(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+    field_ptr: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    if ctx.runtime_error.is_none()
+        && object_kind == crate::native_owned::OWNED
+        && index_kind == crate::native_scalar::INTEGER
+    {
+        if let (Ok(Value::Array(values)), Some(field)) =
+            (ctx.owned_roots.borrow_owned(object), (field_ptr as *const String).as_ref())
+        {
+            let resolved = if index < 0 { values.len() as i64 + index } else { index };
+            if let Some(Value::Struct { name, fields }) =
+                usize::try_from(resolved).ok().and_then(|offset| values.get(offset))
+            {
+                // ArgParser's legacy methods override stored fields. Missing or
+                // owned fields also use the ordinary helpers, preserving errors,
+                // independent returned roots and any hidden method receiver.
+                if name != "ArgParser" {
+                    if let Some((payload, kind)) =
+                        fields.get(field).and_then(crate::native_scalar::encode)
+                    {
+                        measurement::add(Metric::JitIndexedFieldFast, 1);
+                        ctx.field_receiver_pending = false;
+                        ctx.return_value_kind = kind;
+                        return payload;
+                    }
+                }
+            }
+        }
+    }
+    measurement::add(Metric::JitIndexedFieldFallback, 1);
+    let intermediate = jit_indexed_read(ctx, object, object_kind, index, index_kind);
+    if ctx.runtime_error.is_some() {
+        return 0;
+    }
+    let intermediate_kind = ctx.return_value_kind;
+    let result = jit_field_read(ctx, intermediate, intermediate_kind, field_ptr);
+    jit_release_operand(ctx, intermediate, intermediate_kind);
+    result
+}
+
 /// Read with a stack-local root-slot hint. The hint never bypasses handle checks.
 #[no_mangle]
 // SAFETY:
@@ -5516,6 +5572,8 @@ struct BytecodeTranslator {
     /// Whole-function stores whose peeked operand is immediately discarded.
     /// The operand can transfer its root to SSA without creating a second owner.
     discarded_local_store_pcs: HashSet<usize>,
+    /// Adjacent reads entirely within one whole-function basic block.
+    indexed_field_reads: HashMap<usize, String>,
     scalar_return_func: Option<FuncRef>,
     scalar_kind_func: Option<FuncRef>,
     owned_truth_func: Option<FuncRef>,
@@ -5607,6 +5665,7 @@ struct BytecodeTranslator {
     make_array_func: Option<FuncRef>,
     make_struct_func: Option<FuncRef>,
     field_read_func: Option<FuncRef>,
+    indexed_field_read_func: Option<FuncRef>,
     field_write_func: Option<FuncRef>,
     index_set_result_func: Option<FuncRef>,
     field_call_func: Option<FuncRef>,
@@ -5715,6 +5774,7 @@ impl BytecodeTranslator {
             value_stack: Vec::new(),
             scalar_kinds: HashMap::new(),
             discarded_local_store_pcs: HashSet::new(),
+            indexed_field_reads: HashMap::new(),
             scalar_return_func: None,
             scalar_kind_func: None,
             owned_truth_func: None,
@@ -5796,6 +5856,7 @@ impl BytecodeTranslator {
             make_array_func: None,
             make_struct_func: None,
             field_read_func: None,
+            indexed_field_read_func: None,
             field_write_func: None,
             index_set_result_func: None,
             field_call_func: None,
@@ -6963,6 +7024,23 @@ impl BytecodeTranslator {
             }
         }
 
+        // A jump into FieldGet must retain the original operation. Loop regions
+        // also retain their per-opcode callback/deoptimization guards unchanged.
+        if self.tracks_function_depth {
+            self.indexed_field_reads = instructions[..self.function_end]
+                .windows(2)
+                .enumerate()
+                .filter_map(|(pc, pair)| match pair {
+                    [OpCode::IndexGet, OpCode::FieldGet(name)]
+                        if !self.blocks.contains_key(&(pc + 1)) =>
+                    {
+                        Some((pc, name.clone()))
+                    }
+                    _ => None,
+                })
+                .collect();
+        }
+
         if std::env::var("DEBUG_JIT").is_ok() {
             eprintln!(
                 "JIT: Function body extent: 0..{}, blocks created: {:?}",
@@ -7559,6 +7637,11 @@ impl BytecodeTranslator {
             }
 
             OpCode::FieldGet(name) => {
+                if pc > 0 && self.indexed_field_reads.contains_key(&(pc - 1)) {
+                    // The preceding IndexGet performed both operations. Stack
+                    // height is unchanged and no other edge can enter this PC.
+                    return Ok(false);
+                }
                 let object = self.pop_value()?;
                 let ctx = self.ctx_param.ok_or("Field read requires context")?;
                 let helper = self.field_read_func.ok_or("Field read requires helper")?;
@@ -7580,8 +7663,17 @@ impl BytecodeTranslator {
                 let helper = self.indexed_read_func.ok_or("Indexed read requires helper")?;
                 let object_kind = self.scalar_kind(builder, object);
                 let index_kind = self.scalar_kind(builder, index);
-                let call =
-                    builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
+                let call = if let Some(field) = self.indexed_field_reads.get(&pc) {
+                    let name = self.field_names.get(field).ok_or("Missing fused field metadata")?;
+                    let pointer = builder.ins().iconst(types::I64, Arc::as_ptr(name) as i64);
+                    let helper =
+                        self.indexed_field_read_func.ok_or("Missing fused field helper")?;
+                    builder
+                        .ins()
+                        .call(helper, &[ctx, object, object_kind, index, index_kind, pointer])
+                } else {
+                    builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind])
+                };
                 let result = builder.inst_results(call)[0];
                 self.capture_loaded_operand(builder, ctx, result);
                 self.release_operand(builder, object);
@@ -10331,6 +10423,7 @@ impl JitCompiler {
             ("jit_make_array", 2, true),
             ("jit_prepare_field_call", 2, true),
             ("jit_field_read", 4, true),
+            ("jit_indexed_field_read", 6, true),
             ("jit_field_write", 6, true),
             ("jit_index_set_result", 7, true),
             ("jit_indexed_read", 5, true),
@@ -10385,6 +10478,7 @@ impl JitCompiler {
                 "jit_make_array" => translator.make_array_func = Some(function),
                 "jit_prepare_field_call" => translator.field_call_func = Some(function),
                 "jit_field_read" => translator.field_read_func = Some(function),
+                "jit_indexed_field_read" => translator.indexed_field_read_func = Some(function),
                 "jit_field_write" => translator.field_write_func = Some(function),
                 "jit_index_set_result" => translator.index_set_result_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
@@ -10540,6 +10634,7 @@ impl JitCompiler {
         );
         builder.symbol("jit_prepare_field_call", jit_prepare_field_call as *const u8);
         builder.symbol("jit_field_read", jit_field_read as *const u8);
+        builder.symbol("jit_indexed_field_read", jit_indexed_field_read as *const u8);
         builder.symbol("jit_field_write", jit_field_write as *const u8);
         builder.symbol("jit_index_set_result", jit_index_set_result as *const u8);
         builder.symbol("jit_make_struct", jit_make_struct as *const u8);
@@ -13953,6 +14048,77 @@ mod tests {
             let (_, live, capacity, _) = context.owned_roots.storage_state();
             assert_eq!(live, 0);
             assert!(capacity <= 4, "root storage grew to {capacity}");
+        }
+    }
+
+    #[test]
+    fn fused_indexed_fields_preserve_bits_snapshots_and_branch_entries() {
+        for field in [
+            Value::Int(i64::MAX),
+            Value::Float(-0.0),
+            Value::Float(f64::from_bits(0x7ff8_0000_0000_0042)),
+            Value::Bool(true),
+            Value::Null,
+            Value::array(vec![Value::Int(7)]),
+        ] {
+            for index in [0, -1, 1, -2] {
+                let mut counts = Vec::new();
+                let mut errors = Vec::new();
+                for barrier in [false, true] {
+                    let mut compiler = JitCompiler::new().unwrap();
+                    let mut chunk = BytecodeChunk::new();
+                    chunk.emit(OpCode::LoadVar("seed".into()));
+                    let constant = chunk.add_constant(Constant::Int(index));
+                    chunk.emit(OpCode::LoadConst(constant));
+                    chunk.emit(OpCode::IndexGet);
+                    if barrier {
+                        // A separate branch target cannot participate in fusion.
+                        chunk.emit(OpCode::Jump(chunk.instructions.len() + 1));
+                    }
+                    chunk.emit(OpCode::FieldGet("value".into()));
+                    chunk.emit(OpCode::Return);
+                    let compiled = compiler.compile_function(&chunk, "field_fusion").unwrap();
+                    let seed = Arc::new(vec![Value::Struct {
+                        name: "Item".into(),
+                        fields: Arc::new(HashMap::from([("value".into(), field.clone())])),
+                    }]);
+                    let mut globals = HashMap::from([("seed".into(), Value::Array(seed.clone()))]);
+                    let mut names = HashMap::from([(
+                        BytecodeTranslator::hash_var_name("seed"),
+                        "seed".to_owned(),
+                    )]);
+                    let mut stack = Vec::new();
+                    let mut context =
+                        VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+                    context.var_names_ptr = &mut names;
+                    let status = invoke_compiled_fn(compiled, &mut context);
+                    errors.push(context.runtime_error.clone());
+                    if index == 0 || index == -1 {
+                        assert_eq!(status, 0, "{:?}", context.runtime_error);
+                        let result = context.take_return_value(context.return_value);
+                        if let Some(expected) = crate::native_scalar::encode(&field) {
+                            assert_eq!(crate::native_scalar::encode(&result), Some(expected));
+                        } else {
+                            let Value::Array(actual) = result else { panic!("expected array") };
+                            let Value::Array(expected) = &field else { unreachable!() };
+                            assert!(Arc::ptr_eq(&actual, expected));
+                        }
+                    } else {
+                        assert!(context.runtime_error.is_some());
+                    }
+                    assert!(matches!(&seed[0], Value::Struct { fields, .. }
+                        if format!("{:?}", fields["value"]) == format!("{field:?}")));
+                    assert!(stack.is_empty());
+                    assert_eq!(context.owned_roots.storage_state().1, 0);
+                    counts.push(context.owned_roots.issued_handles());
+                }
+                assert_eq!(errors[0], errors[1]);
+                if (index == 0 || index == -1) && crate::native_scalar::encode(&field).is_some() {
+                    assert_eq!(counts[1] - counts[0], 1, "{counts:?}");
+                } else {
+                    assert_eq!(counts[0], counts[1]);
+                }
+            }
         }
     }
 

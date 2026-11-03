@@ -34,6 +34,7 @@ does not read clocks or allocate per event.
 | `jit_native_function_entries` | Successful native function prologues, including direct native recursion; excludes loops/scripts and rejected depth-guard entries |
 | `jit_call_dispatches` | Bytecode-call dispatches observed after main-VM argument preparation or at native callback-bridge entry while JIT is enabled; includes compilation retries, excludes earlier preparation failures, and is not a count of unique logical calls |
 | `jit_owned_argument_dispatches` | Subset of those dispatches containing a value outside Int/Bool/Float/Null; other exclusions such as captures may also apply |
+| `jit_indexed_field_fast_reads`, `jit_indexed_field_fallback_reads` | Calls to the experimental whole-function fused array-index/stored-field helper: immediate scalar successes versus checked generic fallback attempts. Excludes unfused reads and does not measure CPU time or instruction coverage |
 | `scheduler_rounds` | Cooperative scheduler rounds; not Tokio's internal scheduling decisions |
 | `vm_closures_created`, `vm_capture_cells_created` | Created closure values and cells at MakeClosure; cumulative, not live/peak retention |
 | `vm_capture_value_shallow_bytes` | Count times Rust Value size, excluding Arc/Mutex, map/string storage and referenced graph; not retained heap bytes |
