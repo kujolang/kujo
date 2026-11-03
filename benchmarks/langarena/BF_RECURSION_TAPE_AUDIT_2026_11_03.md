@@ -1,5 +1,10 @@
 # Recursive Brainfuck: initial tape mismatch reproduced
 
+Follow-up: the [canonical port correction](BF_RECURSION_TAPE_FIX_2026_11_03.md)
+now passes 96 focused tape observations and all 150 test-size checksums. The
+original isolated audit below describes the pre-fix source and remains historical
+evidence; its remaining structural/comparator gates are still open.
+
 Pinned Rust and Goose start the recursive Brainfuck tape with **one zero byte**
 and grow on rightward movement. The Kujo port starts that variant with **30,000
 zero bytes**, sharing the array variant's initial size. This is a confirmed port

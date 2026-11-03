@@ -71,7 +71,7 @@ func bf_run_ops(ops, input) {
 func bf_text(cfg, text) {
     if cfg["name"] == "Brainfuck::Array" { return bf_array(text) }
     let parsed := bf_parse(text, 0)
-    let machine := bf_run_ops(parsed[0], {"tape": bytes(vector(30000, 0)), "position": 0, "result": 0})
+    let machine := bf_run_ops(parsed[0], {"tape": bytes([0]), "position": 0, "result": 0})
     return machine["result"]
 }
 func bf_warmup(input, iteration) {
