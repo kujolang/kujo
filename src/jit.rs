@@ -5513,6 +5513,9 @@ struct BytecodeTranslator {
     /// Stack simulation - maps stack depth to Cranelift values
     value_stack: Vec<cranelift::prelude::Value>,
     scalar_kinds: HashMap<cranelift::prelude::Value, cranelift::prelude::Value>,
+    /// Whole-function stores whose peeked operand is immediately discarded.
+    /// The operand can transfer its root to SSA without creating a second owner.
+    discarded_local_store_pcs: HashSet<usize>,
     scalar_return_func: Option<FuncRef>,
     scalar_kind_func: Option<FuncRef>,
     owned_truth_func: Option<FuncRef>,
@@ -5711,6 +5714,7 @@ impl BytecodeTranslator {
             cancellation_checks: false,
             value_stack: Vec::new(),
             scalar_kinds: HashMap::new(),
+            discarded_local_store_pcs: HashSet::new(),
             scalar_return_func: None,
             scalar_kind_func: None,
             owned_truth_func: None,
@@ -6366,6 +6370,14 @@ impl BytecodeTranslator {
     }
 
     fn scan_non_int_locals(&mut self, instructions: &[OpCode], function_end: usize) {
+        self.discarded_local_store_pcs = instructions[..function_end.min(instructions.len())]
+            .windows(2)
+            .enumerate()
+            .filter_map(|(pc, pair)| {
+                matches!(pair, [OpCode::StoreLocal(_) | OpCode::DefineLocal(_), OpCode::Pop])
+                    .then_some(pc)
+            })
+            .collect();
         // Loop locals must persist to physical VM slots, not only to the
         // temporary name map. Tagged SSA handles owned values as well as scalars.
         // Integer-map slots retain their separate physical-slot path.
@@ -8872,7 +8884,30 @@ impl BytecodeTranslator {
                     if self.use_local_slots {
                         if let Some(&variable) = self.local_variables.get(name) {
                             self.dirty_local_names.insert(name.clone());
-                            self.store_native_local(builder, variable, value);
+                            if self.tracks_function_depth
+                                && self.discarded_local_store_pcs.contains(&pc)
+                            {
+                                // Load/Dup already gave this operand its own root.
+                                // Move that owner to the local. Keep a Null stack
+                                // placeholder so the following Pop and branch stack
+                                // shapes remain unchanged. Initialization checks
+                                // above still run before ownership changes.
+                                let old = builder.use_var(variable);
+                                let old_kind = builder.use_var(Variable::new(variable.index() + 1));
+                                self.scalar_kinds.insert(old, old_kind);
+                                self.release_operand(builder, old);
+                                let kind = self.scalar_kind(builder, value);
+                                builder.def_var(variable, value);
+                                builder.def_var(Variable::new(variable.index() + 1), kind);
+                                self.pop_value()?;
+                                let null = builder.ins().iconst(types::I64, 0);
+                                let null_kind =
+                                    builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+                                self.scalar_kinds.insert(null, null_kind);
+                                self.push_value(null);
+                            } else {
+                                self.store_native_local(builder, variable, value);
+                            }
                             if self.int_dict_slots.contains(slot) {
                                 if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                     let zero = builder.ins().iconst(types::I64, 0);
@@ -13918,6 +13953,61 @@ mod tests {
             let (_, live, capacity, _) = context.owned_roots.storage_state();
             assert_eq!(live, 0);
             assert!(capacity <= 4, "root storage grew to {capacity}");
+        }
+    }
+
+    #[test]
+    fn discarded_native_local_stores_transfer_roots_without_losing_snapshots() {
+        for repetitions in [1, 8, 128] {
+            let mut counts = Vec::new();
+            for barrier in [false, true] {
+                let mut compiler = JitCompiler::new().unwrap();
+                let mut chunk = BytecodeChunk::new();
+                chunk.local_names.push("local".into());
+                chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+                for _ in 0..repetitions {
+                    chunk.emit(OpCode::LoadVar("seed".into()));
+                    chunk.emit(OpCode::StoreLocal(0));
+                    if barrier {
+                        // Equivalent generic peek store: its operand crosses a
+                        // block edge before Pop, so the consuming proof cannot apply.
+                        chunk.emit(OpCode::Jump(chunk.instructions.len() + 1));
+                    }
+                    chunk.emit(OpCode::Pop);
+                }
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::Return);
+                let compiled = compiler.compile_function(&chunk, "store_transfer").unwrap();
+                let seed = Arc::new(vec![Value::array(vec![Value::Int(7)])]);
+                let mut globals = HashMap::from([("seed".into(), Value::Array(seed.clone()))]);
+                let mut names = ["seed", "local"]
+                    .into_iter()
+                    .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+                    .collect();
+                let mut caller = vec![Value::Int(77)];
+                let mut stack = Vec::new();
+                let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+                context.var_names_ptr = &mut names;
+                context.local_slots_ptr = &mut caller;
+                assert_eq!(
+                    invoke_compiled_fn(compiled, &mut context),
+                    0,
+                    "{:?}",
+                    context.runtime_error
+                );
+                let returned = context.take_return_value(context.return_value);
+                let Value::Array(values) = returned else { panic!("expected array") };
+                assert!(Arc::ptr_eq(&values, &seed));
+                assert!(matches!(caller.as_slice(), [Value::Int(77)]));
+                assert!(stack.is_empty());
+                assert_eq!(context.owned_roots.storage_state().1, 0);
+                counts.push(context.owned_roots.issued_handles());
+            }
+            assert_eq!(
+                counts[1] - counts[0],
+                repetitions as u64,
+                "one redundant root per discarded local store: {counts:?}"
+            );
         }
     }
 

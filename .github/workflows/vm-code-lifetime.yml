@@ -2,6 +2,11 @@ name: vm-code-lifetime
 
 on:
   workflow_dispatch:
+    inputs:
+      local_store_only:
+        description: Run isolated local-store correctness and paired timing gates
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       windows_only:
@@ -12,7 +17,11 @@ permissions:
   contents: read
 
 jobs:
+  local-store:
+    if: inputs.local_store_only
+    uses: ./.github/workflows/native-local-store.yml
   lifetime:
+    if: ${{ !inputs.local_store_only }}
     timeout-minutes: 90
     strategy:
       fail-fast: false

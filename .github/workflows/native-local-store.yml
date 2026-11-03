@@ -1,0 +1,64 @@
+name: native-local-store
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        session: [1, 2]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record identities
+        run: |
+          mkdir store-evidence
+          git rev-parse HEAD > store-evidence/candidate-source.txt
+          rustc -Vv > store-evidence/toolchain.txt
+          lscpu > store-evidence/cpu.txt
+          git ls-files -z src tests Cargo.toml Cargo.lock benchmarks/langarena/src benchmarks/langarena/test.json | xargs -0 sha256sum > store-evidence/source-hashes.txt
+      - name: Check formatting and native root transfers
+        run: |
+          cargo fmt --check
+          cargo test --release --locked --lib -- --nocapture > store-evidence/library.log 2>&1
+      - name: Check runtime semantics
+        run: |
+          cargo test --release --locked --test jit_local_store_transfer --test jit_call_contracts --test jit_cold_callback --test jit_callback_depth --test imported_vm_callback --test callback_module_cache --test language_task_contracts --test langarena_port_contracts > store-evidence/integrations.log 2>&1
+      - name: Build and freeze ordinary candidate CLI
+        run: |
+          cargo build --release --locked --bin kujo --message-format=json > store-evidence/candidate-build.jsonl 2> store-evidence/candidate-build.stderr
+          cp target/release/kujo store-evidence/candidate-kujo
+          KUJO_LANGARENA_BINARY="$PWD/store-evidence/candidate-kujo" cargo test --release --locked --test langarena_port_contracts all_fifty_upstream_checksums_in_all_runtimes -- --exact --ignored --nocapture > store-evidence/all150.log 2>&1
+          store-evidence/candidate-kujo run benchmarks/langarena/build.kujo > store-evidence/port-build.log
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: cd5f2b207a8f907d6c263f5a2e405412965344ca
+          path: baseline
+      - name: Build and freeze accepted baseline with matching flags
+        run: |
+          git -C baseline rev-parse HEAD > store-evidence/baseline-source.txt
+          cargo build --manifest-path baseline/Cargo.toml --target-dir target --release --locked --bin kujo --message-format=json > store-evidence/baseline-build.jsonl 2> store-evidence/baseline-build.stderr
+          cp target/release/kujo store-evidence/baseline-kujo
+          sha256sum store-evidence/*-kujo > store-evidence/binary-hashes.txt
+      - name: Alternating uninstrumented measurements after all builds
+        run: |
+          free -k > store-evidence/memory-before.txt
+          cat /proc/loadavg > store-evidence/load-before.txt
+          ruby benchmarks/langarena/probes/compare-local-store-targets.rb store-evidence/baseline-kujo store-evidence/candidate-kujo store-evidence/timings
+          free -k > store-evidence/memory-after.txt
+          cat /proc/loadavg > store-evidence/load-after.txt
+          sha256sum --check store-evidence/binary-hashes.txt > store-evidence/binary-recheck.txt
+          sha256sum --check store-evidence/source-hashes.txt > store-evidence/source-recheck.txt
+      - name: Preserve evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: local-store-session-${{ matrix.session }}
+          retention-days: 7
+          path: store-evidence/
