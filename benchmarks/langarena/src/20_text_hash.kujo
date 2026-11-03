@@ -30,8 +30,8 @@ func bf_array(text) {
         else if op == "-" { tape[position] = (tape[position] + 255) % 256 }
         else if op == ">" { position += 1 if position >= len(tape) { tape = concat(tape, bytes([0])) } }
         else if op == "<" { position = imax(0, position - 1) }
-        else if op == "[" { if tape[position] == 0 { pc = jumps[pc] continue } }
-        else if op == "]" { if tape[position] != 0 { pc = jumps[pc] continue } }
+        else if op == "[" { if tape[position] == 0 { pc = jumps[pc] + 1 continue } }
+        else if op == "]" { if tape[position] != 0 { pc = jumps[pc] + 1 continue } }
         else if op == "." { result = u32(result * 4 + tape[position]) }
         pc += 1
     }

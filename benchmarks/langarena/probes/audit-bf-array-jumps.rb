@@ -2,7 +2,8 @@ require 'json'
 require 'digest'
 require 'base64'
 require 'open3'
-raise 'usage: UPSTREAM FROZEN_KUJO NEW_OUTPUT' unless ARGV.size == 3
+require_correct = ARGV.delete('--require-correct-jumps')
+raise 'usage: UPSTREAM FROZEN_KUJO NEW_OUTPUT [--require-correct-jumps]' unless ARGV.size == 3
 arena,binary,out = ARGV.map { |p| File.expand_path(p) }
 raise 'existing output' if File.exist?(out)
 comparators = %w[rust/src/benchmarks/brainfuck_array.rs goose/src/brainfuck_array.goose]
@@ -46,8 +47,12 @@ end
 source = File.read('benchmarks/langarena/port.kujo').split('func profile_checkpoint(').first
 kernel = File.read('benchmarks/langarena/src/20_text_hash.kujo')[/func bf_array\(.*?\n}\n/m]
 raise 'kernel extraction' unless kernel && source.include?(kernel)
-raise 'jump sites changed' unless kernel.scan('pc = jumps[pc] continue').size == 2
-before = kernel.sub('func bf_array(', 'func bf_array_before(')
+old_jump = 'pc = jumps[pc] continue'
+new_jump = 'pc = jumps[pc] + 1 continue'
+canonical_fixed = kernel.scan(new_jump).size == 2 && kernel.scan(old_jump).empty?
+raise 'unexpected jump sites' unless canonical_fixed || (kernel.scan(old_jump).size == 2 && kernel.scan(new_jump).empty?)
+raise 'canonical jumps still redispatch brackets' if require_correct && !canonical_fixed
+before = kernel.gsub(new_jump,old_jump).sub('func bf_array(', 'func bf_array_before(')
 before = before.sub('    mut result := 0',"    mut result := 0\n    mut steps := 0")
 before = before.sub('        let op := commands[pc]',"        steps += 1\n        let op := commands[pc]")
 before = before.sub('    return result', '    return [result,position,encode_base64(tape),steps]')
@@ -68,7 +73,7 @@ KUJO
 Dir.mkdir(out)
 File.write(out+'/contracts.kujo',source);File.write(out+'/programs.json',JSON.pretty_generate(programs));File.write(out+'/oracle.json',JSON.pretty_generate(oracle))
 hashes[out+'/contracts.kujo'] = Digest::SHA256.hexdigest(source)
-File.write(out+'/manifest.json',JSON.pretty_generate({files:hashes,scope:'isolated jump variant; canonical port unchanged'}))
+File.write(out+'/manifest.json',JSON.pretty_generate({files:hashes,canonical_fixed:canonical_fixed,scope:'baseline/corrected state and command-count comparison; canonical source unchanged by collector'}))
 runs = []
 %w[vm interpreter jit].each do |mode|
   argv = [binary,'run','--scheduler-timeout-ms','120000'];argv << '--'+mode unless mode == 'vm';argv << out+'/contracts.kujo'
@@ -86,7 +91,8 @@ runs = []
 end
 hashes.each { |p,h| raise 'source drift' unless Digest::SHA256.file(p).hexdigest == h }
 summary = {status:'verified',programs:16,runtimes:3,complete_states:96,
+           canonical_fixed:canonical_fixed,
            target_programs:oracle.count { |r| r[:taken]>0 },
            baseline_steps:oracle.sum { |r| r[:steps]+r[:taken] },candidate_steps:oracle.sum { |r| r[:steps] },
-           scope:'Counts per one pass of16 fixtures; full tape/position/checksum equivalence; isolated candidate only, no actual comparator execution or speed claim'}
+           scope:'Counts per one pass of16 fixtures; full tape/position/checksum equivalence; no actual comparator execution or speed claim'}
 File.write(out+'/verification.json',JSON.pretty_generate(summary));puts JSON.generate(summary)
