@@ -90,3 +90,8 @@ matching existing Windows CI, and a folded single-line integration command.
 All default features and all ten suites remain required. This is build-environment
 repair; no tests ran and no runtime failure/pass is claimed. Artifact `13220463449`
 preserves the exact source/toolchain and build failure.
+
+The first native-shell edit was rejected at dispatch (HTTP 422): the `runner`
+context is unavailable in a `shell` expression. No run started. Remove that
+expression and use GitHub's native platform default shell for both Cargo steps
+(PowerShell on Windows, Bash on Unix); keep the folded single command.
