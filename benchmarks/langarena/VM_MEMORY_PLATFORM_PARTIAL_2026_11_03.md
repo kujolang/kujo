@@ -38,3 +38,30 @@ API results; a local source receipt alone is insufficient. The adjacent
 `vm-memory-platform-partial-2026-11-03.json.gz` retains raw three-platform logs,
 source/toolchain receipts, API snapshots, verifier, negative control and source
 comparison with verified per-artifact hashes.
+
+## Exact integration membership follow-up
+
+Acceptance review reproduced a weakness in the original verifier: replacing the
+generator-after-owner-destruction pass with a duplicate existing test left sixty
+passing lines and unchanged summaries, so the old verifier accepted it. This is
+a verifier defect, not evidence that the actual platform runs omitted the test.
+
+The verifier now compares all sixty passing names against the ten test files at
+the exact tested Git commit, retaining their source hashes and per-file names.
+Its discovery is intentionally limited to these reviewed top-level, directly
+annotated test functions; it is not general Rust test discovery. The tested
+commit must be available in the local Git object database. Cargo target, build,
+summary and workflow-provenance checks still apply.
+
+All three real platform artifacts pass the stronger check. Regression controls
+accept unchanged and CRLF-normalized logs and reject both a duplicate test and a
+fabricated replacement while leaving the passing counts unchanged. Run
+`probes/test-vm-platform-membership.rb ARTIFACT_DIRECTORY PLATFORM EXPECTED_COMMIT`
+to repeat these controls. The separate
+`vm-memory-platform-membership-2026-11-03.json.gz` preserves the reproduced old
+acceptance, corrected verification receipts, pinned test sources, original logs
+and regression scripts. The earlier evidence archive remains immutable.
+
+Both remaining CI jobs have now completed their private-owner test step and are
+running the integration step. Final macOS Intel/Windows artifacts and the overall
+memory-candidate acceptance decision remain pending.

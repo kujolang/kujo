@@ -1,6 +1,7 @@
 # Verify downloaded targeted lifetime artifacts; workflow/job identity is reviewed separately.
 require 'json'
 require 'digest'
+require 'open3'
 raise 'usage: ARTIFACT_DIRECTORY PLATFORM EXPECTED_COMMIT' unless ARGV.size == 3
 out, platform, commit = ARGV
 hosts = {'linux-x64'=>'x86_64-unknown-linux-gnu','linux-arm64'=>'aarch64-unknown-linux-gnu',
@@ -30,6 +31,19 @@ results = summaries.call(integration)
 raise 'integration coverage/results' unless results.size == 10 && results.sum { |row| row[0] } == 60 && results.all? { |row| row[1..-1] == [0,0,0,0] }
 names = integration.scan(/^test (.+) \.\.\. ok$/).flatten
 raise 'integration passing names' unless names.size == 60
+# These ten suites use top-level, directly annotated tests. Pin membership to
+# the tested commit rather than accepting any sixty successful log lines.
+# This is deliberately not a general Rust test-discovery parser.
+test_sources = expected_targets.to_h do |target|
+  path = "tests/#{target}.rs"
+  bytes, error, status = Open3.capture3('git', 'show', "#{commit}:#{path}")
+  raise "missing pinned test source #{path}: #{error}" unless status.success?
+  tests = bytes.scan(/^#\[test\]\s*\nfn ([a-zA-Z0-9_]+)\(/).flatten
+  raise "unsupported test declarations in #{path}" unless tests.size == bytes.scan(/^#\[test\]/).size && !tests.empty?
+  [target, {source_sha256: Digest::SHA256.hexdigest(bytes), tests: tests.sort}]
+end
+expected_names = test_sources.values.flat_map { |entry| entry[:tests] }.sort
+raise 'pinned integration membership' unless expected_names.size == 60 && names.sort == expected_names
 messages = integration.lines.select { |line| line.start_with?('{') }.map { |line| JSON.parse(line) }
 targets = messages.select { |m| m['reason'] == 'compiler-artifact' && m.dig('profile','test') }.map { |m| m.dig('target','name') }
 raise 'integration binaries' unless targets.sort == expected_targets.sort
@@ -37,6 +51,7 @@ raise 'build result' unless messages.select { |m| m['reason'] == 'build-finished
 result = {status:'verified',platform:platform,commit:commit,toolchain:source,
           library_tests:expected_library,library_filtered:lib_summary[0][4],integration_targets:targets,
           integration_passed:60,total_passed:60+expected_library.size,
+          integration_test_sources:test_sources,
           executable_revocation_test:platform != 'windows-x64',
           files:raw.to_h { |name,bytes| [name,Digest::SHA256.hexdigest(bytes)] },
           scope:'Targeted lifetime/semantic verification only; Windows reclamation not proved, remaining library tests excluded, workflow/job provenance reviewed separately.'}
