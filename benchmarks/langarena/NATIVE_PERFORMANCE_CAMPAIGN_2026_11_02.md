@@ -24,17 +24,21 @@ outcome or a reason to weaken Kujo semantics.
 
 ## Full work ledger
 
+The [all-50 port ledger](PORT_EQUIVALENCE_LEDGER_2026_11_02.md) names every
+registered workload and its remaining structural comparison gate. It is separate
+from checksum coverage and runtime optimization acceptance.
+
 | Area | Required outcome | State |
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
-| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | 51 entry controls, 18 native census controls and 102 baseline samples pass; guarded call implementation pending |
+| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | Scaling/census baseline complete; call-error prerequisite passes 155 regressions and 150 checksums; guarded call optimization pending |
 | 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Pending |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
 | 7. Startup/reusable compilation | Measure each frontend/setup phase; reduce confirmed redundant work; evaluate lazy/reusable artifacts with source/ABI invalidation | Pending |
 | 8. Memory lifetime | Complete separate lifetime candidate's resource/platform gates; measure retained code and live heap separately | Pending, candidate separate |
-| Port equivalence | Audit all 50 algorithms/work; isolate port improvements from runtime wins; strengthen structural oracles | Representative research, LZW and graph controls; [maze source review](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md) partial; full audit pending |
+| Port equivalence | Audit all 50 algorithms/work; isolate port improvements from runtime wins; strengthen structural oracles | Representative research, LZW/graph controls and [40-state maze oracle](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); A* path differences confirmed; full audit pending |
 | Production and competition | All-50 test and production checks; repeat frozen Kujo/Rust/Goose comparisons with failures/timeouts retained | Pending |
 | Clean host | Dedicated-host reproduction, independent sessions and resource ceilings | Pending; no dedicated host supplied |
 | Architecture | Typed native regions, shapes/storage, escape/ownership analysis, code owners/reuse and compact VM evaluation | Pending; narrow experiments precede migration |
@@ -87,13 +91,14 @@ The tactical array-region experiment is [closed and rejected](ARRAY_REGION_REJEC
 Its first candidate and sole revision passed their correctness gates but did not
 establish repeatable target gains. The revision's 504-sample sweep consistently
 slowed byte/dictionary fallback paths despite array microbenchmark gains. The
-unaccepted runtime/changelog edits are removed; all 1,390 frozen identities again
-match the accepted baseline. Semantic fixtures and all negative evidence remain.
+unaccepted runtime/changelog edits were removed; at rejection all 1,390 frozen
+identities again matched the accepted baseline. Semantic fixtures and all negative evidence remain.
 Do not begin a third tactical revision or mark the native-access area complete.
 
 The next bounded experiment targets known-callee owned calls and remaining VM
-marshalling. Use the frozen accepted CLI: local target/release artifacts still
-contain the rejected candidate until explicitly rebuilt. Preserve value semantics,
+marshalling. Preserve the original accepted CLI and the corrected frozen CLI
+identified in the call semantic receipt; verify binary hashes before comparison.
+Local `target/release/kujo` now matches the corrected CLI. Preserve value semantics,
 dynamic rebinding, errors and frame/cancellation contracts. Existing positional
 arguments, argument buffers and root pools are already implemented.
 
@@ -105,6 +110,14 @@ The [call baseline](NATIVE_CALL_BASELINE_2026_11_02.md) adds verified native-ent
 count deltas and uninstrumented arity/width measurements. Read-only calls do not
 show width-proportional copies; remaining dispatch/ownership transfer is the
 next hypothesis to isolate. No call optimization is implemented yet.
+
+The [call semantic gates](NATIVE_CALL_SEMANTIC_GATES_2026_11_02.md) subsequently
+exposed pre-existing invalid-call recovery defects: VM arity/non-callable errors
+can bypass handlers, and interpreter non-callable invocation silently succeeds.
+The separate corrective patch passes 155 unique targeted regressions and all
+150 test-size checksums, with source/binary identity checks. This closes the
+semantic prerequisite, not the performance experiment. Next implement and measure
+guarded compiled-callee transfer/dispatch against the corrected baseline.
 
 Independent-session, production, memory and clean-host gates remain open for the
 broader campaign. No candidate from the read-region experiment is accepted.
@@ -139,7 +152,10 @@ points unless a separate contract change is explicitly approved. The broader
 known-callee/marshalling experiment remains open; a debug-lookup cleanup would not
 complete it in any event.
 
-### First candidate in verification: borrowed array views
+### Historical first candidate: borrowed array views (rejected)
+
+The following describes the experiment at entry, not current work. The rejection
+above supersedes its pending verification status; no view candidate remains live.
 
 The unaccepted candidate uses an activation-local array-buffer view at repeated
 local reads. It retains no extra Arc and checks bounds and index kinds on every
