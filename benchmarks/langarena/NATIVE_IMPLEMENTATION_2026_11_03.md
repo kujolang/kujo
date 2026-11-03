@@ -418,3 +418,26 @@ helper is deemed responsible solely from a size histogram or CI success status.
 `priority-helper-profiles-2026-11-03.json.gz` retains all raw/resolved samples,
 provenance and the independent verifier. The older experimental executable scope
 above remains binding; this is not a current-candidate or competitor comparison.
+
+## Worker reuse: focused VM Neural identity controls
+
+CI41731130400 at3eeefa72 completed; artifact13277200596. Independent review
+verifies all39 invocations (three excluded warmups), both baseline copies against
+the original frozen baseline hash, the frozen candidate hash, exact outputs,
+source/config/timer identities, and all six three-way orders twice. No rebuild
+or integration of owner runtime code occurred.
+
+Relative to the within-triplet geometric mean of identical baselines, candidate
+median ratios are0.97465 for computation and0.97257 for process elapsed, with only
+one candidate win in12 pairs. Process ratios span0.92579–1.01546. Identical A/B
+baseline ratios themselves have median0.97602 (computation0.97562), so these
+controls do not attribute the candidate loss to a specific runtime mechanism or
+justify subtracting a numeric load correction. The adverse Neural result persists
+in this sample; worker reuse remains **not accepted** despite repeated Matmul gains.
+
+Archive `owner-neural-controls-2026-11-03.json.gz` preserves raw samples, identities,
+CPU/load observations, independent reviewer/results and run provenance with
+per-file hashes. No clean-host or production result is inferred. The next owner
+acceptance decision requires an explanation or mitigation of the observed VM
+regression plus the already-open production/resource/platform gates; it must not
+be merged merely because the CI command succeeded.
