@@ -62,10 +62,12 @@ accounting_passed = 0
 if platform == 'linux-x64' && workflow.include?('name: Test owner boundary without JIT')
   raw['lifetime-no-jit.log'] = File.binread(File.join(out, 'lifetime-no-jit.log'))
   no_jit = raw.fetch('lifetime-no-jit.log').gsub("\r\n", "\n")
-  raise 'no-JIT owner membership' unless no_jit.scan(/^test (.+) \.\.\. ok$/).flatten == ['vm::code_owner_lifetime_tests::returned_values_functions_and_snapshots_survive_original_vm']
+  expected_no_jit = ['vm::code_owner_lifetime_tests::returned_values_functions_and_snapshots_survive_original_vm']
+  expected_no_jit << 'interpreter::native_functions::web_data::boundary_tests::disabled_network_web_helpers_report_feature_error' if workflow.include?('--lib disabled_network_web_helpers_report_feature_error')
+  raise 'no-JIT owner membership' unless no_jit.scan(/^test (.+) \.\.\. ok$/).flatten.sort == expected_no_jit.sort
   checks = summaries.call(no_jit)
-  raise 'no-JIT owner result' unless checks.size == 1 && checks[0][0,4] == [1,0,0,0]
-  no_jit_passed = 1
+  raise 'no-JIT owner result' unless checks.size == expected_no_jit.size && checks.all? { |row| row[0,4] == [1,0,0,0] }
+  no_jit_passed = expected_no_jit.size
 end
 if platform == 'linux-x64' && workflow.include?('name: Test native owner accounting')
   raw['lifetime-accounting.log'] = File.binread(File.join(out, 'lifetime-accounting.log'))

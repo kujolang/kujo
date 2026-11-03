@@ -2711,6 +2711,7 @@ mod tests {
         .join();
     }
 
+    #[cfg(feature = "runtime-network")]
     fn with_outbound_policy_env<F>(policy: Option<&str>, run: F)
     where
         F: FnOnce(),
@@ -2765,6 +2766,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-network")]
     fn async_http_helpers_enforce_destination_policy_before_spawning_requests() {
         with_outbound_policy_env(Some("deny_private"), || {
             let mut interp = Interpreter::new();

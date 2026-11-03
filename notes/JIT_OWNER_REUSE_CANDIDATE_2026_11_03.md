@@ -63,3 +63,25 @@ compilation counts.
 Build/test gates should run on CI while the frozen local Brainfuck production
 sequence continues. Do not substitute this candidate for its frozen executable
 or change the canonical port during that sequence.
+
+## First Linux result and feature-guard correction
+
+Run `41627350511`, job `125887926893`, artifact `13226839913`, exact
+`cb931728f8cf7d59856f84830b4213a87eec2146`: all six optimized owner-lifetime
+tests passed, including cross-worker transfer, fresh globals/literal ownership,
+current cancellation and executable-entry revocation. Exact names, source and
+summary were independently checked. This is not whole-candidate acceptance.
+
+The same job failed the no-default-features library build with 18 diagnostics;
+no no-JIT tests ran, and the integration step was skipped. Five network-only
+tests and their helpers referenced `network_policy` or HTTP functions compiled
+out by that feature configuration. The four affected source files are byte-for-
+byte unchanged from accepted base `cd5f2b20`; the owner extraction did not create
+those references. The raw logs and identities, including the failed outcome,
+are retained in `benchmarks/langarena/jit-owner-linux-boundary-cb931728-2026-11-03.json.gz`.
+
+The follow-up applies `runtime-network` guards only to those network tests,
+helpers and imports. It adds an explicit disabled-network diagnostic test and
+keeps the no-default-features gate unchanged. Networking-enabled tests remain
+enabled. The correction and new test still need execution; it does not turn the
+earlier failed job into a pass.

@@ -5852,6 +5852,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-network")]
     fn test_release_hardening_network_module_size_limit_contracts() {
         let max_body_bytes = crate::network_policy::MAX_NETWORK_BODY_BYTES as i64;
 

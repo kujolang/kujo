@@ -27,7 +27,7 @@ use std::io::{Read, Write};
 #[cfg(unix)]
 #[cfg(feature = "runtime-network")]
 use std::os::unix::fs::OpenOptionsExt;
-#[cfg(all(unix, test))]
+#[cfg(all(unix, test, feature = "runtime-network"))]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -2889,10 +2889,13 @@ pub fn generate_help(arg_defs: &[ArgumentDef], app_name: &str, description: &str
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "runtime-network")]
     use std::io::{Read, Write};
+    #[cfg(feature = "runtime-network")]
     use std::net::TcpListener;
     use std::sync::Arc;
 
+    #[cfg(feature = "runtime-network")]
     fn test_http_server(response: Vec<u8>) -> (String, thread::JoinHandle<Vec<u8>>) {
         let listener = TcpListener::bind("127.0.0.1:0").expect("test listener should bind");
         let address = listener.local_addr().expect("test listener should have an address");
@@ -2937,6 +2940,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-network")]
     fn test_http_download_file_streams_and_rejects_oversize_response() {
         let _guard = crate::network_policy::test_env_lock()
             .lock()
@@ -3004,6 +3008,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-network")]
     fn test_http_upload_file_streams_exact_binary_body() {
         let _guard = crate::network_policy::test_env_lock()
             .lock()

@@ -1199,6 +1199,17 @@ mod tests {
 #[cfg(test)]
 mod boundary_tests {
     use super::*;
+    #[cfg(not(feature = "runtime-network"))]
+    #[test]
+    fn disabled_network_web_helpers_report_feature_error() {
+        for (name, arity) in [("http_get_file_response", 3), ("http_destination_check", 1)] {
+            let result = handle(&mut Interpreter::new(), name, &vec![Value::Null; arity]);
+            assert!(
+                matches!(result, Some(Value::Error(message)) if message.contains("Network native APIs are disabled")),
+                "{name}"
+            );
+        }
+    }
     #[test]
     fn xml_projection_rejects_malformed_structure_namespaces_and_declarations() {
         let dir = tempfile::tempdir().unwrap();
@@ -1226,6 +1237,7 @@ mod boundary_tests {
         }
     }
     #[test]
+    #[cfg(feature = "runtime-network")]
     fn streaming_http_preserves_status_and_cleans_failed_body() {
         use std::net::TcpListener;
         for (response,success) in [("HTTP/1.1 302 Found\r\nLocation: /next\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",true),("HTTP/1.1 200 OK\r\nContent-Length: 1000\r\nConnection: close\r\n\r\nshort",false)] {
