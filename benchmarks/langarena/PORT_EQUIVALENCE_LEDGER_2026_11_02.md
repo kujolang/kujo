@@ -37,7 +37,7 @@ the accepted port. No rows may be checked off based only on matching checksums.
 | Etc::TextRaytracer | [46_ray.kujo](src/46_ray.kujo) | Oracle open; checksum/source evidence is separate | Every output pixel and ray/intersection work under the float policy. |
 | Etc::NeuralNet | [49_neural.kujo](src/49_neural.kujo) | Oracle open; checksum/source evidence is separate | Weights and outputs after every training step; field/transfer work separately. |
 | Etc::CacheSimulation | [47_cache.kujo](src/47_cache.kujo) | Oracle open; checksum/source evidence is separate | Full LRU order/values after every request; distinguish string links from node indices. |
-| Etc::GameOfLife | [45_life.kujo](src/45_life.kujo) | Oracle open; checksum/source evidence is separate | Complete grid after each generation and boundary behavior. |
+| Etc::GameOfLife | [45_life.kujo](src/45_life.kujo) | [540 complete grid/link/checksum observations in all three Kujo modes](LIFE_PORT_STATE_AUDIT_2026_11_03.md); partial | Random preparation, invalid/zero dimensions, executed Rust/Goose, work/copy counts and production coverage. |
 | Etc::Words | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Complete word/count output, tokenization and ordering behavior. |
 | Etc::LogParser | [48_logs.kujo](src/48_logs.kujo) | Oracle open; checksum/source evidence is separate | All parsed records/matches and malformed-line policy. |
 | Template::Regex | [35_template.kujo](src/35_template.kujo) | Oracle open; checksum/source evidence is separate | Complete rendered output, escaping and parse/render work. |
