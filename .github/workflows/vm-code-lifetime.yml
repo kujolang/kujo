@@ -51,6 +51,7 @@ jobs:
         run: |
           cargo test --release --locked --lib owner_accounting_covers_each_native_definition_path -- --nocapture > lifetime-accounting.log 2>&1
           cargo test --release --locked --lib loop_statistics_include_reuse_and_mutated_code_identity -- --nocapture >> lifetime-accounting.log 2>&1
+          cargo test --release --locked --lib owner_metadata_accounts_literals_capacity_and_unknown_payloads -- --nocapture >> lifetime-accounting.log 2>&1
       - name: Test retained generators, callbacks and task state
         run: >-
           cargo test --release --locked --no-fail-fast --message-format=json

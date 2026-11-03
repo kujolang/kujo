@@ -71,10 +71,11 @@ if platform == 'linux-x64' && workflow.include?('name: Test native owner account
   raw['lifetime-accounting.log'] = File.binread(File.join(out, 'lifetime-accounting.log'))
   accounting = raw.fetch('lifetime-accounting.log').gsub("\r\n", "\n")
   expected = %w[jit::tests::owner_accounting_covers_each_native_definition_path jit::tests::loop_statistics_include_reuse_and_mutated_code_identity]
+  expected << 'jit::tests::owner_metadata_accounts_literals_capacity_and_unknown_payloads' if workflow.include?('--lib owner_metadata_accounts_literals_capacity_and_unknown_payloads')
   raise 'accounting membership' unless accounting.scan(/^test (.+) \.\.\. ok$/).flatten.sort == expected.sort
   checks = summaries.call(accounting)
-  raise 'accounting results' unless checks.size == 2 && checks.all? { |row| row[0,4] == [1,0,0,0] }
-  accounting_passed = 2
+  raise 'accounting results' unless checks.size == expected.size && checks.all? { |row| row[0,4] == [1,0,0,0] }
+  accounting_passed = expected.size
 end
 result = {status:'verified',platform:platform,commit:commit,toolchain:source,
           library_tests:expected_library,library_filtered:lib_summary[0][4],integration_targets:targets,

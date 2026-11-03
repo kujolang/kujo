@@ -10166,6 +10166,115 @@ struct LoopAdmission {
 }
 
 impl JitCompiler {
+    /// Quota weight for visible compiler tables and their owned payloads.
+    /// This deliberately double-counts shared payloads rather than undercounting
+    /// aliases. It is NOT total heap/RSS: backend-private allocations, hash-table
+    /// control bytes and allocator rounding require separate resource evidence.
+    /// Unknown literal kinds fail closed instead of appearing to cost nothing.
+    #[allow(dead_code)] // Staged prerequisite for the exclusive-owner pool candidate.
+    pub(crate) fn retained_metadata_weight(&self) -> Option<usize> {
+        fn table<K, V>(map: &HashMap<K, V>) -> usize {
+            map.capacity().saturating_mul(std::mem::size_of::<(K, V)>())
+        }
+        fn vector<T>(items: &Vec<T>) -> usize {
+            items.capacity().saturating_mul(std::mem::size_of::<T>())
+        }
+        let mut weight = 0usize;
+        macro_rules! charge {
+            ($bytes:expr) => {
+                weight = weight.checked_add($bytes)?
+            };
+        }
+        charge!(table(&self.execution_counts));
+        charge!(table(&self.loop_execution_counts));
+        charge!(self.blocked_loop_sites.capacity().saturating_mul(std::mem::size_of::<(
+            u64,
+            usize,
+            usize
+        )>()));
+        charge!(table(&self.compiled_loop_cache));
+        charge!(table(&self.compiled_cache));
+        charge!(self.loop_jit_blacklist.capacity().saturating_mul(std::mem::size_of::<usize>()));
+        charge!(table(&self.type_profiles));
+        charge!(table(&self.compiled_fn_info));
+        charge!(table(&self.dictionary_keys));
+        charge!(table(&self.struct_shapes));
+        charge!(table(&self.field_names));
+        charge!(table(&self.path_shapes));
+        charge!(table(&self.append_strings));
+        charge!(table(&self.literal_values));
+        for key in self.compiled_loop_cache.keys() {
+            charge!(vector(&key.dense_slots));
+        }
+        for profile in self.type_profiles.values() {
+            charge!(table(&profile.variable_types));
+            charge!(table(&profile.specialized_types));
+        }
+        for name in self.compiled_fn_info.keys() {
+            charge!(name.capacity());
+        }
+        for keys in self.dictionary_keys.values() {
+            charge!(vector(keys));
+            for key in keys.iter() {
+                charge!(key.len());
+            }
+        }
+        for (key, value) in &self.struct_shapes {
+            for shape in [key, value.as_ref()] {
+                charge!(shape.0.capacity());
+                charge!(vector(&shape.1));
+                for name in &shape.1 {
+                    charge!(name.capacity());
+                }
+            }
+        }
+        for (key, value) in &self.field_names {
+            charge!(key.capacity());
+            charge!(value.capacity());
+        }
+        for (key, value) in &self.path_shapes {
+            for path in [key, value.as_ref()] {
+                charge!(vector(path));
+                for name in path.iter().flatten() {
+                    charge!(name.capacity());
+                }
+            }
+        }
+        for value in self.append_strings.values() {
+            charge!(value.len());
+        }
+        for ((_, key), value) in &self.literal_values {
+            charge!(key.capacity());
+            charge!(std::mem::size_of::<Value>());
+            match value.as_ref() {
+                Value::Str(text) => {
+                    charge!(text.capacity());
+                }
+                Value::Bytes(bytes) => {
+                    charge!(bytes.capacity());
+                }
+                _ => return None,
+            }
+        }
+        // Declaration names/signatures are exposed by Cranelift; its private
+        // vector capacities, relocations, symbol/GOT/PLT tables are not.
+        for (_, declaration) in self.module.declarations().get_functions() {
+            charge!(std::mem::size_of_val(declaration));
+            if let Some(name) = &declaration.name {
+                charge!(name.capacity());
+            }
+            charge!(vector(&declaration.signature.params));
+            charge!(vector(&declaration.signature.returns));
+        }
+        for (_, declaration) in self.module.declarations().get_data_objects() {
+            charge!(std::mem::size_of_val(declaration));
+            if let Some(name) = &declaration.name {
+                charge!(name.capacity());
+            }
+        }
+        Some(weight)
+    }
+
     /// Account successful definitions before clearing Cranelift's code buffer.
     /// Saturation or a missing buffer prevents a future retention budget from
     /// treating unknown native storage as free. This does not estimate backend
@@ -16148,6 +16257,29 @@ mod tests {
         for _ in 0..JIT_THRESHOLD {
             compiler.should_compile(0);
         }
+    }
+
+    #[test]
+    fn owner_metadata_accounts_literals_capacity_and_unknown_payloads() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let initial = compiler.retained_metadata_weight().unwrap();
+        let mut chunk = BytecodeChunk::new();
+        chunk.add_constant(Constant::String("retained".repeat(8192)));
+        chunk.add_constant(Constant::Bytes(vec![0; 65536]));
+        let literals = compiler.retain_literal_values(&chunk);
+        assert_eq!(literals.len(), 2);
+        drop(literals);
+        let retained = compiler.retained_metadata_weight().unwrap();
+        // Both the deduplication key and the independently owned literal carry
+        // the complete payload. A code-size-only budget would miss all of it.
+        assert!(retained >= initial + 2 * (8 * 8192 + 65536));
+        drop(compiler.retain_literal_values(&chunk));
+        assert_eq!(compiler.retained_metadata_weight(), Some(retained));
+        compiler.compiled_fn_info.reserve(1024);
+        assert!(compiler.retained_metadata_weight().unwrap() > retained);
+        // Future literal forms must extend accounting before becoming reusable.
+        compiler.literal_values.insert((255, vec![1]), Arc::new(Value::Array(Arc::new(vec![]))));
+        assert_eq!(compiler.retained_metadata_weight(), None);
     }
 
     #[test]

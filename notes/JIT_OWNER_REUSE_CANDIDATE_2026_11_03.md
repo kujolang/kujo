@@ -41,6 +41,18 @@ The workflow offers a Linux-only owner/accounting gate to validate the next
 candidate without repeating all platform builds for every preparatory patch.
 Final acceptance still requires the applicable full platform refresh.
 
+Visible metadata now has a separate checked quota weight covering table capacity,
+loop slot vectors, profiling tables, function names, dictionary keys, shapes,
+field/path names, append strings, literal keys/payloads and exposed backend
+declaration names/signatures. Shared payloads may be charged more than once.
+Unknown literal kinds reject accounting. A regression covers large string/byte
+literals, deduplicated retention, spare table capacity and an unknown payload.
+This is a logical retention quota, **not a measured total-memory bound**;
+backend-private capacities, relocations, symbol/GOT/PLT storage, allocator/control
+bytes and page rounding remain outside it. Reset/drop of transient compiler
+context and the separate physical-resource gate remain required before accepting
+pooling. The method is staged and not yet connected to task execution.
+
 Verification is pending. Run the release library suite, no-JIT coverage and
 callback/task/generator contracts before accepting this boundary. The subsequent
 pool requires cancellation-policy matching, lineage propagation, admission/reset
