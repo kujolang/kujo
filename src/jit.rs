@@ -10166,6 +10166,34 @@ struct LoopAdmission {
 }
 
 impl JitCompiler {
+    /// Prepare an idle, exclusively held compiler for another task. The caller
+    /// must have unwound every native frame and must separately enforce owner
+    /// count, code and metadata quotas before admitting it to a pool.
+    /// Offset-only entries are not task-safe identities. Failed/incomplete
+    /// compilation and a changed cancellation policy require owner destruction.
+    #[allow(dead_code)] // Staged prerequisite; task pooling is not enabled.
+    pub(crate) fn reset_for_task_reuse(&mut self, cancellation_checks: bool) -> bool {
+        if !self.enabled
+            || self.cancellation_checks != cancellation_checks
+            || self.compilation_attempts != self.completed_compilations
+            || self.native_definitions != self.completed_compilations
+            || !self.compiled_cache.is_empty()
+        {
+            return false;
+        }
+        // Replace rather than clear: idle owners must not retain transient IR,
+        // profiling or admission table capacity from the previous invocation.
+        self.ctx = codegen::Context::new();
+        self.execution_counts = HashMap::new();
+        self.loop_execution_counts = HashMap::new();
+        self.blocked_loop_sites = HashSet::new();
+        self.loop_jit_blacklist = HashSet::new();
+        self.type_profiles = HashMap::new();
+        // Keep code-identity caches, emitted-code counters and all embedded
+        // literal/key/shape owners alive with the executable module.
+        true
+    }
+
     /// Quota weight for visible compiler tables and their owned payloads.
     /// This deliberately double-counts shared payloads rather than undercounting
     /// aliases. It is NOT total heap/RSS: backend-private allocations, hash-table
@@ -16260,6 +16288,25 @@ mod tests {
     }
 
     #[test]
+    fn owner_reset_rejects_incomplete_or_incompatible_compilers() {
+        for reason in ["policy", "disabled", "attempt", "definition", "offset"] {
+            let mut compiler = JitCompiler::new_with_cancellation(true).unwrap();
+            compiler.execution_counts.insert(9, 100);
+            match reason {
+                "disabled" => compiler.enabled = false,
+                "attempt" => compiler.compilation_attempts = 1,
+                "definition" => compiler.native_definitions = 1,
+                "offset" => {
+                    compiler.compiled_cache.insert(0, dummy_compiled_fn as CompiledFn);
+                }
+                _ => {}
+            }
+            assert!(!compiler.reset_for_task_reuse(reason != "policy"), "{reason}");
+            assert_eq!(compiler.execution_counts.get(&9), Some(&100), "{reason}");
+        }
+    }
+
+    #[test]
     fn owner_metadata_accounts_literals_capacity_and_unknown_payloads() {
         let mut compiler = JitCompiler::new().unwrap();
         let initial = compiler.retained_metadata_weight().unwrap();
@@ -16363,6 +16410,22 @@ mod tests {
         assert_eq!(compiler.emitted_code_bytes, first_bytes);
         assert_eq!(first as usize, reused as usize);
         assert_eq!(compiler.stats().compiled_functions, 1);
+        compiler.execution_counts.insert(0, JIT_THRESHOLD);
+        compiler.block_chunk_loop(chunk.code_identity(), start, end);
+        compiler.loop_jit_blacklist.insert(start);
+        compiler.type_profiles.insert(0, SpecializationInfo::new());
+        assert!(compiler.reset_for_task_reuse(false));
+        assert_eq!(compiler.execution_counts.capacity(), 0);
+        assert_eq!(compiler.loop_execution_counts.capacity(), 0);
+        assert_eq!(compiler.blocked_loop_sites.capacity(), 0);
+        assert_eq!(compiler.loop_jit_blacklist.capacity(), 0);
+        assert_eq!(compiler.type_profiles.capacity(), 0);
+        assert!(!compiler.should_execute_chunk_loop(chunk.code_identity(), start, end));
+        let after_reset =
+            compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_eq!(first as usize, after_reset as usize);
+        assert_eq!(compiler.compilation_attempts, 1);
+        assert_eq!(compiler.emitted_code_bytes, first_bytes);
         chunk.name = Some("renamed".into());
         compiler.should_execute_chunk_loop(chunk.code_identity(), start, end);
         let changed =

@@ -74,6 +74,7 @@ if platform == 'linux-x64' && workflow.include?('name: Test native owner account
   accounting = raw.fetch('lifetime-accounting.log').gsub("\r\n", "\n")
   expected = %w[jit::tests::owner_accounting_covers_each_native_definition_path jit::tests::loop_statistics_include_reuse_and_mutated_code_identity]
   expected << 'jit::tests::owner_metadata_accounts_literals_capacity_and_unknown_payloads' if workflow.include?('--lib owner_metadata_accounts_literals_capacity_and_unknown_payloads')
+  expected << 'jit::tests::owner_reset_rejects_incomplete_or_incompatible_compilers' if workflow.include?('--lib owner_reset_rejects_incomplete_or_incompatible_compilers')
   raise 'accounting membership' unless accounting.scan(/^test (.+) \.\.\. ok$/).flatten.sort == expected.sort
   checks = summaries.call(accounting)
   raise 'accounting results' unless checks.size == expected.size && checks.all? { |row| row[0,4] == [1,0,0,0] }

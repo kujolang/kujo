@@ -95,3 +95,22 @@ after a successful owner gate even when the independent no-JIT gate fails.
 Cancellation still stops those steps, and a failed no-JIT step still fails the
 job. This prevents an unrelated feature-configuration failure from hiding later
 default-feature test outcomes; it does not relax acceptance.
+
+## Idle compiler reset prerequisite
+
+The candidate now has an explicit idle-only reset boundary. It rejects changed
+cancellation policy, disabled compilers, unfinished/rejected compilation counts
+and legacy offset-only entries. Successful reset replaces transient IR context,
+admission/retry/blocked-site tables and type profiles, releasing their spare
+capacity. Code-identity loop caches, machine code and embedded literal/key/shape
+owners remain together. Pointer-keyed append/key caches retain the Arc allocation
+used as their key, so dropping the source chunk does not recycle that key while
+its compiled owner survives.
+
+The loop regression now requires fresh admission after reset, the same cached
+native pointer and unchanged compilation/byte counts. A separate rejection test
+covers policy, disabled state, attempt/definition imbalance and offset entries.
+The targeted workflow and exact-membership verifier include the new test.
+Execution remains pending CI; formatting and static inventory checks are local.
+This method is not connected to task execution. Pool quotas, owner eviction,
+route propagation, panic/reentry and physical-resource gates remain required.
