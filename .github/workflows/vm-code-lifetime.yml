@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      profile_only:
+        description: Run symbolized Brainfuck production profiling only
+        type: boolean
+        default: false
       elapsed_only:
         description: Run paired baseline/candidate task elapsed diagnostics only
         type: boolean
@@ -25,14 +29,17 @@ permissions:
   contents: read
 
 jobs:
+  profile:
+    if: inputs.profile_only && !inputs.elapsed_only && !inputs.checksum_only
+    uses: ./.github/workflows/bf-profile-gate.yml
   elapsed:
-    if: inputs.elapsed_only && !inputs.checksum_only
+    if: inputs.elapsed_only && !inputs.checksum_only && !inputs.profile_only
     uses: ./.github/workflows/owner-elapsed-gate.yml
   checksum:
-    if: inputs.checksum_only && !inputs.elapsed_only
+    if: inputs.checksum_only && !inputs.elapsed_only && !inputs.profile_only
     uses: ./.github/workflows/langarena-checksum-gate.yml
   lifetime:
-    if: ${{ !inputs.checksum_only && !inputs.elapsed_only }}
+    if: ${{ !inputs.checksum_only && !inputs.elapsed_only && !inputs.profile_only }}
     timeout-minutes: 90
     strategy:
       fail-fast: false

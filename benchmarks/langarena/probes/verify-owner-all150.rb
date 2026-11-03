@@ -13,6 +13,7 @@ raise 'artifact provenance' unless artifact.dig('workflow_run','id')==run['id'] 
 workflow,err,status=Open3.capture3('git','show',"#{commit}:.github/workflows/vm-code-lifetime.yml");raise err unless status.success?
 expected_jobs=[['checksum / all150','success'],['lifetime','skipped']]
 expected_jobs<<['elapsed','skipped'] if workflow.include?("\n  elapsed:\n")
+expected_jobs<<['profile','skipped'] if workflow.include?("\n  profile:\n")
 raise 'job membership/outcome' unless jobs.map{|j|[j['name'],j['conclusion']]}.sort==expected_jobs.sort
 source=read.call('source.txt')
 raise 'source/host' unless source.lines.first.strip==commit && source.lines.map(&:strip).include?('host: x86_64-unknown-linux-gnu')

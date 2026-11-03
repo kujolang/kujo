@@ -1,0 +1,37 @@
+name: bf-profile-gate
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  symbolized:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_PROFILE_RELEASE_STRIP: 'none'
+      CARGO_PROFILE_RELEASE_DEBUG: '1'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build optimized symbol-preserving CLI
+        run: |
+          mkdir bf-profile-evidence
+          git rev-parse HEAD > bf-profile-evidence/source.txt
+          rustc --version --verbose > bf-profile-evidence/toolchain.txt
+          sw_vers > bf-profile-evidence/host.txt
+          cargo build --release --locked --bin kujo --message-format=json > bf-profile-evidence/build.jsonl 2> bf-profile-evidence/build.stderr
+          cp target/release/kujo bf-profile-evidence/kujo
+          shasum -a 256 bf-profile-evidence/kujo > bf-profile-evidence/binary-sha256.txt
+          /usr/bin/nm bf-profile-evidence/kujo > bf-profile-evidence/symbols.txt
+      - name: Sample unchanged production program after full warmup
+        run: |
+          ruby benchmarks/langarena/probes/profile-bf-production.rb bf-profile-evidence/kujo bf-profile-evidence/samples
+          shasum -a 256 --check bf-profile-evidence/binary-sha256.txt > bf-profile-evidence/binary-recheck.txt
+      - name: Preserve profiles even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bf-production-symbolized-macos
+          retention-days: 7
+          path: bf-profile-evidence/
