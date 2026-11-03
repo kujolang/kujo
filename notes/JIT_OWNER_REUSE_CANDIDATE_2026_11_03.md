@@ -204,3 +204,7 @@ is pending CI. The pinned artifact verifier includes its exact owner-test name.
 Reset revision06e896cf run41632651515 now reports owner/no-JIT/accounting steps
 successful, with integration still running. These API step statuses are not yet
 independently verified terminal artifacts. Later pool/route gates remain pending.
+
+The earlier `cb931728` Windows boundary is independently verified at 65 targeted
+passes; see `JIT_OWNER_WINDOWS_BOUNDARY_2026_11_03.md`. Windows reclamation remains
+open, and this earlier revision does not certify later pool/task-route changes.
