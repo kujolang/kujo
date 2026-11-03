@@ -42,9 +42,9 @@ the accepted port. No rows may be checked off based only on matching checksums.
 | Etc::LogParser | [48_logs.kujo](src/48_logs.kujo) | Oracle open; checksum/source evidence is separate | All parsed records/matches and malformed-line policy. |
 | Template::Regex | [35_template.kujo](src/35_template.kujo) | Oracle open; checksum/source evidence is separate | Complete rendered output, escaping and parse/render work. |
 | Template::Parse | [35_template.kujo](src/35_template.kujo) | Oracle open; checksum/source evidence is separate | Complete rendered output, escaping and parse/render work. |
-| Sort::Quick | [30_sort.kujo](src/30_sort.kujo) | [Complete arrays/snapshots: 49 inputs, Rust and all three Kujo modes](SORT_PORT_STATE_AUDIT_2026_11_02.md); historical rejected call candidate | Partition/call/copy/comparison counts; production and Goose controls. |
-| Sort::Merge | [30_sort.kujo](src/30_sort.kujo) | [Complete arrays/snapshots: 49 inputs, Rust and all three Kujo modes](SORT_PORT_STATE_AUDIT_2026_11_02.md); historical rejected call candidate | Partition/call/copy/comparison counts; production and Goose controls. |
-| Sort::Self | [30_sort.kujo](src/30_sort.kujo) | Oracle open; checksum/source evidence is separate | Complete sorted arrays on adversarial seeds; partition/call/copy/comparison counts. |
+| Sort::Quick | [30_sort.kujo](src/30_sort.kujo) | [1,764 complete wrapper observations on accepted runtime](SORT_WRAPPER_STATE_AUDIT_2026_11_03.md); partial | Preparation, empty/stability boundaries, comparison/call/copy counts, production and executed Rust/Goose controls. |
+| Sort::Merge | [30_sort.kujo](src/30_sort.kujo) | [1,764 complete wrapper observations on accepted runtime](SORT_WRAPPER_STATE_AUDIT_2026_11_03.md); partial | Preparation, empty/stability boundaries, comparison/call/copy counts, production and executed Rust/Goose controls. |
+| Sort::Self | [30_sort.kujo](src/30_sort.kujo) | [1,764 complete wrapper observations on accepted runtime](SORT_WRAPPER_STATE_AUDIT_2026_11_03.md); partial | Preparation, empty/stability boundaries, comparison/call/copy counts, production and executed Rust/Goose controls. |
 | Graph::BFS | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
 | Graph::DFS | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
 | Graph::AStar | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
@@ -70,7 +70,7 @@ the accepted port. No rows may be checked off based only on matching checksums.
 | Distance::Jaro | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
 | Distance::NGram | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
 
-The current implementation priority remains the call-error prerequisite and then
-guarded compiled-callee transfer. Independent port audits may proceed during
+The current implementation priority is completion of the separate memory-lifetime
+gates before ownership-safe code/worker reuse; see the active campaign ledger. Independent port audits may proceed during
 build waits, but cannot be counted as runtime speed improvements. Clean-host
 measurements and all-50 production validation remain separate open gates.
