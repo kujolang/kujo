@@ -1,6 +1,12 @@
 struct FusionItem { value: any }
-func read_field(items, index) { return items[index].value }
-func missing_field(items, index) { return items[index].missing }
+func read_field(items, index) {
+    let state := {"items": items}
+    return state["items"][index].value
+}
+func missing_field(items, index) {
+    let state := {"items": items}
+    return state["items"][index].missing
+}
 func transit(input) {
     mut items := [FusionItem { value: input }]
     let prior := items
