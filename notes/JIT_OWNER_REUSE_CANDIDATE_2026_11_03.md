@@ -208,3 +208,17 @@ independently verified terminal artifacts. Later pool/route gates remain pending
 The earlier `cb931728` Windows boundary is independently verified at 65 targeted
 passes; see `JIT_OWNER_WINDOWS_BOUNDARY_2026_11_03.md`. Windows reclamation remains
 open, and this earlier revision does not certify later pool/task-route changes.
+
+## Capability transition regression
+
+The task reuse corpus now alternates filesystem-read permission allowed/denied/
+allowed against a fixed temporary fixture and the same bytecode. It requires the
+successful fixture contents, the specific capability-denied error, one retained
+owner and unchanged nonzero compilation counts across all three invocations.
+Thus fresh policy must be honored with actually retained code, not by avoiding
+reuse. The fixture is test-owned and removed automatically. Exact owner membership
+is included in the artifact verifier; runtime execution remains pending CI.
+
+Pool revision0a0dd452 now reports its owner-test step successful; minimal-feature
+checks are running. Current-source acceptance still requires completed raw
+artifacts, broader concurrency/recovery/resource gates and measured economics.

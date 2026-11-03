@@ -13011,6 +13011,51 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn task_code_reuse_obeys_each_invocations_capability_policy() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(file.path(), "task-private fixture").unwrap();
+        let function = function_from_source(
+            "func retained(path) { mut i := 0 while i < 1000 { i += 1 } return read_file(path) }",
+        );
+        let pool = Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20));
+        let mut compiled = None;
+        for allowed in [true, false, true] {
+            let policy = RuntimeCapabilityPolicy {
+                filesystem_read: allowed,
+                ..RuntimeCapabilityPolicy::default()
+            };
+            let environment = Interpreter::with_capability_policy(policy.clone()).env;
+            let result = VM::execute_language_task(
+                function.clone(),
+                vec![Value::Str(Arc::new(file.path().to_str().unwrap().to_owned()))],
+                environment,
+                policy,
+                None,
+                Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                true,
+                Some(Arc::clone(&pool)),
+            );
+            if allowed {
+                assert!(
+                    matches!(result.unwrap(), Value::Str(s) if s.as_str() == "task-private fixture")
+                );
+            } else {
+                let error = result.unwrap_err();
+                assert!(error.contains("Capability denied"), "{error}");
+            }
+            let idle = pool.idle.lock().unwrap();
+            assert_eq!(idle.len(), 1);
+            let attempts = idle[0].1.jit_compiler.as_ref().unwrap().compilation_attempts;
+            assert!(attempts > 0);
+            if let Some(previous) = compiled {
+                assert_eq!(attempts, previous, "policy must be checked with retained code");
+            }
+            compiled = Some(attempts);
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn idle_code_pool_bounds_retention_and_exclusively_moves_entries() {
         fn compiled_owner() -> VmCodeOwner {
             let mut vm = VM::new();
