@@ -241,3 +241,14 @@ passes; see `JIT_OWNER_RESET_GATE_2026_11_03.md` and its raw evidence archive.
 This supersedes pending reset-execution statements only, not later pool/task-route
 acceptance. The initial task-integration run41633864624 reports owner-step success
 but is still running its remaining steps; raw terminal verification is pending.
+
+## Worker unwind control
+
+A focused Rust-worker regression now checks out a compiled owner into a fresh VM,
+executes it, then deliberately panics after native frames have returned but before
+normal owner return. It checks the exact panic payload, so an unrelated assertion
+failure cannot satisfy the control. The pool must stay empty and unpoisoned, a
+fresh VM must compile/execute successfully afterward, and earlier returned arrays
+must survive final destruction. This tests the Rust unwind boundary; it does not
+claim support for unwinding across an active native ABI frame. Runtime execution
+is pending CI, and physical reclamation remains a separate gate.

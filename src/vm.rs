@@ -13056,6 +13056,53 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn unwinding_worker_discards_checked_out_code_owner() {
+        let function = function();
+        let pool = Arc::new(VmCodePool::new(1, 512, 4 << 20, 8 << 20));
+        let mut original = VM::new();
+        original.set_jit_enabled(true);
+        assert!(original.jit_compile_bytecode_function(&function).unwrap());
+        let retained =
+            original.call_function_from_jit(function.clone(), vec![Value::Int(7)]).unwrap();
+        assert!(pool.put(std::mem::take(&mut original.code_owner), false));
+        drop(original);
+        let worker_pool = Arc::clone(&pool);
+        let worker_function = function.clone();
+        let worker = std::thread::spawn(move || {
+            let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let mut vm = VM::new();
+                vm.set_jit_enabled(true);
+                vm.code_owner = worker_pool.take(false).unwrap();
+                assert_pair(
+                    &vm.call_function_from_jit(worker_function, vec![Value::Int(9)]).unwrap(),
+                    9,
+                );
+                // Native frames have returned. The surrounding Rust worker now
+                // panics before the normal owner-return path can run.
+                panic!("worker panic before owner return");
+            }));
+            match outcome {
+                Err(payload) => {
+                    payload.downcast_ref::<&str>() == Some(&"worker panic before owner return")
+                }
+                Ok(()) => false,
+            }
+        });
+        assert!(worker.join().unwrap());
+        assert!(pool.take(false).is_none(), "unwound owner must not be recycled");
+        assert!(!pool.idle.is_poisoned(), "execution must not hold the pool lock");
+        let mut next = VM::new();
+        next.set_jit_enabled(true);
+        assert!(next.jit_compile_bytecode_function(&function).unwrap());
+        assert_pair(&next.call_function_from_jit(function, vec![Value::Int(11)]).unwrap(), 11);
+        assert!(pool.put(std::mem::take(&mut next.code_owner), false));
+        drop(next);
+        drop(pool);
+        assert_pair(&retained, 7);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn idle_code_pool_bounds_retention_and_exclusively_moves_entries() {
         fn compiled_owner() -> VmCodeOwner {
             let mut vm = VM::new();
