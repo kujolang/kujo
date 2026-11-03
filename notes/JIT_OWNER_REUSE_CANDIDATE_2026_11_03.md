@@ -114,3 +114,23 @@ The targeted workflow and exact-membership verifier include the new test.
 Execution remains pending CI; formatting and static inventory checks are local.
 This method is not connected to task execution. Pool quotas, owner eviction,
 route propagation, panic/reentry and physical-resource gates remain required.
+
+## Bounded idle storage prerequisite
+
+A staged private VmCodePool now moves whole owners through a short mutex hold.
+Cancellation policy selects an idle owner; misses return immediately rather than
+waiting for an owner held by a parent task. Explicit constructor limits cover
+idle-owner count, native definitions, emitted code and logical metadata weight.
+Return first applies idle reset, removes invocation-side name/inline caches and
+charges retained VM dispatch-map capacity in addition to compiler metadata.
+Empty, incompatible, over-budget or poisoned-lock returns discard their owners.
+Rejected-owner destruction occurs outside the pool lock. These quotas do not
+claim to bound opaque backend allocations or process RSS.
+
+The new owner test crosses a worker thread, checks exclusive checkout and native
+pointer identity, executes the retained function in a new VM, checks all four
+quota rejection paths and policy mismatch, poisons storage and verifies fail-
+closed behavior, and retains the returned value after eviction. Runtime execution
+is pending CI. No task route uses this pool yet; production defaults, lineage
+propagation, panic-safe return and whole-candidate resource/performance gates are
+still open. No new unsafe code or unsafe trait implementation is introduced.

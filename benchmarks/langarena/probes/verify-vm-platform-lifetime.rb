@@ -18,7 +18,8 @@ integration = raw.fetch('lifetime-integration.log').gsub("\r\n","\n")
 expected_library = %w[disabling_jit_does_not_destroy_cached_code returned_values_functions_and_snapshots_survive_original_vm]
 vm_source, vm_error, vm_status = Open3.capture3('git', 'show', "#{commit}:src/vm.rs")
 raise "missing pinned VM source: #{vm_error}" unless vm_status.success?
-%w[exclusive_code_owner_survives_vm_and_worker_transfer
+%w[idle_code_pool_bounds_retention_and_exclusively_moves_entries
+   exclusive_code_owner_survives_vm_and_worker_transfer
    transferred_code_uses_current_globals_and_keeps_literal_owners
    transferred_code_observes_current_cancellation_token].each do |name|
   expected_library << name if vm_source.include?("fn #{name}()")

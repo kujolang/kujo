@@ -410,6 +410,91 @@ struct VmCodeOwner {
     inline_cache: HashMap<CallSiteId, InlineCacheEntry>,
 }
 
+/// Lineage-local idle storage, never a lock held during native execution.
+/// Logical quotas exclude opaque backend/allocator storage; physical resource
+/// acceptance is separate. No runtime route uses this staged pool yet.
+#[cfg(feature = "runtime-jit")]
+#[allow(dead_code)]
+struct VmCodePool {
+    idle: Mutex<Vec<(bool, VmCodeOwner)>>,
+    max_owners: usize,
+    max_definitions: usize,
+    max_code_bytes: usize,
+    max_metadata_weight: usize,
+}
+
+#[cfg(feature = "runtime-jit")]
+#[allow(dead_code)]
+impl VmCodePool {
+    fn new(
+        max_owners: usize,
+        max_definitions: usize,
+        max_code_bytes: usize,
+        max_metadata_weight: usize,
+    ) -> Self {
+        Self {
+            idle: Mutex::new(Vec::new()),
+            max_owners,
+            max_definitions,
+            max_code_bytes,
+            max_metadata_weight,
+        }
+    }
+
+    // A miss returns immediately, including when a parent holds the only owner.
+    // Callers must create a fresh owner rather than wait for a nested task.
+    fn take(&self, cancellation_checks: bool) -> Option<VmCodeOwner> {
+        let mut idle = self.idle.lock().ok()?;
+        let index = idle.iter().position(|(policy, _)| *policy == cancellation_checks)?;
+        Some(idle.swap_remove(index).1)
+    }
+
+    // Invoke only after all native frames unwind. Panic paths must drop owners
+    // rather than call this method. Rejected owners are destroyed outside locks.
+    fn put(&self, mut owner: VmCodeOwner, cancellation_checks: bool) -> bool {
+        let Some(compiler) = owner.jit_compiler.as_mut() else { return false };
+        if compiler.native_definitions == 0
+            || compiler.native_definitions > self.max_definitions
+            || compiler.emitted_code_bytes > self.max_code_bytes
+            || !compiler.reset_for_task_reuse(cancellation_checks)
+        {
+            return false;
+        }
+        // These invocation-side indexes can contain names or entries from
+        // wrappers unique to the old task. Drop their spare capacity as well.
+        owner.jit_var_names_cache = HashMap::new();
+        owner.inline_cache = HashMap::new();
+        let Some(weight) = compiler.retained_metadata_weight().and_then(|weight| {
+            weight
+                .checked_add(
+                    owner
+                        .compiled_functions
+                        .capacity()
+                        .checked_mul(std::mem::size_of::<(u64, CompiledFn)>())?,
+                )?
+                .checked_add(
+                    owner
+                        .compiled_fn_info
+                        .capacity()
+                        .checked_mul(std::mem::size_of::<(u64, CompiledFnInfo)>())?,
+                )
+        }) else {
+            return false;
+        };
+        if weight > self.max_metadata_weight {
+            return false;
+        }
+        {
+            let Ok(mut idle) = self.idle.lock() else { return false };
+            if idle.len() < self.max_owners {
+                idle.push((cancellation_checks, owner));
+                return true;
+            }
+        }
+        false
+    }
+}
+
 #[cfg(feature = "runtime-jit")]
 impl Drop for VmCodeOwner {
     fn drop(&mut self) {
@@ -12816,6 +12901,64 @@ mod code_owner_lifetime_tests {
             assert_pair(&second, 9);
             assert_pair(&result, 7);
         }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn idle_code_pool_bounds_retention_and_exclusively_moves_entries() {
+        fn compiled_owner() -> VmCodeOwner {
+            let mut vm = VM::new();
+            vm.set_jit_enabled(true);
+            assert!(vm.jit_compile_bytecode_function(&function()).unwrap());
+            std::mem::take(&mut vm.code_owner)
+        }
+        let pool = Arc::new(VmCodePool::new(1, 64, 1 << 20, 1 << 20));
+        let retained_function = function();
+        let mut original = VM::new();
+        original.set_jit_enabled(true);
+        assert!(original.jit_compile_bytecode_function(&retained_function).unwrap());
+        let owner = std::mem::take(&mut original.code_owner);
+        drop(original);
+        let pointer = *owner.compiled_functions.values().next().unwrap() as usize;
+        assert!(pool.put(owner, false));
+        assert!(pool.take(true).is_none());
+        assert!(!pool.put(compiled_owner(), false)); // Full: evict incoming owner.
+        let worker_pool = Arc::clone(&pool);
+        let owner = std::thread::spawn(move || worker_pool.take(false).unwrap()).join().unwrap();
+        assert!(pool.take(false).is_none()); // Never wait for the active owner.
+        assert_eq!(*owner.compiled_functions.values().next().unwrap() as usize, pointer);
+        let mut next = VM::new();
+        next.set_jit_enabled(true);
+        next.code_owner = owner;
+        let result = next.call_function_from_jit(retained_function, vec![Value::Int(11)]).unwrap();
+        assert_pair(&result, 11);
+        assert!(pool.put(std::mem::take(&mut next.code_owner), false));
+        drop(next);
+        assert_eq!(pool.idle.lock().unwrap().len(), 1);
+        for (owners, definitions, code, metadata) in [
+            (0, 64, usize::MAX, usize::MAX),
+            (1, 0, usize::MAX, usize::MAX),
+            (1, 64, 0, usize::MAX),
+            (1, 64, usize::MAX, 0),
+        ] {
+            let bounded = VmCodePool::new(owners, definitions, code, metadata);
+            assert!(!bounded.put(compiled_owner(), false));
+            assert!(bounded.take(false).is_none());
+        }
+        assert!(!pool.put(VmCodeOwner::default(), false));
+        assert!(!pool.put(compiled_owner(), true));
+        let poisoned = Arc::new(VmCodePool::new(1, 64, 1 << 20, 1 << 20));
+        let worker_pool = Arc::clone(&poisoned);
+        assert!(std::thread::spawn(move || {
+            let _guard = worker_pool.idle.lock().unwrap();
+            panic!("poison idle storage");
+        })
+        .join()
+        .is_err());
+        assert!(poisoned.take(false).is_none());
+        assert!(!poisoned.put(compiled_owner(), false));
+        drop(pool);
+        assert_pair(&result, 11); // Returned values survive all idle-code eviction.
     }
 
     #[cfg(feature = "runtime-jit")]
