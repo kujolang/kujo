@@ -198,3 +198,23 @@ platform CI. Final platform acceptance remains pending, as do the broader
 campaign's production, clean-host, architecture and performance requirements.
 No admission-policy change or new performance optimization is accepted here.
 `loop-local-identity-2026-11-03.json.gz` preserves the portable local evidence.
+# Linux gate disposition
+
+Run `41588426114` completed on exact runtime commit
+`537406d8afb9e2f400111cf6ac8d0cfe3a7412a2`. The optimized loop job passed
+1,356 tests with zero failures and eight existing ignores. Its recorded
+`src/jit.rs` and `tests/jit_loop_condition_calls.rs` SHA-256 hashes match the
+current accepted sources. Linux used rustc 1.99.1, x86_64-unknown-linux-gnu.
+Formatting, Clippy, MSRV, VM/interpreter parity and minimal release smoke passed.
+
+The full release gate failed in `generated_artifact_freshness_contract`: the
+unsafe and TODO inventories retained old source line numbers. Regenerating both
+with their strict generators changes only row line numbers and generation dates:
+299 unsafe rows and 25 TODO rows retain their contents/classifications. A second
+generation matches all four files exactly; formatting and diff checks pass.
+No freshness assertion, test or classification was relaxed. The complete release
+gate must still be rerun on the corrected commit; this is not a full release pass.
+
+`loop-linux-gates-2026-11-03.json.gz` preserves the source/toolchain receipt,
+optimized test log and inventory verification. The separate memory-lifetime
+candidate is not included in this Linux run.
