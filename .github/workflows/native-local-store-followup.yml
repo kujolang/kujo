@@ -44,6 +44,12 @@ jobs:
             goose/src
       - name: Check exact network states and historical snapshots
         run: |
+          for runtime in vm interpreter jit; do
+            flags=()
+            if [ "$runtime" != vm ]; then flags+=("--$runtime"); fi
+            frozen/candidate-kujo run "${flags[@]}" tests/fixtures/jit_local_store_transfer.kujo > "post-evidence/store-$runtime.out" 2> "post-evidence/store-$runtime.err"
+            grep -Fx 'local-store-transfer: OK' "post-evidence/store-$runtime.out"
+          done
           ruby benchmarks/langarena/probes/audit-neural-state.rb frozen/candidate-kujo upstream post-evidence/neural > post-evidence/neural.log
           ruby benchmarks/langarena/probes/verify-neural-state.rb post-evidence/neural > post-evidence/neural-independent.json
       - name: Check complete sorting outputs and wrapper state
