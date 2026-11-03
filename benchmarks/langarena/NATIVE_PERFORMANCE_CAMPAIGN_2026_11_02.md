@@ -32,7 +32,7 @@ from checksum coverage and runtime optimization acceptance.
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
 | 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | [Tagged-call tactic rejected and removed](NATIVE_CALL_CANDIDATE_2026_11_02.md): microbenchmark gains did not establish useful repeated workload gains; broader call architecture remains open |
-| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; async-route and admission controls next |
+| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); admission controls next |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
@@ -108,8 +108,10 @@ worker compilation on the corrected frozen baseline, measure compile time and
 native coverage separately, and define a general admission/reuse hypothesis.
 The [64-cell baseline controls](JIT_ECONOMICS_ENTRY_2026_11_03.md) now pass:
 late tree compilation and fixed-work bytecode per-job duplication are reproduced.
-Loop-only controls retain the duplication; async mapper coverage and admission
-body/count sweeps remain before choosing a candidate.
+Loop-only controls retain the duplication. The [40 async-wrapper controls](JIT_ASYNC_ECONOMICS_2026_11_03.md)
+confirm fresh task-VM compilation even for sequential awaits; reusing only the
+outer parallel mapper VM would miss this cost. Admission body/count sweeps
+remain before choosing a candidate.
 
 Do not hardcode workload names or move compilation outside official timing.
 Keep worker isolation and code-lifetime ownership explicit; the separate memory

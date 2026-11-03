@@ -1,0 +1,38 @@
+# Diagnostic async-wrapper equal-kernel-work control: direct|parallel WORKERS REPEATS.
+# Sixteen identical jobs per repetition; concurrency never changes kernel work.
+func kernel(n) {
+    mut total := 0
+    mut i := 0
+    while i < n { total += i i += 1 }
+    return total
+}
+async func worker(n) { return kernel(n) }
+let options := args()
+assert_equal(len(options), 3)
+let mode := options[0]
+let workers := to_int(options[1])
+let repeats := to_int(options[2])
+assert(mode == "direct" || mode == "parallel")
+assert(workers >= 1 && workers <= 16 && repeats >= 1 && repeats <= 4)
+let jobs := [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+              2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000]
+let snapshot := jobs
+mut total := 0
+mut repeat_index := 0
+while repeat_index < repeats {
+    mut results := []
+    if mode == "parallel" {
+        results = await parallel_map(jobs, worker, workers)
+    } else {
+        for n in jobs { results = push(results, await worker(n)) }
+    }
+    assert_equal(len(results), 16)
+    for result in results {
+        assert_equal(result, 1999000)
+        total += result
+    }
+    assert_equal(jobs, snapshot)
+    repeat_index += 1
+}
+assert_equal(total, 31984000 * repeats)
+print("async-worker-economics: OK")
