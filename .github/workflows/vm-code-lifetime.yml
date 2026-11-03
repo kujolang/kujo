@@ -78,6 +78,16 @@ jobs:
           ruby benchmarks/langarena/probes/test-jit-async-reuse-verifier.rb >> lifetime-economics.log 2>&1
           ruby benchmarks/langarena/probes/collect-jit-async-economics.rb target/release/kujo owner-async-economics >> lifetime-economics.log 2>&1
           ruby benchmarks/langarena/probes/verify-jit-async-economics.rb owner-async-economics reuse >> lifetime-economics.log 2>&1
+      - name: Measure isolated task-owner resources
+        if: always() && !cancelled() && steps.integration.outcome == 'success' && matrix.os == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir owner-resources
+          git rev-parse HEAD > owner-resources/source.txt
+          cargo test --release --locked --lib --no-run --message-format=json > owner-resources/build.jsonl
+          ruby benchmarks/langarena/probes/collect-owner-resources.rb owner-resources
+          ruby benchmarks/langarena/probes/verify-owner-resources.rb owner-resources
       - name: Preserve verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -92,3 +102,4 @@ jobs:
             lifetime-integration.log
             lifetime-economics.log
             owner-async-economics/
+            owner-resources/

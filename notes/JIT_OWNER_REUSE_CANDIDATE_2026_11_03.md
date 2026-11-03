@@ -292,3 +292,21 @@ Bounded storage0a0dd452 now has73 independently verified targeted Linux passes;
 macOS Intel cb931728 has66. See `JIT_OWNER_POOL_GATE_2026_11_03.md` for exact
 identities and limits. These close their prerequisite artifact reviews only;
 later actual-task/recovery/economics and physical-resource acceptance stay open.
+
+## Isolated Linux resource diagnostic
+
+A dedicated ignored test (explicit CI invocation only) now runs the actual task
+VM path with/without a pool, for same/distinct bytecode at32/1024 tasks. Each of
+eight cases gets its own process and180-second deadline. It warms one compiler,
+then records process RSS and total executable virtual mappings every32 tasks and
+after pool destruction. Native/compile counters require the intended execution:
+pooled same-code compiles once; unpooled/distinct code compiles once per task.
+
+The collector pins the exact test executable SHA, source commit, argv/environment,
+exit/signal and raw log hashes. The verifier checks eight exact cases, every
+checkpoint and all counters, leaving resource observations explicitly review-
+pending. Observations include common harness/runtime allocations (including the
+retained receipt vector); they are not total live heap or pool-attributable bytes.
+No physical-memory limit or speed gain is asserted before paired data review.
+The Linux workflow runs this only after successful integrations. Local syntax,
+formatting and inventory checks pass; actual resource execution remains pending.

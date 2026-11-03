@@ -13404,3 +13404,120 @@ mod code_owner_lifetime_tests {
         }
     }
 }
+
+#[cfg(all(test, feature = "runtime-jit", target_os = "linux"))]
+mod task_owner_resource_tests {
+    use super::*;
+
+    fn snapshot() -> (u64, u64) {
+        let status = std::fs::read_to_string("/proc/self/status").unwrap();
+        let rss = status
+            .lines()
+            .find_map(|line| {
+                line.strip_prefix("VmRSS:")?.split_whitespace().next()?.parse::<u64>().ok()
+            })
+            .unwrap()
+            * 1024;
+        let maps = std::fs::read_to_string("/proc/self/maps").unwrap();
+        let executable = maps
+            .lines()
+            .filter_map(|line| {
+                let mut fields = line.split_whitespace();
+                let range = fields.next()?;
+                let permissions = fields.next()?;
+                if !permissions.contains('x') {
+                    return None;
+                }
+                let (start, end) = range.split_once('-')?;
+                Some(
+                    u64::from_str_radix(end, 16).unwrap() - u64::from_str_radix(start, 16).unwrap(),
+                )
+            })
+            .sum();
+        (rss, executable)
+    }
+
+    fn function(version: usize) -> Value {
+        let source = format!("func resource_worker(n) {{ mut i := 0 while i < n {{ i += 1 }} return i + {version} }}");
+        let ast = crate::parser::Parser::new(crate::lexer::tokenize(&source).unwrap()).parse();
+        let script = crate::compiler::Compiler::new().compile(&ast).unwrap();
+        let chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some((**chunk).clone()),
+                _ => None,
+            })
+            .unwrap();
+        Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        }
+    }
+
+    fn execute(function: Value, pool: Option<Arc<VmCodePool>>, expected: i64) {
+        let result = VM::execute_language_task(
+            function,
+            vec![Value::Int(1000)],
+            Environment::new(),
+            RuntimeCapabilityPolicy::default(),
+            None,
+            Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            true,
+            pool,
+        )
+        .unwrap();
+        assert!(matches!(result, Value::Int(value) if value == expected));
+    }
+
+    #[test]
+    #[ignore = "isolated Linux process resource diagnostic; invoked explicitly by owner CI"]
+    fn task_owner_resource_diagnostic() {
+        let mode = std::env::var("KUJO_OWNER_RESOURCE_MODE").unwrap();
+        let shape = std::env::var("KUJO_OWNER_RESOURCE_SHAPE").unwrap();
+        let count: usize = std::env::var("KUJO_OWNER_RESOURCE_COUNT").unwrap().parse().unwrap();
+        assert!(matches!(mode.as_str(), "pooled" | "unpooled"));
+        assert!(matches!(shape.as_str(), "same" | "distinct"));
+        assert!([32, 1024].contains(&count));
+        // Warm one owner and static compiler state identically in both modes.
+        execute(function(0), None, 1000);
+        measurement::start().unwrap();
+        let pool = (mode == "pooled").then(|| Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20)));
+        let shared_function = function(0);
+        let mut observations = Vec::with_capacity(count / 32 + 1);
+        let baseline = snapshot();
+        for iteration in 0..count {
+            let version = if shape == "distinct" { iteration } else { 0 };
+            let callable =
+                if shape == "distinct" { function(version) } else { shared_function.clone() };
+            execute(callable, pool.clone(), 1000 + version as i64);
+            if (iteration + 1) % 32 == 0 {
+                let (rss, executable) = snapshot();
+                let owners = pool.as_ref().map_or(0, |pool| pool.idle.lock().unwrap().len());
+                observations.push(serde_json::json!({"tasks":iteration+1,"rss_bytes":rss,"executable_mapping_bytes":executable,"idle_owners":owners}));
+            }
+        }
+        drop(pool);
+        drop(shared_function);
+        let after_drop = snapshot();
+        let metrics = measurement::snapshot("success");
+        let expected_compiles = if mode == "pooled" && shape == "same" { 1 } else { count };
+        assert_eq!(
+            metrics["counters"]["jit_compile_entries"].as_u64(),
+            Some(expected_compiles as u64)
+        );
+        assert_eq!(metrics["counters"]["jit_native_boundary_entries"].as_u64(), Some(count as u64));
+        println!(
+            "OWNER_RESOURCE {}",
+            serde_json::json!({
+                "schema":"kujo.owner-resource/v1", "mode":mode,"shape":shape,"count":count,
+                "measurements":metrics,
+                "baseline_rss_bytes":baseline.0,"baseline_executable_mapping_bytes":baseline.1,
+                "observations":observations,"after_drop_rss_bytes":after_drop.0,
+                "after_drop_executable_mapping_bytes":after_drop.1,
+                "scope":"Linux process RSS and executable virtual mappings; not requested live heap, total ownership bytes or elapsed speed"
+            })
+        );
+    }
+}
