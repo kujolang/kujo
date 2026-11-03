@@ -96,8 +96,46 @@ in all runtimes, and collects Heaptrack allocation profiles in separate runs of
 the four priority workloads. Raw traces and analysis are retained. Allocation
 counts, retained heap, peak RSS and logical root issuance are distinct measures;
 none supplies a copied-byte total or proves an elapsed-time improvement. Stripped
-executable stacks may limit attribution. These checks remain pending until the
-frozen-binary follow-up completes.
+executable stacks may limit attribution.
+
+### Frozen state and resource follow-up passed
+
+Run `41717910054`, artifact `13272195277`, completed successfully. Frozen binary
+hashes match session 1 before and after execution. Off-host raw comparisons verify
+98 complete sorting arrays per engine, 1,764 wrapper/RNG/input observations,
+1,197 complete normalized NeuralNet states (134,064 compared float values), and
+10,036 pixels per baseline/candidate/runtime. Expanded local-store fixtures pass
+VM/interpreter/JIT. Existing snapshot assertions and negative controls remain.
+This does not close all-50 structural equivalence or production acceptance.
+
+Heaptrack 1.3.0 reports the following whole-process allocation calls, separately
+from timing. Counts include frontend, compilation, preparation and warmup.
+
+| JIT workload | Baseline allocation calls | Candidate allocation calls | Baseline/candidate peak heap |
+| --- | ---: | ---: | --- |
+| QuickSort | 1,007,735 | 1,004,982 | 40.00M / 39.92M |
+| MergeSort | 1,663,686 | 1,659,316 | 58.86M / 58.14M |
+| NeuralNet | 11,830,983 | 11,331,648 | 25.91M / 24.78M |
+| TextRaytracer | 5,464,577 | 5,120,953 | 37.73M / 34.70M |
+
+VM Quick/Merge/Neural allocation counts are identical; ray differs by three
+calls out of 9.67 million. Reported unfreed-at-exit memory is unchanged at the
+displayed precision (JIT 19.23K). This is not a universal no-leak proof or a
+copied-byte measurement. Stripped stacks prevent reliable helper attribution
+from these allocation traces. Heaptrack-instrumented elapsed times are excluded
+from speed comparisons.
+
+Separate runner phase records reproduce off-host: frontend parse, bytecode
+compile, inclusive JIT compilation, creation, preparation, warmup and configured
+iterations remain distinguished. Native function-entry counts match baseline and
+candidate in all four workloads. Compiler spans overlap execution phases; no
+sum or subtraction is presented as an independent compilation measurement.
+
+`local-store-state-resources-2026-11-03.json.gz` preserves 194 hash-verified text
+records and SHA-256/size identities for 16 compressed allocation traces and two
+Rust oracle executables. Binary files remain in the downloaded/remote artifact,
+not duplicated into Git. Off-host state and phase verification are retained;
+allocation totals are Heaptrack's summaries, not a second raw-trace decoding.
 
 ## Corrected worker-reuse evidence
 
