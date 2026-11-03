@@ -2,7 +2,8 @@
 
 The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
-It has not completed integration, no-JIT, all-benchmark or platform acceptance.
+It also passes all 150 test-size benchmark checks. It has not completed
+integration, no-JIT, production-size or platform acceptance.
 
 The new `probes/vm_resource_probe.rs` links three diagnostics to one recorded
 Kujo library. Run it as `COUNT jit|vm live|vm-maps|compiler-maps` on macOS.
@@ -63,7 +64,27 @@ Some candidate RSS observations are higher. For example, the 32-VM JIT live
 probe has median peak RSS 6,828,032 bytes versus baseline 6,680,576 bytes. We do
 not claim an RSS or speed improvement, nor that requested-byte reclamation forces
 the system allocator to return pages to the OS. Longer resource, integration,
-no-JIT, all-benchmark and platform checks remain before runtime acceptance.
+no-JIT, production-size and platform checks remain before runtime acceptance.
 
 `vm-resource-comparison-2026-11-03.json.gz` preserves both raw matrices, the
 matched-library metadata, comparison verifier and negative-control evidence.
+
+## Current-source CLI and benchmark gate
+
+The isolated candidate CLI build completed successfully in 23m29s. The exact
+Cargo executable artifact was copied and hashed as
+`17a26b324469d5d61eb2da5406bf335cf2906b328c851188244706566663c325`.
+All 175 staged source/input/driver identities matched before the run; the
+generated port matched its ordered source fragments byte-for-byte.
+
+The unchanged 50 test-size inputs pass in VM, JIT and interpreter modes:
+**150 passed, zero failed**. The sequential runner checks each configuration,
+exit status, complete stdout checksum, summary line and truncation status; it
+rechecks frozen identities before and after each mode. Independent inspection
+repeated the coverage/checksum checks and verified all 14 archived artifacts in
+`vm-memory-checksums-2026-11-03.json.gz`.
+
+These are correctness results, not a timing comparison or production-size
+certification. The memory patch remains separate and unaccepted. Matched
+generator-lifetime regression execution and the remaining integration/no-JIT/
+platform gates must finish before integration.
