@@ -57,6 +57,7 @@ jobs:
           cargo test --release --locked --lib owner_metadata_accounts_literals_capacity_and_unknown_payloads -- --nocapture >> lifetime-accounting.log 2>&1
           cargo test --release --locked --lib owner_reset_rejects_incomplete_or_incompatible_compilers -- --nocapture >> lifetime-accounting.log 2>&1
       - name: Test retained generators, callbacks and task state
+        id: integration
         if: always() && !cancelled() && steps.owner.outcome == 'success'
         run: >-
           cargo test --release --locked --no-fail-fast --message-format=json
@@ -70,6 +71,11 @@ jobs:
           --test task_module_snapshot_contracts
           --test task_global_snapshot_contracts
           --test imported_task_globals_contracts > lifetime-integration.log 2>&1
+      - name: Measure async task compilation reuse
+        if: always() && !cancelled() && steps.integration.outcome == 'success' && matrix.os == 'ubuntu-22.04'
+        run: |
+          ruby benchmarks/langarena/probes/collect-jit-async-economics.rb target/release/kujo owner-async-economics > lifetime-economics.log 2>&1
+          ruby benchmarks/langarena/probes/verify-jit-async-economics.rb owner-async-economics reuse >> lifetime-economics.log 2>&1
       - name: Preserve verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -82,3 +88,5 @@ jobs:
             lifetime-no-jit.log
             lifetime-accounting.log
             lifetime-integration.log
+            lifetime-economics.log
+            owner-async-economics/

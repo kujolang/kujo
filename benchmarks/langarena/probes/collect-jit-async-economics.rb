@@ -9,7 +9,7 @@ raise 'output exists' if File.exist?(dir)
 raise 'diagnostic override' unless ENV.keys.grep(/\A(?:DEBUG_|DISABLE_.*JIT|KUJO_HASHMAP_PROFILE\z)/).empty?
 source = 'benchmarks/langarena/probes/jit-async-worker-economics.kujo'
 port = 'benchmarks/langarena/port.kujo'
-files = [binary, source, port, __FILE__, 'src/interpreter/mod.rs', 'src/interpreter/native_functions/async_ops.rs', 'src/jit.rs', 'src/vm.rs', 'src/benchmarks/runtime_measurements.rs'].to_h { |p| [p, Digest::SHA256.file(p).hexdigest] }
+files = [binary, source, port, __FILE__, 'src/interpreter/mod.rs', 'src/interpreter/tasks.rs', 'src/interpreter/native_functions/callbacks.rs', 'src/interpreter/native_functions/async_ops.rs', 'src/jit.rs', 'src/vm.rs', 'src/benchmarks/runtime_measurements.rs'].to_h { |p| [p, Digest::SHA256.file(p).hexdigest] }
 verify = -> { files.each { |p,h| raise "input drift #{p}" unless Digest::SHA256.file(p).hexdigest == h } }
 FileUtils.mkdir_p(dir)
 report = {status:'running',pid:Process.pid,started_at:Time.now.utc.iso8601,files:files,rows:[],scope:'One instrumented observation per cell; Async wrapper calls a synchronous helper; fixed 16 equal worker jobs per repetition. Direct controls await each wrapper; parallel controls use the async mapper route. Counters include setup/checksum and compile attempts. Inclusive compile wall spans can overlap across workers, exclude metadata retention before their entry, and are not CPU time or a fraction of process time. Interpreter has no measurement flag.'}

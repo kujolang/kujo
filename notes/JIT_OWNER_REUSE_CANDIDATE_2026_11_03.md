@@ -252,3 +252,21 @@ fresh VM must compile/execute successfully afterward, and earlier returned array
 must survive final destruction. This tests the Rust unwind boundary; it does not
 claim support for unwinding across an active native ABI frame. Runtime execution
 is pending CI, and physical reclamation remains a separate gate.
+
+## Async economics acceptance wiring
+
+The Linux targeted workflow now runs the unchanged forty-cell async economics
+collector after successful integrations. A separate `reuse` verification mode
+requires one compilation for direct/serial jobs, nonzero bounded compilations
+for concurrent jobs, unchanged native participation and exact task/output/input
+coverage. Baseline mode preserves the original one-compilation-per-job oracle.
+Loop-only misses/hits must agree with compilation/reuse counts. Concurrent cells
+report their observations without assuming a scheduling-dependent speed gain.
+
+The collector now freezes task and callback route sources as well. The verifier
+requires the source manifest and still checks raw outputs, measurement hashes,
+argv/configuration, statuses and all forty exact cells. Six synthetic parser
+controls pass: baseline/reuse accepted; duplicate cell, failed outcome, serial
+recompilation and lost native execution rejected. Synthetic controls are not
+benchmark results. Runtime diagnostic collection is pending CI. Instrumented
+wall spans are not an uninstrumented speed comparison or self CPU attribution.
