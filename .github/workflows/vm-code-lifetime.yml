@@ -104,6 +104,10 @@ jobs:
           cargo test --release --locked --lib --no-run --message-format=json > owner-resources/build.jsonl
           ruby benchmarks/langarena/probes/collect-owner-resources.rb owner-resources
           ruby benchmarks/langarena/probes/verify-owner-resources.rb owner-resources
+          ruby benchmarks/langarena/probes/test-owner-concurrent-verifier.rb > owner-resources/concurrent-controls.json
+          ruby -rjson -e 'rows=File.readlines("owner-resources/build.jsonl").filter_map{|l|JSON.parse(l) rescue nil}; paths=rows.select{|r|r["reason"]=="compiler-artifact" && r.dig("profile","test") && r["executable"]}.map{|r|r["executable"]}.uniq; abort unless paths.size==1; File.write("owner-resources/concurrent-binary.txt",paths.first)'
+          KUJO_OWNER_RESOURCE_CONCURRENT=1 timeout 180 "$(cat owner-resources/concurrent-binary.txt)" --exact vm::task_owner_resource_tests::task_owner_resource_diagnostic --ignored --nocapture --test-threads=1 > owner-resources/concurrent.log 2>&1
+          ruby benchmarks/langarena/probes/verify-owner-concurrent-resources.rb owner-resources/concurrent.log > owner-resources/concurrent-verified.json
       - name: Preserve verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

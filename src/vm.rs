@@ -13525,6 +13525,10 @@ mod task_owner_resource_tests {
     #[test]
     #[ignore = "isolated Linux process resource diagnostic; invoked explicitly by owner CI"]
     fn task_owner_resource_diagnostic() {
+        if std::env::var("KUJO_OWNER_RESOURCE_CONCURRENT").as_deref() == Ok("1") {
+            concurrent_lineage_resources();
+            return;
+        }
         let mode = std::env::var("KUJO_OWNER_RESOURCE_MODE").unwrap();
         let shape = std::env::var("KUJO_OWNER_RESOURCE_SHAPE").unwrap();
         let count: usize = std::env::var("KUJO_OWNER_RESOURCE_COUNT").unwrap().parse().unwrap();
@@ -13568,6 +13572,77 @@ mod task_owner_resource_tests {
                 "observations":observations,"after_drop_rss_bytes":after_drop.0,
                 "after_drop_executable_mapping_bytes":after_drop.1,
                 "scope":"Linux process RSS and executable virtual mappings; not requested live heap, total ownership bytes or elapsed speed"
+            })
+        );
+    }
+
+    // Mechanism-level observation: explicit exclusive leases, not scheduler
+    // throughput. Actual task-route concurrency has separate integration tests.
+    fn concurrent_lineage_resources() {
+        execute(function(0), None, 1000);
+        let baseline = snapshot();
+        let mut observations = Vec::new();
+        for lineage in 0..8 {
+            let pool = Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20));
+            let callable = function(lineage);
+            for round in 0..16 {
+                let release = Arc::new(std::sync::Barrier::new(3));
+                let (ready_tx, ready_rx) = std::sync::mpsc::channel();
+                let workers: Vec<_> = (0..2)
+                    .map(|_| {
+                        let pool = Arc::clone(&pool);
+                        let release = Arc::clone(&release);
+                        let ready = ready_tx.clone();
+                        let callable = callable.clone();
+                        std::thread::spawn(move || {
+                            let mut vm = VM::new();
+                            vm.set_jit_enabled(true);
+                            if let Some(owner) = pool.take(false) {
+                                vm.code_owner = owner;
+                            }
+                            assert!(vm.jit_compile_bytecode_function(&callable).unwrap());
+                            let result = vm
+                                .call_function_from_jit(callable, vec![Value::Int(1000)])
+                                .unwrap();
+                            assert!(matches!(result, Value::Int(n) if n == 1000 + lineage as i64));
+                            ready.send(()).unwrap();
+                            release.wait();
+                            assert!(pool.put(std::mem::take(&mut vm.code_owner), false));
+                        })
+                    })
+                    .collect();
+                drop(ready_tx);
+                for _ in 0..2 {
+                    ready_rx.recv_timeout(std::time::Duration::from_secs(30)).unwrap();
+                }
+                assert!(pool.idle.lock().unwrap().is_empty());
+                let active = snapshot();
+                release.wait();
+                for worker in workers {
+                    worker.join().unwrap();
+                }
+                let idle = snapshot();
+                assert_eq!(pool.idle.lock().unwrap().len(), 2);
+                observations.push(serde_json::json!({
+                    "lineage":lineage,"round":round,"active_owners":2,"idle_owners":2,
+                    "active_rss_bytes":active.0,"active_executable_mapping_bytes":active.1,
+                    "idle_rss_bytes":idle.0,"idle_executable_mapping_bytes":idle.1
+                }));
+            }
+            drop(pool);
+            let after_drop = snapshot();
+            observations.push(serde_json::json!({
+                "lineage":lineage,"after_drop_rss_bytes":after_drop.0,
+                "after_drop_executable_mapping_bytes":after_drop.1
+            }));
+        }
+        println!(
+            "OWNER_CONCURRENT_RESOURCE {}",
+            serde_json::json!({
+                "schema":"kujo.owner-concurrent-resource/v1",
+                "baseline_rss_bytes":baseline.0,"baseline_executable_mapping_bytes":baseline.1,
+                "lineages":8,"rounds_per_lineage":16,"observations":observations,
+                "scope":"Explicit two-owner leases and eight pool lifetimes; process RSS/executable mappings, not task scheduler throughput or total owned heap"
             })
         );
     }
