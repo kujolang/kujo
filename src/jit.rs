@@ -1570,14 +1570,22 @@ pub unsafe extern "C" fn jit_indexed_write(
         ctx.runtime_error = Some(VM::local_mutation_error(kind, name));
         return 1;
     }
-    let operands = ctx.owned_roots.clone_value(index, index_kind).and_then(|index| {
-        ctx.owned_roots.clone_value(value, value_kind).map(|value| (index, value))
-    });
-    let (index, value) = match operands {
-        Ok(values) => values,
-        Err(error) => {
-            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
-            return 1;
+    // Immediate operands cannot fail ownership validation. Keep them narrow
+    // until the destination is known instead of moving two full-width Values
+    // through the root decoder and an intermediate tuple on every scalar write.
+    // Owned/invalid operands still validate before destination lookup, in order.
+    let immediate = index_kind == crate::native_scalar::INTEGER && (0..=3).contains(&value_kind);
+    let operands = if immediate {
+        None
+    } else {
+        match ctx.owned_roots.clone_value(index, index_kind).and_then(|index| {
+            ctx.owned_roots.clone_value(value, value_kind).map(|value| (index, value))
+        }) {
+            Ok(values) => Some(values),
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                return 1;
+            }
         }
     };
     if location == 1 && target_kind != crate::native_owned::OWNED {
@@ -1600,7 +1608,36 @@ pub unsafe extern "C" fn jit_indexed_write(
             .ok_or_else(|| "Native indexed write binding is missing".to_string()),
         _ => Err("Invalid native indexed write location".into()),
     };
-    match target.and_then(|target| VM::set_indexed_value(target, index, value)) {
+    let result = match target {
+        Err(error) => Err(error),
+        Ok(target) => match operands {
+            Some((index, value)) => VM::set_indexed_value(target, index, value),
+            None => match target {
+                Value::Array(values) => {
+                    // Match VM::set_indexed_value, including COW before the bounds
+                    // check. No backing pointer or reference survives this call.
+                    let values = Arc::make_mut(values);
+                    let offset = if index < 0 {
+                        (values.len() as i64 + index) as usize
+                    } else {
+                        index as usize
+                    };
+                    if let Some(slot) = values.get_mut(offset) {
+                        *slot = crate::native_scalar::decode(value, value_kind);
+                        Ok(())
+                    } else {
+                        Err(format!("Index out of bounds: {index}"))
+                    }
+                }
+                _ => VM::set_indexed_value(
+                    target,
+                    Value::Int(index),
+                    crate::native_scalar::decode(value, value_kind),
+                ),
+            },
+        },
+    };
+    match result {
         Ok(()) => 0,
         Err(error) => {
             ctx.runtime_error = Some(error);
@@ -14285,6 +14322,106 @@ mod tests {
         assert!(
             matches!(&slots[0], Value::DenseIntDictIntFull(values) if values.as_slice() == [1,99])
         );
+    }
+
+    #[test]
+    fn native_scalar_indexed_writes_match_vm_contract_and_snapshots() {
+        let hash = BytecodeTranslator::hash_var_name("local");
+        let mut names = HashMap::from([(hash, "local".to_owned())]);
+        let scalars = [
+            (i64::MIN, 0),
+            (i64::MAX, 0),
+            (7, 1),
+            (0, 1),
+            (99, 2),
+            ((-0.0f64).to_bits() as i64, 3),
+            (0x7ff8000000000042u64 as i64, 3),
+        ];
+        for location in 0..=2 {
+            for shared in [false, true] {
+                for index in [i64::MIN, -4, -3, -1, 0, 2, 3, i64::MAX] {
+                    for (payload, kind) in scalars {
+                        let seed =
+                            Value::array(vec![Value::Int(10), Value::Int(20), Value::Int(30)]);
+                        let snapshot = shared.then(|| seed.clone());
+                        let mut expected = seed.clone();
+                        let expected_error = VM::set_indexed_value(
+                            &mut expected,
+                            Value::Int(index),
+                            crate::native_scalar::decode(payload, kind),
+                        )
+                        .err();
+                        let mut context = VMContext::new(
+                            std::ptr::null_mut(),
+                            std::ptr::null_mut(),
+                            std::ptr::null_mut(),
+                        );
+                        context.var_names_ptr = &mut names;
+                        context.owned_roots.enter().unwrap();
+                        let mut slots = vec![];
+                        let mut locals = HashMap::new();
+                        let (target, target_kind) = match location {
+                            0 => {
+                                slots.push(seed);
+                                context.local_slots_ptr = &mut slots;
+                                (0, 0)
+                            }
+                            1 => context.owned_roots.encode(seed).unwrap(),
+                            _ => {
+                                locals.insert("local".to_owned(), seed);
+                                context.locals_ptr = &mut locals;
+                                (0, 0)
+                            }
+                        };
+                        // SAFETY: live exclusive context and destination storage;
+                        // the root belongs to this scope and metadata remains live.
+                        let status = unsafe {
+                            jit_indexed_write(
+                                &mut context,
+                                location,
+                                target,
+                                target_kind,
+                                0,
+                                hash as i64,
+                                index,
+                                0,
+                                payload,
+                                kind,
+                            )
+                        };
+                        assert_eq!(status, i64::from(expected_error.is_some()));
+                        assert_eq!(context.runtime_error, expected_error);
+                        let actual = match location {
+                            0 => &slots[0],
+                            1 => {
+                                context.owned_roots.current_value_mut(target, target_kind).unwrap()
+                            }
+                            _ => locals.get("local").unwrap(),
+                        };
+                        let (Value::Array(actual), Value::Array(expected)) = (actual, &expected)
+                        else {
+                            panic!("array representation changed")
+                        };
+                        for (actual, expected) in actual.iter().zip(expected.iter()) {
+                            match (actual, expected) {
+                                (Value::Float(a), Value::Float(b)) => {
+                                    assert_eq!(a.to_bits(), b.to_bits())
+                                }
+                                _ => assert_eq!(actual, expected),
+                            }
+                        }
+                        if let Some(Value::Array(snapshot)) = snapshot {
+                            assert_eq!(
+                                snapshot.as_slice(),
+                                &[Value::Int(10), Value::Int(20), Value::Int(30)]
+                            );
+                        }
+                        context.owned_roots.leave().unwrap();
+                        assert_eq!(context.owned_roots.storage_state().1, 0);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

@@ -1,0 +1,44 @@
+func rewrite(input, value) {
+    mut data := input
+    let before := data
+    data[-1] = value
+    data[0] = value
+    assert_equal(before, [10, 20, 30])
+    return data
+}
+func bad_write(input, index) {
+    mut data := input
+    data[index] = 17
+    return data
+}
+func dictionary_write(input, value) {
+    mut data := input
+    data[1] = value
+    return data
+}
+func byte_write(input, value) {
+    mut data := input
+    data[-1] = value
+    return data
+}
+let original := [10, 20, 30]
+let bytes_before := bytes([0, 255, 17])
+mut n := 0
+while n < 160 {
+    for item in [9007199254740993, -17, true, false, null, -0.0, 1.25, [7], {"a": 8}] {
+        let result := rewrite(original, item)
+        assert_equal(result, [item, 20, item])
+        assert_equal(original, [10, 20, 30])
+        assert_equal(dictionary_write({"1": 10}, item)[1], item)
+    }
+    assert_equal(byte_write(bytes_before, 128), bytes([0, 255, 128]))
+    assert_equal(bytes_before, bytes([0, 255, 17]))
+    for index in [-4, 3, 9007199254740993] {
+        mut caught := 0
+        try { bad_write(original, index) } except error { caught = 1 }
+        assert_equal(caught, 1)
+        assert_equal(original, [10, 20, 30])
+    }
+    n += 1
+}
+print("scalar-indexed-write: OK")
