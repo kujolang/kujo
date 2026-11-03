@@ -33,7 +33,7 @@ the accepted port. No rows may be checked off based only on matching checksums.
 | Json::ParseDom | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete values/output and malformed-input behavior; isolate DOM versus typed-mapping work. |
 | Json::ParseMapping | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete values/output and malformed-input behavior; isolate DOM versus typed-mapping work. |
 | CSV::Parse | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Every parsed field and quote/error policy; account for validation and copying. |
-| Etc::Sieve | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete prime flags/list and marking work across sizes. |
+| Etc::Sieve | [10_basic.kujo](src/10_basic.kujo) | [216 complete flag-buffer observations in all three Kujo modes](SIEVE_PORT_STATE_AUDIT_2026_11_03.md); partial | Executed Rust/Goose controls, marking/traversal work counts, invalid limits and production coverage. |
 | Etc::TextRaytracer | [46_ray.kujo](src/46_ray.kujo) | Oracle open; checksum/source evidence is separate | Every output pixel and ray/intersection work under the float policy. |
 | Etc::NeuralNet | [49_neural.kujo](src/49_neural.kujo) | Oracle open; checksum/source evidence is separate | Weights and outputs after every training step; field/transfer work separately. |
 | Etc::CacheSimulation | [47_cache.kujo](src/47_cache.kujo) | Oracle open; checksum/source evidence is separate | Full LRU order/values after every request; distinguish string links from node indices. |
