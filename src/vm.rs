@@ -12798,7 +12798,7 @@ mod code_owner_lifetime_tests {
         }
     }
 
-    #[cfg(all(feature = "runtime-jit", target_os = "macos"))]
+    #[cfg(all(feature = "runtime-jit", any(target_os = "macos", target_os = "linux")))]
     #[test]
     fn vm_drop_revokes_its_executable_entry() {
         // Isolate mapping checks from parallel tests that could reuse freed pages.
@@ -12822,6 +12822,20 @@ mod code_owner_lifetime_tests {
             );
             return;
         }
+        #[cfg(target_os = "linux")]
+        fn executable(pointer: usize) -> bool {
+            // Read mapping metadata only. Never dereference a retired native entry.
+            let maps = std::fs::read_to_string("/proc/self/maps").unwrap();
+            maps.lines().any(|line| {
+                let mut fields = line.split_whitespace();
+                let (start, end) = fields.next().unwrap().split_once('-').unwrap();
+                let start = usize::from_str_radix(start, 16).unwrap();
+                let end = usize::from_str_radix(end, 16).unwrap();
+                let permissions = fields.next().unwrap();
+                start <= pointer && pointer < end && permissions.contains('x')
+            })
+        }
+        #[cfg(target_os = "macos")]
         fn executable(pointer: usize) -> bool {
             unsafe extern "C" {
                 static mach_task_self_: u32;

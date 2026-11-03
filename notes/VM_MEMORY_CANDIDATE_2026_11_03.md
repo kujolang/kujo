@@ -51,3 +51,20 @@ retention stays unchanged. These counts do not establish lower RSS or speed.
 
 Next: run exact-branch platform checks and production controls, preserving all
 failures/timeouts. Do not integrate or publish before remaining acceptance gates.
+
+## Platform verification branch
+
+The platform follow-up extends the executable-entry regression to Linux by
+reading `/proc/self/maps` metadata in the isolated test subprocess. It checks
+execute permission before and after each VM destruction, without dereferencing
+retired code or adding unsafe sites. Runtime implementation outside the test
+module remains byte-for-byte identical to candidate75445306. Windows runs the
+retained-value/code-toggle and integration contracts, but has no reclamation
+claim: the backend limitation remains explicit.
+
+The manual `native-upgrade` workflow accepts an optional `code_lifetime_only`
+Boolean (default false). True calls the separate lifetime workflow on Linux
+x64/arm64, macOS x64/arm64 and Windows x64. Existing push/PR/default manual upgrade
+behavior remains unchanged. This route verifies owner, generator, callback and
+task contracts and uploads logs; it neither publishes artifacts nor releases.
+Platform results remain pending until exact-commit jobs and evidence are reviewed.

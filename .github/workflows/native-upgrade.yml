@@ -2,12 +2,24 @@ name: native-upgrade
 
 on:
   workflow_dispatch:
+    inputs:
+      code_lifetime_only:
+        description: Run isolated VM code-lifetime verification instead of upgrade tests
+        type: boolean
+        default: false
   push:
     branches: [main]
   pull_request:
 
 jobs:
+  code-lifetime:
+    if: github.event_name == 'workflow_dispatch' && inputs.code_lifetime_only
+    permissions:
+      contents: read
+    uses: ./.github/workflows/vm-code-lifetime.yml
+
   native-upgrade:
+    if: github.event_name != 'workflow_dispatch' || !inputs.code_lifetime_only
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

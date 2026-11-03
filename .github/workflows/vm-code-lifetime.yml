@@ -1,0 +1,56 @@
+name: vm-code-lifetime
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  lifetime:
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record exact source and toolchain
+        shell: bash
+        run: |
+          git rev-parse HEAD > lifetime-source.txt
+          rustc --version --verbose >> lifetime-source.txt
+      - name: Verify formatting
+        run: cargo fmt --check
+      - name: Test private code-owner lifetime
+        shell: bash
+        run: cargo test --release --locked --lib code_owner_lifetime_tests -- --nocapture > lifetime-library.log 2>&1
+      - name: Test retained generators, callbacks and task state
+        shell: bash
+        run: |
+          cargo test --release --locked --no-fail-fast --message-format=json \
+            --test generator_continuation_contracts \
+            --test imported_vm_callback \
+            --test callback_module_cache \
+            --test jit_callback_depth \
+            --test language_task_contracts \
+            --test jit_cold_callback \
+            --test task_jit_policy \
+            --test task_module_snapshot_contracts \
+            --test task_global_snapshot_contracts \
+            --test imported_task_globals_contracts > lifetime-integration.log 2>&1
+      - name: Preserve verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vm-code-lifetime-${{ matrix.os }}
+          retention-days: 7
+          path: |
+            lifetime-source.txt
+            lifetime-library.log
+            lifetime-integration.log
