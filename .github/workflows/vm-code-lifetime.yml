@@ -84,6 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir owner-resources
+          ruby benchmarks/langarena/probes/test-owner-resource-verifier.rb > owner-resources/verifier-controls.json
           git rev-parse HEAD > owner-resources/source.txt
           cargo test --release --locked --lib --no-run --message-format=json > owner-resources/build.jsonl
           ruby benchmarks/langarena/probes/collect-owner-resources.rb owner-resources

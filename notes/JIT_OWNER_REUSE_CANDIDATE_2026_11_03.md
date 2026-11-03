@@ -322,3 +322,16 @@ and raw archive. Eighteen verifier controls pass across the three artifacts.
 These supersede earlier pending statements only for those revisions. Later
 unwind/eviction, economics, resources and final combined acceptance remain open;
 no elapsed-speed gain is established.
+
+## Resource verifier negative controls
+
+Sixteen self-contained synthetic controls now test the resource verifier without
+building or executing Kujo. The valid eight-case receipt is accepted explicitly
+as review-pending. Missing/duplicate cases, timeout, changed logs, wrong environment
+or invocation, missing checkpoint, repeated compilation, lost native execution,
+invalid retained-owner state, invalid memory values, duplicate receipt, wrong
+source and changed binary are rejected without writing an acceptance receipt.
+These controls pass locally and are wired before future CI resource collection;
+results are uploaded alongside diagnostics. They validate the evidence parser,
+not resource behavior or an optimization speedup. Existing live runs predate this
+workflow addition and are not restarted.
