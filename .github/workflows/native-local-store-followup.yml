@@ -72,6 +72,28 @@ jobs:
             done
           done
           sha256sum --check post-evidence/binary-hashes.txt > post-evidence/binary-recheck.txt
+      - name: Collect allocation profiles separately from elapsed measurements
+        run: |
+          sudo apt-get update > post-evidence/heaptrack-install.log 2>&1
+          sudo apt-get install -y --no-install-recommends heaptrack >> post-evidence/heaptrack-install.log 2>&1
+          heaptrack --version > post-evidence/heaptrack-version.txt
+          heaptrack_print --help > post-evidence/heaptrack-print-help.txt
+          for variant in baseline candidate; do
+            for runtime in vm jit; do
+              for name in Sort::Quick Sort::Merge Etc::NeuralNet Etc::TextRaytracer; do
+                label="$variant-$runtime-${name//::/-}"
+                flags=()
+                if [ "$runtime" = jit ]; then flags+=(--jit); fi
+                timeout 600 heaptrack -o "$PWD/post-evidence/$label.heap" "frozen/$variant-kujo" run "${flags[@]}" --scheduler-no-timeout benchmarks/langarena/port.kujo benchmarks/langarena/test.json "$name" > "post-evidence/$label.heap.out" 2> "post-evidence/$label.heap.err"
+                checksum=$(ruby -rjson -e 'puts JSON.parse(File.read("benchmarks/langarena/test.json")).find{|r| r["name"]==ARGV[0]}.fetch("checksum")' "$name")
+                grep -Fx "$name: OK $checksum" "post-evidence/$label.heap.out"
+                trace=$(find post-evidence -maxdepth 1 -type f \( -name "$label.heap*.gz" -o -name "$label.heap*.zst" \))
+                test -n "$trace"
+                heaptrack_print -f "$trace" > "post-evidence/$label.heap.summary.txt" 2> "post-evidence/$label.heap.summary.err"
+              done
+            done
+          done
+          sha256sum --check post-evidence/binary-hashes.txt > post-evidence/binary-after-allocation-profiles.txt
       - name: Preserve state and resource evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

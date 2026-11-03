@@ -53,6 +53,14 @@ and measures resources/native entries separately from elapsed timing. NeuralNet
 tools are imported unchanged from `1eea508d`; no experimental runtime or port
 correction is imported with them. No acceptance decision yet.
 
+The follow-up also compares all 10,036 rendered pixels across three image sizes
+in all runtimes, and collects Heaptrack allocation profiles in separate runs of
+the four priority workloads. Raw traces and analysis are retained. Allocation
+counts, retained heap, peak RSS and logical root issuance are distinct measures;
+none supplies a copied-byte total or proves an elapsed-time improvement. Stripped
+executable stacks may limit attribution. These checks remain pending until the
+frozen-binary follow-up completes.
+
 ## Corrected worker-reuse evidence
 
 Run `41654661543`, source `bc7fc048a8b47fa0a153e4fe7879094af7b7a0d4`, artifact
