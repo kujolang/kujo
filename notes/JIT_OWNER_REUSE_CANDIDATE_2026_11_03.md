@@ -346,3 +346,18 @@ The pool must retain an owner with emitted native code. This is targeted coverag
 of an explicit boundary requirement, not a proof of every specialization or dense
 slot layout. Source-pinned artifact membership includes the new test. Runtime
 execution remains pending CI; no production runtime implementation changed.
+
+## First verified compilation economics result
+
+Source d9803cb6 now passes all forty async economics cells in CI and independent
+bounded archive review: direct/one-worker serial cases compile once for16/64 jobs,
+with unchanged outputs, task counts and native participation. Concurrent cases
+also reduce compilation events in this observation; scheduling affects counts.
+This is not elapsed-speed evidence. The binary was rehashed by CI but not uploaded,
+so archive verification explicitly preserves its identity as a CI receipt. Source,
+generated port, raw outputs, metrics and invocations are independently checked.
+Six synthetic and five archive parser controls pass. See
+`benchmarks/langarena/JIT_OWNER_REUSE_ECONOMICS_2026_11_03.md` for counts and limits.
+Unwind1910a363 and economics-source d9803cb6 each have79 independently verified
+targeted Linux passes. Later resources, final platform/all150 and elapsed gates
+remain open; no candidate integration follows yet.

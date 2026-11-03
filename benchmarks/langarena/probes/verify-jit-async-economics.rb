@@ -1,6 +1,8 @@
 require 'json'
 require 'digest'
-raise 'usage: OUTPUT [baseline|reuse]' unless (1..2).cover?(ARGV.size)
+require 'open3'
+raise 'usage: OUTPUT [baseline|reuse] [archive COMMIT GENERATED_PORT]' unless (1..2).cover?(ARGV.size) || (ARGV.size==5 && ARGV[2]=='archive')
+archived=ARGV.size==5
 policy=ARGV.fetch(1, 'baseline')
 raise 'unknown verification policy' unless %w[baseline reuse].include?(policy)
 dir=File.expand_path(ARGV.fetch(0))
@@ -9,7 +11,33 @@ raise 'unfinished collection' unless report['status']=='verified-review-pending'
 required=%w[benchmarks/langarena/probes/jit-async-worker-economics.kujo benchmarks/langarena/port.kujo benchmarks/langarena/probes/collect-jit-async-economics.rb src/interpreter/mod.rs src/interpreter/native_functions/async_ops.rs src/jit.rs src/vm.rs src/benchmarks/runtime_measurements.rs]
 required+=%w[src/interpreter/tasks.rs src/interpreter/native_functions/callbacks.rs] if policy=='reuse'
 raise 'source manifest incomplete' unless (required-report.fetch('files').keys).empty?
-report.fetch('files').each{|p,h|raise "input drift #{p}" unless Digest::SHA256.file(p).hexdigest==h}
+recorded_dir=dir
+identity_scope='Source and executable bytes rehashed locally.'
+if archived
+  commit=ARGV[3]
+  raise 'full archive source commit required' unless commit.match?(/\A[0-9a-f]{40}\z/)
+  binary=report.fetch('files').keys.first
+  raise 'archive file coverage' unless report['files'].keys.sort==(required+[binary]).sort
+  raise 'archive binary receipt' unless binary.start_with?('/') && report['files'][binary].match?(/\A[0-9a-f]{64}\z/)
+  required.each do |path|
+    if path=='benchmarks/langarena/port.kujo'
+      bytes=File.binread(ARGV[4])
+    else
+      bytes,err,status=Open3.capture3('git','show',"#{commit}:#{path}")
+      raise "archive source missing #{path}: #{err}" unless status.success?
+    end
+    raise "archive input drift #{path}" unless Digest::SHA256.hexdigest(bytes)==report['files'][path]
+  end
+  first=report.fetch('rows').find{|r|r['runtime']=='jit'}
+  index=first.fetch('argv').index('--measurements')
+  raise 'archive measurement path' unless index
+  recorded_dir=File.dirname(first['argv'].fetch(index+1))
+  raise 'archive output directory' unless recorded_dir.start_with?('/')
+  identity_scope='Pinned source and supplied generated-port bytes rehashed; executable SHA is a CI collector receipt, executable bytes unavailable for independent rehash.'
+else
+  report.fetch('files').each{|p,h|raise "input drift #{p}" unless Digest::SHA256.file(p).hexdigest==h}
+end
+
 labels=[]
 [1,4].each{|r|labels<<"worker-direct-1-#{r}";[1,4,8,16].each{|w|labels<<"worker-parallel-#{w}-#{r}"}}
 expected=labels.product(%w[vm interpreter jit loop-only])
@@ -31,7 +59,7 @@ rows.each do |row|
   argv=[binary,'run','--scheduler-timeout-ms','60000']
   argv<<'--interpreter' if row['runtime']=='interpreter'
   argv<<'--jit' if %w[jit loop-only].include?(row['runtime'])
-  argv+=['--measurements',dir+'/'+label+'.json'] unless row['runtime']=='interpreter'
+  argv+=['--measurements',recorded_dir+'/'+label+'.json'] unless row['runtime']=='interpreter'
   raise 'invocation' unless row['argv']==argv+args
   raise 'oracle output' unless row['stdout'].lines.map(&:strip)==output
   env=row['runtime']=='loop-only' ? {'DISABLE_FUNCTION_JIT'=>'1'} : {}
@@ -74,5 +102,5 @@ summary=rows.select{|r|%w[jit loop-only].include?(r['runtime'])}.map do |row|
   c=row.fetch('measurement').fetch('counters')
   row.slice('label','runtime').merge('compile_entries'=>c['jit_compile_entries'],'compile_inclusive_wall_ns'=>c['jit_compile_inclusive_wall_ns'],'native_function_entries'=>c['jit_native_function_entries'])
 end
-File.write(dir+'/verified.json',JSON.pretty_generate({status:'passed',verification_policy:policy,outcomes:40,report_sha256:Digest::SHA256.file(dir+'/report.json').hexdigest,scope:report['scope'],summary:summary})+"\n")
-puts '40 exact diagnostic cells, outputs, measurement receipts and input identities verified.'
+File.write(dir+(archived ? '/archived-verified.json' : '/verified.json'),JSON.pretty_generate({status:archived ? 'archived-counters-verified' : 'passed',input_identity_scope:identity_scope,verification_policy:policy,outcomes:40,report_sha256:Digest::SHA256.file(dir+'/report.json').hexdigest,scope:report['scope'],summary:summary})+"\n")
+puts archived ? '40 archived diagnostic cells and counters verified; executable identity remains CI-receipt evidence.' : '40 exact diagnostic cells, outputs, measurement receipts and input identities verified.'
