@@ -235,3 +235,9 @@ This controls overlap explicitly rather than assuming worker scheduling produced
 it. Runtime execution remains pending; it does not by itself establish resource
 bounds or a compilation-speed gain. Pinned integration membership automatically
 includes the new 62nd integration test.
+
+Reset prerequisite06e896cf is now independently verified at72 targeted Linux
+passes; see `JIT_OWNER_RESET_GATE_2026_11_03.md` and its raw evidence archive.
+This supersedes pending reset-execution statements only, not later pool/task-route
+acceptance. The initial task-integration run41633864624 reports owner-step success
+but is still running its remaining steps; raw terminal verification is pending.
