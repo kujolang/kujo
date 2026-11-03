@@ -20,6 +20,11 @@ Dir.mktmpdir('owner-elapsed-controls') do |directory|
     raise 'paired variants' unless pair.map { |r| r['variant'] }.sort == %w[baseline candidate]
   end
   raise 'order variation' unless report['rows'].each_slice(2).map { |pair| pair.first['variant'] }.uniq.size == 2
+  measured = report['rows'].reject { |row| row['warmup'] }
+  measured.group_by { |row| row.values_at('runtime', 'mode', 'workers') }.each do |cell, rows|
+    firsts = rows.each_slice(2).map { |pair| pair.first['variant'] }
+    raise "per-cell alternation #{cell}" unless firsts.size == 7 && firsts.each_cons(2).all? { |a,b| a != b }
+  end
   results << '192 samples, 24 excluded warmups, twelve paired cells, no measurement flags'
   _, _, status = Open3.capture3('ruby', collector, good, bad, directory + '/invalid')
   report = JSON.parse(File.read(directory + '/invalid/report.json'))

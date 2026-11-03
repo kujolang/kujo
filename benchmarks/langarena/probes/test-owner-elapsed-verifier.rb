@@ -21,9 +21,12 @@ Dir.mktmpdir('owner-elapsed-verifier') do |directory|
   File.write(directory+'/comparisons.json',out)
   File.write(directory+'/binary-recheck.txt',"elapsed-evidence/baseline-kujo: OK\nelapsed-evidence/candidate-kujo: OK\n")
   pristine = Dir.glob(directory+'/**/*').select { |p| File.file?(p) }.to_h { |p| [p,File.binread(p)] }
-  %w[valid duplicate-sample bad-ratio failed-sample instrumented altered-binary wrong-raw].each do |mode|
+  %w[valid nonalternating duplicate-sample bad-ratio failed-sample instrumented altered-binary wrong-raw].each do |mode|
     pristine.each { |path,bytes| File.binwrite(path,bytes) }
     report = JSON.parse(File.read(directory+'/samples/report.json'))
+    if mode == 'nonalternating'
+      report['rows'] = report['rows'].each_slice(2).flat_map { |pair| pair.sort_by { |row| row['variant'] } }
+    end
     report['rows'][1] = report['rows'][0] if mode == 'duplicate-sample'
     report['comparisons'][0]['median_speedup'] += 1 if mode == 'bad-ratio'
     report['rows'][0]['exit'] = 1 if mode == 'failed-sample'

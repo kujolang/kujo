@@ -27,8 +27,8 @@ end
 raise 'unexpected inputs' unless report['files'].size == 4
 cells = %w[vm interpreter jit].flat_map { |runtime| [['direct',1],['parallel',4],['parallel',8],['parallel',16]].map { |mode,workers| [runtime,mode,workers] } }
 expected = (-1...7).flat_map do |round|
-  cells.rotate([round,0].max % cells.size).each_with_index.flat_map do |cell,index|
-    ((round+index).even? ? %w[baseline candidate] : %w[candidate baseline]).map { |variant| [round,*cell,variant] }
+  cells.rotate([round,0].max % cells.size).flat_map do |cell|
+    ((round+cells.index(cell)).even? ? %w[baseline candidate] : %w[candidate baseline]).map { |variant| [round,*cell,variant] }
   end
 end
 rows = report.fetch('rows')

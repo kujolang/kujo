@@ -23,8 +23,8 @@ cells = %w[vm interpreter jit].flat_map do |runtime|
 end
 begin
   (-1...7).each do |round|
-    cells.rotate([round, 0].max % cells.size).each_with_index do |cell, index|
-      order = (round + index).even? ? %w[baseline candidate] : %w[candidate baseline]
+    cells.rotate([round, 0].max % cells.size).each do |cell|
+      order = (round + cells.index(cell)).even? ? %w[baseline candidate] : %w[candidate baseline]
       order.each do |variant|
         verify.call
         label = [round, cell[:runtime], cell[:mode], cell[:workers], variant].join('-')
