@@ -1,0 +1,55 @@
+name: owner-elapsed-gate
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  paired:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record candidate and host
+        run: |
+          mkdir elapsed-evidence
+          git rev-parse HEAD > elapsed-evidence/candidate-source.txt
+          rustc --version --verbose > elapsed-evidence/toolchain.txt
+          lscpu > elapsed-evidence/cpu.txt
+          uname -a > elapsed-evidence/host.txt
+          free -k > elapsed-evidence/memory-before-build.txt
+      - name: Build candidate
+        run: |
+          cargo build --release --locked --bin kujo --message-format=json > elapsed-evidence/candidate-build.jsonl 2> elapsed-evidence/candidate-build.stderr
+          cp target/release/kujo elapsed-evidence/candidate-kujo
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: cd5f2b207a8f907d6c263f5a2e405412965344ca
+          path: elapsed-baseline
+      - name: Build accepted baseline
+        run: |
+          git -C elapsed-baseline rev-parse HEAD > elapsed-evidence/baseline-source.txt
+          cargo build --manifest-path elapsed-baseline/Cargo.toml --target-dir target --release --locked --bin kujo --message-format=json > elapsed-evidence/baseline-build.jsonl 2> elapsed-evidence/baseline-build.stderr
+          cp target/release/kujo elapsed-evidence/baseline-kujo
+          sha256sum elapsed-evidence/*-kujo > elapsed-evidence/binary-sha256.txt
+      - name: Run uninstrumented alternating pairs
+        run: |
+          ruby benchmarks/langarena/probes/test-owner-elapsed-collector.rb > elapsed-evidence/collector-controls.json
+          free -k > elapsed-evidence/memory-before-samples.txt
+          cat /proc/loadavg > elapsed-evidence/load-before-samples.txt
+          ruby benchmarks/langarena/probes/compare-owner-elapsed.rb elapsed-evidence/baseline-kujo elapsed-evidence/candidate-kujo elapsed-evidence/samples > elapsed-evidence/comparisons.json
+          cat /proc/loadavg > elapsed-evidence/load-after-samples.txt
+          free -k > elapsed-evidence/memory-after-samples.txt
+          sha256sum --check elapsed-evidence/binary-sha256.txt > elapsed-evidence/binary-recheck.txt
+      - name: Preserve paired evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-elapsed-linux
+          retention-days: 7
+          path: elapsed-evidence/
