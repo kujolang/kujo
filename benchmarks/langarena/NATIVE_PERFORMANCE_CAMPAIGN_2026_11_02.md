@@ -105,10 +105,20 @@ baseline, and all 1,392 frozen identities match. Accepted invalid-call recovery
 fixes remain. At that rejection, local target binaries still contained the
 rejected candidate; later builds do not replace the need to verify binary identity.
 
-The **compilation economics baseline is established**; ownership-safe worker
-reuse remains the implementation objective. The scoped private-VM lifetime checkpoint
-is now accepted. Begin the separately gated exclusive-owner reuse candidate;
-Windows reclamation remains unresolved.
+The **compilation economics baseline is established**. Exclusive-owner worker
+reuse is implemented on `codex/jit-owner-reuse-20261103` and remains unaccepted;
+do not restart its implementation. The scoped private-VM lifetime checkpoint
+is accepted. Windows reclamation remains unresolved.
+
+The candidate has verified [Linux release and all150 checksum gates](JIT_OWNER_COMBINED_GATES_2026_11_03.md),
+[targeted platform artifacts](JIT_OWNER_PLATFORM_REVIEW_2026_11_03.md), and
+[twelve isolated resource cases through 4,096 tasks](JIT_OWNER_4096_RESOURCE_REVIEW_2026_11_03.md).
+Reduced compilation counts are established, not an elapsed speed improvement.
+The next acceptance actions are review of the
+[concurrent/repeated-pool diagnostic](JIT_OWNER_CONCURRENT_RESOURCE_PROTOCOL_2026_11_03.md),
+[paired elapsed experiment](JIT_OWNER_ELAPSED_PROTOCOL_2026_11_03.md), and remaining
+production outcomes. The broader eight-area campaign and clean-host gate remain
+open even if this candidate is accepted.
 The [64-cell baseline controls](JIT_ECONOMICS_ENTRY_2026_11_03.md) now pass:
 late tree compilation and fixed-work bytecode per-job duplication are reproduced.
 Loop-only controls retain the duplication. The [40 async-wrapper controls](JIT_ASYNC_ECONOMICS_2026_11_03.md)
@@ -126,8 +136,9 @@ now proves `JitCompiler: Send` and rejects direct `Sync` sharing on both frozen
 libraries. Exclusive mutex-owned movement type-checks; it does not prove lifetime
 or performance. The review specifies compiler/dispatch ownership, task-local
 state exclusions, reentrancy and retention gates for an exclusive-lease candidate.
-Implementation follows the completed scoped lifetime checkpoint; reuse itself
-remains unimplemented and unaccepted.
+Implementation followed the completed scoped lifetime checkpoint; reuse itself
+now exists only on the candidate branch and remains unaccepted. The boundary
+review is historical prerequisite evidence, not the current implementation status.
 
 Do not hardcode workload names or move compilation outside official timing.
 Keep worker isolation and code-lifetime ownership explicit; accepted reclamation
