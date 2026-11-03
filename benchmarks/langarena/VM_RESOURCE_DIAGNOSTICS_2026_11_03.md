@@ -3,8 +3,8 @@
 The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
 It also passes all 150 test-size benchmark checks, the matched generator suites
-and 32 targeted callback/task integration tests. It has not completed no-JIT,
-production-size or platform acceptance.
+and 32 targeted callback/task integration tests. The no-JIT feature gate now
+passes 178 tests; extended resource, production-size and platform acceptance remain open.
 
 The new `probes/vm_resource_probe.rs` links three diagnostics to one recorded
 Kujo library. Run it as `COUNT jit|vm live|vm-maps|compiler-maps` on macOS.
@@ -64,7 +64,7 @@ patch. This metadata comparison is not a transitive binary checksum manifest.
 Some candidate RSS observations are higher. For example, the 32-VM JIT live
 probe has median peak RSS 6,828,032 bytes versus baseline 6,680,576 bytes. We do
 not claim an RSS or speed improvement, nor that requested-byte reclamation forces
-the system allocator to return pages to the OS. Longer resource, no-JIT,
+the system allocator to return pages to the OS. Longer resource,
 production-size and platform checks remain before runtime acceptance.
 
 `vm-resource-comparison-2026-11-03.json.gz` preserves both raw matrices, the
@@ -87,7 +87,7 @@ repeated the coverage/checksum checks and verified all 14 archived artifacts in
 
 These are correctness results, not a timing comparison or production-size
 certification. The memory patch remains separate and unaccepted. The remaining
-no-JIT/resource/production/platform gates must finish before integration.
+resource/production/platform gates must finish before integration.
 
 ## Generator lifetime regression
 
@@ -134,6 +134,35 @@ Independent verification confirms all 32 test identities, nine suite identities,
 zero failed/ignored tests and 19 hash-verified artifacts in
 `vm-memory-lifecycle-2026-11-03.json.gz`. This completes the selected lifecycle
 integration gate; it does not claim universal concurrency or platform coverage.
-The no-JIT build/parity gate remains pending, using CI's
+The no-JIT build/parity gate subsequently passed, as recorded below, using CI's
 `runtime-network,runtime-archive,runtime-image` feature set in release mode with
 the generator regression added to its four existing parity suites.
+
+## No-JIT feature acceptance
+
+The separate candidate passes **178 tests across five suites**, with no failures
+or ignored tests, using `--no-default-features --features
+runtime-network,runtime-archive,runtime-image` in the release profile. This is
+the CI optional-feature set plus the generator suite. The build completed in
+57m49s and Cargo exited zero.
+
+| Suite | Passed |
+| --- | ---: |
+| Generator continuations | 28 |
+| Native representation matrix | 6 |
+| Native representation parity | 18 |
+| Token estimation release contract | 2 |
+| VM/interpreter parity surfaces | 124 |
+
+Independent verification matches every passing test name to its exact binary's
+`--list` output, verifies all 154 source/manifest identities and records
+the five executable hashes. `vm-memory-no-jit-2026-11-03.json.gz` preserves
+168 verified artifacts, including source snapshots, logs, manifests, test
+membership and verifier. This proves feature compatibility, not JIT reclamation
+in a build where JIT is disabled. The runtime candidate remains separate.
+
+The first extended resource-probe build failed because the Apple linker could
+not parse Rust LLVM22 bitcode with its LLVM17 reader. Its failure is preserved
+in local `long-probes/` evidence. A fresh matched build uses Rust-managed thin
+LTO in `long-probes-v2/`; no extended resource outcome is claimed until that
+build and the 256/1,024-owner matrix pass.
