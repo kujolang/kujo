@@ -32,12 +32,12 @@ from checksum coverage and runtime optimization acceptance.
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
 | 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | [Tagged-call tactic rejected and removed](NATIVE_CALL_CANDIDATE_2026_11_02.md): microbenchmark gains did not establish useful repeated workload gains; broader call architecture remains open |
-| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); [demand-admission tactic rejected](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) after Words/SHA256 failures; loop correctness and owned reuse remain open |
+| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); [demand-admission tactic rejected](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) after Words/SHA256 failures; [physical-slot loop fix verified locally and in optimized Linux tests](LOOP_LOCAL_IDENTITY_2026_11_03.md); owned reuse and full release acceptance remain open |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
 | 7. Startup/reusable compilation | Measure each frontend/setup phase; reduce confirmed redundant work; evaluate lazy/reusable artifacts with source/ABI invalidation | Pending |
-| 8. Memory lifetime | Complete separate lifetime candidate's resource/platform gates; measure retained code and live heap separately | Pending, candidate separate |
+| 8. Memory lifetime | Complete separate lifetime candidate's resource/platform gates; measure retained code and live heap separately | Current-source candidate prepared separately; current-source tests and resource/platform acceptance pending |
 | Port equivalence | Audit all 50 algorithms/work; isolate port improvements from runtime wins; strengthen structural oracles | Representative research, LZW/graph controls and [40-state maze oracle](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); A* path differences confirmed; full audit pending |
 | Production and competition | All-50 test and production checks; repeat frozen Kujo/Rust/Goose comparisons with failures/timeouts retained | Pending |
 | Clean host | Dedicated-host reproduction, independent sessions and resource ceilings | Pending; no dedicated host supplied |
@@ -101,11 +101,12 @@ verified 126-sample unchanged-workload batches did not establish convincing
 repeatable target improvement. The first NeuralNet slowdown did not repeat;
 we do not claim a causal regression. Source is restored to the corrected call
 baseline, and all 1,392 frozen identities match. Accepted invalid-call recovery
-fixes remain; local target binaries still contain the rejected candidate.
+fixes remain. At that rejection, local target binaries still contained the
+rejected candidate; later builds do not replace the need to verify binary identity.
 
-Next is **compilation economics**: reproduce late tree compilation and repeated
-worker compilation on the corrected frozen baseline, measure compile time and
-native coverage separately, and define a general admission/reuse hypothesis.
+The **compilation economics baseline is established**; ownership-safe worker
+reuse remains the implementation objective. First complete the separate current-source
+VM code-lifetime candidate and its resource/semantic/platform gates.
 The [64-cell baseline controls](JIT_ECONOMICS_ENTRY_2026_11_03.md) now pass:
 late tree compilation and fixed-work bytecode per-job duplication are reproduced.
 Loop-only controls retain the duplication. The [40 async-wrapper controls](JIT_ASYNC_ECONOMICS_2026_11_03.md)
@@ -113,8 +114,10 @@ confirm fresh task-VM compilation even for sequential awaits; reusing only the
 outer parallel mapper VM would miss this cost. [Admission controls](JIT_ADMISSION_CONTROLS_2026_11_03.md)
 now pass 120 outcomes: body-size-independent 100-call admission and eager
 zero-trip-loop compilation are reproduced, with long-hot native coverage.
-Next design demand-based admission and an owned code-reuse boundary; a single
-threshold change does not address both cold and per-task compilation costs.
+The demand-admission tactic and its sole revision were rejected, as recorded
+below. Do not restart that tactic automatically after the loop correction.
+Define the owned code-reuse boundary only after lifetime checks pass; compilation
+and execution state must remain separate, bounded, and isolated across tasks.
 
 Do not hardcode workload names or move compilation outside official timing.
 Keep worker isolation and code-lifetime ownership explicit; the separate memory
@@ -193,6 +196,11 @@ failed two of50 JIT test-size workloads: Words checksum and SHA256 iteration.
 Both reproduce on the accepted baseline with loop-only JIT. Runtime policy is
 restored; independently verified worker-native cancellation tests remain. No
 performance comparison or third tactical revision follows an incorrect candidate.
-Next isolate loop reuse/state restoration and iterable corruption as separate
-correctness work, then reassess compilation economics. Local target binaries
-still contain the rejected candidate; use the frozen accepted CLI.
+The separate [loop-local identity correction](LOOP_LOCAL_IDENTITY_2026_11_03.md)
+is now committed as `537406d8`; all 150 normal test-size checks pass. Optimized
+Linux verification passes 1,356 tests, with eight existing ignores. Full release
+CI failed stale generated inventories; `318ef035` repairs only those inventories
+and records the evidence. Run `41591576889` is the pending full gate on that
+correction. The separate memory candidate remains excluded. Use recorded frozen
+executables rather than assuming a shared target directory contains accepted
+binaries; isolated-worktree builds can also replace dependency metadata.
