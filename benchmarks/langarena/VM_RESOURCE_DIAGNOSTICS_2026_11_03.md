@@ -225,3 +225,8 @@ runner, independent verifier, coordinator receipt and corrected port sources.
 Every embedded artifact hash is checked. The candidate runtime has not changed;
 this closes its new-port test-size refresh, not all-150 production or platform
 acceptance. The eleven production results retain their original port identity.
+
+The [partial platform lifetime matrix](VM_MEMORY_PLATFORM_PARTIAL_2026_11_03.md)
+now verifies 63 targeted tests each on Linux x64, Linux ARM64 and macOS ARM64,
+including executable revocation. macOS Intel and Windows checks remain pending;
+the candidate is still separate and unaccepted.
