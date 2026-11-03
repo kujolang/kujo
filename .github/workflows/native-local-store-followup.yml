@@ -25,6 +25,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > post-evidence/source-run.json
           ruby -rjson -e 'r=JSON.parse(File.read("post-evidence/source-run.json")); abort unless r["status"]=="completed" && r["conclusion"]=="success"'
           gh run download "$SOURCE_RUN" -n local-store-session-1 -D frozen
+          ruby -rjson -e 'r=JSON.parse(File.read("post-evidence/source-run.json")); abort "source provenance mismatch" unless r["head_sha"]==File.read("frozen/candidate-source.txt").strip && r["event"]=="workflow_dispatch" && File.read("frozen/baseline-source.txt").strip=="cd5f2b207a8f907d6c263f5a2e405412965344ca"'
           git fetch --depth=1 origin "$(cat frozen/candidate-source.txt)"
           git diff --exit-code "$(cat frozen/candidate-source.txt)" HEAD -- src Cargo.toml Cargo.lock benchmarks/langarena/src benchmarks/langarena/test.json
           ruby -rjson -rdigest -e 'r=JSON.parse(File.read("frozen/timings/report.json")); %w[baseline candidate].each{|v| abort unless Digest::SHA256.file("frozen/#{v}-kujo").hexdigest==r["files"][r["binaries"][v]]}'
