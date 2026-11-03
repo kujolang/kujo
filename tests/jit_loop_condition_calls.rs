@@ -390,3 +390,83 @@ fn reused_loop_keeps_nested_snapshots_across_collection_shapes() {
     "#;
     assert_eq!(check(source), (3, 3));
 }
+
+#[test]
+fn loop_locals_keep_physical_identity_across_shadowing_and_iteration_scopes() {
+    for source in [
+        r#"
+        func scan() {
+            mut total := 0
+            if false { mut i := 999 }
+            mut i := 0
+            while i < 300 { total += 1 i += 1 }
+            return [total, i]
+        }
+        assert_equal(scan(), [300, 300])
+        assert_equal(scan(), [300, 300])
+        print("PASS")
+        "#,
+        r#"
+        func scan(data) {
+            mut total := 0
+            for item in [5] { total += item }
+            for item in data { total += item }
+            return total
+        }
+        let data := range(0, 300)
+        assert_equal(scan(data), 44855)
+        assert_equal(scan(data), 44855)
+        assert_equal(len(data), 300)
+        print("PASS")
+        "#,
+        r#"
+        func scan(data, first) {
+            mut total := 0
+            if first { for item in data { total += item } }
+            else { for item in data { total += item } }
+            return total
+        }
+        let data := range(0, 300)
+        assert_equal(scan(data, false), 44850)
+        assert_equal(scan(data, true), 44850)
+        assert_equal(scan(data, false), 44850)
+        print("PASS")
+        "#,
+        r#"
+        func scan(data) {
+            mut total := 0
+            for item in data { total += item }
+            for item in data { total += item }
+            return total
+        }
+        let data := range(0, 300)
+        assert_equal(scan(data), 89700)
+        assert_equal(scan(data), 89700)
+        print("PASS")
+        "#,
+    ] {
+        let (entries, completed) = check(source);
+        assert!(entries > 0 && completed > 0, "native loops must execute and complete");
+    }
+}
+
+#[test]
+fn loop_storage_keys_preserve_source_names_in_readonly_errors() {
+    let (entries, _) = check_result(
+        r#"
+        func scan() {
+            if false { let fixed := [0] }
+            let fixed := [1]
+            mut i := 0
+            while i < 300 {
+                if i == 250 { fixed[0] = 2 }
+                i += 1
+            }
+        }
+        try { scan() } except error { print(error.message) }
+        "#,
+        "Cannot mutate immutable let binding: fixed",
+        false,
+    );
+    assert!(entries > 0, "readonly error must follow native loop entry");
+}

@@ -5643,8 +5643,10 @@ struct BytecodeTranslator {
     int_dict_set_ptr_dense_int_full_func: Option<FuncRef>,
     /// Specialization information for this compilation
     specialization: Option<SpecializationInfo>,
-    /// Local slot names indexed by slot id
+    /// Storage keys indexed by physical slot. Loop SSA uses distinct keys even
+    /// when separate lexical bindings have the same source name.
     local_names: Vec<String>,
+    loop_source_local_names: Vec<String>,
     local_binding_kinds: Vec<BytecodeBindingKind>,
     readonly_initialization: HashMap<usize, StackSlot>,
     local_initialization_func: Option<FuncRef>,
@@ -5776,6 +5778,7 @@ impl BytecodeTranslator {
             non_int_locals: std::collections::HashSet::new(),
             use_local_slots: false,
             local_names: Vec::new(),
+            loop_source_local_names: Vec::new(),
             local_binding_kinds: Vec::new(),
             readonly_initialization: HashMap::new(),
             local_initialization_func: None,
@@ -5826,6 +5829,32 @@ impl BytecodeTranslator {
     fn set_local_names(&mut self, local_names: Vec<String>, kinds: Vec<BytecodeBindingKind>) {
         self.local_names = local_names;
         self.local_binding_kinds = kinds;
+    }
+
+    fn use_physical_loop_slot_keys(&mut self) {
+        // Source names are not binding identities: shadowed locals and compiler
+        // iterator temporaries can occupy distinct physical slots with equal names.
+        // Keep the existing named-function representation outside loop regions.
+        self.loop_source_local_names = self.local_names.clone();
+        for (slot, name) in self.local_names.iter_mut().enumerate() {
+            if !self.int_dict_slots.contains(&slot) {
+                *name = format!("\0loop-slot:{slot}");
+            }
+        }
+    }
+
+    fn hash_binding_name(&self, storage_name: &str) -> u64 {
+        let source = if self.loop_source_local_names.is_empty() {
+            storage_name
+        } else {
+            self.local_names
+                .iter()
+                .position(|name| name == storage_name)
+                .and_then(|slot| self.loop_source_local_names.get(slot))
+                .map(String::as_str)
+                .unwrap_or(storage_name)
+        };
+        Self::hash_var_name(source)
     }
 
     /// Analyze bytecode to find loop headers (backward jump targets) and their expected stack depths.
@@ -6279,7 +6308,7 @@ impl BytecodeTranslator {
             .ins()
             .iconst(types::I64, if kind == BytecodeBindingKind::LetImmutable { 1 } else { 2 });
         let name = self.local_names.get(index).ok_or("Invalid local initialization slot")?;
-        let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+        let hash = builder.ins().iconst(types::I64, self.hash_binding_name(name) as i64);
         let local_flag = self.readonly_initialization.get(&index).copied();
         if !define {
             let initialized = if self.loop_resume_enabled {
@@ -6406,12 +6435,12 @@ impl BytecodeTranslator {
                     let get_arg = get_arg_func.unwrap();
                     let index = builder.ins().iconst(types::I64, i as i64);
                     let hash =
-                        builder.ins().iconst(types::I64, Self::hash_var_name(param_name) as i64);
+                        builder.ins().iconst(types::I64, self.hash_binding_name(param_name) as i64);
                     let call = builder.ins().call(get_arg, &[ctx, index, hash]);
                     builder.inst_results(call)[0]
                 } else {
                     // SLOW PATH: Load parameter value from HashMap via runtime call
-                    let name_hash = Self::hash_var_name(param_name) as i64;
+                    let name_hash = self.hash_binding_name(param_name) as i64;
                     let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                     let index = builder.ins().iconst(types::I64, i as i64);
 
@@ -6464,7 +6493,7 @@ impl BytecodeTranslator {
                     builder.inst_results(call)[0]
                 }
                 None => {
-                    let name_hash = Self::hash_var_name(&name) as i64;
+                    let name_hash = self.hash_binding_name(&name) as i64;
                     let name_hash_value = builder.ins().iconst(types::I64, name_hash);
                     let zero = builder.ins().iconst(types::I64, 0);
                     let call = builder.ins().call(
@@ -6564,7 +6593,7 @@ impl BytecodeTranslator {
                 let kind = builder.use_var(Variable::new(variable.index() + 1));
                 builder.ins().call(store_func, &[ctx, slot_index_value, value, kind]);
             } else if let Some(store_func) = self.store_var_func {
-                let name_hash = Self::hash_var_name(name) as i64;
+                let name_hash = self.hash_binding_name(name) as i64;
                 let name_hash_value = builder.ins().iconst(types::I64, name_hash);
                 let zero = builder.ins().iconst(types::I64, 0);
                 let kind = builder.use_var(Variable::new(variable.index() + 1));
@@ -7757,7 +7786,7 @@ impl BytecodeTranslator {
                         } else {
                             let location = if self.tracks_function_depth { 2 } else { 0 };
                             let target = if location == 2 {
-                                Self::hash_var_name(&name) as i64
+                                self.hash_binding_name(&name) as i64
                             } else {
                                 *slot as i64
                             };
@@ -7771,7 +7800,7 @@ impl BytecodeTranslator {
                     }
                     MutationBinding::Named(name) => (
                         3,
-                        builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64),
+                        builder.ins().iconst(types::I64, self.hash_binding_name(name) as i64),
                         builder.ins().iconst(types::I64, 0),
                         true,
                     ),
@@ -7896,7 +7925,7 @@ impl BytecodeTranslator {
                     } else {
                         let location = if self.tracks_function_depth { 2 } else { 0 };
                         let target = if location == 2 {
-                            Self::hash_var_name(&pair_name) as i64
+                            self.hash_binding_name(&pair_name) as i64
                         } else {
                             *pair_slot as i64
                         };
@@ -7924,7 +7953,8 @@ impl BytecodeTranslator {
                 let operands = builder.ins().stack_addr(types::I64, slot, 0);
                 let location = builder.ins().iconst(types::I64, location);
                 let mutable = builder.ins().iconst(types::I64, i64::from(mutable));
-                let name_hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let name_hash =
+                    builder.ins().iconst(types::I64, self.hash_binding_name(&name) as i64);
                 let pair_location = builder.ins().iconst(types::I64, pair_location);
                 let argc_value = builder.ins().iconst(types::I64, *argc as i64);
                 let call = builder.ins().call(
@@ -8079,7 +8109,7 @@ impl BytecodeTranslator {
                 let operands = builder.ins().stack_addr(types::I64, slot, 0);
                 let location = builder.ins().iconst(types::I64, location);
                 let binding_kind = builder.ins().iconst(types::I64, binding_kind);
-                let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let hash = builder.ins().iconst(types::I64, self.hash_binding_name(&name) as i64);
                 let call = builder.ins().call(
                     helper,
                     &[ctx, location, target, kind, binding_kind, hash, shape, operands],
@@ -8136,7 +8166,8 @@ impl BytecodeTranslator {
                     };
                     let binding = builder.ins().iconst(types::I64, binding);
                     let location = builder.ins().iconst(types::I64, location);
-                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                    let hash =
+                        builder.ins().iconst(types::I64, self.hash_binding_name(&name) as i64);
                     let index_kind = self.scalar_kind(builder, index);
                     let value_kind = self.scalar_kind(builder, value);
                     let call = builder.ins().call(
@@ -8188,7 +8219,7 @@ impl BytecodeTranslator {
                             self.stack_push_func,
                             self.store_var_from_stack_func,
                         ) {
-                            let name_hash = Self::hash_var_name(var_name) as i64;
+                            let name_hash = self.hash_binding_name(var_name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
 
@@ -8388,7 +8419,7 @@ impl BytecodeTranslator {
                         if let (Some(load_var_ref), Some(stack_push), Some(stack_pop)) =
                             (self.load_var_func, self.stack_push_func, self.stack_pop_func)
                         {
-                            let name_hash = Self::hash_var_name(var_name) as i64;
+                            let name_hash = self.hash_binding_name(var_name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
 
@@ -8523,7 +8554,7 @@ impl BytecodeTranslator {
                 // future tail-call optimization work.
                 if self.non_int_locals.contains(name) {
                     if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -8553,7 +8584,7 @@ impl BytecodeTranslator {
                         if let (Some(ctx), Some(load_func)) =
                             (self.ctx_param, self.operand_load_func)
                         {
-                            let name_hash = Self::hash_var_name(name) as i64;
+                            let name_hash = self.hash_binding_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -8627,7 +8658,7 @@ impl BytecodeTranslator {
                             } else {
                                 let location = if self.tracks_function_depth { 2 } else { 0 };
                                 let target = if location == 2 {
-                                    Self::hash_var_name(&name) as i64
+                                    self.hash_binding_name(&name) as i64
                                 } else {
                                     *slot as i64
                                 };
@@ -8641,7 +8672,7 @@ impl BytecodeTranslator {
                         }
                         MutationBinding::Named(name) => (
                             3,
-                            builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64),
+                            builder.ins().iconst(types::I64, self.hash_binding_name(name) as i64),
                             builder.ins().iconst(types::I64, 0),
                             true,
                         ),
@@ -8676,7 +8707,7 @@ impl BytecodeTranslator {
                 let ctx = self.ctx_param.ok_or("Dead local requires context")?;
                 let helper = self.dead_local_func.ok_or("Dead local requires helper")?;
                 let index = builder.ins().iconst(types::I64, *slot as i64);
-                let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let hash = builder.ins().iconst(types::I64, self.hash_binding_name(&name) as i64);
                 let clear =
                     builder.ins().iconst(types::I64, i64::from(!self.tracks_function_depth));
                 let call = builder.ins().call(helper, &[ctx, index, hash, clear]);
@@ -8699,7 +8730,7 @@ impl BytecodeTranslator {
                         if let (Some(ctx), Some(load_func)) =
                             (self.ctx_param, self.operand_load_func)
                         {
-                            let name_hash = Self::hash_var_name(name) as i64;
+                            let name_hash = self.hash_binding_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -8721,7 +8752,7 @@ impl BytecodeTranslator {
                     }
 
                     if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -8742,7 +8773,8 @@ impl BytecodeTranslator {
                     // store writes private locals and must not shadow a global or
                     // bypass its readonly binding check for collection constructors.
                     let value = self.peek_value()?;
-                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+                    let hash =
+                        builder.ins().iconst(types::I64, self.hash_binding_name(name) as i64);
                     let kind = self.scalar_kind(builder, value);
                     let named = builder.ins().iconst(types::I64, 0);
                     let call = builder.ins().call(assign, &[ctx, hash, value, kind, named]);
@@ -8756,7 +8788,7 @@ impl BytecodeTranslator {
                     if let (Some(ctx), Some(store_from_stack)) =
                         (self.ctx_param, self.store_var_from_stack_func)
                     {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
                         if let Some(push) = self.scalar_push_func {
@@ -8782,7 +8814,7 @@ impl BytecodeTranslator {
                         // Variable not in local slots - fall back to runtime call
                         if let (Some(ctx), Some(store_func)) = (self.ctx_param, self.store_var_func)
                         {
-                            let name_hash = Self::hash_var_name(name) as i64;
+                            let name_hash = self.hash_binding_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
                             let kind = self.scalar_kind(builder, value);
@@ -8826,7 +8858,7 @@ impl BytecodeTranslator {
                         if let (Some(ctx), Some(store_from_stack)) =
                             (self.ctx_param, self.store_var_from_stack_func)
                         {
-                            let name_hash = Self::hash_var_name(name) as i64;
+                            let name_hash = self.hash_binding_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
                             if let Some(push) = self.scalar_push_func {
@@ -8852,7 +8884,7 @@ impl BytecodeTranslator {
                     }
 
                     if let (Some(ctx), Some(store_func)) = (self.ctx_param, self.store_var_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let kind = self.scalar_kind(builder, value);
@@ -8889,7 +8921,8 @@ impl BytecodeTranslator {
                 if let (Some(ctx), Some(assign)) = (self.ctx_param, self.named_assignment_func) {
                     let value = self.peek_value()?;
                     let kind = self.scalar_kind(builder, value);
-                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+                    let hash =
+                        builder.ins().iconst(types::I64, self.hash_binding_name(name) as i64);
                     let global_only = builder.ins().iconst(types::I64, 1);
                     let call = builder.ins().call(assign, &[ctx, hash, value, kind, global_only]);
                     self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
@@ -8962,7 +8995,7 @@ impl BytecodeTranslator {
                     }
 
                     if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -8990,7 +9023,7 @@ impl BytecodeTranslator {
                         if let (Some(ctx), Some(store_from_stack)) =
                             (self.ctx_param, self.store_var_from_stack_func)
                         {
-                            let name_hash = Self::hash_var_name(name) as i64;
+                            let name_hash = self.hash_binding_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
                             if let Some(push) = self.scalar_push_func {
@@ -9013,7 +9046,7 @@ impl BytecodeTranslator {
                     }
 
                     if let (Some(ctx), Some(store_func)) = (self.ctx_param, self.store_var_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let kind = self.scalar_kind(builder, value);
@@ -9062,7 +9095,7 @@ impl BytecodeTranslator {
                         (self.ctx_param, self.operand_load_func)
                     {
                         // Fall back to runtime call for globals
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -9082,7 +9115,7 @@ impl BytecodeTranslator {
                 } else {
                     // Fall back to runtime call
                     if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
-                        let name_hash = Self::hash_var_name(name) as i64;
+                        let name_hash = self.hash_binding_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
@@ -9406,7 +9439,7 @@ impl BytecodeTranslator {
         let ctx = self.ctx_param.ok_or("Loop indexing requires context")?;
         let cache = *self.int_dict_ptr_slots.get(&slot).ok_or("Missing loop dictionary view")?;
         let name = self.local_names.get(slot).ok_or("Invalid loop dictionary slot")?;
-        let hash = Self::hash_var_name(name) as i64;
+        let hash = self.hash_binding_name(name) as i64;
         let binding = match self
             .local_binding_kinds
             .get(slot)
@@ -9663,7 +9696,7 @@ impl BytecodeTranslator {
             (1, builder.use_var(variable), builder.use_var(Variable::new(variable.index() + 1)))
         } else {
             let (location, target) = if self.tracks_function_depth {
-                (2, Self::hash_var_name(&name) as i64)
+                (2, self.hash_binding_name(&name) as i64)
             } else {
                 (0, slot as i64)
             };
@@ -11313,6 +11346,9 @@ impl JitCompiler {
             translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
             if let Some(slots) = int_dict_slots.as_ref() {
                 translator.set_int_dict_slots(slots.clone());
+            }
+            if translator.loop_resume_enabled {
+                translator.use_physical_loop_slot_keys();
             }
             translator.allocate_local_slots(&mut builder, &chunk.instructions, function_end);
             translator.initialize_local_slots_from_vm(

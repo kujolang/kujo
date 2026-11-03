@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep distinct physical locals separate in loop JIT even when lexical bindings
+  or iterator temporaries share a source name; preserve source diagnostics.
+
 - Route invalid-call arity and non-callable errors through VM exception handlers;
   interpreter calls to non-callable values now report an error instead of zero.
   Hot-call regression controls preserve argument order, rebinding and snapshots.
