@@ -210,3 +210,18 @@ The [eleven selected production controls](VM_MEMORY_PRODUCTION_2026_11_03.md)
 also pass independent verification on the frozen candidate and unchanged port.
 This closes that targeted sequence; the other production combinations and
 remaining platform acceptance are separate open gates.
+
+## Corrected-port refresh
+
+After the recursive Brainfuck tape correction `9358355f`, the same frozen memory
+candidate CLI (`17a26b324469d5d61eb2da5406bf335cf2906b328c851188244706566663c325`)
+passes **150/150 unchanged test-size checksums** again. Independent verification
+checks every configuration, phase sequence, exit, complete success summary and
+source/binary identity. The corrected generated port SHA-256 is
+`eaf6a7411e12b72cdc8e1e343a83b76f92f4515dbec6b41779ed6205428eef12`.
+
+`vm-memory-final-port-2026-11-03.json.gz` preserves all raw results, manifests,
+runner, independent verifier, coordinator receipt and corrected port sources.
+Every embedded artifact hash is checked. The candidate runtime has not changed;
+this closes its new-port test-size refresh, not all-150 production or platform
+acceptance. The eleven production results retain their original port identity.
