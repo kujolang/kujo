@@ -41,4 +41,6 @@ rows=[]
 end
 hashes.each{|f,h|raise 'identity drift' unless Digest::SHA256.file(f).hexdigest==h}
 File.write(root+'/report.json',JSON.pretty_generate({files:hashes,sizes:sizes,rows:rows,scope:'Full encoded bytes and decoded bytes/state verified in all3Kujo runtimes using unchanged port functions. Ruby standard Base64 oracle; pinned Rust/Goose source formula only, not execution. Two diagnostic repetitions at each size, not official production iteration counts. Malformed inputs and independent comparator execution remain open.'}))
-puts '36 encode/decode state cases pass; review small-input checksum differences.'
+mismatches=rows.sum{|row|row[:cases].count{|cell|!cell[:checksum_matches]}}
+puts "36 encode/decode state cases verified; #{mismatches} encoding checksum mismatches."
+exit(mismatches==0 ? 0 : 1)

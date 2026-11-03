@@ -1,5 +1,17 @@
 # Base64 port state audit — partial
 
+Follow-up: the encoding preview rule is now corrected in `src/10_basic.kujo`.
+The reusable collector fails on the original port with 15 checksum mismatches
+and passes on the corrected port with none, across all three runtimes. The
+original audit archive below remains historical evidence; the separate
+`base64-preview-fix-2026-11-03.json.gz` retains the before/after regression data.
+No encoding/decoding work, registered input or iteration count changed.
+The corrected generated port also passes all 150 registered test-size checksums
+on the locally verified loop-fix runtime (50 each in VM, interpreter and JIT).
+Its complete generated text matches the ordered source fragments, and the
+archive retains exact configs, outputs, binary/source hashes and verification.
+This does not extend production or comparator-execution coverage.
+
 The unchanged port's encode/decode functions pass full-data checks at 12 input
 sizes in VM, interpreter and JIT: 0, 1, 2, 3, 4, 23, 30, 255, 256, 257, 1,024
 and 500,000 bytes. Each input consists of ASCII `a`, matching the registered
@@ -23,8 +35,9 @@ buffer exceeds four bytes. The encoded data and accumulated length still match.
 This is a port-formatting gap, not an encoder/runtime failure. Registered
 test-size inputs are 30 bytes for encoding and 23 for decoding; both production
 inputs are 500,000 bytes. Their encoding checksum previews match. No registered
-configuration or port code was changed by this audit. Repair the preview rule
-separately from runtime work, with short-input regression coverage.
+configuration or port code was changed by the original audit. The subsequent
+preview-only fix is separate from runtime work and uses this short-input
+regression coverage. The decoder's short-input checksum boundary remains open.
 
 The upstream Rust decoder checksum slices its decoded buffer at four bytes,
 so this audit does not claim a shared decoder-checksum contract below that size.

@@ -61,9 +61,13 @@ func base64_run(input, iteration) {
     }
     return state
 }
+func base64_preview(text) {
+    if byte_length(text) > 4 { return substring(text, 0, 4) + "..." }
+    return text
+}
 func base64_checksum(state) {
     if state["cfg"]["name"] == "Base64::Encode" {
-        return checksum_string("encode " + substring(utf8_decode(state["plain"]), 0, 4) + "... to " + substring(state["encoded"], 0, 4) + "...: " + str(state["result"]))
+        return checksum_string("encode " + base64_preview(utf8_decode(state["plain"])) + " to " + base64_preview(state["encoded"]) + ": " + str(state["result"]))
     }
     return checksum_string("decode " + substring(state["encoded"], 0, 4) + "... to " + substring(utf8_decode(state["decoded"]), 0, 4) + "...: " + str(state["result"]))
 }
