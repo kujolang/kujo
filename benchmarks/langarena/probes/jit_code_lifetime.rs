@@ -64,7 +64,7 @@ fn mapped(address: usize, page_size: usize) -> bool {
 
 fn main() {
     let count: usize = std::env::args().nth(1).expect("compiler count").parse().unwrap();
-    assert!((1..=64).contains(&count));
+    assert!((1..=1024).contains(&count));
     // SAFETY: getpagesize has no pointer arguments or preconditions.
     let page_size = unsafe { getpagesize() } as usize;
     assert!(page_size.is_power_of_two());

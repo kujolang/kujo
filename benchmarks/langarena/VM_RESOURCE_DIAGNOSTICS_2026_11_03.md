@@ -4,7 +4,7 @@ The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
 It also passes all 150 test-size benchmark checks, the matched generator suites
 and 32 targeted callback/task integration tests. The no-JIT feature gate now
-passes 178 tests; extended resource, production-size and platform acceptance remain open.
+passes 178 tests; extended resource checks also pass. Production-size and platform acceptance remain open.
 
 The new `probes/vm_resource_probe.rs` links three diagnostics to one recorded
 Kujo library. Run it as `COUNT jit|vm live|vm-maps|compiler-maps` on macOS.
@@ -64,8 +64,8 @@ patch. This metadata comparison is not a transitive binary checksum manifest.
 Some candidate RSS observations are higher. For example, the 32-VM JIT live
 probe has median peak RSS 6,828,032 bytes versus baseline 6,680,576 bytes. We do
 not claim an RSS or speed improvement, nor that requested-byte reclamation forces
-the system allocator to return pages to the OS. Longer resource,
-production-size and platform checks remain before runtime acceptance.
+the system allocator to return pages to the OS. The extended resource gate below
+now passes; production-size and platform checks remain before runtime acceptance.
 
 `vm-resource-comparison-2026-11-03.json.gz` preserves both raw matrices, the
 matched-library metadata, comparison verifier and negative-control evidence.
@@ -87,7 +87,7 @@ repeated the coverage/checksum checks and verified all 14 archived artifacts in
 
 These are correctness results, not a timing comparison or production-size
 certification. The memory patch remains separate and unaccepted. The remaining
-resource/production/platform gates must finish before integration.
+production/platform gates must finish before integration.
 
 ## Generator lifetime regression
 
@@ -163,6 +163,37 @@ in a build where JIT is disabled. The runtime candidate remains separate.
 
 The first extended resource-probe build failed because the Apple linker could
 not parse Rust LLVM22 bitcode with its LLVM17 reader. Its failure is preserved
-in local `long-probes/` evidence. A fresh matched build uses Rust-managed thin
-LTO in `long-probes-v2/`; no extended resource outcome is claimed until that
-build and the 256/1,024-owner matrix pass.
+in local `long-probes/` evidence. The successful matched rebuild uses Rust-managed
+thin LTO in `long-probes-v2/`; its extended resource results are recorded below.
+
+## Extended same-process lifetime checks
+
+The rebuilt matched probes pass **60 process outcomes** at 256 and 1,024 owners,
+with three repetitions for each count and mode. The independent verifier checks
+**38,400 lifetime observations**: 30,720 VM destructions and 7,680 public-compiler
+controls. It verifies exact process coverage, source/binary/raw-output identities
+and all 12 rejected invalid-count controls (0 and 1,025 for three probe modes
+and both binaries). Baseline retention fails the candidate zero-growth predicate
+in all 12 applicable negative-control groups.
+
+| Destroyed JIT VMs | Baseline requested-live and executable growth | Candidate growth |
+| --- | ---: | ---: |
+| 256 | 1,048,576 bytes | 0 |
+| 1,024 | 4,194,304 bytes | 0 |
+
+Every intermediate drop matches the expected growth, in every repetition. VM-only
+controls remain flat; public compiler destruction still retains 256/1,024 distinct
+code pages, preserving its existing API lifetime. No stale code is invoked.
+These are instrumented allocation and mapping counts, not RSS, elapsed time or
+a claim about all program shapes. Production-size and platform gates remain open.
+
+The three probe count guards are extended from 64 to 1,024. Both frozen default-JIT
+libraries are linked with identical Rust-managed thin-LTO flags; library and
+probe hashes are recorded. All 12 boundary controls reject the expected counts
+with the exact guard assertion. The initial old-guard attempt and linker failure
+remain preserved, and are not counted as runtime failures or successful controls.
+
+`vm-memory-extended-resources-2026-11-03.json.gz` preserves 174 verified
+artifacts: both build attempts, raw matrices, identities, source patch, collectors,
+verifier and source probes. Executables and libraries are identified by hash, not
+embedded. The separate runtime patch is still unaccepted and unmerged.

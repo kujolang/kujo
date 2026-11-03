@@ -71,7 +71,7 @@ fn cycle(jit: bool, value: i64) -> usize {
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     let count: usize = args.get(1).expect("count").parse().unwrap();
-    assert!((1..=64).contains(&count));
+    assert!((1..=1024).contains(&count));
     let jit = match args.get(2).map(String::as_str) {
         Some("jit") => true,
         Some("vm") => false,

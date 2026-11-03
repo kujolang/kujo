@@ -107,7 +107,7 @@ fn main() {
         Some("vm") => false,
         _ => panic!("mode jit|vm"),
     };
-    assert!((1..=64).contains(&count));
+    assert!((1..=1024).contains(&count));
     // SAFETY: ABI calls as in the compiler probe; owned anonymous mapping only.
     let page_size = unsafe { getpagesize() } as usize;
     assert!(page_size.is_power_of_two());
