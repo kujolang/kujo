@@ -119,6 +119,13 @@ below. Do not restart that tactic automatically after the loop correction.
 Define the owned code-reuse boundary only after lifetime checks pass; compilation
 and execution state must remain separate, bounded, and isolated across tasks.
 
+The [source and compile-only ownership review](JIT_OWNER_REUSE_BOUNDARY_2026_11_03.md)
+now proves `JitCompiler: Send` and rejects direct `Sync` sharing on both frozen
+libraries. Exclusive mutex-owned movement type-checks; it does not prove lifetime
+or performance. The review specifies compiler/dispatch ownership, task-local
+state exclusions, reentrancy and retention gates for an exclusive-lease candidate.
+Implementation and acceptance still follow the separate lifetime checkpoint.
+
 Do not hardcode workload names or move compilation outside official timing.
 Keep worker isolation and code-lifetime ownership explicit; the separate memory
 candidate remains excluded. Do not repeat tagged transfers or borrowed helper
