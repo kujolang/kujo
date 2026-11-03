@@ -146,6 +146,26 @@ Actual sort improvement, error cleanup, branch joins, loop persistence and lifet
 proofs remain required before acceptance. Existing dead-parameter and recursive
 rebind releases are already present and must not be claimed as new work.
 
+Additional accepted-binary local diagnostics pass NeuralNet checksum 1586674334
+and TextRaytracer checksum 1438660. The four instrumented observations are:
+
+| Workload | JIT dispatches | Native function entries | Owned-argument dispatches | JIT compilation entries |
+| --- | ---: | ---: | ---: | ---: |
+| QuickSort | 900,732 | 900,508 | 533,812 | 5 |
+| MergeSort | 1,000,033 | 999,808 | 600,010 | 6 |
+| NeuralNet | 156,082 | 156,010 | 156,020 | 8 |
+| TextRaytracer | 1,110,423 | 1,109,608 | 742,465 | 10 |
+
+These are process-wide event counts, including preparation and warmup. They
+demonstrate frequent native entries, not the fraction of time or instructions
+executed natively. Native functions can still call costly runtime helpers. The
+recorded parse, bytecode compile and inclusive JIT compile spans are separate
+diagnostic observations; subtracting them from wall time does not isolate warmup.
+All four raw observations, outputs and port hashes are preserved in
+`priority-baseline-observations-2026-11-03.json.gz`. A separate captured-value
+diagnostic records 136 shallow bytes for one cell on this frozen executable;
+this is a value-size observation, not allocation or CPU attribution.
+
 The companion `native-implementation-entry-2026-11-03.json.gz` preserves 425
 individually SHA-256-verified files, including raw worker timing/build records,
 profile evidence, baseline identities and fresh sorting measurements. Executables
