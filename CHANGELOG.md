@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route invalid-call arity and non-callable errors through VM exception handlers;
+  interpreter calls to non-callable values now report an error instead of zero.
+  Hot-call regression controls preserve argument order, rebinding and snapshots.
+
 - Reduce internal depth-cache hashing overhead while retaining weak-reference
   invalidation, snapshot isolation and existing cache retention bounds.
 

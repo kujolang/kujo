@@ -4242,7 +4242,13 @@ impl VM {
                             // Only legacy methods need a second view of the receiver
                             // for lexical field binding. Ordinary arguments move once.
                             let raw_args = Self::legacy_receiver_args(chunk, &args);
-                            let args = self.prepare_bytecode_call_args(chunk, args)?;
+                            let args = match self.prepare_bytecode_call_args(chunk, args) {
+                                Ok(args) => args,
+                                Err(error) => {
+                                    self.throw_runtime_value(Value::Error(error))?;
+                                    continue;
+                                }
+                            };
 
                             self.record_jit_dispatch(&args);
                             // Track function calls for JIT compilation
@@ -4906,9 +4912,11 @@ impl VM {
                             }
                         }
                         _ => {
-                            return Err(Self::non_callable_error_message(
-                                "the value being called is not callable",
-                            ));
+                            self.throw_runtime_value(Value::Error(
+                                Self::non_callable_error_message(
+                                    "the value being called is not callable",
+                                ),
+                            ))?;
                         }
                     }
                 }

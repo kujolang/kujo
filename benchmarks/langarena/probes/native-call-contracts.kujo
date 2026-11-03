@@ -1,0 +1,75 @@
+# Hot-call semantic controls; not a timing benchmark.
+mut order := []
+func marked(n) { order = push(order, n) return [n] }
+func ordered(a, b, c, d) { return [a, b, c, d] }
+func ordered_call() { return ordered(marked(1), marked(2), marked(3), marked(4)) }
+func first(value) { return value[0] }
+func second(value) { return value[-1] }
+func needs_two(a, b) { return a }
+mut selected := first
+func indirect(value) { return selected(value) }
+func capture(offset) { return func(value) { return offset + value[0] } }
+func apply(callback, value) { return callback(value) }
+func guarded(value) { try { return value[0] } except error { return -7 } }
+func through_guard(value) { return guarded(value) }
+func mutate(a, b) {
+    mut changed := a
+    changed[0][0] += 1
+    assert_equal(b[0][0], 1)
+    return changed
+}
+func recurse(value, depth) {
+    if depth == 0 { return value }
+    let snapshot := value
+    mut next := value
+    next[0][0] += 1
+    let result := recurse(next, depth - 1)
+    assert_equal(value, snapshot)
+    return result
+}
+struct Receiver {
+    value: int,
+    func invoke(arg) { return value + arg[0] }
+}
+func field_call(receiver, value) { return receiver.invoke(value) }
+
+let original := [[1, 2], [3, 4]]
+let snapshot := original
+let captured := capture(10)
+let receiver := Receiver { value: 10 }
+mut i := 0
+while i < 220 {
+    order = []
+    assert_equal(ordered_call(), [[1], [2], [3], [4]])
+    assert_equal(order, [1, 2, 3, 4])
+    assert_equal(indirect([3, 5]), 3)
+    assert_equal(apply(captured, [3]), 13)
+    assert_equal(through_guard([3]), 3)
+    assert_equal(field_call(receiver, [3]), 13)
+    assert_equal(mutate(original, original), [[2, 2], [3, 4]])
+    assert_equal(recurse(original, 3), [[4, 2], [3, 4]])
+    i += 1
+}
+selected = second
+assert_equal(indirect([3, 5]), 5)
+selected = len
+assert_equal(indirect([3, 5]), 2)
+selected = capture(20)
+assert_equal(indirect([3, 5]), 23)
+selected = needs_two
+mut errors := 0
+try { indirect([3]) } except error { errors += 1 }
+selected = 17
+try { indirect([3]) } except error { errors += 1 }
+selected = first
+try { indirect([]) } except error { errors += 1 }
+try { ordered([1], [2], [3]) } except error { errors += 1 }
+try { ordered([1], [2], [3], [4], [5]) } except error { errors += 1 }
+assert_equal(errors, 5)
+assert_equal(indirect([7, 9]), 7)
+assert_equal(through_guard([]), -7)
+assert_equal(through_guard([11]), 11)
+assert_equal(recurse(original, 64), [[65, 2], [3, 4]])
+assert_equal(original, snapshot)
+assert_equal(original, [[1, 2], [3, 4]])
+print("native-call-contracts: OK")

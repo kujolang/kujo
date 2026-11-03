@@ -130,11 +130,11 @@ fn check_result(source: &str, expected_stdout: &str, non_callable_error: bool) -
             std::thread::sleep(std::time::Duration::from_millis(10));
         };
         let diagnostics = std::fs::read_to_string(stderr).unwrap();
-        // The accepted interpreter leaves this discarded call's error as a
-        // value, whereas VM/JIT report a fatal diagnostic. Preserve both modes.
-        if non_callable_error && mode != Some("--interpreter") {
+        // Calling a rebound non-function is a runtime failure in every engine.
+        // Preserve the side effects preceding the invalid call during fallback.
+        if non_callable_error {
             assert_eq!(status.code(), Some(4), "{mode:?}: {diagnostics}");
-            assert!(diagnostics.contains("not callable"), "{mode:?}: {diagnostics}");
+            assert!(diagnostics.contains("Cannot call non-function"), "{mode:?}: {diagnostics}");
         } else {
             assert!(status.success(), "{mode:?}: {diagnostics}");
         }

@@ -6903,7 +6903,10 @@ impl Interpreter {
 
                         self.create_generator(params, body, captured, &args_vec)
                     }
-                    _ => Value::Int(0),
+                    _ => Value::Error(format!(
+                        "Cannot call non-function '{}'. Pass a function, closure, or imported callable value instead.",
+                        callable_name
+                    )),
                 };
                 call_result
             }

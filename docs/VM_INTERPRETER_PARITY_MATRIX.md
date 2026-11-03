@@ -1,9 +1,20 @@
 # VM/Interpreter/Compiler Parity Matrix
 
-Last updated: 2026-10-31
+Last updated: 2026-11-02
 
 This matrix is the release-facing record for VM, interpreter, and compiler
 parity. New runtime work must update the table and its named test evidence.
+
+## Invalid-call recovery (2026-11-02)
+
+VM arity validation and non-callable targets use the ordinary exception path,
+including handlers in a caller frame. The interpreter reports a runtime error
+for non-callable values instead of silently returning zero. Uncaught invalid
+calls still fail; caught calls preserve snapshots and permit subsequent calls.
+`tests/jit_call_contracts.rs` covers cold invalid calls and hot argument ordering,
+dynamic target replacement, field receivers, closures, recursive snapshots and
+recovery across VM, interpreter and experimental JIT. This does not resolve all
+historical expression-evaluation-order or error-text differences.
 
 ## ArgParser stored-field precedence (2026-10-31)
 
