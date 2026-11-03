@@ -31,8 +31,8 @@ from checksum coverage and runtime optimization acceptance.
 | Area | Required outcome | State |
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
-| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | Scaling/census baseline complete; call-error prerequisite passes 155 regressions and 150 checksums; guarded call optimization pending |
-| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Pending |
+| 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | [Tagged-call tactic rejected and removed](NATIVE_CALL_CANDIDATE_2026_11_02.md): microbenchmark gains did not establish useful repeated workload gains; broader call architecture remains open |
+| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | Next bounded experiment: reproduce compile-cost and per-task duplication before editing policy |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
@@ -95,32 +95,27 @@ unaccepted runtime/changelog edits were removed; at rejection all 1,390 frozen
 identities again matched the accepted baseline. Semantic fixtures and all negative evidence remain.
 Do not begin a third tactical revision or mark the native-access area complete.
 
-The next bounded experiment targets known-callee owned calls and remaining VM
-marshalling. Preserve the original accepted CLI and the corrected frozen CLI
-identified in the call semantic receipt; verify binary hashes before comparison.
-Local `target/release/kujo` now matches the corrected CLI. Preserve value semantics,
-dynamic rebinding, errors and frame/cancellation contracts. Existing positional
-arguments, argument buffers and root pools are already implemented.
+The [tagged-call experiment](NATIVE_CALL_CANDIDATE_2026_11_02.md) is also closed
+and removed. Its correctness gates and 476 call-control samples passed, but two
+verified 126-sample unchanged-workload batches did not establish convincing
+repeatable target improvement. The first NeuralNet slowdown did not repeat;
+we do not claim a causal regression. Source is restored to the corrected call
+baseline, and all 1,392 frozen identities match. Accepted invalid-call recovery
+fixes remain; local target binaries still contain the rejected candidate.
 
-[Call-scaling entry controls](probes/NATIVE_CALL_SCALING.md) pass 51/51 cases on
-the accepted CLI across all three runtimes. They cover scalar arities 0–4 and
-array arities 1–4 at three widths, with snapshots retained. These are correctness
-entry controls, not measured speed or proof of the future optimized call path.
-The [call baseline](NATIVE_CALL_BASELINE_2026_11_02.md) adds verified native-entry
-count deltas and uninstrumented arity/width measurements. Read-only calls do not
-show width-proportional copies; remaining dispatch/ownership transfer is the
-next hypothesis to isolate. No call optimization is implemented yet.
+Next is **compilation economics**: reproduce late tree compilation and repeated
+worker compilation on the corrected frozen baseline, measure compile time and
+native coverage separately, and define a general admission/reuse hypothesis.
+Do not hardcode workload names or move compilation outside official timing.
+Keep worker isolation and code-lifetime ownership explicit; the separate memory
+candidate remains excluded. Do not repeat tagged transfers or borrowed helper
+views without new attribution supporting a different mechanism.
 
-The [call semantic gates](NATIVE_CALL_SEMANTIC_GATES_2026_11_02.md) subsequently
-exposed pre-existing invalid-call recovery defects: VM arity/non-callable errors
-can bypass handlers, and interpreter non-callable invocation silently succeeds.
-The separate corrective patch passes 155 unique targeted regressions and all
-150 test-size checksums, with source/binary identity checks. This closes the
-semantic prerequisite, not the performance experiment. Next implement and measure
-guarded compiled-callee transfer/dispatch against the corrected baseline.
-
-Independent-session, production, memory and clean-host gates remain open for the
-broader campaign. No candidate from the read-region experiment is accepted.
+The broader native-access and call-frame areas remain open. Native instruction
+coverage, root/copy traffic and self CPU must guide any larger typed-region,
+callee-specialization or inlining design. Event counts are not time fractions.
+Independent-session, production, memory and clean-host gates remain open for
+the full campaign. No runtime optimization from these two tactics was accepted.
 
 ### Entry controls established
 
