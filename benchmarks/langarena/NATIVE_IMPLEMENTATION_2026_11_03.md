@@ -45,6 +45,22 @@ The earlier run `41706406972` was cancelled after discovering its requested
 all-runtime test name did not yet exist on the accepted branch. It is not an
 acceptance receipt. `79e32f6a` adds that explicit test and rejects zero-test gates.
 
+Session 2 is now independently reviewed (artifact `13269802619`): 1,321 library
+passes, eight explicit manual-test ignores, 89 selected integration passes, two
+ignored full-checksum tests, then the explicit all150 gate passes every exact
+name/checksum in all three runtimes. All 916 recorded source hashes match the
+pinned Git revision. Actual executable bytes, release build receipts, unchanged
+timing boundaries and all 512 alternating observations verify.
+
+Session-2 JIT computation paired medians are 1.063x QuickSort, 1.044x MergeSort,
+1.050x NeuralNet and 1.046x TextRaytracer. Their paired ranges are respectively
+1.051–1.085, 1.021–1.055, 1.013–1.057 and 0.997–1.074. Process medians improve
+1.051x/1.042x/1.044x/1.049x. This is provisional single-session evidence, not
+acceptance or a competitor comparison. VM Matmul T4/T8/T16 process medians are
+0.951x/0.978x/0.963x; T16 loses seven pairs. Independent-session agreement and
+regression/resource review remain required. Raw timings and verification are in
+`local-store-session-2-2026-11-03.json.gz`; session 1 remains running.
+
 Follow-up workflow `post_store_run=41707246908` must run only after successful
 completion. It downloads the frozen candidate, verifies source/runtime identity,
 checks expanded all-type/branch/error fixtures in all three runtimes, executes the
