@@ -10,7 +10,7 @@ raise 'test binary identity' unless paths.size==1
 binary=paths.first; hash=Digest::SHA256.file(binary).hexdigest
 File.write(dir+'/executable.json',JSON.generate({path:binary,sha256:hash}))
 cases=[]
-%w[pooled unpooled].product(%w[same distinct],[32,1024]).each do |mode,shape,count|
+%w[pooled unpooled].product(%w[same distinct],[32,1024,4096]).each do |mode,shape,count|
   raise 'binary drift' unless Digest::SHA256.file(binary).hexdigest==hash
   env={'KUJO_OWNER_RESOURCE_MODE'=>mode,'KUJO_OWNER_RESOURCE_SHAPE'=>shape,'KUJO_OWNER_RESOURCE_COUNT'=>count.to_s}
   path=dir+"/#{mode}-#{shape}-#{count}.log"

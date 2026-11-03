@@ -13458,6 +13458,8 @@ mod code_owner_lifetime_tests {
 mod task_owner_resource_tests {
     use super::*;
 
+    const RESOURCE_TASK_COUNTS: [usize; 3] = [32, 1024, 4096];
+
     fn snapshot() -> (u64, u64) {
         let status = std::fs::read_to_string("/proc/self/status").unwrap();
         let rss = status
@@ -13528,7 +13530,7 @@ mod task_owner_resource_tests {
         let count: usize = std::env::var("KUJO_OWNER_RESOURCE_COUNT").unwrap().parse().unwrap();
         assert!(matches!(mode.as_str(), "pooled" | "unpooled"));
         assert!(matches!(shape.as_str(), "same" | "distinct"));
-        assert!([32, 1024].contains(&count));
+        assert!(RESOURCE_TASK_COUNTS.contains(&count));
         // Warm one owner and static compiler state identically in both modes.
         execute(function(0), None, 1000);
         measurement::start().unwrap();

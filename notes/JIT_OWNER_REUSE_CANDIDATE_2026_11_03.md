@@ -395,3 +395,20 @@ repeated-eviction resource coverage open. Nineteen resource verifier controls pa
 See `benchmarks/langarena/JIT_OWNER_RESOURCE_REVIEW_2026_11_03.md` for exact source,
 provenance, raw artifacts and executable-identity limitations. Candidate acceptance,
 latest-source gates and elapsed-speed comparison remain pending.
+
+## Repeated-eviction resource extension
+
+The resource matrix now adds4096 tasks for same/distinct code in pooled/unpooled
+processes (twelve cases total). Distinct-code runs can cross the production512-
+definition owner limit repeatedly rather than observing only the first turnover.
+Deadlines remain180 seconds per process; inputs/results/native counters and all
+32-task checkpoints remain required. This extends measurement, not runtime policy.
+
+Archive verification derives eight versus twelve expected cases from pinned VM
+source, preserving older evidence without allowing it to satisfy the new matrix.
+Nineteen synthetic controls pass, including current-source twelve-case and pinned
+historical eight-case fixtures. The initial control rerun exposed the distinction
+between uncommitted and pinned source expectations; the fixture now follows each
+source independently. Earlier eight-case resource evidence re-verifies unchanged.
+Actual4096-task execution and concurrent two-owner/lineage resource coverage remain
+pending; no RSS bound or performance claim is added by this extension.

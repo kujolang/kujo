@@ -6,6 +6,9 @@ require 'open3'
 verifier = File.expand_path('verify-owner-resources.rb', __dir__)
 head, error, status = Open3.capture3('git', 'rev-parse', 'HEAD')
 raise error unless status.success?
+committed_source, error, status = Open3.capture3('git', 'show', head.strip+':src/vm.rs')
+raise error unless status.success?
+committed_counts = committed_source.include?('const RESOURCE_TASK_COUNTS: [usize; 3] = [32, 1024, 4096];') ? [32, 1024, 4096] : [32, 1024]
 controls = {
   'valid' => nil, 'archive-valid' => nil,
   'archive-build-failed' => 'archive build outcome', 'archive-wrong-binary' => 'archive build binary', 'missing-case' => 'case coverage',
@@ -30,7 +33,8 @@ Dir.mktmpdir('kujo-resource-verifier-') do |dir|
     ]
     File.write(dir+'/build.jsonl', build.map { |row| JSON.generate(row) }.join("\n")+"\n")
 
-    cases = %w[pooled unpooled].product(%w[same distinct], [32, 1024]).map do |mode, shape, count|
+    counts = control.start_with?('archive-') ? committed_counts : [32, 1024, 4096]
+    cases = %w[pooled unpooled].product(%w[same distinct], counts).map do |mode, shape, count|
       target = mode == 'pooled' && shape == 'same' && count == 32
       unpooled = mode == 'unpooled' && shape == 'same' && count == 32
       observations = (32..count).step(32).map do |tasks|
@@ -81,7 +85,7 @@ Dir.mktmpdir('kujo-resource-verifier-') do |dir|
       raise "valid rejected: #{out} #{err}" unless result.success?
       verified = JSON.parse(File.read(acceptance_file))
       raise 'archive binary scope' if archived && !verified['input_identity_scope'].include?('executable bytes unavailable')
-      raise 'incorrect review scope' unless verified['status'] == 'verified-observations-review-pending' && verified['rows'].size == 8
+      raise 'incorrect review scope' unless verified['status'] == 'verified-observations-review-pending' && verified['rows'].size == counts.size * 4
     end
     results << {control: control, expected_acceptance: expected_error.nil?, exit: result.exitstatus}
   end

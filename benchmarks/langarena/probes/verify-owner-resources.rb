@@ -15,6 +15,8 @@ else
   raise "source identity #{err}" unless status.success?
 end
 raise 'source identity' unless File.read(dir+'/source.txt')==head
+source=File.read('src/vm.rs') unless archived
+counts=source.include?('const RESOURCE_TASK_COUNTS: [usize; 3] = [32, 1024, 4096];') ? [32,1024,4096] : [32,1024]
 identity=JSON.parse(File.read(dir+'/executable.json'))
 identity_scope='Executable bytes rehashed locally.'
 if archived
@@ -28,10 +30,10 @@ else
   raise 'binary changed' unless Digest::SHA256.file(identity.fetch('path')).hexdigest==identity.fetch('sha256')
 end
 cases=JSON.parse(File.read(dir+'/cases.json'))
-expected_cases=%w[pooled unpooled].product(%w[same distinct],[32,1024])
+expected_cases=%w[pooled unpooled].product(%w[same distinct],counts)
 raise 'case coverage' unless cases.map{|c|c.values_at('mode','shape','count')}==expected_cases
 rows=[]
-%w[pooled unpooled].product(%w[same distinct],[32,1024]).each do |mode,shape,count|
+%w[pooled unpooled].product(%w[same distinct],counts).each do |mode,shape,count|
   name="#{mode}-#{shape}-#{count}.log"; raw=File.read(dir+'/'+name)
   receipt=cases.find{|c|c.values_at('mode','shape','count')==[mode,shape,count]}
   raise 'process outcome' unless receipt['exit']==0 && receipt['signal'].nil?
@@ -59,5 +61,5 @@ rows=[]
   raise 'native participation' unless counters['jit_native_boundary_entries']==count
   rows<<{file:name,sha256:Digest::SHA256.hexdigest(raw),receipt:data}
 end
-File.write(dir+(archived ? '/archived-verified.json' : '/verified.json'),JSON.pretty_generate({status:'verified-observations-review-pending',input_identity_scope:identity_scope,source:head.strip,executable:identity,rows:rows,scope:'Eight isolated diagnostic processes; RSS and executable mappings, not live heap or elapsed speed. Resource tradeoffs require review.'})+"\n")
-puts '8 isolated resource observations verified; review retention and memory tradeoffs before acceptance.'
+File.write(dir+(archived ? '/archived-verified.json' : '/verified.json'),JSON.pretty_generate({status:'verified-observations-review-pending',input_identity_scope:identity_scope,source:head.strip,executable:identity,rows:rows,scope:'Source-pinned isolated diagnostic processes; RSS and executable mappings, not live heap or elapsed speed. Resource tradeoffs require review.'})+"\n")
+puts "#{rows.size} isolated resource observations verified; review retention and memory tradeoffs before acceptance."
