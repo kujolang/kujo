@@ -197,3 +197,11 @@ remain preserved, and are not counted as runtime failures or successful controls
 artifacts: both build attempts, raw matrices, identities, source patch, collectors,
 verifier and source probes. Executables and libraries are identified by hash, not
 embedded. The separate runtime patch is still unaccepted and unmerged.
+
+## Linux candidate release gate
+
+The [exact-candidate Linux workflow](VM_MEMORY_LINUX_GATE_2026_11_03.md) now passes
+all seven jobs, including the full release gate and 1,358 optimized library and
+integration tests (eight existing ignores). The newer cross-platform mapping
+assertions and production sequence remain pending; this does not accept or merge
+the separate runtime candidate.
