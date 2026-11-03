@@ -14407,14 +14407,17 @@ mod tests {
                                 (Value::Float(a), Value::Float(b)) => {
                                     assert_eq!(a.to_bits(), b.to_bits())
                                 }
-                                _ => assert_eq!(actual, expected),
+                                (Value::Int(a), Value::Int(b)) => assert_eq!(a, b),
+                                (Value::Bool(a), Value::Bool(b)) => assert_eq!(a, b),
+                                (Value::Null, Value::Null) => {}
+                                _ => panic!("scalar kind mismatch: {actual:?} / {expected:?}"),
                             }
                         }
                         if let Some(Value::Array(snapshot)) = snapshot {
-                            assert_eq!(
-                                snapshot.as_slice(),
-                                &[Value::Int(10), Value::Int(20), Value::Int(30)]
-                            );
+                            assert_eq!(snapshot.len(), 3);
+                            for (value, expected) in snapshot.iter().zip([10, 20, 30]) {
+                                assert!(matches!(value, Value::Int(actual) if *actual == expected));
+                            }
                         }
                         context.owned_roots.leave().unwrap();
                         assert_eq!(context.owned_roots.storage_state().1, 0);
