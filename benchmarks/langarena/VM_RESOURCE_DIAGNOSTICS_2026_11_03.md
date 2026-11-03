@@ -1,4 +1,4 @@
-# VM resource diagnostics: candidate observations
+# VM resource diagnostics: matched baseline and candidate
 
 The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
@@ -32,9 +32,38 @@ These measurements are not elapsed-time performance results.
 The candidate library and probe identities, source patch, raw observations and
 verification receipts are retained in `vm-resource-candidate-2026-11-03.json.gz`.
 The archive explicitly describes an unaccepted candidate, not main-branch runtime
-behavior. A matched baseline is still required before claiming a measured fix.
+behavior. The matched comparison below now establishes the scoped reclamation effect.
 Use identical source/toolchain/features/vendor paths and freeze the linked
 artifact: copying a Kujo rlib alone does not freeze its transitive dependency
-metadata. The baseline is being rebuilt in the same isolated path; the runtime
-patch is restored after that build. Do not infer resource results on Windows,
+metadata. The baseline was rebuilt in the same isolated path; the runtime
+patch was restored and its source hashes verified after that build. Do not infer resource results on Windows,
 where the pinned backend has a separate deallocation limitation.
+
+## Matched result
+
+All 90 process outcomes pass `probes/compare-vm-resources.rb`, which checks raw
+outputs, exact matrix identities, binary hashes, RSS receipts and every VM-drop
+observation. Passing candidate data supplied as both versions is rejected by the
+negative control because it does not reproduce the baseline leak.
+
+| Destroyed JIT VMs | Baseline live retained bytes | Candidate live retained bytes |
+| --- | ---: | ---: |
+| 1 | 4,096 | 0 |
+| 8 | 32,768 | 0 |
+| 32 | 131,072 | 0 |
+
+Every repetition matches. Baseline executable mapping growth has the same byte
+counts; candidate executable growth is zero. VM-only controls stay flat, and
+public compiler retention stays unchanged. The 582 dependency artifact records
+have matching Cargo metadata; all were reused for the baseline. Root crate build
+metadata/features match, and the tested source difference is the isolated memory
+patch. This metadata comparison is not a transitive binary checksum manifest.
+
+Some candidate RSS observations are higher. For example, the 32-VM JIT live
+probe has median peak RSS 6,828,032 bytes versus baseline 6,680,576 bytes. We do
+not claim an RSS or speed improvement, nor that requested-byte reclamation forces
+the system allocator to return pages to the OS. Longer resource, integration,
+no-JIT, all-benchmark and platform checks remain before runtime acceptance.
+
+`vm-resource-comparison-2026-11-03.json.gz` preserves both raw matrices, the
+matched-library metadata, comparison verifier and negative-control evidence.
