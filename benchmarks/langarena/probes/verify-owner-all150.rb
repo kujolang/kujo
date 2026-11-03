@@ -39,6 +39,7 @@ messages=read.call('build.jsonl').lines.map{|line|JSON.parse(line)}
 raise 'build outcome' unless messages.select{|m|m['reason']=='build-finished'}.map{|m|m['success']}==[true]
 %w[kujo langarena_port_contracts].each do |name|
  entries=messages.select{|m|m['reason']=='compiler-artifact' && m.dig('target','name')==name && m['executable']}
+ raise 'JIT feature coverage' unless entries.size == 1 && entries[0].fetch('features', []).include?('runtime-jit')
  raise 'optimized build coverage' unless entries.size==1 && entries[0].dig('profile','opt_level')=='3' && entries[0].dig('profile','debug_assertions')==false && entries[0].dig('profile','test')==(name=='langarena_port_contracts')
 end
 config,err,status=Open3.capture3('git','show',"#{commit}:benchmarks/langarena/test.json");raise err unless status.success?
