@@ -38,6 +38,9 @@ jobs:
         run: cargo fmt --check
       - name: Test private code-owner lifetime
         run: cargo test --release --locked --lib code_owner_lifetime_tests -- --nocapture > lifetime-library.log 2>&1
+      - name: Test owner boundary without JIT
+        if: matrix.os == 'ubuntu-22.04'
+        run: cargo test --release --locked --no-default-features --lib code_owner_lifetime_tests -- --nocapture > lifetime-no-jit.log 2>&1
       - name: Test retained generators, callbacks and task state
         run: >-
           cargo test --release --locked --no-fail-fast --message-format=json
@@ -60,4 +63,5 @@ jobs:
           path: |
             lifetime-source.txt
             lifetime-library.log
+            lifetime-no-jit.log
             lifetime-integration.log

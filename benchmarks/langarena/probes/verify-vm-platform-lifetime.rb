@@ -16,6 +16,13 @@ raise 'source/toolchain identity' unless source.lines.first.strip == commit && s
 library = raw.fetch('lifetime-library.log').gsub("\r\n","\n")
 integration = raw.fetch('lifetime-integration.log').gsub("\r\n","\n")
 expected_library = %w[disabling_jit_does_not_destroy_cached_code returned_values_functions_and_snapshots_survive_original_vm]
+vm_source, vm_error, vm_status = Open3.capture3('git', 'show', "#{commit}:src/vm.rs")
+raise "missing pinned VM source: #{vm_error}" unless vm_status.success?
+%w[exclusive_code_owner_survives_vm_and_worker_transfer
+   transferred_code_uses_current_globals_and_keeps_literal_owners
+   transferred_code_observes_current_cancellation_token].each do |name|
+  expected_library << name if vm_source.include?("fn #{name}()")
+end
 expected_library << 'vm_drop_revokes_its_executable_entry' unless platform == 'windows-x64'
 expected_library.map! { |name| 'vm::code_owner_lifetime_tests::'+name }
 raise 'owner-test membership' unless library.scan(/^test (.+) \.\.\. ok$/).flatten.sort == expected_library.sort
@@ -48,9 +55,21 @@ messages = integration.lines.select { |line| line.start_with?('{') }.map { |line
 targets = messages.select { |m| m['reason'] == 'compiler-artifact' && m.dig('profile','test') }.map { |m| m.dig('target','name') }
 raise 'integration binaries' unless targets.sort == expected_targets.sort
 raise 'build result' unless messages.select { |m| m['reason'] == 'build-finished' }.map { |m| m['success'] } == [true]
+workflow, workflow_error, workflow_status = Open3.capture3('git', 'show', "#{commit}:.github/workflows/vm-code-lifetime.yml")
+raise "missing pinned workflow: #{workflow_error}" unless workflow_status.success?
+no_jit_passed = 0
+if platform == 'linux-x64' && workflow.include?('name: Test owner boundary without JIT')
+  raw['lifetime-no-jit.log'] = File.binread(File.join(out, 'lifetime-no-jit.log'))
+  no_jit = raw.fetch('lifetime-no-jit.log').gsub("\r\n", "\n")
+  raise 'no-JIT owner membership' unless no_jit.scan(/^test (.+) \.\.\. ok$/).flatten == ['vm::code_owner_lifetime_tests::returned_values_functions_and_snapshots_survive_original_vm']
+  checks = summaries.call(no_jit)
+  raise 'no-JIT owner result' unless checks.size == 1 && checks[0][0,4] == [1,0,0,0]
+  no_jit_passed = 1
+end
 result = {status:'verified',platform:platform,commit:commit,toolchain:source,
           library_tests:expected_library,library_filtered:lib_summary[0][4],integration_targets:targets,
-          integration_passed:60,total_passed:60+expected_library.size,
+          integration_passed:60,total_passed:60+expected_library.size+no_jit_passed,
+          no_jit_passed:no_jit_passed,vm_source_sha256:Digest::SHA256.hexdigest(vm_source),
           integration_test_sources:test_sources,
           executable_revocation_test:platform != 'windows-x64',
           files:raw.to_h { |name,bytes| [name,Digest::SHA256.hexdigest(bytes)] },

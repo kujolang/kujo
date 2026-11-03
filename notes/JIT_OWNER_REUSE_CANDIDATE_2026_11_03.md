@@ -20,6 +20,13 @@ drops the original VM first, requires the same compiled entry, executes it and
 checks returned values after final owner destruction. Existing lifetime, code
 identity, callback and generator tests remain applicable.
 
+Additional boundary regressions execute code against different VM globals,
+retain embedded string literals through both VM destructions, and toggle the
+previous/current cancellation tokens independently. They preserve the compiler's
+cancellation-check policy while requiring each invocation's current token. The
+targeted platform workflow also runs the owner boundary without JIT on Linux.
+These checks are pending execution, not proof that task pooling is safe.
+
 Verification is pending. Run the release library suite, no-JIT coverage and
 callback/task/generator contracts before accepting this boundary. The subsequent
 pool requires cancellation-policy matching, lineage propagation, admission/reset

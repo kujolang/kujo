@@ -12772,7 +12772,10 @@ mod code_owner_lifetime_tests {
     }
 
     fn function() -> Value {
-        let source = "func retained(x) { return [x, x + 1] }";
+        function_from_source("func retained(x) { return [x, x + 1] }")
+    }
+
+    fn function_from_source(source: &str) -> Value {
         let tokens = crate::lexer::tokenize(source).unwrap();
         let ast = crate::parser::Parser::new(tokens).parse();
         let script = crate::compiler::Compiler::new().compile(&ast).unwrap();
@@ -12813,6 +12816,56 @@ mod code_owner_lifetime_tests {
             assert_pair(&second, 9);
             assert_pair(&result, 7);
         }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn transferred_code_uses_current_globals_and_keeps_literal_owners() {
+        let function = function_from_source(
+            "func retained(x) { return [task_global + x, \"owned literal\"] }",
+        );
+        let mut original = VM::new();
+        original.set_jit_enabled(true);
+        original.globals.lock().unwrap().define("task_global".into(), Value::Int(10));
+        assert!(original.jit_compile_bytecode_function(&function).unwrap());
+        let first = original.call_function_from_jit(function.clone(), vec![Value::Int(2)]).unwrap();
+        let owner = std::mem::take(&mut original.code_owner);
+        drop(original);
+        let mut next = VM::new();
+        next.set_jit_enabled(true);
+        next.globals.lock().unwrap().define("task_global".into(), Value::Int(30));
+        next.code_owner = owner;
+        let second = next.call_function_from_jit(function, vec![Value::Int(3)]).unwrap();
+        drop(next);
+        for (value, expected) in [(first, 12), (second, 33)] {
+            let Value::Array(items) = value else { panic!("expected array") };
+            assert!(matches!(items[0], Value::Int(n) if n == expected));
+            assert!(matches!(&items[1], Value::Str(s) if s.as_str() == "owned literal"));
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn transferred_code_observes_current_cancellation_token() {
+        use std::sync::atomic::AtomicBool;
+        let function =
+            function_from_source("func retained(n) { mut i := 0 while i < n { i += 1 } return i }");
+        let previous_token = Arc::new(AtomicBool::new(false));
+        let current_token = Arc::new(AtomicBool::new(false));
+        let mut original = VM::with_task_policy(true, Some(previous_token.clone()));
+        assert!(original.jit_compile_bytecode_function(&function).unwrap());
+        let owner = std::mem::take(&mut original.code_owner);
+        drop(original);
+        previous_token.store(true, Ordering::Release);
+        let mut next = VM::with_task_policy(true, Some(current_token.clone()));
+        next.code_owner = owner;
+        assert!(matches!(
+            next.call_function_from_jit(function.clone(), vec![Value::Int(20)]).unwrap(),
+            Value::Int(20)
+        ));
+        current_token.store(true, Ordering::Release);
+        let error = next.call_function_from_jit(function, vec![Value::Int(20)]).unwrap_err();
+        assert!(error.to_lowercase().contains("cancel"), "{error}");
     }
 
     #[cfg(feature = "runtime-jit")]
