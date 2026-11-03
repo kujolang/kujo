@@ -287,3 +287,8 @@ retained definition/code/visible-metadata bounds, exactly ten whole-owner evicti
 The exact eviction count rejects a candidate that merely discards every owner
 because reset or accounting failed. Execution is pending CI. This is a logical
 quota and ownership control, not a physical heap/RSS reclamation measurement.
+
+Bounded storage0a0dd452 now has73 independently verified targeted Linux passes;
+macOS Intel cb931728 has66. See `JIT_OWNER_POOL_GATE_2026_11_03.md` for exact
+identities and limits. These close their prerequisite artifact reviews only;
+later actual-task/recovery/economics and physical-resource acceptance stay open.
