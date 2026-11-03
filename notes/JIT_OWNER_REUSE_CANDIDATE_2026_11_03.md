@@ -375,3 +375,9 @@ and the executable itself. It rechecks source/binary identities afterward. This 
 test-size correctness only, not all-production or competitive performance. The
 three-runtime execution remains pending CI; local compilation is avoided while
 the accepted production benchmark runs. Runtime source is unchanged by this gate.
+
+GitHub rejected direct dispatch of the new branch-only workflow with HTTP404
+because it is not registered on the default branch. The existing lifetime workflow
+now exposes an explicit checksum-only dispatch route to the reusable checksum
+workflow; it skips the lifetime matrix and does not restart the existing runs.
+This is workflow routing, not checksum execution evidence.

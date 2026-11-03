@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      checksum_only:
+        description: Run only the all150 test-size checksum gate
+        type: boolean
+        default: false
       linux_only:
         description: Run the Linux owner/accounting gate before a full platform refresh
         type: boolean
@@ -17,7 +21,11 @@ permissions:
   contents: read
 
 jobs:
+  checksum:
+    if: inputs.checksum_only
+    uses: ./.github/workflows/langarena-checksum-gate.yml
   lifetime:
+    if: ${{ !inputs.checksum_only }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
