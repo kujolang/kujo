@@ -458,6 +458,7 @@ pub struct Interpreter {
     /// Explicit caller JIT policy for isolated workers and bytecode callbacks.
     /// Each worker compiler separately specializes for its cancellation token.
     pub(crate) vm_jit_requested: bool,
+    pub(crate) task_code_pool: Option<Arc<crate::vm::VmCodePool>>,
     pub(crate) task_cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
     pub(crate) task_capture_globals: Option<TaskCaptureGlobals>,
 }
@@ -558,6 +559,7 @@ impl Interpreter {
             capability_policy,
             vm_globals: None,
             vm_jit_requested: false,
+            task_code_pool: None,
             task_cancellation: None,
             task_capture_globals: None,
         }

@@ -57,6 +57,7 @@ pub(crate) fn submit(
     policy: RuntimeCapabilityPolicy,
     output: Option<Arc<Mutex<Vec<u8>>>>,
     jit_requested: bool,
+    code_pool: Option<Arc<crate::vm::VmCodePool>>,
 ) -> Result<Arc<TaskState>, String> {
     let params = match &function {
         Value::Function(params, ..) | Value::AsyncFunction(params, ..) => params,
@@ -113,6 +114,7 @@ pub(crate) fn submit(
                     output,
                     worker_state.cancelled.clone(),
                     jit_requested,
+                    code_pool,
                 )
             } else {
                 let mut interpreter = Interpreter::with_environment(policy, environment);
@@ -124,6 +126,7 @@ pub(crate) fn submit(
                 interpreter.output = output;
                 interpreter.task_cancellation = Some(worker_state.cancelled.clone());
                 interpreter.vm_jit_requested = jit_requested;
+                interpreter.task_code_pool = code_pool;
                 let value = interpreter.execute_task_body(&function, &args);
                 match value {
                     Value::Error(message) | Value::ErrorObject { message, .. } => Err(message),
@@ -146,6 +149,19 @@ pub(crate) fn submit(
 }
 
 impl Interpreter {
+    pub(crate) fn task_code_pool(&mut self) -> Option<Arc<crate::vm::VmCodePool>> {
+        #[cfg(feature = "runtime-jit")]
+        if self.vm_jit_requested {
+            // Provisional candidate ceilings: two idle owners, each with at
+            // most 512 definitions, 4 MiB code and 8 MiB visible metadata.
+            // Physical backend/RSS retention still requires resource acceptance.
+            return Some(Arc::clone(self.task_code_pool.get_or_insert_with(|| {
+                Arc::new(crate::vm::VmCodePool::new(2, 512, 4 << 20, 8 << 20))
+            })));
+        }
+        None
+    }
+
     pub(crate) fn task_is_cancelled(&self) -> bool {
         self.task_cancellation.as_ref().is_some_and(|flag| flag.load(Ordering::Acquire))
     }
@@ -178,6 +194,7 @@ impl Interpreter {
             self.capability_policy.clone(),
             self.output.clone(),
             self.vm_jit_requested,
+            self.task_code_pool(),
         )
     }
 
@@ -269,6 +286,7 @@ impl Interpreter {
             self.capability_policy.clone(),
             self.output.clone(),
             self.vm_jit_requested,
+            self.task_code_pool(),
         )?);
         Ok(())
     }
@@ -280,6 +298,7 @@ pub(crate) fn submit_detached_vm(
     policy: RuntimeCapabilityPolicy,
     output: Option<Arc<Mutex<Vec<u8>>>>,
     jit_requested: bool,
+    code_pool: Option<Arc<crate::vm::VmCodePool>>,
 ) -> Result<(), String> {
     use crate::bytecode::{Constant, OpCode};
     let Value::BytecodeFunction { chunk, captured, captured_binding_kinds } = function else {
@@ -325,6 +344,7 @@ pub(crate) fn submit_detached_vm(
         policy,
         output,
         jit_requested,
+        code_pool,
     )?);
     Ok(())
 }

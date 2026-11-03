@@ -134,3 +134,29 @@ closed behavior, and retains the returned value after eviction. Runtime executio
 is pending CI. No task route uses this pool yet; production defaults, lineage
 propagation, panic-safe return and whole-candidate resource/performance gates are
 still open. No new unsafe code or unsafe trait implementation is introduced.
+
+## Initial task-route integration (unaccepted)
+
+Interpreter state now lazily holds a lineage-local pool only when JIT is
+requested. Candidate defaults retain at most two idle owners, each capped at
+512 native definitions, 4 MiB emitted code and 8 MiB visible metadata. These are
+provisional logical ceilings, not measured physical memory bounds. Ordinary and
+detached task submission carry the pool through both bytecode and AST routes;
+child task interpreters inherit it. VM task execution leases a cancellation-
+compatible owner into a fresh VM and returns it only after synchronous execution
+returns. Rust panic unwinding skips return and destroys the VM-owned compiler.
+Normal language errors retain no invocation state in the returned owner.
+
+A regression runs identical loop bytecode with two different task globals,
+requires correct distinct results and unchanged nonzero compilation/byte counts,
+and checks that a non-JIT interpreter does not allocate a pool. Existing task,
+cancellation, capability, snapshot, callback and generator gates remain required.
+The reproduction baseline is the existing 64/40/120 compilation-economics
+controls; this candidate has not yet run that comparison or its new test.
+
+This is partial route integration: reusable callback VM bridges and parallel-map
+worker construction still require explicit lineage propagation and tests. No
+whole-candidate acceptance, all-150 refresh, physical-resource result or elapsed
+speed claim exists. Changes remain isolated on the candidate branch. Local builds
+remain deferred while the frozen production sequence runs; CI executes runtime
+checks. Production files and accepted main source are unchanged.

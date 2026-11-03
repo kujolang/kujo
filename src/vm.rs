@@ -412,10 +412,9 @@ struct VmCodeOwner {
 
 /// Lineage-local idle storage, never a lock held during native execution.
 /// Logical quotas exclude opaque backend/allocator storage; physical resource
-/// acceptance is separate. No runtime route uses this staged pool yet.
-#[cfg(feature = "runtime-jit")]
-#[allow(dead_code)]
-struct VmCodePool {
+/// acceptance is separate.
+#[allow(dead_code)] // Empty in non-JIT execution; no pool is allocated there.
+pub(crate) struct VmCodePool {
     idle: Mutex<Vec<(bool, VmCodeOwner)>>,
     max_owners: usize,
     max_definitions: usize,
@@ -426,7 +425,7 @@ struct VmCodePool {
 #[cfg(feature = "runtime-jit")]
 #[allow(dead_code)]
 impl VmCodePool {
-    fn new(
+    pub(crate) fn new(
         max_owners: usize,
         max_definitions: usize,
         max_code_bytes: usize,
@@ -6301,6 +6300,7 @@ impl VM {
                         self.interpreter.capability_policy().clone(),
                         self.interpreter.output_buffer(),
                         self.interpreter.vm_jit_requested,
+                        self.interpreter.task_code_pool(),
                     );
                     if let Err(error) = result {
                         self.throw_runtime_value(Value::Error(error))?;
@@ -6839,8 +6839,16 @@ impl VM {
         output: Option<Arc<Mutex<Vec<u8>>>>,
         cancelled: Arc<std::sync::atomic::AtomicBool>,
         jit_requested: bool,
+        code_pool: Option<Arc<VmCodePool>>,
     ) -> Result<Value, String> {
         let mut vm = VM::with_task_policy(jit_requested, Some(cancelled));
+        vm.interpreter.task_code_pool = code_pool.clone();
+        #[cfg(feature = "runtime-jit")]
+        if jit_requested {
+            if let Some(owner) = code_pool.as_ref().and_then(|pool| pool.take(true)) {
+                vm.code_owner = owner;
+            }
+        }
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
         vm.set_globals(Arc::new(Mutex::new(environment)));
@@ -6855,7 +6863,17 @@ impl VM {
         vm.stack.extend(args);
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
-        vm.execute_preloaded_callback()
+        let result = vm.execute_preloaded_callback();
+        // Normal return (including an ordinary language error) has unwound all
+        // native frames. A Rust panic skips this block and drops the owner with
+        // its VM inside the task's existing catch_unwind boundary.
+        #[cfg(feature = "runtime-jit")]
+        if jit_requested {
+            if let Some(pool) = code_pool {
+                pool.put(std::mem::take(&mut vm.code_owner), true);
+            }
+        }
+        result
     }
 
     fn call_interpreter_callable(
@@ -7027,6 +7045,7 @@ impl VM {
                     self.interpreter.capability_policy().clone(),
                     self.interpreter.output_buffer(),
                     self.interpreter.vm_jit_requested,
+                    self.interpreter.task_code_pool(),
                 )?;
                 self.stack.push(task.completion.clone());
                 return Ok(());
@@ -12901,6 +12920,44 @@ mod code_owner_lifetime_tests {
             assert_pair(&second, 9);
             assert_pair(&result, 7);
         }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn task_code_reuse_keeps_globals_fresh_and_compilation_flat() {
+        let function = function_from_source(
+            "func retained(n) { mut i := 0 while i < n { i += 1 } return task_global + i }",
+        );
+        let pool = Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20));
+        let mut counts = None;
+        for global in [10, 30] {
+            let mut environment = Environment::new();
+            environment.define("task_global".into(), Value::Int(global));
+            let result = VM::execute_language_task(
+                function.clone(),
+                vec![Value::Int(1000)],
+                environment,
+                RuntimeCapabilityPolicy::default(),
+                None,
+                Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                true,
+                Some(Arc::clone(&pool)),
+            )
+            .unwrap();
+            assert!(matches!(result, Value::Int(n) if n == global + 1000));
+            let idle = pool.idle.lock().unwrap();
+            assert_eq!(idle.len(), 1);
+            let compiler = idle[0].1.jit_compiler.as_ref().unwrap();
+            let current = (compiler.compilation_attempts, compiler.emitted_code_bytes);
+            assert!(current.0 > 0 && current.1 > 0);
+            if let Some(previous) = counts {
+                assert_eq!(current, previous, "same bytecode must not be compiled per task");
+            }
+            counts = Some(current);
+        }
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.task_code_pool().is_none());
+        assert!(interpreter.task_code_pool.is_none());
     }
 
     #[cfg(feature = "runtime-jit")]

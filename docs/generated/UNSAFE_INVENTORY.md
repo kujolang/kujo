@@ -217,25 +217,25 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/upgrade.rs | 504 | non_executable | src_comment_or_string |         return Err(""unsafe upgrade lock path"".into()); |
 | src/upgrade/tests.rs | 317 | executable | src_executable_other |     if unsafe { libc::geteuid() } != 0 { |
 | src/upgrade/tests.rs | 499 | non_executable | src_comment_or_string |     archive.extend(tar_bytes(&[(""../unsafe"", b""evil"", b'0')])); |
-| src/vm.rs | 507 | executable | vm_executable |             unsafe { compiler.free_vm_owned_memory() }; |
-| src/vm.rs | 8786 | executable | vm_executable |     pub(crate) unsafe fn take_native_arguments(vm: *mut Self, count: usize) -> Vec<Value> { |
-| src/vm.rs | 8791 | executable | vm_executable |         let pool = unsafe { &mut *std::ptr::addr_of_mut!((*vm).native_argument_pool) }; |
-| src/vm.rs | 8819 | executable | vm_executable |     pub(crate) unsafe fn take_native_path_depth_cache( |
-| src/vm.rs | 8826 | executable | vm_executable |         unsafe { std::mem::take(&mut *std::ptr::addr_of_mut!((*vm).path_depth_valid)) } |
-| src/vm.rs | 8834 | executable | vm_executable |     pub(crate) unsafe fn restore_native_path_depth_cache( |
-| src/vm.rs | 8842 | executable | vm_executable |         unsafe { *std::ptr::addr_of_mut!((*vm).path_depth_valid) = cache }; |
-| src/vm.rs | 10473 | executable | vm_executable |                 assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0); |
-| src/vm.rs | 10493 | executable | vm_executable |                 unsafe { |
-| src/vm.rs | 10518 | executable | vm_executable |                 unsafe { jit_leave_function(&mut ctx) }; |
-| src/vm.rs | 10579 | executable | vm_executable |             let result = unsafe { |
-| src/vm.rs | 11294 | executable | vm_executable |         let first = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11297 | executable | vm_executable |         let second = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11301 | executable | vm_executable |         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
-| src/vm.rs | 11326 | executable | vm_executable |         assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0); |
-| src/vm.rs | 11340 | executable | vm_executable |             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) }; |
-| src/vm.rs | 13112 | executable | vm_executable |             unsafe extern ""C"" { |
-| src/vm.rs | 13132 | executable | vm_executable |             let status = unsafe { |
-| src/vm.rs | 13145 | executable | vm_executable |                 assert_eq!(unsafe { mach_port_deallocate(mach_task_self_, object) }, 0); |
+| src/vm.rs | 506 | executable | vm_executable |             unsafe { compiler.free_vm_owned_memory() }; |
+| src/vm.rs | 8805 | executable | vm_executable |     pub(crate) unsafe fn take_native_arguments(vm: *mut Self, count: usize) -> Vec<Value> { |
+| src/vm.rs | 8810 | executable | vm_executable |         let pool = unsafe { &mut *std::ptr::addr_of_mut!((*vm).native_argument_pool) }; |
+| src/vm.rs | 8838 | executable | vm_executable |     pub(crate) unsafe fn take_native_path_depth_cache( |
+| src/vm.rs | 8845 | executable | vm_executable |         unsafe { std::mem::take(&mut *std::ptr::addr_of_mut!((*vm).path_depth_valid)) } |
+| src/vm.rs | 8853 | executable | vm_executable |     pub(crate) unsafe fn restore_native_path_depth_cache( |
+| src/vm.rs | 8861 | executable | vm_executable |         unsafe { *std::ptr::addr_of_mut!((*vm).path_depth_valid) = cache }; |
+| src/vm.rs | 10492 | executable | vm_executable |                 assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0); |
+| src/vm.rs | 10512 | executable | vm_executable |                 unsafe { |
+| src/vm.rs | 10537 | executable | vm_executable |                 unsafe { jit_leave_function(&mut ctx) }; |
+| src/vm.rs | 10598 | executable | vm_executable |             let result = unsafe { |
+| src/vm.rs | 11313 | executable | vm_executable |         let first = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11316 | executable | vm_executable |         let second = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11320 | executable | vm_executable |         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
+| src/vm.rs | 11345 | executable | vm_executable |         assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0); |
+| src/vm.rs | 11359 | executable | vm_executable |             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) }; |
+| src/vm.rs | 13169 | executable | vm_executable |             unsafe extern ""C"" { |
+| src/vm.rs | 13189 | executable | vm_executable |             let status = unsafe { |
+| src/vm.rs | 13202 | executable | vm_executable |                 assert_eq!(unsafe { mach_port_deallocate(mach_task_self_, object) }, 0); |
 | tests/benchmark_publication_policy_contract.rs | 58 | non_executable | test_comment_or_string |             ""retired launch-unsafe artifact should stay removed: {path}"" |
 | tests/bytecode_call_profile.rs | 40 | non_executable | test_comment_or_string | unsafe impl GlobalAlloc for CountingAllocator { |
 | tests/bytecode_call_profile.rs | 41 | executable | test_executable |     unsafe fn alloc(&self, layout: Layout) -> *mut u8 { |
