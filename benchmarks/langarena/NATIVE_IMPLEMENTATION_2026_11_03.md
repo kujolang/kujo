@@ -29,6 +29,30 @@ nearly full local disk; runtime builds need CI capacity.
 
 No stretch target, overall speedup or completed campaign is claimed here.
 
+## First implementation under validation
+
+`bf211fe9` implements consuming SSA local stores only for whole-function native
+code when the next opcode is `Pop`. Initialization/error checks run first; the
+operand transfers to the local and a Null placeholder preserves stack shape.
+Loop physical slots, peek stores and named bindings keep their existing paths.
+The compiled regression compares equivalent consuming/peek paths and requires
+one fewer issued root per store, unchanged backing storage and complete cleanup.
+
+CI `41707246908`, source `79e32f6a37daed7c36bd982afb33fb6567d55d9f`, runs two
+independent Linux sessions. Both library-test steps have passed; integration,
+all150 checksums and 16-workload paired timings remain pending at this update.
+The earlier run `41706406972` was cancelled after discovering its requested
+all-runtime test name did not yet exist on the accepted branch. It is not an
+acceptance receipt. `79e32f6a` adds that explicit test and rejects zero-test gates.
+
+Follow-up workflow `post_store_run=41707246908` must run only after successful
+completion. It downloads the frozen candidate, verifies source/runtime identity,
+checks expanded all-type/branch/error fixtures in all three runtimes, executes the
+complete sorting oracles and the 1,197-state / 134,064-float NeuralNet control,
+and measures resources/native entries separately from elapsed timing. NeuralNet
+tools are imported unchanged from `1eea508d`; no experimental runtime or port
+correction is imported with them. No acceptance decision yet.
+
 ## Corrected worker-reuse evidence
 
 Run `41654661543`, source `bc7fc048a8b47fa0a153e4fe7879094af7b7a0d4`, artifact
@@ -51,6 +75,32 @@ times for the worker diagnostic, not LangArena or sorting gains. The interpreter
 needs confirmation rather than attributing it to load or silently dismissing it.
 Disposition: promising verified JIT result, integration still pending regression
 confirmation and unchanged-workload evidence. No experimental source imported.
+
+### Independent confirmation
+
+Run `41654661543` attempt **2**, same pinned source, artifact `13265972965`.
+Downloaded ZIP SHA-256:
+`71fd661301bc8402d676e2fecee0dd084dbd43646303007588be5c7cab9a3011`.
+All 192 samples, raw outputs, actual binaries and alternating orders independently
+verify again. Toolchain and reported CPU model match the first session; executable
+hashes differ between builds and are recorded separately. Timings are paired
+within each execution session, not mixed between hosts/builds.
+
+| Runtime | Direct | 4 workers | 8 workers | 16 workers |
+| --- | ---: | ---: | ---: | ---: |
+| VM paired median baseline/candidate | 1.0146 | 1.0160 | 1.0030 | 0.9844 |
+| Interpreter | 1.0008 | 1.0166 | 0.9849 | 1.0162 |
+| JIT | 2.8289 | 2.3509 | 2.4285 | 2.3814 |
+
+JIT wins all 28 pairs here, 56 across both sessions. The interpreter 16-worker
+loss does not repeat (four candidate wins in seven pairs). VM 16-worker medians
+remain slightly below parity in both sessions, with broad overlapping paired
+ranges (second session 0.8886–1.2099); this remains explicit regression review,
+not a claimed speedup or proven causal loss. Actual unchanged-workload testing
+is required before integration. The `owner_workloads` workflow uses these frozen
+experiment binaries with the accepted port, separately from the local-store
+candidate. The companion confirmation archive retains raw samples and receipts;
+no global LangArena gain is inferred from this worker diagnostic.
 
 ## Profile repair and limits
 

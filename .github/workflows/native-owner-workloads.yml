@@ -1,0 +1,44 @@
+name: native-owner-workloads
+on:
+  workflow_call:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  unchanged-workloads:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Verify frozen experiment provenance
+        run: |
+          mkdir owner-workload-evidence
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41654661543/attempts/2" > owner-workload-evidence/origin-run.json
+          ruby -rjson -e 'r=JSON.parse(File.read("owner-workload-evidence/origin-run.json")); abort unless r["conclusion"]=="success" && r["head_sha"]=="bc7fc048a8b47fa0a153e4fe7879094af7b7a0d4" && r["run_attempt"]==2'
+          gh run download 41654661543 -n owner-elapsed-linux -D frozen
+          test "$(cat frozen/candidate-source.txt)" = bc7fc048a8b47fa0a153e4fe7879094af7b7a0d4
+          test "$(cat frozen/baseline-source.txt)" = cd5f2b207a8f907d6c263f5a2e405412965344ca
+          ruby -rjson -rdigest -e 'r=JSON.parse(File.read("frozen/samples/report.json")); %w[baseline candidate].each{|v| abort unless Digest::SHA256.file("frozen/#{v}-kujo").hexdigest==r["files"][r["binaries"][v]]}'
+          cp frozen/*-kujo frozen/*-source.txt frozen/*-build.jsonl frozen/*-build.stderr owner-workload-evidence/
+          cp frozen/toolchain.txt owner-workload-evidence/build-toolchain.txt
+          chmod +x owner-workload-evidence/*-kujo
+          sha256sum owner-workload-evidence/*-kujo > owner-workload-evidence/binary-hashes.txt
+          git rev-parse HEAD > owner-workload-evidence/harness-source.txt
+          lscpu > owner-workload-evidence/execution-cpu.txt
+          uname -a > owner-workload-evidence/execution-host.txt
+          owner-workload-evidence/candidate-kujo run benchmarks/langarena/build.kujo
+      - name: Collect alternating pairs with the accepted port
+        run: |
+          ruby benchmarks/langarena/probes/test-local-store-verifier.rb > owner-workload-evidence/verifier-controls.json
+          ruby benchmarks/langarena/probes/compare-local-store-targets.rb owner-workload-evidence/baseline-kujo owner-workload-evidence/candidate-kujo owner-workload-evidence/timings
+          ruby benchmarks/langarena/probes/verify-local-store-targets.rb owner-workload-evidence bc7fc048a8b47fa0a153e4fe7879094af7b7a0d4 "$(cat owner-workload-evidence/harness-source.txt)" > owner-workload-evidence/timing-review.json
+          sha256sum --check owner-workload-evidence/binary-hashes.txt > owner-workload-evidence/binary-recheck.txt
+      - name: Preserve paired workload evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-unchanged-workloads
+          retention-days: 7
+          path: owner-workload-evidence/

@@ -1,15 +1,17 @@
 require 'json'
 require 'digest'
 require 'open3'
-raise 'usage: ARTIFACT_DIRECTORY CANDIDATE_SHA' unless ARGV.size == 2
-root, candidate = ARGV
+raise 'usage: ARTIFACT_DIRECTORY CANDIDATE_SHA [HARNESS_SHA]' unless (2..3).cover?(ARGV.size)
+root, candidate, harness = ARGV
+harness ||= candidate
+raise 'harness identity' unless harness.match?(/\A[0-9a-f]{40}\z/)
 raise 'candidate identity' unless candidate.match?(/\A[0-9a-f]{40}\z/) && File.read(root + '/candidate-source.txt').strip == candidate
 baseline = 'cd5f2b207a8f907d6c263f5a2e405412965344ca'
 raise 'baseline identity' unless File.read(root + '/baseline-source.txt').strip == baseline
 report = JSON.parse(File.read(root + '/timings/report.json'))
 raise 'incomplete collection' unless report['status'] == 'collected-review-pending'
 read_source = ->(path) do
-  value, error, status = Open3.capture3('git', 'show', "#{candidate}:#{path}")
+  value, error, status = Open3.capture3('git', 'show', "#{harness}:#{path}")
   raise error unless status.success?
   value
 end
@@ -70,7 +72,7 @@ summary = cells.map do |name, runtime|
   end
   {name: name, runtime: runtime, metrics: metrics}
 end
-result = {status: 'timings-verified-review-pending', candidate: candidate, samples: rows.size, warmups: rows.count { |r| r['round'] == -1 }, comparisons: summary,
+result = {status: 'timings-verified-review-pending', candidate: candidate, harness: harness, samples: rows.size, warmups: rows.count { |r| r['round'] == -1 }, comparisons: summary,
           scope: 'Actual source/timing boundaries, binary bytes, build outcomes, alternating order, raw outputs and recomputed ratios. Correctness logs, resource review, independent-session agreement and acceptance remain separate.'}
 File.write(root + '/timing-verification.json', JSON.pretty_generate(result))
 puts JSON.pretty_generate(result)

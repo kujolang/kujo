@@ -11,6 +11,10 @@ on:
         description: Completed local-store run whose frozen binaries need state and resource checks
         type: string
         default: ''
+      owner_workloads:
+        description: Measure the corrected owner experiment's frozen binaries on unchanged workloads
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       windows_only:
@@ -23,15 +27,18 @@ permissions:
 
 jobs:
   local-store:
-    if: inputs.local_store_only && inputs.post_store_run == ''
+    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads
     uses: ./.github/workflows/native-local-store.yml
   post-store:
-    if: inputs.post_store_run != ''
+    if: inputs.post_store_run != '' && !inputs.owner_workloads
     uses: ./.github/workflows/native-local-store-followup.yml
     with:
       source_run: ${{ inputs.post_store_run }}
+  owner-workloads:
+    if: inputs.owner_workloads
+    uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' }}
+    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
