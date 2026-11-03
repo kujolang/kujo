@@ -259,3 +259,57 @@ fn sequential_async_workers_reuse_code_through_parallel_and_callback_routes() {
         }
     }
 }
+
+#[test]
+fn overlapping_native_tasks_keep_active_owners_and_snapshots_separate() {
+    let source = r#"
+        shared_set("reuse-ready", channel())
+        shared_set("reuse-release", channel())
+        async func worker(input) {
+            mut i := 0
+            while i < 1000 { i += 1 }
+            mut changed := input
+            changed[0] += i
+            let ready := shared_get("reuse-ready")
+            let release := shared_get("reuse-release")
+            ready.send(1)
+            release.receive()
+            return changed
+        }
+        let original := [10,20]
+        let first := worker(original)
+        let second := worker([30,40])
+        let ready := shared_get("reuse-ready")
+        let release := shared_get("reuse-release")
+        assert_equal(ready.receive(),1)
+        assert_equal(ready.receive(),1)
+        release.send(1)
+        release.send(1)
+        let first_result := await first
+        let second_result := await second
+        assert_equal(first_result,[1010,20])
+        assert_equal(second_result,[1030,40])
+        assert_equal(original,[10,20])
+        let third := worker(original)
+        assert_equal(ready.receive(),1)
+        release.send(1)
+        assert_equal(await third,[1010,20])
+        assert_equal(first_result,[1010,20])
+        assert_equal(second_result,[1030,40])
+        assert_equal(original,[10,20])
+        print("PASS")
+    "#;
+    for mode in ["vm", "interpreter", "jit"] {
+        if mode == "jit" && !cfg!(feature = "runtime-jit") {
+            continue;
+        }
+        if let Some(report) = run(source, mode) {
+            let entries = report["counters"]["jit_native_boundary_entries"].as_u64().unwrap();
+            if mode == "jit" {
+                assert!(entries > 0, "{report}");
+            } else {
+                assert_eq!(entries, 0);
+            }
+        }
+    }
+}

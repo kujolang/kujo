@@ -222,3 +222,16 @@ is included in the artifact verifier; runtime execution remains pending CI.
 Pool revision0a0dd452 now reports its owner-test step successful; minimal-feature
 checks are running. Current-source acceptance still requires completed raw
 artifacts, broader concurrency/recovery/resource gates and measured economics.
+
+## Overlapping task regression
+
+An end-to-end regression now holds two workers concurrently at channel gates after
+each has performed a hot loop and private array mutation. Both must announce
+readiness before either is released. A third task runs after they return, while
+first/second results and the original input remain observable. VM/interpreter/JIT
+must produce the exact independent arrays; JIT must report native participation,
+and non-JIT must not. The existing thirty-second process deadline catches hangs.
+This controls overlap explicitly rather than assuming worker scheduling produced
+it. Runtime execution remains pending; it does not by itself establish resource
+bounds or a compilation-speed gain. Pinned integration membership automatically
+includes the new 62nd integration test.
