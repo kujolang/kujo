@@ -1,0 +1,10 @@
+[package]
+name = "kujo-profile-symbols"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+rustc-demangle = "=0.1.26"
