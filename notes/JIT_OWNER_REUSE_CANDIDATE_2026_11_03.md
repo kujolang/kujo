@@ -270,3 +270,10 @@ controls pass: baseline/reuse accepted; duplicate cell, failed outcome, serial
 recompilation and lost native execution rejected. Synthetic controls are not
 benchmark results. Runtime diagnostic collection is pending CI. Instrumented
 wall spans are not an uninstrumented speed comparison or self CPU attribution.
+
+Fresh-checkout correction: the first source-manifest control rerun failed because
+`port.kujo` is generated and absent from the candidate checkout. CI now runs the
+canonical Kujo builder before collection, and synthetic verifier tests create
+self-contained source fixtures in a temporary working directory. All six controls
+pass after this correction. The earlier failed local check is not counted as a
+pass; no runtime diagnostic execution has completed yet.

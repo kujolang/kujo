@@ -74,7 +74,9 @@ jobs:
       - name: Measure async task compilation reuse
         if: always() && !cancelled() && steps.integration.outcome == 'success' && matrix.os == 'ubuntu-22.04'
         run: |
-          ruby benchmarks/langarena/probes/collect-jit-async-economics.rb target/release/kujo owner-async-economics > lifetime-economics.log 2>&1
+          target/release/kujo run benchmarks/langarena/build.kujo > lifetime-economics.log 2>&1
+          ruby benchmarks/langarena/probes/test-jit-async-reuse-verifier.rb >> lifetime-economics.log 2>&1
+          ruby benchmarks/langarena/probes/collect-jit-async-economics.rb target/release/kujo owner-async-economics >> lifetime-economics.log 2>&1
           ruby benchmarks/langarena/probes/verify-jit-async-economics.rb owner-async-economics reuse >> lifetime-economics.log 2>&1
       - name: Preserve verification evidence
         if: always()

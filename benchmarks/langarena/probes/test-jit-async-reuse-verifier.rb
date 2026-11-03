@@ -1,9 +1,10 @@
 # Synthetic parser controls only. These fixtures are not benchmark measurements.
 require 'tmpdir'
+require 'fileutils'
 require 'json'
 require 'digest'
 require 'open3'
-verifier=File.join(__dir__,'verify-jit-async-economics.rb')
+verifier=File.expand_path('verify-jit-async-economics.rb',__dir__)
 results=[]
 Dir.mktmpdir('synthetic-async-reuse-') do |dir|
   binary=dir+'/synthetic-binary'; File.write(binary,'not an executable')
@@ -36,10 +37,14 @@ Dir.mktmpdir('synthetic-async-reuse-') do |dir|
     rows[-1]=rows[0].dup if control=='duplicate'
     rows[0][:exit]=4 if control=='failed'
     paths=[binary]+%w[benchmarks/langarena/probes/jit-async-worker-economics.kujo benchmarks/langarena/port.kujo benchmarks/langarena/probes/collect-jit-async-economics.rb src/interpreter/mod.rs src/interpreter/native_functions/async_ops.rs src/jit.rs src/vm.rs src/benchmarks/runtime_measurements.rs src/interpreter/tasks.rs src/interpreter/native_functions/callbacks.rs]
-    report={status:'verified-review-pending',files:paths.to_h{|p|[p,Digest::SHA256.file(p).hexdigest]},rows:rows,scope:'Synthetic verifier test; not benchmark evidence'}
+    paths.drop(1).each do |path|
+      FileUtils.mkdir_p(File.dirname(dir+'/'+path))
+      File.write(dir+'/'+path,'synthetic source fixture; not benchmark evidence')
+    end
+    report={status:'verified-review-pending',files:paths.to_h{|p|[p,Digest::SHA256.file(p==binary ? p : dir+'/'+p).hexdigest]},rows:rows,scope:'Synthetic verifier test; not benchmark evidence'}
     File.write(dir+'/report.json',JSON.generate(report))
     policy=control=='baseline' ? 'baseline' : 'reuse'
-    out,err,status=Open3.capture3('ruby',verifier,dir,policy)
+    out,err,status=Open3.capture3('ruby',verifier,dir,policy,chdir:dir)
     expected=%w[baseline reuse].include?(control)
     raise "#{control}: #{out} #{err}" unless status.success? == expected
     results<<{control:control,accepted:status.success?}
