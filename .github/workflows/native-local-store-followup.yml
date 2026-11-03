@@ -58,6 +58,7 @@ jobs:
           frozen/candidate-kujo run benchmarks/langarena/build.kujo
           ruby benchmarks/langarena/probes/audit-sort-state.rb upstream frozen/candidate-kujo post-evidence/sort > post-evidence/sort.log
           ruby benchmarks/langarena/probes/audit-sort-wrapper-state.rb upstream frozen/candidate-kujo post-evidence/sort-wrapper > post-evidence/sort-wrapper.log
+          ruby benchmarks/langarena/probes/audit-ray-pixels.rb frozen/baseline-kujo frozen/candidate-kujo post-evidence/ray-pixels > post-evidence/ray-pixels.log
       - name: Measure peak RSS and native participation separately from timing
         run: |
           for variant in baseline candidate; do
