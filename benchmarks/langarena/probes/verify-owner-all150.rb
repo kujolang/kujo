@@ -69,5 +69,12 @@ if test_source.include?("fn #{regression}()")
  result[:calculator_regression]='passed-all-three-runtimes'
  result[:evidence_sha256]['calculator-regression.log']=Digest::SHA256.hexdigest(read.call('calculator-regression.log'))
 end
+if test_source.include?('fn log_parser_materializes_named_counts_in_all_runtimes()')
+ log_counts=read.call('log-counts-regression.log').gsub(/\e\[[0-9;]*m/,'')
+ raise 'log counts regression membership' unless log_counts.scan(/^test (.+) \.\.\. ok$/).flatten==['log_parser_materializes_named_counts_in_all_runtimes']
+ raise 'log counts regression result' unless log_counts.scan(/test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;/)==[['1','0','0','0',filtered]]
+ result[:log_counts_regression]='passed-all-three-runtimes'
+ result[:evidence_sha256]['log-counts-regression.log']=Digest::SHA256.hexdigest(read.call('log-counts-regression.log'))
+end
 File.write(File.join(dir,'verification.json'),JSON.pretty_generate(result)+"\n")
 puts JSON.generate(result.reject{|k,_|k==:evidence_sha256})

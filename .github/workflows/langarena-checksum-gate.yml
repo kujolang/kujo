@@ -36,6 +36,9 @@ jobs:
       - name: Verify calculator accumulator regression in all runtimes
         run: |
           KUJO_LANGARENA_BINARY="$PWD/checksum-evidence/kujo" cargo test --release --locked --test langarena_port_contracts calculator_accumulator_wraps_before_conversion_in_all_runtimes -- --exact --nocapture > checksum-evidence/calculator-regression.log 2>&1
+      - name: Verify log named counts regression in all runtimes
+        run: |
+          KUJO_LANGARENA_BINARY="$PWD/checksum-evidence/kujo" cargo test --release --locked --test langarena_port_contracts log_parser_materializes_named_counts_in_all_runtimes -- --exact --nocapture > checksum-evidence/log-counts-regression.log 2>&1
       - name: Recheck frozen identities
         if: always() && !cancelled()
         run: |

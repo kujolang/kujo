@@ -39,3 +39,26 @@ while still rejecting arbitrary stderr; no failed speed observation is scored.
 
 Executed comparator state, Unicode boundaries, allocation/work normalization and
 production coverage remain open. The all-50 ledger row remains partial.
+
+## Named-count work correction
+
+The canonical port now materializes a dictionary containing all thirteen pinned
+pattern names/counts, sums its values, then updates the wrapping result. This
+supersedes the direct-accumulation difference noted above; it is a benchmark work
+correction, not a runtime speed improvement. Helper invocation and values-list
+materialization are Kujo implementation costs; exact allocation parity is not
+claimed. Pattern setup/precompilation and preparation layouts still need review.
+
+The refreshed audit verifies 144 full states including every named count, 1,872
+match lists, input text/config snapshots, and count-dictionary copy independence
+in VM/interpreter/JIT. Names and patterns both match pinned comparator source.
+Six unchanged-checksum altered-match/count controls reject mismatches. The
+separate named-count regression covers all thirteen keys, copied dictionary
+mutation, wrapped accumulation and prior-state preservation. Its extracted Kujo
+fixture and the official Etc::LogParser test checksum (117) pass all three modes
+on the frozen accepted runtime. Rust integration execution and refreshed all150
+CI remain pending; no runtime source changed.
+
+Raw refreshed evidence is in log-named-counts-2026-11-03.json.gz, with originals
+at /tmp/kujo-log-named-counts-review. Comparator execution, Unicode behavior,
+remaining work/setup differences and production remain open.

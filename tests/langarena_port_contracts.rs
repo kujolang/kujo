@@ -35,6 +35,44 @@ fn registry_covers_exactly_the_fifty_pinned_benchmarks() {
 }
 
 #[test]
+fn log_parser_materializes_named_counts_in_all_runtimes() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("logs.kujo");
+    let script = source(false)
+        + r#"
+let expected := {"errors":1,"bots":0,"suspicious":0,"ips":0,"api_calls":0,"post_requests":0,"auth_attempts":0,"methods":0,"emails":0,"passwords":0,"tokens":0,"sessions":0,"peak_hours":0}
+let counts := logs_match_counts(" 404 ")
+assert_equal(counts, expected)
+mut changed := counts
+changed["errors"] = 9
+assert_equal(counts, expected)
+let original := {"cfg":{"name":"Etc::LogParser"},"text":" 404 ","result":4294967295}
+let next := logs_run(original, 0)
+assert_equal(next["result"], 0)
+assert_equal(original["result"], 4294967295)
+assert_equal(logs_run(next, 1)["result"], 1)
+assert_equal(next["result"], 0)
+print("log-named-counts: OK")
+"#;
+    std::fs::write(&path, script).unwrap();
+    let binary = std::env::var_os("KUJO_LANGARENA_BINARY")
+        .unwrap_or_else(|| env!("CARGO_BIN_EXE_kujo").into());
+    for runtime in ["vm", "interpreter", "jit"] {
+        if runtime == "jit" && !cfg!(feature = "runtime-jit") {
+            continue;
+        }
+        let mut command = std::process::Command::new(&binary);
+        command.arg("run").arg(&path);
+        if runtime != "vm" {
+            command.arg(format!("--{runtime}"));
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{runtime}: {}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "log-named-counts: OK");
+    }
+}
+
+#[test]
 fn calculator_accumulator_wraps_before_conversion_in_all_runtimes() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("calculator.kujo");

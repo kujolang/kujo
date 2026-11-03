@@ -9,6 +9,7 @@ cases = JSON.parse(File.read(out+'/cases.json'))
 expected = JSON.parse(File.read(out+'/expected.json'))
 raise 'case coverage' unless cases.size == 16 && manifest['cases'] == 16
 raise 'state coverage' unless expected.map { |r| r.values_at('case','step') } == (0...16).flat_map { |i| (0...3).map { |step| [i,step] } } && manifest['states_per_runtime'] == 48
+raise 'named count coverage' unless expected.all? { |r| r['counts'].is_a?(Hash) && r['counts'].size == 13 && r['counts'].values == r['matches'].map(&:size) }
 raise 'pattern coverage' unless expected.all? { |r| r['matches'].size == 13 }
 commands = manifest.fetch('commands')
 raise 'mode coverage' unless commands.map { |c| c['mode'] } == %w[vm interpreter jit]
@@ -26,6 +27,9 @@ commands.each do |command|
   changed = Marshal.load(Marshal.dump(actual))
   changed[0]['matches'][0] << 'fabricated-match'
   raise 'altered matches accepted' if changed == expected
+  changed = Marshal.load(Marshal.dump(actual))
+  changed[0]['counts']['errors'] = -1
+  raise 'altered counts accepted' if changed == expected
 end
-File.write(out+'/verification.json',JSON.pretty_generate({status:'verified',cases:16,states:144,pattern_lists:1872,files:files,negative_controls:3,scope:manifest['scope']}))
-puts '144 full states, 1872 pattern lists and three unchanged-checksum altered-match controls verified'
+File.write(out+'/verification.json',JSON.pretty_generate({status:'verified',cases:16,states:144,pattern_lists:1872,files:files,negative_controls:6,scope:manifest['scope']}))
+puts '144 full states, 1872 pattern lists and six unchanged-checksum altered-match/count controls verified'

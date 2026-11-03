@@ -21,6 +21,10 @@ patterns = JSON.parse(File.read(sources.last).match(/let patterns := (\[[^\n]+\]
 rust_patterns = comparators[0].scan(/Regex::new\(("(?:\\.|[^"\\])*")\)/m).flatten.map { |s| JSON.parse(s) }
 goose_patterns = comparators[1].scan(/regex::compile\("""(.*?)"""\)/m).flatten
 raise 'comparator pattern drift' unless patterns.size == 13 && patterns == rust_patterns && patterns == goose_patterns
+names = JSON.parse(File.read(sources.last).match(/let names := (\[[^\n]+\])/)[1])
+rust_names = comparators[0].scan(/\(\s*"([a-z_]+)",\s*Regex::new/m).flatten
+goose_names = comparators[1].scan(/Pattern \{ "([a-z_]+)", regex::compile/).flatten
+raise 'comparator name drift' unless names.size == 13 && names == rust_names && names == goose_names
 regexes = patterns.map { |p| Regexp.new(p) }
 methods = %w[GET POST PUT DELETE]
 paths = %w[/index.html /api/users /admin /images/logo.png /etc/passwd /wp-admin/setup.php]
@@ -54,7 +58,7 @@ expected = cases.each_with_index.flat_map do |entry,index|
   matches = regexes.map { |regex| state['text'].scan(regex) }
   3.times.map do |step|
     state['result'] = (state['result'] + matches.sum(&:size)) & 0xffffffff
-    {'case'=>index,'step'=>step,'state'=>Marshal.load(Marshal.dump(state)),'matches'=>matches,'checksum'=>state['result']}
+    {'case'=>index,'step'=>step,'state'=>Marshal.load(Marshal.dump(state)),'matches'=>matches,'counts'=>names.zip(matches.map(&:size)).to_h,'checksum'=>state['result']}
   end
 end
 fixture = sources.map { |p| File.read(p) }.join("\n") + "\nlet cases := parse_json(read_file(#{JSON.generate(out+'/cases.json')}))\nlet audit_patterns := #{JSON.generate(patterns)}\n" + <<'KUJO'
@@ -66,8 +70,16 @@ for entry in cases {
     for pattern in audit_patterns { matches = push(matches, regex_find_all(state["text"], pattern)) }
     mut step := 0
     while step < 3 {
+        let snapshot := state
+        let counts := logs_match_counts(state["text"])
+        mut altered := counts
+        altered["errors"] = -1
+        assert(counts["errors"] >= 0)
         state = logs_run(state, step)
-        print(to_json({"case":index,"step":step,"state":state,"matches":matches,"checksum":result_checksum(state)}))
+        assert_equal(snapshot["text"], state["text"])
+        assert_equal(snapshot["cfg"], state["cfg"])
+
+        print(to_json({"case":index,"step":step,"state":state,"matches":matches,"counts":counts,"checksum":result_checksum(state)}))
         step += 1
     }
     index += 1
@@ -76,7 +88,7 @@ KUJO
 {'fixture.kujo'=>fixture,'cases.json'=>JSON.generate(cases),'expected.json'=>JSON.generate(expected)}.each do |name,bytes|
   File.write(out+'/'+name,bytes); files[out+'/'+name] = Digest::SHA256.hexdigest(bytes)
 end
-manifest = {pin:pin,files:files,cases:cases.size,states_per_runtime:expected.size,commands:[],scope:'ASCII full text, per-pattern matched strings and accumulated checksum; no competitor execution or speed claim'}
+manifest = {pin:pin,files:files,cases:cases.size,states_per_runtime:expected.size,commands:[],scope:'ASCII full text, thirteen pinned named counts, per-pattern matched strings, snapshots and accumulated checksum; no competitor execution or speed claim'}
 %w[vm interpreter jit].each do |mode|
   files.each { |p,h| raise 'identity drift' unless Digest::SHA256.file(p).hexdigest == h }
   argv = [binary,'run','--scheduler-timeout-ms','120000']; argv << "--#{mode}" unless mode == 'vm'; argv << out+'/fixture.kujo'
