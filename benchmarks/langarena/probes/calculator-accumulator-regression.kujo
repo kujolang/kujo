@@ -1,0 +1,22 @@
+# Appended to the assembled canonical port by the contract test.
+let inputs := [0, 1, 9223372036854775807, wrapping_sub(-9223372036854775807, 1), -1, 4294967296]
+let deltas := [0, 1, 4294967295, 0, 4294967295, 0]
+mut case_index := 0
+for value in inputs {
+    let ast := [CalcAssignment { kind: "CalcAssignment", name: "answer", expression: CalcNumber { kind: "CalcNumber", value: value } }]
+    mut state := {"cfg":{"name":"Calculator::Interpreter"}, "ast":ast, "result":4294967290}
+    let snapshot := state
+    mut expected := 4294967290
+    mut step := 0
+    while step < 3 {
+        state = calc_run(state, step)
+        expected = (expected + deltas[case_index]) % 4294967296
+        assert_equal(state["result"], expected)
+        assert_equal(result_checksum(state), expected)
+        assert_equal(snapshot["result"], 4294967290)
+        assert_equal(state["ast"], ast)
+        step += 1
+    }
+    case_index += 1
+}
+print("calculator-accumulator: OK")

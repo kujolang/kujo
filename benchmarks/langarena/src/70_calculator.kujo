@@ -134,7 +134,7 @@ func calc_run(input, iteration) {
         mut variables := {}
         mut value := 0
         for node in state["ast"] { let evaluated := calc_evaluate(node, variables) value = evaluated[0] variables = evaluated[1] }
-        state["result"] = u32(state["result"] + value)
+        state["result"] = u32(wrapping_add(state["result"], value))
     }
     return state
 }

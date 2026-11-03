@@ -35,6 +35,30 @@ fn registry_covers_exactly_the_fifty_pinned_benchmarks() {
 }
 
 #[test]
+fn calculator_accumulator_wraps_before_conversion_in_all_runtimes() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("calculator.kujo");
+    let mut script = source(false);
+    script += include_str!("../benchmarks/langarena/probes/calculator-accumulator-regression.kujo");
+    std::fs::write(&path, script).unwrap();
+    let binary = std::env::var_os("KUJO_LANGARENA_BINARY")
+        .unwrap_or_else(|| env!("CARGO_BIN_EXE_kujo").into());
+    for runtime in ["vm", "interpreter", "jit"] {
+        if runtime == "jit" && !cfg!(feature = "runtime-jit") {
+            continue;
+        }
+        let mut command = std::process::Command::new(&binary);
+        command.arg("run").arg(&path);
+        if runtime != "vm" {
+            command.arg(format!("--{runtime}"));
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{runtime}: {}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "calculator-accumulator: OK");
+    }
+}
+
+#[test]
 fn port_kernels_preserve_input_values_and_roundtrip_binary_data() {
     let mut script = source(false);
     script += r#"

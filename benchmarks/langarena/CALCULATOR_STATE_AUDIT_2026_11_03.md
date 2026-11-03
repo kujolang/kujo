@@ -29,8 +29,20 @@ Rust/Goose calculator source files are byte-checked at
 `3c9f84ddaeec834c0631747cb789e8cfd602f993`, not executed. The JIT fallback notice is
 retained; execution mode alone does not establish native coverage.
 
-Next: integrate the one-line correction separately from worker reuse, add a
-regression across all runtimes, and rerun unchanged all150 checksum checks.
+After the frozen production sequence terminated, the one-line correction was
+integrated into this branch's canonical port source. The canonical source now
+passes the same 252-state oracle without fixture substitution. The added
+`calculator-accumulator-regression.kujo` covers zero, one, signed maximum/minimum,
+minus one and a multiple of 2^32, three iterations each, with snapshot checks.
+It passes directly with the frozen accepted runtime in VM/interpreter/JIT; a
+Rust contract test runs the same fixture in all three modes. CI execution of
+that contract and the refreshed unchanged all150 checks remains pending.
+
+The new checksum workflow includes the regression fixture in its pinned source
+manifest and runs the regression explicitly. Artifact verification derives the
+filtered-test count and skipped-job membership from pinned source, preserving
+compatibility with historical evidence while requiring the new regression log.
+
 Random program preparation, malformed syntax/error policy, signed-minimum
 division, work/allocation attribution, comparator execution and production
 coverage remain open. No elapsed performance claim follows from this audit.
