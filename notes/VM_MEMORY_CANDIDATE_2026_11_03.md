@@ -1,0 +1,53 @@
+# Isolated VM code-memory candidate — not accepted
+
+This branch contains a proposed VM-private code-owner reclamation change. It is
+not merged into the accepted performance branch and is not a release. Production
+and platform acceptance remain pending. Public JitCompiler destruction retains
+its existing behavior, including the documented backend Windows limitation.
+
+The VM owns its compiler and native pointer caches exclusively. Native calls
+borrow the VM synchronously; dropping the VM cannot overlap an active call.
+Returned values, generators and saved execution state preserve bytecode and
+language values, not this compiler's native entry pointers. On destruction, the
+VM takes its compiler once and releases generated code/data. Remaining pointer
+cache destruction does not invoke those entries. The compiler's embedded literal,
+field/path/shape metadata survives through the free operation and is then dropped.
+No externally callable raw entry escapes through the VM's public execution API.
+
+## Explicit unsafe-site review
+
+Six executable inventory matches are added; the exact total changes from269 to275:
+
+- `src/jit.rs`: unsafe method declaration and backend `free_memory` call (147→149).
+  The method is crate-private and consumes the compiler; its caller must prove
+  no generated entry is executing or can be invoked again. It is used only by
+  the owning VM's destruction path, not public compiler destruction.
+- `src/vm.rs`: one destruction call and three macOS test sites (15→19).
+  The call consumes the uniquely owned compiler after synchronous execution.
+  The test ABI declaration matches Mach region querying. Its query uses valid,
+  initialized output buffers of sufficient size and never reads code memory.
+  Its port-deallocation call releases only the send right returned by that query,
+  and only when nonzero. A subprocess prevents parallel tests from reusing freed
+  addresses during mapping assertions. Reclamation is checked by execute
+  permission, because an allocator can retain non-executable pages.
+
+The exact total and per-module assertions remain enforced; unrelated module
+budgets are unchanged. The inventory and TODO tables are regenerated to update
+line positions and these reviewed entries, not to hide new findings.
+
+## Existing local evidence
+
+Accepted performance branch commit80a05a3c records the full evidence in
+`benchmarks/langarena/VM_RESOURCE_DIAGNOSTICS_2026_11_03.md` and its archives:
+1,319 library passes,150 test-size checks, matched28-test generator suites,
+32 callback/task checks,178 no-JIT tests,90 small resource outcomes and60 extended
+resource outcomes through1,024 owners. These are revision-specific local results,
+not platform acceptance. The runtime files match that tested candidate patch;
+this preparation adds inventory review/tests and documentation only.
+
+The live-byte and executable-map probes return to baseline after every candidate
+VM destruction while the baseline retains4,096 bytes per JIT VM. Public compiler
+retention stays unchanged. These counts do not establish lower RSS or speed.
+
+Next: run exact-branch platform checks and production controls, preserving all
+failures/timeouts. Do not integrate or publish before remaining acceptance gates.

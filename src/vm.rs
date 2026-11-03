@@ -415,6 +415,20 @@ pub(crate) struct CallFrame {
     prev_chunk: Option<BytecodeChunk>,
 }
 
+#[cfg(feature = "runtime-jit")]
+impl Drop for VM {
+    fn drop(&mut self) {
+        if let Some(compiler) = self.jit_compiler.take() {
+            // SAFETY: this VM exclusively owns the compiler and all its native
+            // pointer caches. Execution borrows the VM synchronously, so native
+            // calls have returned before destruction. Snapshots, generators and
+            // returned Values retain bytecode, not these private native pointers.
+            // Dropping the remaining caches never invokes their function pointers.
+            unsafe { compiler.free_vm_owned_memory() };
+        }
+    }
+}
+
 #[allow(dead_code)] // These VM helpers are retained for scheduler/JIT/debug follow-through paths.
 impl VM {
     fn requires_closure_vm(chunk: &BytecodeChunk) -> bool {
@@ -12709,6 +12723,157 @@ mod imported_collection_boundary_tests {
                 }
                 _ => panic!("representation changed"),
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod code_owner_lifetime_tests {
+    use super::*;
+
+    fn assert_pair(value: &Value, expected: i64) {
+        let Value::Array(items) = value else { panic!("expected array, got {value:?}") };
+        assert_eq!(items.len(), 2);
+        assert!(matches!(items[0], Value::Int(value) if value == expected));
+        assert!(matches!(items[1], Value::Int(value) if value == expected + 1));
+    }
+
+    fn function() -> Value {
+        let source = "func retained(x) { return [x, x + 1] }";
+        let tokens = crate::lexer::tokenize(source).unwrap();
+        let ast = crate::parser::Parser::new(tokens).parse();
+        let script = crate::compiler::Compiler::new().compile(&ast).unwrap();
+        let chunk = script
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(chunk) => Some((**chunk).clone()),
+                _ => None,
+            })
+            .unwrap();
+        Value::BytecodeFunction {
+            chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn returned_values_functions_and_snapshots_survive_original_vm() {
+        for jit in [false, cfg!(feature = "runtime-jit")] {
+            let function = function();
+            let mut vm = VM::new();
+            vm.set_jit_enabled(jit);
+            assert_eq!(vm.jit_compile_bytecode_function(&function).unwrap(), jit);
+            let result = vm.call_function_from_jit(function.clone(), vec![Value::Int(7)]).unwrap();
+            vm.globals.lock().unwrap().define("saved_function".into(), function.clone());
+            let snapshot = vm.save_execution_state();
+            drop(vm);
+            assert_pair(&result, 7);
+            let mut other = VM::new();
+            other.set_jit_enabled(jit);
+            other.restore_execution_state(snapshot);
+            drop(function);
+            let function = other.globals.lock().unwrap().get("saved_function").unwrap();
+            assert_eq!(other.jit_compile_bytecode_function(&function).unwrap(), jit);
+            let second = other.call_function_from_jit(function, vec![Value::Int(9)]).unwrap();
+            assert_pair(&second, 9);
+            assert_pair(&result, 7);
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn disabling_jit_does_not_destroy_cached_code() {
+        let function = function();
+        let mut vm = VM::new();
+        vm.set_jit_enabled(true);
+        assert!(vm.jit_compile_bytecode_function(&function).unwrap());
+        let pointer = *vm.compiled_functions.values().next().unwrap() as usize;
+        for enabled in [true, false, true, false, true] {
+            vm.set_jit_enabled(enabled);
+            let result = vm.call_function_from_jit(function.clone(), vec![Value::Int(3)]).unwrap();
+            assert_pair(&result, 3);
+            assert_eq!(*vm.compiled_functions.values().next().unwrap() as usize, pointer);
+        }
+    }
+
+    #[cfg(all(feature = "runtime-jit", target_os = "macos"))]
+    #[test]
+    fn vm_drop_revokes_its_executable_entry() {
+        // Isolate mapping checks from parallel tests that could reuse freed pages.
+        const CHILD: &str = "KUJO_TEST_VM_CODE_LIFETIME_CHILD";
+        if std::env::var_os(CHILD).is_none() {
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "vm::code_owner_lifetime_tests::vm_drop_revokes_its_executable_entry",
+                    "--test-threads=1",
+                    "--nocapture",
+                ])
+                .env(CHILD, "1")
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            return;
+        }
+        fn executable(pointer: usize) -> bool {
+            unsafe extern "C" {
+                static mach_task_self_: u32;
+                fn mach_vm_region(
+                    task: u32,
+                    address: *mut u64,
+                    size: *mut u64,
+                    flavor: i32,
+                    info: *mut i32,
+                    count: *mut u32,
+                    object: *mut u32,
+                ) -> i32;
+                fn mach_port_deallocate(task: u32, name: u32) -> i32;
+            }
+            let mut address = pointer as u64;
+            let mut size = 0u64;
+            let mut info = [0i32; 32];
+            let mut count = 32u32;
+            let mut object = 0u32;
+            // SAFETY: query current task into valid initialized output buffers;
+            // never invoke or dereference the recorded native entry address.
+            let status = unsafe {
+                mach_vm_region(
+                    mach_task_self_,
+                    &mut address,
+                    &mut size,
+                    9,
+                    info.as_mut_ptr(),
+                    &mut count,
+                    &mut object,
+                )
+            };
+            if object != 0 {
+                // SAFETY: release exactly the send right returned by this query.
+                assert_eq!(unsafe { mach_port_deallocate(mach_task_self_, object) }, 0);
+            }
+            assert!(status == 0 || status == 1);
+            // The system allocator may retain the mapped pages after deallocation.
+            // Cranelift revokes execute permission before returning that storage.
+            status == 0
+                && address <= pointer as u64
+                && (pointer as u64) - address < size
+                && info[0] & 4 != 0
+        }
+        for _ in 0..8 {
+            let mut vm = VM::new();
+            vm.set_jit_enabled(true);
+            assert!(vm.jit_compile_bytecode_function(&function()).unwrap());
+            let pointer = *vm.compiled_functions.values().next().unwrap() as usize;
+            assert!(executable(pointer));
+            drop(vm);
+            assert!(!executable(pointer), "VM-owned entry must no longer be executable");
         }
     }
 }

@@ -160,10 +160,15 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // Scope/metadata lifetimes, callback restoration and owned root identities
     // were reviewed; allocator accounting was made non-panicking on overflow.
     // Counts include declarations and test blocks, not just production operations.
+    // The isolated VM code-owner candidate adds six reviewed sites: two JIT
+    // declaration/free sites, one VM destruction call and three macOS mapping
+    // test sites. See notes/VM_MEMORY_CANDIDATE_2026_11_03.md for ownership,
+    // pointer invalidation and OS send-right obligations; public compiler
+    // destruction remains unchanged. Candidate platform acceptance is pending.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 269,
-        "executable unsafe budget changed: expected 269, got {executable_count}"
+        executable_count, 275,
+        "executable unsafe budget changed: expected 275, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -202,7 +207,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         ("src/process_lifetime.rs", 4),
         ("src/interpreter/native_functions/process_job_windows.rs", 12),
         ("tests/process_lifetime_contracts.rs", 4),
-        ("src/vm.rs", 15),
+        ("src/vm.rs", 19),
         ("tests/bytecode_call_profile.rs", 8),
         ("tests/jit_boolean_returns.rs", 1),
         ("tests/jit_checked_arithmetic.rs", 3),
@@ -228,7 +233,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .count();
 
     assert_eq!(
-        jit_executable_count, 147,
-        "jit executable unsafe budget changed: expected 147, got {jit_executable_count}"
+        jit_executable_count, 149,
+        "jit executable unsafe budget changed: expected 149, got {jit_executable_count}"
     );
 }

@@ -184,6 +184,50 @@ fn vm_generator_has_no_automatic_global_environment_ownership_cycle() {
     drop(generator);
 }
 
+#[test]
+fn vm_generator_resumes_after_its_original_native_code_owner_is_dropped() {
+    for (creator_jit, resumer_jit) in [(false, false), (false, true), (true, false), (true, true)] {
+        if (creator_jit || resumer_jit) && !cfg!(feature = "runtime-jit") {
+            continue;
+        }
+        let (mut original, env, generator) = setup(
+            "func twice(n) { return n * 2 } func* values() { yield twice(3) try { yield twice(4) throw(\"resume failure\") } except err { yield twice(5) } } let instance := values()",
+        );
+        original.set_jit_enabled(creator_jit);
+        let helper = env.lock().unwrap().get("twice").unwrap();
+        assert_eq!(original.jit_compile_bytecode_function(&helper).unwrap(), creator_jit);
+        // Generator continuations deliberately run with JIT disabled. Exercise
+        // the helper outside that dispatcher as well, while its code owner lives.
+        assert_eq!(
+            number(Some(
+                original.call_function_from_jit(helper.clone(), vec![Value::Int(2)]).unwrap()
+            )),
+            4
+        );
+        assert_eq!(number(step(&mut original, &generator)), 6);
+        assert_eq!(original.jit_enabled(), creator_jit);
+        drop(original);
+
+        // Retain the language environment and continuation, but no original VM
+        // or native-code owner. Resuming without JIT also prevents a fresh native
+        // allocation from accidentally making a stale entry callable again.
+        let mut resumed = VM::new();
+        resumed.set_globals(env.clone());
+        resumed.set_jit_enabled(resumer_jit);
+        assert_eq!(resumed.jit_stats().compiled_functions, 0);
+        assert_eq!(resumed.jit_compile_bytecode_function(&helper).unwrap(), resumer_jit);
+        assert_eq!(number(step(&mut resumed, &generator)), 8);
+        assert_eq!(number(step(&mut resumed, &generator)), 10);
+        assert!(step(&mut resumed, &generator).is_none());
+        assert_eq!(resumed.jit_enabled(), resumer_jit);
+        assert_eq!(
+            number(Some(resumed.call_function_from_jit(helper, vec![Value::Int(6)]).unwrap())),
+            12
+        );
+        assert_eq!(env.lock().unwrap().scopes.len(), 1);
+    }
+}
+
 fn interpret(interpreter: &mut Interpreter, source: &str) {
     let mut parser = Parser::new(tokenize(source).unwrap());
     let parsed = parser.parse_with_diagnostics();
