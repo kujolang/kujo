@@ -61,7 +61,7 @@ cargo test --test byte_iteration_contracts --test native_environment_contracts -
 KUJO_LANGARENA_BINARY="$PWD/target/release/kujo" cargo test --test langarena_port_contracts -- --ignored --nocapture
 ```
 
-The full checksum test is explicit because it is a long-running workload. The
+The full checksum test is explicit because it is a long-running workload. It covers VM, interpreter and JIT with exact name/checksum membership. The
 ordinary tests check the exact 50-name registry and small algorithm, binary
 roundtrip, AST, and value-semantics cases in both runtimes.
 

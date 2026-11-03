@@ -361,3 +361,17 @@ Six synthetic and five archive parser controls pass. See
 Unwind1910a363 and economics-source d9803cb6 each have79 independently verified
 targeted Linux passes. Later resources, final platform/all150 and elapsed gates
 remain open; no candidate integration follows yet.
+
+## All150 final-candidate gate
+
+The explicit ignored LangArena checksum regression now covers VM, interpreter and
+JIT. It checks all fifty exact name/checksum lines in configuration order and one
+exact successful summary per runtime; duplicate or substituted checksums cannot
+satisfy the count. The source fragments, inputs and iteration counts are unchanged.
+
+A manual Linux workflow builds optimized artifacts, freezes the CLI, runs that
+explicit regression and uploads source/toolchain hashes, build records, raw output
+and the executable itself. It rechecks source/binary identities afterward. This is
+test-size correctness only, not all-production or competitive performance. The
+three-runtime execution remains pending CI; local compilation is avoided while
+the accepted production benchmark runs. Runtime source is unchanged by this gate.

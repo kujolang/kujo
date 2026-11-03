@@ -1,0 +1,46 @@
+name: langarena-checksum-gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  all150:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record source and toolchain
+        run: |
+          mkdir checksum-evidence
+          git rev-parse HEAD > checksum-evidence/source.txt
+          rustc --version --verbose >> checksum-evidence/source.txt
+          git ls-files -z src tests Cargo.toml Cargo.lock benchmarks/langarena/src benchmarks/langarena/test.json | xargs -0 sha256sum > checksum-evidence/source-sha256.txt
+      - name: Verify formatting
+        run: cargo fmt --check
+      - name: Build optimized checksum test and CLI
+        run: cargo test --release --locked --test langarena_port_contracts --no-run --message-format=json > checksum-evidence/build.jsonl 2> checksum-evidence/build.stderr
+      - name: Freeze executable
+        run: |
+          cp target/release/kujo checksum-evidence/kujo
+          sha256sum checksum-evidence/kujo > checksum-evidence/binary-sha256.txt
+      - name: Verify all fifty checksums in VM interpreter and JIT
+        run: |
+          KUJO_LANGARENA_BINARY="$PWD/checksum-evidence/kujo" cargo test --release --locked --test langarena_port_contracts all_fifty_upstream_checksums_in_all_runtimes -- --exact --ignored --nocapture > checksum-evidence/checksums.log 2>&1
+      - name: Recheck frozen identities
+        if: always() && !cancelled()
+        run: |
+          sha256sum --check checksum-evidence/binary-sha256.txt > checksum-evidence/binary-recheck.log
+          sha256sum --check checksum-evidence/source-sha256.txt > checksum-evidence/source-recheck.log
+      - name: Preserve source build binary and checksum evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: langarena-all150-linux
+          retention-days: 7
+          path: checksum-evidence/
