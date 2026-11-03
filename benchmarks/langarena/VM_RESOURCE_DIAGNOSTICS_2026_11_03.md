@@ -205,3 +205,8 @@ all seven jobs, including the full release gate and 1,358 optimized library and
 integration tests (eight existing ignores). The newer cross-platform mapping
 assertions and production sequence remain pending; this does not accept or merge
 the separate runtime candidate.
+
+The [eleven selected production controls](VM_MEMORY_PRODUCTION_2026_11_03.md)
+also pass independent verification on the frozen candidate and unchanged port.
+This closes that targeted sequence; the other production combinations and
+remaining platform acceptance are separate open gates.
