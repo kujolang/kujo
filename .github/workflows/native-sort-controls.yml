@@ -1,0 +1,40 @@
+name: native-sort-controls
+on:
+  workflow_call:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  controls:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Freeze identities and identical baseline copy
+        run: |
+          mkdir sort-control-evidence
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41707246908" > sort-control-evidence/source-run.json
+          ruby -rjson -e 'r=JSON.parse(File.read("sort-control-evidence/source-run.json")); abort unless r["conclusion"]=="success" && r["head_sha"]=="79e32f6a37daed7c36bd982afb33fb6567d55d9f"'
+          gh run download 41707246908 -n local-store-session-1 -D frozen
+          ruby -rjson -rdigest -e 'r=JSON.parse(File.read("frozen/timings/report.json")); %w[baseline candidate].each{|v| abort unless Digest::SHA256.file("frozen/#{v}-kujo").hexdigest==r["files"][r["binaries"][v]]}'
+          cp frozen/baseline-kujo frozen/baseline-copy-kujo
+          chmod +x frozen/*-kujo
+          sha256sum frozen/*-kujo > sort-control-evidence/binary-hashes.txt
+          cp frozen/*-source.txt sort-control-evidence/
+          git rev-parse HEAD > sort-control-evidence/harness-source.txt
+          lscpu > sort-control-evidence/cpu.txt
+          cat /proc/loadavg > sort-control-evidence/load-before.txt
+      - name: Counterbalance candidate with two identical baselines
+        run: |
+          ruby benchmarks/langarena/probes/compare-sort-identity-controls.rb frozen sort-control-evidence/samples
+          sha256sum --check sort-control-evidence/binary-hashes.txt > sort-control-evidence/binary-recheck.txt
+          cat /proc/loadavg > sort-control-evidence/load-after.txt
+      - name: Preserve raw controls
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sort-identity-controls
+          retention-days: 7
+          path: sort-control-evidence/

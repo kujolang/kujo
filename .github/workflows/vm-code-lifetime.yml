@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      sort_controls:
+        description: Run identical-binary controls for the frozen local-store sorting comparison
+        type: boolean
+        default: false
       profile_only:
         description: Recheck Brainfuck sampling with the original frozen symbolized binary
         type: boolean
@@ -30,22 +34,25 @@ permissions:
   actions: read
 
 jobs:
+  sort-controls:
+    if: inputs.sort_controls
+    uses: ./.github/workflows/native-sort-controls.yml
   profile:
-    if: inputs.profile_only
+    if: inputs.profile_only && !inputs.sort_controls
     uses: ./.github/workflows/native-bf-profile.yml
   local-store:
-    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only
+    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
     uses: ./.github/workflows/native-local-store.yml
   post-store:
-    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only
+    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
     uses: ./.github/workflows/native-local-store-followup.yml
     with:
       source_run: ${{ inputs.post_store_run }}
   owner-workloads:
-    if: inputs.owner_workloads && !inputs.profile_only
+    if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
     uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only }}
+    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
