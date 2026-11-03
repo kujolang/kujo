@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      priority_profile:
+        description: Sample four priority kernels using the original frozen symbolized experiment
+        type: boolean
+        default: false
       scalar_write:
         description: Test and measure the isolated scalar indexed-write candidate
         type: boolean
@@ -38,28 +42,31 @@ permissions:
   actions: read
 
 jobs:
+  priority-profile:
+    if: inputs.priority_profile
+    uses: ./.github/workflows/native-priority-profile.yml
   scalar-write:
-    if: inputs.scalar_write
+    if: inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-scalar-write.yml
   sort-controls:
-    if: inputs.sort_controls && !inputs.scalar_write
+    if: inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-sort-controls.yml
   profile:
-    if: inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
+    if: inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-bf-profile.yml
   local-store:
-    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
+    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-local-store.yml
   post-store:
-    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
+    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-local-store-followup.yml
     with:
       source_run: ${{ inputs.post_store_run }}
   owner-workloads:
-    if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
+    if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write }}
+    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile }}
     timeout-minutes: 90
     strategy:
       fail-fast: false

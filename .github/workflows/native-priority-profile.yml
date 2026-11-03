@@ -1,0 +1,44 @@
+name: native-priority-profile
+on:
+  workflow_call:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sample:
+    runs-on: macos-15-intel
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify original executable and unchanged priority kernels
+        run: |
+          mkdir priority-evidence
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41656109318" > priority-evidence/origin-run.json
+          ruby -rjson -e 'r=JSON.parse(File.read("priority-evidence/origin-run.json")); abort unless r["head_sha"]=="827c2e73c8be733f0ce893972737b814484225ef" && r["conclusion"]=="failure"'
+          gh run download 41656109318 -n bf-production-symbolized-macos -D frozen
+          ruby -rdigest -e 'abort unless Digest::SHA256.file("frozen/kujo").hexdigest=="629acef99b0963da1004b6356e6c0693cd103aa1bfb184031a3f5d27b741e274"'
+          git fetch --depth=1 origin 827c2e73c8be733f0ce893972737b814484225ef
+          git diff --exit-code 827c2e73c8be733f0ce893972737b814484225ef HEAD -- src/interpreter/assignment.rs src/interpreter/value.rs benchmarks/langarena/test.json benchmarks/langarena/src/00_common.kujo benchmarks/langarena/src/30_sort.kujo benchmarks/langarena/src/46_ray.kujo benchmarks/langarena/src/49_neural.kujo benchmarks/langarena/src/99_main.kujo
+          chmod +x frozen/kujo
+          cp frozen/source.txt frozen/toolchain.txt frozen/binary-sha256.txt priority-evidence/
+          git rev-parse HEAD > priority-evidence/harness-source.txt
+          sw_vers > priority-evidence/execution-host.txt
+          uname -m >> priority-evidence/execution-host.txt
+      - name: Build and test only the symbol resolver
+        run: |
+          cargo test --locked --manifest-path benchmarks/langarena/probes/profile-symbols/Cargo.toml > priority-evidence/symbol-tests.log 2>&1
+          cargo build --release --locked --manifest-path benchmarks/langarena/probes/profile-symbols/Cargo.toml > priority-evidence/symbol-build.log 2>&1
+      - name: Collect four unchanged test-size kernels with minimum symbol coverage
+        run: |
+          frozen/kujo run benchmarks/langarena/build.kujo > priority-evidence/port-build.log
+          ruby benchmarks/langarena/probes/sample-priority-symbols.rb frozen/kujo priority-evidence/samples benchmarks/langarena/probes/profile-symbols/target/release/kujo-profile-symbols > priority-evidence/collector.log 2>&1
+      - name: Preserve raw and resolved samples even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: priority-profile-original-symbolized
+          retention-days: 7
+          path: priority-evidence/

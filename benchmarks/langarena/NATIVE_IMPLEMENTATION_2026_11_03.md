@@ -380,3 +380,19 @@ Scalar-write CI `41722996389` stopped at test compilation because the new test
 incorrectly assumed `Value: PartialEq`. The assertion-only correction compares
 scalar kinds explicitly and retains exact float-bit checks. No candidate runtime
 success or timing result is claimed from that failed run.
+
+### Priority helper attribution follow-up
+
+`native-priority-profile.yml` reuses the original symbolized experiment executable
+SHA `629acef9…` from run `41656109318`, rather than pretending that stripped current
+CLI traces contain named helpers. It requires unchanged priority kernel inputs
+and identical `assignment.rs` / `value.rs` source, checks all four test-size
+outputs in VM/JIT, resolves Rust symbols and rejects fewer than 50 worker samples.
+Samples begin only after each warmup marker. The separate hosted Mac runner does
+not share the scalar comparison's Linux host.
+
+This executable predates the local-store/scalar-write changes and includes the
+separate worker experiment. Its samples can guide investigation of unchanged
+shared helpers; they cannot establish current-candidate performance, native
+instruction coverage or exact native-versus-helper CPU fractions. No runtime or
+benchmark algorithm change accompanies the profiling follow-up.
