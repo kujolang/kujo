@@ -7,7 +7,8 @@ verifier = File.expand_path('verify-owner-resources.rb', __dir__)
 head, error, status = Open3.capture3('git', 'rev-parse', 'HEAD')
 raise error unless status.success?
 controls = {
-  'valid' => nil, 'missing-case' => 'case coverage',
+  'valid' => nil, 'archive-valid' => nil,
+  'archive-build-failed' => 'archive build outcome', 'archive-wrong-binary' => 'archive build binary', 'missing-case' => 'case coverage',
   'duplicate-case' => 'case coverage', 'timeout' => 'process outcome',
   'changed-log' => 'log identity', 'wrong-environment' => 'environment',
   'wrong-invocation' => 'invocation', 'missing-checkpoint' => 'checkpoint coverage',
@@ -23,6 +24,12 @@ Dir.mktmpdir('kujo-resource-verifier-') do |dir|
     File.write(binary, 'synthetic binary identity fixture')
     File.write(dir+'/source.txt', control == 'wrong-source' ? '0'*40+"\n" : head)
     File.write(dir+'/executable.json', JSON.generate({path: binary, sha256: Digest::SHA256.file(binary).hexdigest}))
+    build = [
+      {reason: 'compiler-artifact', profile: {test: true}, target: {name: 'kujo'}, executable: control == 'archive-wrong-binary' ? '/wrong/binary' : binary},
+      {reason: 'build-finished', success: control != 'archive-build-failed'}
+    ]
+    File.write(dir+'/build.jsonl', build.map { |row| JSON.generate(row) }.join("\n")+"\n")
+
     cases = %w[pooled unpooled].product(%w[same distinct], [32, 1024]).map do |mode, shape, count|
       target = mode == 'pooled' && shape == 'same' && count == 32
       unpooled = mode == 'unpooled' && shape == 'same' && count == 32
@@ -61,14 +68,19 @@ Dir.mktmpdir('kujo-resource-verifier-') do |dir|
     cases[-1] = cases.first if control == 'duplicate-case'
     File.write(dir+'/cases.json', JSON.generate(cases))
     File.write(binary, 'changed identity') if control == 'changed-binary'
-    File.delete(dir+'/verified.json') if File.exist?(dir+'/verified.json')
-    out, err, result = Open3.capture3('ruby', verifier, dir)
+    archived = control.start_with?('archive-')
+    acceptance_file = dir+(archived ? '/archived-verified.json' : '/verified.json')
+    File.delete(acceptance_file) if File.exist?(acceptance_file)
+    argv = ['ruby', verifier, dir]
+    argv += ['archive', head.strip] if archived
+    out, err, result = Open3.capture3(*argv)
     if expected_error
       raise "#{control} accepted or wrong rejection: #{out} #{err}" unless !result.success? && err.include?(expected_error)
-      raise "#{control} wrote acceptance" if File.exist?(dir+'/verified.json')
+      raise "#{control} wrote acceptance" if File.exist?(acceptance_file)
     else
       raise "valid rejected: #{out} #{err}" unless result.success?
-      verified = JSON.parse(File.read(dir+'/verified.json'))
+      verified = JSON.parse(File.read(acceptance_file))
+      raise 'archive binary scope' if archived && !verified['input_identity_scope'].include?('executable bytes unavailable')
       raise 'incorrect review scope' unless verified['status'] == 'verified-observations-review-pending' && verified['rows'].size == 8
     end
     results << {control: control, expected_acceptance: expected_error.nil?, exit: result.exitstatus}

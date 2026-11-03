@@ -381,3 +381,17 @@ because it is not registered on the default branch. The existing lifetime workfl
 now exposes an explicit checksum-only dispatch route to the reusable checksum
 workflow; it skips the lifetime matrix and does not restart the existing runs.
 This is workflow routing, not checksum execution evidence.
+
+## Physical resource observations reviewed
+
+Source06b4388f now has eight independently checked Linux resource processes,
+80 targeted passes and40 economics cells. Same-code pooling compiles once and
+retains8KiB executable mappings; distinct1024-task pooling peaks at4MiB sampled
+executable-map delta and8300KiB sampled RSS delta. All eight executable-map deltas
+return to zero after drop, but that distinct pooled process retains8300KiB RSS.
+Keep the positive RSS cost explicit; this is not a leak attribution or memory win.
+All sampled pools hold one idle owner, leaving concurrent two-owner/lineage and
+repeated-eviction resource coverage open. Nineteen resource verifier controls pass.
+See `benchmarks/langarena/JIT_OWNER_RESOURCE_REVIEW_2026_11_03.md` for exact source,
+provenance, raw artifacts and executable-identity limitations. Candidate acceptance,
+latest-source gates and elapsed-speed comparison remain pending.

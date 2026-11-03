@@ -1,12 +1,32 @@
 require 'json'
 require 'digest'
 require 'open3'
-raise 'usage: RESOURCE_DIRECTORY' unless ARGV.size==1
+raise 'usage: RESOURCE_DIRECTORY [archive COMMIT]' unless ARGV.size==1 || (ARGV.size==3 && ARGV[1]=='archive')
 dir=ARGV.first
-head,err,status=Open3.capture3('git','rev-parse','HEAD')
-raise "source identity #{err}" unless status.success? && File.read(dir+'/source.txt')==head
+archived=ARGV.size==3
+if archived
+  commit=ARGV[2]
+  raise 'archive commit identity' unless commit.match?(/\A[0-9a-f]{40}\z/)
+  source,err,status=Open3.capture3('git','show',"#{commit}:src/vm.rs")
+  raise "archive source #{err}" unless status.success?
+  head=commit+"\n"
+else
+  head,err,status=Open3.capture3('git','rev-parse','HEAD')
+  raise "source identity #{err}" unless status.success?
+end
+raise 'source identity' unless File.read(dir+'/source.txt')==head
 identity=JSON.parse(File.read(dir+'/executable.json'))
-raise 'binary changed' unless Digest::SHA256.file(identity.fetch('path')).hexdigest==identity.fetch('sha256')
+identity_scope='Executable bytes rehashed locally.'
+if archived
+  raise 'binary identity receipt' unless identity['path'].is_a?(String) && identity['path'].start_with?('/') && identity['sha256'].match?(/\A[0-9a-f]{64}\z/)
+  messages=File.readlines(dir+'/build.jsonl').map{|line|JSON.parse(line)}
+  raise 'archive build outcome' unless messages.select{|m|m['reason']=='build-finished'}.map{|m|m['success']}==[true]
+  binaries=messages.select{|m|m['reason']=='compiler-artifact' && m.dig('profile','test') && m['executable']}
+  raise 'archive build binary' unless binaries.size==1 && binaries[0]['executable']==identity['path'] && binaries[0].dig('target','name')=='kujo'
+  identity_scope='Pinned source and successful build receipt checked; executable hash is CI collector evidence, executable bytes unavailable for independent rehash.'
+else
+  raise 'binary changed' unless Digest::SHA256.file(identity.fetch('path')).hexdigest==identity.fetch('sha256')
+end
 cases=JSON.parse(File.read(dir+'/cases.json'))
 expected_cases=%w[pooled unpooled].product(%w[same distinct],[32,1024])
 raise 'case coverage' unless cases.map{|c|c.values_at('mode','shape','count')}==expected_cases
@@ -39,5 +59,5 @@ rows=[]
   raise 'native participation' unless counters['jit_native_boundary_entries']==count
   rows<<{file:name,sha256:Digest::SHA256.hexdigest(raw),receipt:data}
 end
-File.write(dir+'/verified.json',JSON.pretty_generate({status:'verified-observations-review-pending',source:head.strip,executable:identity,rows:rows,scope:'Eight isolated diagnostic processes; RSS and executable mappings, not live heap or elapsed speed. Resource tradeoffs require review.'})+"\n")
+File.write(dir+(archived ? '/archived-verified.json' : '/verified.json'),JSON.pretty_generate({status:'verified-observations-review-pending',input_identity_scope:identity_scope,source:head.strip,executable:identity,rows:rows,scope:'Eight isolated diagnostic processes; RSS and executable mappings, not live heap or elapsed speed. Resource tradeoffs require review.'})+"\n")
 puts '8 isolated resource observations verified; review retention and memory tradeoffs before acceptance.'
