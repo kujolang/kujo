@@ -114,9 +114,11 @@ The candidate has verified [Linux release and all150 checksum gates](JIT_OWNER_C
 [targeted platform artifacts](JIT_OWNER_PLATFORM_REVIEW_2026_11_03.md), and
 [twelve isolated resource cases through 4,096 tasks](JIT_OWNER_4096_RESOURCE_REVIEW_2026_11_03.md).
 Reduced compilation counts are established, not an elapsed speed improvement.
+The [two-owner/eight-pool resource observations](JIT_OWNER_CONCURRENT_RESOURCE_REVIEW_2026_11_03.md)
+are independently verified, with residual RSS and scope limits recorded.
 The next acceptance actions are review of the
-[concurrent/repeated-pool diagnostic](JIT_OWNER_CONCURRENT_RESOURCE_PROTOCOL_2026_11_03.md),
-[paired elapsed experiment](JIT_OWNER_ELAPSED_PROTOCOL_2026_11_03.md), and remaining
+[paired elapsed experiment](JIT_OWNER_ELAPSED_PROTOCOL_2026_11_03.md), refreshed
+checksum/regression CI after the calculator port correction, and remaining
 production outcomes. The broader eight-area campaign and clean-host gate remain
 open even if this candidate is accepted.
 The [64-cell baseline controls](JIT_ECONOMICS_ENTRY_2026_11_03.md) now pass:
