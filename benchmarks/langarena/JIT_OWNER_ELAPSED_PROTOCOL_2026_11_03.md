@@ -38,3 +38,13 @@ Dispatch the registered `vm-code-lifetime.yml` with `elapsed_only: true` and
 `checksum_only: false`. This selects only the reusable elapsed workflow; it does
 not rerun the platform matrix. This diagnostic is one candidate acceptance input;
 memory, platform and production gates remain separate requirements.
+
+The off-host review command is `ruby probes/verify-owner-elapsed.rb ARTIFACT SHA`
+(invoke from the repository root with the full `benchmarks/langarena/` prefix).
+It rehashes uploaded executable bytes and pinned fixture/collector source,
+checks optimized build receipts, enforces exact 192-sample membership/order and
+uninstrumented argv, compares every raw output, and independently recomputes all
+paired ratios. Seven synthetic verifier controls cover valid evidence and
+rejection of duplicate samples, wrong ratios, failed samples, instrumentation,
+changed executable bytes and incorrect raw output. Workflow/job/artifact API
+provenance must still be checked separately against the dispatched revision.
