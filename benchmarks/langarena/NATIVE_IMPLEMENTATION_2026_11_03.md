@@ -110,6 +110,29 @@ experiment binaries with the accepted port, separately from the local-store
 candidate. The companion confirmation archive retains raw samples and receipts;
 no global LangArena gain is inferred from this worker diagnostic.
 
+### Unchanged-workload gate: integration blocked
+
+Run `41711233289` attempt 1, harness `c54a309f`, artifact `13268447748`, uses
+the attempt-2 frozen runtime binaries. All 512 observations independently verify:
+64 excluded process warmups and seven alternating pairs per workload/runtime.
+Matmul T4/T8/T16 JIT process paired medians improve 1.222x/1.358x/1.532x, with
+seven wins each. Computation medians improve 1.385x/1.684x/1.987x. These are
+test-size observations on this Linux host, not a production or aggregate gain.
+
+VM QuickSort and MergeSort lose all seven pairs: process baseline/candidate
+medians are 0.892x and 0.929x (candidate about 12% and 8% slower). Computation
+medians are 0.885x and 0.930x. BWTEncode VM computation also loses all seven
+pairs, median 0.959x. The four priority JIT process medians are 1.005x, 0.998x,
+1.007x and 0.989x for Quick, Merge, NeuralNet and TextRaytracer respectively;
+there is no established priority-workload improvement. Complete raw times,
+paired ranges, outputs and hashes remain in the archive below.
+
+These losses block integration. Attempt 2 of the same run has been requested
+for independent confirmation; it must not be counted as complete yet. Source
+inspection shows task-pool allocation/checkout gated by JIT, so the cause of
+the VM losses is unresolved. Compiler layout effects are a hypothesis, not a
+diagnosis. The existing experiment is still preserved separately.
+
 ## Profile repair and limits
 
 Run `41656109318`, source `827c2e73c8be733f0ce893972737b814484225ef`, artifact
@@ -126,6 +149,26 @@ make this a useful CPU profile. The collector now rejects fewer than 50 worker
 samples and retains raw plus resolved output. Neither runtime regression nor
 specific hot-helper attribution follows from this failed run. The imported
 collector originates from experiment `827c2e73`; runtime source is untouched.
+
+The repaired collector completed in `41713260539`, harness `753afcfb`, artifact
+`13269950946`, using the original frozen symbolized executable SHA
+`629acef99b0963da1004b6356e6c0693cd103aa1bfb184031a3f5d27b741e274`.
+Independent reconstruction of every demangled sample matches exactly. VM,
+interpreter and JIT contain 1,475, 1,583 and 1,566 worker samples after the
+1,000 checked warmups. Inputs match the original production fixture. Every
+partial production execution was terminated after sampling, not completed.
+
+The JIT sample identifies root encode/release/clone work, value movement and
+environment lookup among active leaf frames. VM samples include opcode cloning;
+interpreter samples include allocation, environment lookup and expression
+evaluation. The two idle controller threads dominate all-thread wait counts;
+those counts must not be interpreted as worker CPU bottlenecks. These observations
+justify further attribution, not a specific optimization or a speed estimate.
+They describe the original experimental executable, not the local-store candidate.
+
+`owner-workloads-bf-profile-2026-11-03.json.gz` retains both raw artifacts,
+independent verification receipts, provenance and ZIP digests, excluding binary
+copies. Every archived file hash was checked after writing.
 
 ## Fresh sorting entry observations
 
