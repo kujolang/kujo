@@ -76,3 +76,9 @@ rustfmt newline policy. The raw job log is retained under local evidence as
 checkout; preserve the formatting gate. A Windows-only manual retry option avoids
 restarting the four still-running Linux/macOS jobs. Runtime and test bodies are
 unchanged by this workflow repair; Windows semantic verification remains pending.
+
+Windows-only retry `41614100004` passed checkout but still failed formatting for
+vendored `tiny_http`'s `task_pool.rs`: its nested `.gitattributes` specifies
+`* text=auto`, so disabling autocrlf alone leaves native Windows line endings.
+Set `core.eol=lf` before checkout as well. The tracked blob has LF endings; no
+vendored source or formatting requirement is changed. Preserve the retry log.

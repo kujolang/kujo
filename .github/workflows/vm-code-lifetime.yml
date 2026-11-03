@@ -24,7 +24,9 @@ jobs:
     steps:
       - name: Preserve repository line endings on Windows
         if: runner.os == 'Windows'
-        run: git config --global core.autocrlf false
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: dtolnay/rust-toolchain@stable
       - name: Record exact source and toolchain
