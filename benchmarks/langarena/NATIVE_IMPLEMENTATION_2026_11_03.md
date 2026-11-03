@@ -39,8 +39,8 @@ The compiled regression compares equivalent consuming/peek paths and requires
 one fewer issued root per store, unchanged backing storage and complete cleanup.
 
 CI `41707246908`, source `79e32f6a37daed7c36bd982afb33fb6567d55d9f`, runs two
-independent Linux sessions. Both library-test steps have passed; integration,
-all150 checksums and 16-workload paired timings remain pending at this update.
+independent Linux sessions. Both completed library/integration checks, exact
+all150 checksums and 16-workload paired timings; their raw evidence is reviewed.
 The earlier run `41706406972` was cancelled after discovering its requested
 all-runtime test name did not yet exist on the accepted branch. It is not an
 acceptance receipt. `79e32f6a` adds that explicit test and rejects zero-test gates.
@@ -59,9 +59,31 @@ Session-2 JIT computation paired medians are 1.063x QuickSort, 1.044x MergeSort,
 acceptance or a competitor comparison. VM Matmul T4/T8/T16 process medians are
 0.951x/0.978x/0.963x; T16 loses seven pairs. Independent-session agreement and
 regression/resource review remain required. Raw timings and verification are in
-`local-store-session-2-2026-11-03.json.gz`; session 1 remains running.
+`local-store-session-2-2026-11-03.json.gz`.
 
-Follow-up workflow `post_store_run=41707246908` must run only after successful
+Session 1 (artifact `13269309023`) independently passes the same 1,321 library,
+89 integration and 150 exact checksum outputs, with the same 916 source hashes
+and toolchain. Both sessions' binary bytes are verified separately; their build
+hashes differ. Session 1 reports EPYC 7763, session 2 EPYC 9V74. Absolute timings
+are not pooled across hosts/builds.
+
+| JIT computation paired median | Session 1 | Session 2 |
+| --- | ---: | ---: |
+| QuickSort | 1.056x | 1.063x |
+| MergeSort | 1.005x | 1.044x |
+| NeuralNet | 1.021x | 1.050x |
+| TextRaytracer | 1.038x | 1.046x |
+
+QuickSort wins all fourteen computation pairs. MergeSort's improvement does not
+repeat clearly in session 1. Session-1 VM Quick/Merge process medians are
+0.921x/0.938x, unlike session 2's 1.001x/1.025x. These unresolved differences
+prevent acceptance. Run `41719214681` at `984da2ed` uses frozen session-1
+binaries plus a byte-identical baseline copy in all six three-way orders twice
+for VM sorting. This tests measurement variation directly; it is not permission
+to dismiss regressions. The collector's 78-invocation synthetic control verifies
+exact order balance, not performance.
+
+Follow-up run `41717910054` at `3feb22a7` was dispatched after successful
 completion. It downloads the frozen candidate, verifies source/runtime identity,
 checks expanded all-type/branch/error fixtures in all three runtimes, executes the
 complete sorting oracles and the 1,197-state / 134,064-float NeuralNet control,
@@ -143,11 +165,21 @@ pairs, median 0.959x. The four priority JIT process medians are 1.005x, 0.998x,
 there is no established priority-workload improvement. Complete raw times,
 paired ranges, outputs and hashes remain in the archive below.
 
-These losses block integration. Attempt 2 of the same run has been requested
-for independent confirmation; it must not be counted as complete yet. Source
+These losses blocked integration. Attempt 2 of the same run is now independently
+verified (artifact `13269744010`): 512 observations, identical frozen executable
+bytes, exact order and raw outputs. Matmul JIT process medians again improve
+1.202x/1.392x/1.557x, with seven wins each. The VM sorting losses do not repeat:
+Quick/Merge process medians are 1.021x/1.016x, with seven/six wins. VM NeuralNet
+instead loses seven process pairs, median 0.983x. Neither averaging away a loss
+nor selecting the faster session establishes regression freedom. Source
 inspection shows task-pool allocation/checkout gated by JIT, so the cause of
 the VM losses is unresolved. Compiler layout effects are a hypothesis, not a
 diagnosis. The existing experiment is still preserved separately.
+
+`native-independent-confirmations-2026-11-03.json.gz` retains both second-stage
+reviews, source/provenance records and raw observations: 2,094 individually
+hash-verified files, with executable copies excluded. Worker integration and
+local-store acceptance remain pending; no full-suite aggregate gain is claimed.
 
 ## Profile repair and limits
 
