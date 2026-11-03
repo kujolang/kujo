@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reclaim private VM-owned JIT code after the VM is destroyed, preserving returned
+  values, generators, callbacks and standalone compiler lifetime. Reclamation is
+  verified on macOS/Linux; the pinned Windows backend's code-memory retention
+  remains unresolved. This does not claim lower peak RSS or faster execution.
+
 - Keep distinct physical locals separate in loop JIT even when lexical bindings
   or iterator temporaries share a source name; preserve source diagnostics.
 

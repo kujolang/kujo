@@ -3,8 +3,9 @@
 Authorized by the user's goal, “do All of that,” following review of the supplied
 performance investigation. This is a new campaign; the accepted checkpoint and
 completed sections 3/4 cutoff stay closed. No tags, publication or Kostya contact.
-The separate VM-owned code-lifetime candidate remains excluded until its own
-acceptance gates pass. The objective includes all eight areas and the validation
+The VM-owned code-lifetime candidate has passed its scoped acceptance gates;
+see [final review](VM_MEMORY_ACCEPTANCE_2026_11_03.md). Windows reclamation remains
+open, with no RSS or elapsed-speed claim. The objective includes all eight areas and the validation
 roadmap below; the first three experiments are a delivery sequence, not a reduced
 completion definition. Rust/Goose parity is an objective to measure, not a promised
 outcome or a reason to weaken Kujo semantics.
@@ -37,7 +38,7 @@ from checksum coverage and runtime optimization acceptance.
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
 | 7. Startup/reusable compilation | Measure each frontend/setup phase; reduce confirmed redundant work; evaluate lazy/reusable artifacts with source/ABI invalidation | Pending |
-| 8. Memory lifetime | Complete separate lifetime candidate's resource/platform gates; measure retained code and live heap separately | Separate candidate passes 1,319 library tests, 90 matched resource outcomes, 150 test-size checks, matched 28-test generator suites, 32 lifecycle tests, 178 no-JIT feature tests and 60 extended-resource outcomes; [acceptance evidence](VM_RESOURCE_DIAGNOSTICS_2026_11_03.md); production/platform acceptance remains open |
+| 8. Memory lifetime | Complete lifetime resource/platform gates; measure code and live heap separately | [Scoped private-VM fix accepted](VM_MEMORY_ACCEPTANCE_2026_11_03.md); Windows reclamation, broader resource and all-production gates remain open |
 | Port equivalence | Audit all 50 algorithms/work; isolate port improvements from runtime wins; strengthen structural oracles | Representative research, LZW/graph controls and [40-state maze oracle](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); A* path differences confirmed; full audit pending |
 | Production and competition | All-50 test and production checks; repeat frozen Kujo/Rust/Goose comparisons with failures/timeouts retained | Pending |
 | Clean host | Dedicated-host reproduction, independent sessions and resource ceilings | Pending; no dedicated host supplied |
@@ -105,8 +106,9 @@ fixes remain. At that rejection, local target binaries still contained the
 rejected candidate; later builds do not replace the need to verify binary identity.
 
 The **compilation economics baseline is established**; ownership-safe worker
-reuse remains the implementation objective. First complete the separate current-source
-VM code-lifetime candidate and its resource/semantic/platform gates.
+reuse remains the implementation objective. The scoped private-VM lifetime checkpoint
+is now accepted. Begin the separately gated exclusive-owner reuse candidate;
+Windows reclamation remains unresolved.
 The [64-cell baseline controls](JIT_ECONOMICS_ENTRY_2026_11_03.md) now pass:
 late tree compilation and fixed-work bytecode per-job duplication are reproduced.
 Loop-only controls retain the duplication. The [40 async-wrapper controls](JIT_ASYNC_ECONOMICS_2026_11_03.md)
@@ -116,19 +118,20 @@ now pass 120 outcomes: body-size-independent 100-call admission and eager
 zero-trip-loop compilation are reproduced, with long-hot native coverage.
 The demand-admission tactic and its sole revision were rejected, as recorded
 below. Do not restart that tactic automatically after the loop correction.
-Define the owned code-reuse boundary only after lifetime checks pass; compilation
-and execution state must remain separate, bounded, and isolated across tasks.
+Compilation and execution state must remain separate, bounded, and isolated
+across tasks in the next owned code-reuse implementation.
 
 The [source and compile-only ownership review](JIT_OWNER_REUSE_BOUNDARY_2026_11_03.md)
 now proves `JitCompiler: Send` and rejects direct `Sync` sharing on both frozen
 libraries. Exclusive mutex-owned movement type-checks; it does not prove lifetime
 or performance. The review specifies compiler/dispatch ownership, task-local
 state exclusions, reentrancy and retention gates for an exclusive-lease candidate.
-Implementation and acceptance still follow the separate lifetime checkpoint.
+Implementation follows the completed scoped lifetime checkpoint; reuse itself
+remains unimplemented and unaccepted.
 
 Do not hardcode workload names or move compilation outside official timing.
-Keep worker isolation and code-lifetime ownership explicit; the separate memory
-candidate remains excluded. Do not repeat tagged transfers or borrowed helper
+Keep worker isolation and code-lifetime ownership explicit; accepted reclamation
+does not prove sharing or reuse. Do not repeat tagged transfers or borrowed helper
 views without new attribution supporting a different mechanism.
 
 The broader native-access and call-frame areas remain open. Native instruction

@@ -10159,6 +10159,17 @@ struct LoopAdmission {
 }
 
 impl JitCompiler {
+    /// Release this private VM owner's generated code and data allocations.
+    ///
+    /// # Safety
+    /// No generated function may be executing or called again. All pointers from
+    /// this compiler, including loop/direct-argument entries, become invalid.
+    /// Public compiler destruction deliberately keeps its existing behavior.
+    pub(crate) unsafe fn free_vm_owned_memory(self) {
+        // SAFETY: the caller establishes the complete native-pointer lifetime.
+        unsafe { self.module.free_memory() };
+    }
+
     fn retain_literal_values(&mut self, chunk: &BytecodeChunk) -> HashMap<usize, Arc<Value>> {
         chunk
             .constants

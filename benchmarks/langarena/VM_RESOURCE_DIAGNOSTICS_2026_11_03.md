@@ -1,5 +1,10 @@
 # VM resource diagnostics: matched baseline and candidate
 
+**Acceptance follow-up:** the scoped private-VM fix has completed its selected
+gates; see [final review](VM_MEMORY_ACCEPTANCE_2026_11_03.md). Pending/unaccepted
+statements below describe the original chronology. Windows reclamation and the
+broader production/performance requirements remain open.
+
 The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
 It also passes all 150 test-size benchmark checks, the matched generator suites
