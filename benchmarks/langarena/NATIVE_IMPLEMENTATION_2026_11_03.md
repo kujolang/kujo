@@ -396,3 +396,25 @@ separate worker experiment. Its samples can guide investigation of unchanged
 shared helpers; they cannot establish current-candidate performance, native
 instruction coverage or exact native-versus-helper CPU fractions. No runtime or
 benchmark algorithm change accompanies the profiling follow-up.
+
+The profiling follow-up passed in `41725794191` at `6074074f`, artifact
+`13275765423`. Independent review reconstructs every resolved sample from raw
+text, verifies input hashes/outputs, and conserves worker-tree exclusive weights.
+
+| Workload | VM worker samples | JIT worker samples | Selected JIT exclusive observations |
+| --- | ---: | ---: | --- |
+| QuickSort | 1,175 | 1,091 | indexed-write helper 33; memory movement nearest that helper 82 |
+| MergeSort | 1,187 | 809 | path-mutation helper 76; movement nearest assignment write 33 |
+| NeuralNet | 1,019 | 1,141 | root encode 82; Value clone 70; movement nearest root encode 137 |
+| TextRaytracer | 1,150 | 1,148 | root encode 48; field read 38; movement nearest root encode 68 |
+
+These are descriptive sampled occupancies, not additive causal speedup estimates.
+Unknown generated-code frames remain unknown. VM dispatch and opcode cloning also
+appear repeatedly. Environment lookup is prominent but does not reopen the rejected
+caching tactic: concurrent diagnostic-environment observation semantics still apply.
+The QuickSort evidence supports testing scalar indexed-write materialization;
+NeuralNet supports investigating transient struct roots and field access. No named
+helper is deemed responsible solely from a size histogram or CI success status.
+`priority-helper-profiles-2026-11-03.json.gz` retains all raw/resolved samples,
+provenance and the independent verifier. The older experimental executable scope
+above remains binding; this is not a current-candidate or competitor comparison.
