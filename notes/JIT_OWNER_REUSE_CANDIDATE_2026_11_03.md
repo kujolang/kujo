@@ -183,3 +183,9 @@ physical resources, full economics diagnostics, all150, production and platforms
 The older feature/accounting gate41630118425 now reports terminal success; its
 raw artifact still needs independent verification. It does not certify these new
 route changes. No current candidate is merged into accepted main.
+
+The corrected feature/accounting gate is now independently verified: see
+`JIT_OWNER_ACCOUNTING_GATE_2026_11_03.md` for 71 targeted passes on exact
+`fc56848e`, raw artifact provenance and six verifier controls. This supersedes
+pending-execution statements for that revision's three accounting tests and two
+minimal-feature tests only. Later reset/pool/task-route checks remain pending.
