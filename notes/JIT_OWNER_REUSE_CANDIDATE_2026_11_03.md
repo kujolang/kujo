@@ -310,3 +310,15 @@ retained receipt vector); they are not total live heap or pool-attributable byte
 No physical-memory limit or speed gain is asserted before paired data review.
 The Linux workflow runs this only after successful integrations. Local syntax,
 formatting and inventory checks pass; actual resource execution remains pending.
+
+## Verified task and route prerequisites
+
+Initial task integration ff3409ec, bridge integration 5ae0d6b4 and overlapping-task
+revision a7dd8001 now have independently verified terminal Linux artifacts: 74,
+75 and 78 targeted passes respectively. The last includes fresh capabilities,
+cancellation/error recovery and rebinding tests. See
+`benchmarks/langarena/JIT_OWNER_TASK_ROUTE_GATE_2026_11_03.md` for exact provenance
+and raw archive. Eighteen verifier controls pass across the three artifacts.
+These supersede earlier pending statements only for those revisions. Later
+unwind/eviction, economics, resources and final combined acceptance remain open;
+no elapsed-speed gain is established.
