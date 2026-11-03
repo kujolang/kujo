@@ -67,10 +67,11 @@ jobs:
                 label="$variant-$runtime-${name//::/-}"
                 flags=()
                 if [ "$runtime" = jit ]; then flags+=(--jit); fi
-                /usr/bin/time -v "frozen/$variant-kujo" run "${flags[@]}" --measurements "$PWD/post-evidence/$label.measurements.json" benchmarks/langarena/port.kujo benchmarks/langarena/test.json "$name" > "post-evidence/$label.out" 2> "post-evidence/$label.resources.txt"
+                /usr/bin/time -v "frozen/$variant-kujo" run "${flags[@]}" --measurements "$PWD/post-evidence/$label.measurements.json" benchmarks/langarena/port.kujo benchmarks/langarena/test.json "$name" --profile > "post-evidence/$label.out" 2> "post-evidence/$label.resources.txt"
               done
             done
           done
+          ruby benchmarks/langarena/probes/review-priority-phases.rb post-evidence > post-evidence/phases.json
           sha256sum --check post-evidence/binary-hashes.txt > post-evidence/binary-recheck.txt
       - name: Collect allocation profiles separately from elapsed measurements
         run: |
