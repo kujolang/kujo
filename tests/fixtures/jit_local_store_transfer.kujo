@@ -1,4 +1,12 @@
 func make_rows(first, second) { return [[first], [second]] }
+struct TransferItem { value: any }
+func transit(input) {
+    mut local := input
+    mut i := 0
+    while i < 3 { local = input i += 1 }
+    return local
+}
+func callable(x) { return x + 1 }
 func recur(input, depth) {
     mut state := input
     if depth == 0 { return state }
@@ -31,6 +39,11 @@ func fail_after_store(input) {
 let original := [[2], [3]]
 mut n := 0
 while n < 160 {
+    for item in [null, true, 9007199254740993, 1.25, "text", bytes([0, 255]), {"x": [1]}, TransferItem { value: [2] }] {
+        assert_equal(transit(item), item)
+    }
+    let returned_function := transit(callable)
+    assert_equal(returned_function(8), 9)
     assert_equal(recur(original, 5), [[7], [3]])
     assert_equal(exercise(original, 1), [[12], [9]])
     assert_equal(exercise(original, 0), [[13], [8]])
