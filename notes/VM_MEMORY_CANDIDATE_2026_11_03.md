@@ -82,3 +82,11 @@ vendored `tiny_http`'s `task_pool.rs`: its nested `.gitattributes` specifies
 `* text=auto`, so disabling autocrlf alone leaves native Windows line endings.
 Set `core.eol=lf` before checkout as well. The tracked blob has LF endings; no
 vendored source or formatting requirement is changed. Preserve the retry log.
+
+Run `41614521350` passes formatting but fails while building vendored OpenSSL:
+Git Bash selects its incomplete MSYS Perl installation (missing
+`Locale/Maketext/Simple.pm`). Use native PowerShell for Windows cargo steps,
+matching existing Windows CI, and a folded single-line integration command.
+All default features and all ten suites remain required. This is build-environment
+repair; no tests ran and no runtime failure/pass is claimed. Artifact `13220463449`
+preserves the exact source/toolchain and build failure.
