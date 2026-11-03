@@ -277,3 +277,13 @@ canonical Kujo builder before collection, and synthetic verifier tests create
 self-contained source fixtures in a temporary working directory. All six controls
 pass after this correction. The earlier failed local check is not counted as a
 pass; no runtime diagnostic execution has completed yet.
+
+## Distinct-code eviction control
+
+The task-owner corpus now executes32 distinct same-named hot-loop functions with
+a one-idle-owner/two-definition quota. It checks exact version-specific results,
+retained definition/code/visible-metadata bounds, exactly ten whole-owner evictions
+(one new definition per task), and all returned arrays after final pool drop.
+The exact eviction count rejects a candidate that merely discards every owner
+because reset or accounting failed. Execution is pending CI. This is a logical
+quota and ownership control, not a physical heap/RSS reclamation measurement.

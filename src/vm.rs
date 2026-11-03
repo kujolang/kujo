@@ -13103,6 +13103,49 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn task_code_pool_evicts_distinct_code_without_losing_results() {
+        // A deliberately small definition budget forces repeated real eviction,
+        // rather than testing only a zero-budget rejection of one owner.
+        let pool = Arc::new(VmCodePool::new(1, 2, 4 << 20, 8 << 20));
+        let mut retained = Vec::new();
+        let mut evictions = 0;
+        for version in 0..32 {
+            let function = function_from_source(&format!(
+                "func retained(n) {{ mut i := 0 while i < n {{ i += 1 }} return [i + {version}, i + {version} + 1] }}",
+            ));
+            let result = VM::execute_language_task(
+                function,
+                vec![Value::Int(1000)],
+                Environment::new(),
+                RuntimeCapabilityPolicy::default(),
+                None,
+                Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                true,
+                Some(Arc::clone(&pool)),
+            )
+            .unwrap();
+            assert_pair(&result, 1000 + version);
+            retained.push(result);
+            let idle = pool.idle.lock().unwrap();
+            assert!(idle.len() <= 1);
+            if let Some((_, owner)) = idle.first() {
+                let compiler = owner.jit_compiler.as_ref().unwrap();
+                assert!((1..=2).contains(&compiler.native_definitions));
+                assert!(compiler.emitted_code_bytes <= 4 << 20);
+                assert!(compiler.retained_metadata_weight().unwrap() <= 8 << 20);
+            } else {
+                evictions += 1;
+            }
+        }
+        assert_eq!(evictions, 10, "one definition per task must evict every third owner");
+        drop(pool);
+        for (version, result) in retained.iter().enumerate() {
+            assert_pair(result, 1000 + version as i64);
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn idle_code_pool_bounds_retention_and_exclusively_moves_entries() {
         fn compiled_owner() -> VmCodeOwner {
             let mut vm = VM::new();

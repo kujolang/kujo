@@ -233,9 +233,9 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/vm.rs | 11327 | executable | vm_executable |         let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) }; |
 | src/vm.rs | 11352 | executable | vm_executable |         assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0); |
 | src/vm.rs | 11366 | executable | vm_executable |             let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) }; |
-| src/vm.rs | 13310 | executable | vm_executable |             unsafe extern ""C"" { |
-| src/vm.rs | 13330 | executable | vm_executable |             let status = unsafe { |
-| src/vm.rs | 13343 | executable | vm_executable |                 assert_eq!(unsafe { mach_port_deallocate(mach_task_self_, object) }, 0); |
+| src/vm.rs | 13353 | executable | vm_executable |             unsafe extern ""C"" { |
+| src/vm.rs | 13373 | executable | vm_executable |             let status = unsafe { |
+| src/vm.rs | 13386 | executable | vm_executable |                 assert_eq!(unsafe { mach_port_deallocate(mach_task_self_, object) }, 0); |
 | tests/benchmark_publication_policy_contract.rs | 58 | non_executable | test_comment_or_string |             ""retired launch-unsafe artifact should stay removed: {path}"" |
 | tests/bytecode_call_profile.rs | 40 | non_executable | test_comment_or_string | unsafe impl GlobalAlloc for CountingAllocator { |
 | tests/bytecode_call_profile.rs | 41 | executable | test_executable |     unsafe fn alloc(&self, layout: Layout) -> *mut u8 { |
