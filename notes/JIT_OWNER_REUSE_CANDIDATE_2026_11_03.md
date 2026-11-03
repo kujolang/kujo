@@ -189,3 +189,18 @@ The corrected feature/accounting gate is now independently verified: see
 `fc56848e`, raw artifact provenance and six verifier controls. This supersedes
 pending-execution statements for that revision's three accounting tests and two
 minimal-feature tests only. Later reset/pool/task-route checks remain pending.
+
+## Task reuse recovery regression
+
+A new task-execution regression warms and retains an owner, cancels the previous
+invocation's token, then runs with a fresh token. It separately cancels the current
+task and requires a subsequent successful invocation, triggers an indexed-access
+error, replaces the function with a different same-named bytecode function, and
+returns to the original. Retained array results must remain correct after pool
+destruction. This exercises task-level code selection and invocation isolation;
+it does not replace overlapping-task, panic-path or capability tests. Execution
+is pending CI. The pinned artifact verifier includes its exact owner-test name.
+
+Reset revision06e896cf run41632651515 now reports owner/no-JIT/accounting steps
+successful, with integration still running. These API step statuses are not yet
+independently verified terminal artifacts. Later pool/route gates remain pending.

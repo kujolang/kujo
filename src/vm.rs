@@ -12969,6 +12969,48 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn task_code_reuse_recovers_cancellation_errors_and_rebinding() {
+        use std::sync::atomic::AtomicBool;
+        let pool = Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20));
+        let original = function_from_source(
+            "func retained(n) { mut i := 0 while i < n { i += 1 } return [i, i + 1] }",
+        );
+        let replacement = function_from_source(
+            "func retained(n) { mut i := 0 while i < n { i += 1 } return [i + 10, i + 11] }",
+        );
+        let invalid = function_from_source(
+            "func retained(n) { mut i := 0 while i < n { i += 1 } let a := [7] return a[n] }",
+        );
+        let run = |function: Value, token: Arc<AtomicBool>| {
+            VM::execute_language_task(
+                function,
+                vec![Value::Int(1000)],
+                Environment::new(),
+                RuntimeCapabilityPolicy::default(),
+                None,
+                token,
+                true,
+                Some(Arc::clone(&pool)),
+            )
+        };
+        let old_token = Arc::new(AtomicBool::new(false));
+        let retained = run(original.clone(), Arc::clone(&old_token)).unwrap();
+        assert_pair(&retained, 1000);
+        assert_eq!(pool.idle.lock().unwrap().len(), 1);
+        old_token.store(true, Ordering::Release);
+        assert_pair(&run(original.clone(), Arc::new(AtomicBool::new(false))).unwrap(), 1000);
+        let cancelled = run(original.clone(), Arc::new(AtomicBool::new(true))).unwrap_err();
+        assert!(cancelled.to_lowercase().contains("cancel"), "{cancelled}");
+        assert_pair(&run(original.clone(), Arc::new(AtomicBool::new(false))).unwrap(), 1000);
+        assert!(run(invalid, Arc::new(AtomicBool::new(false))).is_err());
+        assert_pair(&run(replacement, Arc::new(AtomicBool::new(false))).unwrap(), 1010);
+        assert_pair(&run(original, Arc::new(AtomicBool::new(false))).unwrap(), 1000);
+        drop(pool);
+        assert_pair(&retained, 1000);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn idle_code_pool_bounds_retention_and_exclusively_moves_entries() {
         fn compiled_owner() -> VmCodeOwner {
             let mut vm = VM::new();
