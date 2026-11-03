@@ -1,0 +1,76 @@
+# All-50 port-equivalence evidence ledger
+
+This ledger enumerates exactly the 50 names in unchanged `test.json`, checked
+against their source registrations. It tracks **structural equivalence**, not
+checksum coverage, runtime optimization acceptance or a performance ranking.
+Existing checkpoint checksum passes remain separate evidence.
+
+Every row remains open. Bounded Rust oracles do not establish Goose equivalence,
+production equivalence or equal operation counts. “Oracle open” means no dedicated
+full-state oracle is indexed by this campaign ledger; it does not erase earlier
+checksum tests or representative source research.
+
+For each row, completion requires pinned comparator/source identities, equivalent
+inputs and phase boundaries, complete-output/state checks on official and
+adversarial controls, explicit work/layout differences, all-three-runtime Kujo
+checks, and recorded production/Goose outcomes. Count differences must be
+separated from runtime costs; diagnostic port variants cannot silently replace
+the accepted port. No rows may be checked off based only on matching checksums.
+
+| Workload | Kujo source | Current structural evidence | Next comparison gate |
+| --- | --- | --- | --- |
+| Binarytrees::Obj | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete tree shape/values and construction/traversal counts across depths. |
+| Binarytrees::Arena | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete tree shape/values and construction/traversal counts across depths. |
+| Brainfuck::Array | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Output bytes, tape/pointer state and instruction counts, including nested loops. |
+| Brainfuck::Recursion | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Output bytes, tape/pointer state and instruction counts, including nested loops. |
+| Matmul::Single | [25_matmul.kujo](src/25_matmul.kujo) | Oracle open; checksum/source evidence is separate | Every output cell under the float policy; equal-size worker controls and transfer work. |
+| Matmul::T4 | [25_matmul.kujo](src/25_matmul.kujo) | Oracle open; checksum/source evidence is separate | Every output cell under the float policy; equal-size worker controls and transfer work. |
+| Matmul::T8 | [25_matmul.kujo](src/25_matmul.kujo) | Oracle open; checksum/source evidence is separate | Every output cell under the float policy; equal-size worker controls and transfer work. |
+| Matmul::T16 | [25_matmul.kujo](src/25_matmul.kujo) | Oracle open; checksum/source evidence is separate | Every output cell under the float policy; equal-size worker controls and transfer work. |
+| Base64::Encode | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded/decoded bytes; separate data generation, codec and checksum work. |
+| Base64::Decode | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded/decoded bytes; separate data generation, codec and checksum work. |
+| Json::Generate | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete values/output and malformed-input behavior; isolate DOM versus typed-mapping work. |
+| Json::ParseDom | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete values/output and malformed-input behavior; isolate DOM versus typed-mapping work. |
+| Json::ParseMapping | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete values/output and malformed-input behavior; isolate DOM versus typed-mapping work. |
+| CSV::Parse | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Every parsed field and quote/error policy; account for validation and copying. |
+| Etc::Sieve | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete prime flags/list and marking work across sizes. |
+| Etc::TextRaytracer | [46_ray.kujo](src/46_ray.kujo) | Oracle open; checksum/source evidence is separate | Every output pixel and ray/intersection work under the float policy. |
+| Etc::NeuralNet | [49_neural.kujo](src/49_neural.kujo) | Oracle open; checksum/source evidence is separate | Weights and outputs after every training step; field/transfer work separately. |
+| Etc::CacheSimulation | [47_cache.kujo](src/47_cache.kujo) | Oracle open; checksum/source evidence is separate | Full LRU order/values after every request; distinguish string links from node indices. |
+| Etc::GameOfLife | [45_life.kujo](src/45_life.kujo) | Oracle open; checksum/source evidence is separate | Complete grid after each generation and boundary behavior. |
+| Etc::Words | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Complete word/count output, tokenization and ordering behavior. |
+| Etc::LogParser | [48_logs.kujo](src/48_logs.kujo) | Oracle open; checksum/source evidence is separate | All parsed records/matches and malformed-line policy. |
+| Template::Regex | [35_template.kujo](src/35_template.kujo) | Oracle open; checksum/source evidence is separate | Complete rendered output, escaping and parse/render work. |
+| Template::Parse | [35_template.kujo](src/35_template.kujo) | Oracle open; checksum/source evidence is separate | Complete rendered output, escaping and parse/render work. |
+| Sort::Quick | [30_sort.kujo](src/30_sort.kujo) | Oracle open; checksum/source evidence is separate | Complete sorted arrays on adversarial seeds; partition/call/copy/comparison counts. |
+| Sort::Merge | [30_sort.kujo](src/30_sort.kujo) | Oracle open; checksum/source evidence is separate | Complete sorted arrays on adversarial seeds; partition/call/copy/comparison counts. |
+| Sort::Self | [30_sort.kujo](src/30_sort.kujo) | Oracle open; checksum/source evidence is separate | Complete sorted arrays on adversarial seeds; partition/call/copy/comparison counts. |
+| Graph::BFS | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
+| Graph::DFS | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
+| Graph::AStar | [40_graph.kujo](src/40_graph.kujo) | [Graph ordering controls](GRAPH_ORDER_AUDIT_2026_11_02.md); executed A* oracle, BFS/DFS source review | Full traversal/expansion traces on generated and adversarial graphs; production and Goose execution. |
+| Hash::SHA256 | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Complete hash outputs and operation semantics across byte boundaries; preserve the toy algorithm. |
+| Hash::CRC32 | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Complete hash outputs and operation semantics across byte boundaries; preserve the toy algorithm. |
+| Calculator::Ast | [70_calculator.kujo](src/70_calculator.kujo) | Oracle open; checksum/source evidence is separate | Parsed structure, evaluated values, failures and token/operation work. |
+| Calculator::Interpreter | [70_calculator.kujo](src/70_calculator.kujo) | Oracle open; checksum/source evidence is separate | Parsed structure, evaluated values, failures and token/operation work. |
+| Maze::Generator | [80_maze.kujo](src/80_maze.kujo) | [40-state Rust/all-three-Kujo controls](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); partial | Expansion/finish-opening visit counts, disconnected/minimum-size controls, production and Goose execution. |
+| Maze::BFS | [80_maze.kujo](src/80_maze.kujo) | [40-state Rust/all-three-Kujo controls](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); partial | Expansion/finish-opening visit counts, disconnected/minimum-size controls, production and Goose execution. |
+| Maze::AStar | [80_maze.kujo](src/80_maze.kujo) | [40-state Rust/all-three-Kujo controls](MAZE_PORT_SOURCE_AUDIT_2026_11_02.md); partial | Expansion/finish-opening visit counts, disconnected/minimum-size controls, production and Goose execution. |
+| CLBG::Fannkuchredux | [60_clbg.kujo](src/60_clbg.kujo) | Oracle open; checksum/source evidence is separate | Complete outputs/intermediate state under numeric policy and equivalent iteration work. |
+| CLBG::Mandelbrot | [60_clbg.kujo](src/60_clbg.kujo) | Oracle open; checksum/source evidence is separate | Complete outputs/intermediate state under numeric policy and equivalent iteration work. |
+| CLBG::Nbody | [61_nbody.kujo](src/61_nbody.kujo) | Oracle open; checksum/source evidence is separate | Complete outputs/intermediate state under numeric policy and equivalent iteration work. |
+| CLBG::Spectralnorm | [60_clbg.kujo](src/60_clbg.kujo) | Oracle open; checksum/source evidence is separate | Complete outputs/intermediate state under numeric policy and equivalent iteration work. |
+| Compress::BWTEncode | [50_bwt.kujo](src/50_bwt.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::BWTDecode | [50_bwt.kujo](src/50_bwt.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::HuffEncode | [51_huffman.kujo](src/51_huffman.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::HuffDecode | [51_huffman.kujo](src/51_huffman.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::ArithEncode | [52_arithmetic.kujo](src/52_arithmetic.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::ArithDecode | [52_arithmetic.kujo](src/52_arithmetic.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::LZWEncode | [53_lzw.kujo](src/53_lzw.kujo) | [Eight full-byte Rust/all-three-Kujo controls](LZW_PORT_AUDIT_2026_11_02.md); partial | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Compress::LZWDecode | [53_lzw.kujo](src/53_lzw.kujo) | [Eight full-byte Rust/all-three-Kujo controls](LZW_PORT_AUDIT_2026_11_02.md); partial | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
+| Distance::Jaro | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
+| Distance::NGram | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
+
+The current implementation priority remains the call-error prerequisite and then
+guarded compiled-callee transfer. Independent port audits may proceed during
+build waits, but cannot be counted as runtime speed improvements. Clean-host
+measurements and all-50 production validation remain separate open gates.
