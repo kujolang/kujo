@@ -29,7 +29,7 @@ nearly full local disk; runtime builds need CI capacity.
 
 No stretch target, overall speedup or completed campaign is claimed here.
 
-## First implementation under validation
+## First implementation: retained on the isolated branch
 
 `bf211fe9` implements consuming SSA local stores only for whole-function native
 code when the next opcode is `Pop`. Initialization/error checks run first; the
@@ -76,8 +76,8 @@ are not pooled across hosts/builds.
 
 QuickSort wins all fourteen computation pairs. MergeSort's improvement does not
 repeat clearly in session 1. Session-1 VM Quick/Merge process medians are
-0.921x/0.938x, unlike session 2's 1.001x/1.025x. These unresolved differences
-prevent acceptance. Run `41719214681` at `984da2ed` uses frozen session-1
+0.921x/0.938x, unlike session 2's 1.001x/1.025x. These differences required
+additional controls. Run `41719214681` at `984da2ed` uses frozen session-1
 binaries plus a byte-identical baseline copy in all six three-way orders twice
 for VM sorting. This tests measurement variation directly; it is not permission
 to dismiss regressions. The collector's 78-invocation synthetic control verifies
@@ -89,7 +89,7 @@ checks expanded all-type/branch/error fixtures in all three runtimes, executes t
 complete sorting oracles and the 1,197-state / 134,064-float NeuralNet control,
 and measures resources/native entries separately from elapsed timing. NeuralNet
 tools are imported unchanged from `1eea508d`; no experimental runtime or port
-correction is imported with them. No acceptance decision yet.
+correction is imported with them. Results and the bounded disposition follow.
 
 The follow-up also compares all 10,036 rendered pixels across three image sizes
 in all runtimes, and collects Heaptrack allocation profiles in separate runs of
@@ -136,6 +136,39 @@ records and SHA-256/size identities for 16 compressed allocation traces and two
 Rust oracle executables. Binary files remain in the downloaded/remote artifact,
 not duplicated into Git. Off-host state and phase verification are retained;
 allocation totals are Heaptrack's summaries, not a second raw-trace decoding.
+
+### Frozen VM sorting identity controls passed
+
+Run `41719214681`, artifact `13272861200`, completed successfully. Independent
+review verifies all 78 invocations, six warmups, all six three-way orders twice,
+actual frozen executable hashes, unchanged timed port and exact raw outputs.
+The two baseline labels use byte-identical executables. Candidate ratios below
+compare against the within-triplet geometric mean of those two baselines.
+
+| VM paired median | Identical baseline A/B | Baseline reference/candidate | Candidate range |
+| --- | ---: | ---: | ---: |
+| Quick computation | 1.0132x | 1.0033x | 0.9867–1.0199 |
+| Quick process | 1.0160x | 0.9981x | 0.9837–1.0069 |
+| Merge computation | 1.0155x | 0.9931x | 0.9728–1.0194 |
+| Merge process | 1.0173x | 0.9980x | 0.9718–1.0172 |
+
+The earlier large VM sorting loss does not reproduce with the same binaries.
+Identical binaries themselves differ measurably in this experiment. This does
+not establish the cause of earlier differences, justify correcting their times,
+or prove universal regression freedom. Matmul's inconsistent VM deltas also
+remain part of the full-suite review rather than being silently discarded.
+
+Disposition: retain `bf211fe9` on the isolated implementation branch as a bounded
+JIT improvement, supported by repeated QuickSort computation gains, full-state
+and all-runtime checksum gates, and resource controls. Do not merge it into the
+accepted branch yet. No clear repeated MergeSort improvement, all-50 aggregate
+speedup, production acceptance or Rust/Goose parity is established. The candidate
+removes one root issuance per eligible store; copied-byte volume remains unmeasured.
+
+`local-store-sort-controls-2026-11-03.json.gz` preserves raw observations,
+source/run provenance, the off-host verifier, recomputed comparisons and download
+digest. Every embedded file is hash-verified. This closes the requested frozen
+sorting control, not the broader performance campaign.
 
 ## Corrected worker-reuse evidence
 
@@ -217,7 +250,7 @@ diagnosis. The existing experiment is still preserved separately.
 `native-independent-confirmations-2026-11-03.json.gz` retains both second-stage
 reviews, source/provenance records and raw observations: 2,094 individually
 hash-verified files, with executable copies excluded. Worker integration and
-local-store acceptance remain pending; no full-suite aggregate gain is claimed.
+accepted-branch integration remain pending; no full-suite aggregate gain is claimed.
 
 ## Profile repair and limits
 
