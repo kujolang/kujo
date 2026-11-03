@@ -215,3 +215,47 @@ fn hot_worker_cancellation_has_no_parent_native_false_positive() {
         }
     }
 }
+
+#[test]
+fn sequential_async_workers_reuse_code_through_parallel_and_callback_routes() {
+    for route in ["parallel", "callback"] {
+        let mut first_compile_count = None;
+        for jobs in [1, 4] {
+            let body = if route == "parallel" {
+                let inputs = vec!["1000"; jobs].join(",");
+                format!("assert_equal(await parallel_map([{inputs}], worker, 1), [{inputs}])")
+            } else {
+                format!(
+                    "func replacement(c) {{ assert_equal(await worker(1000),1000) return \"x\" }} assert_equal(regex_replace_with(\"{}\",\"a\",replacement),\"{}\")",
+                    "a".repeat(jobs), "x".repeat(jobs)
+                )
+            };
+            let source = format!(
+                "async func worker(n) {{ mut i := 0 while i < n {{ i += 1 }} return i }}\n{body}\nprint(\"PASS\")"
+            );
+            for mode in ["vm", "interpreter", "jit"] {
+                if mode == "jit" && !cfg!(feature = "runtime-jit") {
+                    continue;
+                }
+                if let Some(report) = run(&source, mode) {
+                    let entries =
+                        report["counters"]["jit_native_boundary_entries"].as_u64().unwrap();
+                    if mode == "jit" {
+                        assert!(entries > 0, "{route}/{jobs}: {report}");
+                        let count = report["counters"]["jit_compile_entries"].as_u64().unwrap();
+                        assert!(count > 0);
+                        if let Some(first) = first_compile_count {
+                            assert_eq!(
+                                count, first,
+                                "{route}: compilation grew with sequential tasks"
+                            );
+                        }
+                        first_compile_count = Some(count);
+                    } else {
+                        assert_eq!(entries, 0);
+                    }
+                }
+            }
+        }
+    }
+}

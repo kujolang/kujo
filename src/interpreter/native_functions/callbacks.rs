@@ -43,6 +43,7 @@ impl<'a> Callback<'a> {
             let checkpoint = interp.capture_globals_checkpoint();
             let captures = interp.publish_active_captures_for_bridge();
             vm.set_task_capture_globals(interp.task_capture_globals.clone());
+            vm.set_task_code_pool(interp.task_code_pool());
             let result = vm
                 .call_reused_sync_callback(self.function.clone(), args, &mut interp.module_loader)
                 .unwrap_or_else(Value::Error);

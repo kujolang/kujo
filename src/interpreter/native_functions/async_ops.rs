@@ -731,6 +731,7 @@ fn try_parallel_map_with_bytecode(
     let capability_policy = interp.capability_policy().clone();
     let jit_requested = interp.vm_jit_requested;
     let cancellation = interp.task_cancellation.clone();
+    let code_pool = interp.task_code_pool();
     let elements = array.as_ref().clone();
     let (tx, rx) = tokio::sync::oneshot::channel();
     AsyncRuntime::spawn_task(async move {
@@ -742,6 +743,7 @@ fn try_parallel_map_with_bytecode(
             let worker_env = base_env.clone();
             let worker_policy = capability_policy.clone();
             let worker_cancellation = cancellation.clone();
+            let worker_code_pool = code_pool.clone();
             tokio::task::spawn_blocking(move || {
                 (
                     idx,
@@ -752,6 +754,7 @@ fn try_parallel_map_with_bytecode(
                         worker_policy,
                         jit_requested,
                         worker_cancellation,
+                        worker_code_pool,
                     ),
                 )
             })
@@ -806,6 +809,7 @@ fn execute_bytecode_mapper(
     capability_policy: RuntimeCapabilityPolicy,
     jit_requested: bool,
     cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
+    code_pool: Option<Arc<crate::vm::VmCodePool>>,
 ) -> Result<Value, String> {
     const MAPPER: &str = "__kujo_parallel_mapper";
     const ARGUMENT: &str = "__kujo_parallel_argument";
@@ -828,6 +832,7 @@ fn execute_bytecode_mapper(
     ];
 
     let mut vm = VM::with_task_policy(jit_requested, cancellation);
+    vm.set_task_code_pool(code_pool);
     vm.set_capability_policy(capability_policy);
     vm.set_globals(Arc::clone(&shared_environment));
     match vm.execute_until_suspend(wrapper)? {

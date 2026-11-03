@@ -37,9 +37,8 @@ expected_targets = %w[generator_continuation_contracts imported_vm_callback call
   jit_callback_depth language_task_contracts jit_cold_callback task_jit_policy
   task_module_snapshot_contracts task_global_snapshot_contracts imported_task_globals_contracts]
 results = summaries.call(integration)
-raise 'integration coverage/results' unless results.size == 10 && results.sum { |row| row[0] } == 60 && results.all? { |row| row[1..-1] == [0,0,0,0] }
+raise 'integration coverage/results' unless results.size == 10 && results.all? { |row| row[1..-1] == [0,0,0,0] }
 names = integration.scan(/^test (.+) \.\.\. ok$/).flatten
-raise 'integration passing names' unless names.size == 60
 # These ten suites use top-level, directly annotated tests. Pin membership to
 # the tested commit rather than accepting any sixty successful log lines.
 # This is deliberately not a general Rust test-discovery parser.
@@ -52,7 +51,7 @@ test_sources = expected_targets.to_h do |target|
   [target, {source_sha256: Digest::SHA256.hexdigest(bytes), tests: tests.sort}]
 end
 expected_names = test_sources.values.flat_map { |entry| entry[:tests] }.sort
-raise 'pinned integration membership' unless expected_names.size == 60 && names.sort == expected_names
+raise 'pinned integration membership' unless names.sort == expected_names && results.sum { |row| row[0] } == expected_names.size
 messages = integration.lines.select { |line| line.start_with?('{') }.map { |line| JSON.parse(line) }
 targets = messages.select { |m| m['reason'] == 'compiler-artifact' && m.dig('profile','test') }.map { |m| m.dig('target','name') }
 raise 'integration binaries' unless targets.sort == expected_targets.sort
@@ -84,7 +83,7 @@ if platform == 'linux-x64' && workflow.include?('name: Test native owner account
 end
 result = {status:'verified',platform:platform,commit:commit,toolchain:source,
           library_tests:expected_library,library_filtered:lib_summary[0][4],integration_targets:targets,
-          integration_passed:60,total_passed:60+expected_library.size+no_jit_passed+accounting_passed,
+          integration_passed:expected_names.size,total_passed:expected_names.size+expected_library.size+no_jit_passed+accounting_passed,
           accounting_passed:accounting_passed,
           no_jit_passed:no_jit_passed,vm_source_sha256:Digest::SHA256.hexdigest(vm_source),
           integration_test_sources:test_sources,

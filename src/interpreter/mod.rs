@@ -2896,6 +2896,7 @@ impl Interpreter {
                     self.task_cancellation.clone(),
                     self.task_capture_globals.clone(),
                     self.vm_jit_requested,
+                    self.task_code_pool(),
                     &mut self.module_loader,
                 )
                 .unwrap_or_else(Value::Error);

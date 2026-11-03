@@ -160,3 +160,26 @@ whole-candidate acceptance, all-150 refresh, physical-resource result or elapsed
 speed claim exists. Changes remain isolated on the candidate branch. Local builds
 remain deferred while the frozen production sequence runs; CI executes runtime
 checks. Production files and accepted main source are unchanged.
+
+## Callback and parallel-worker lineage propagation
+
+Parallel bytecode mapper VMs now inherit the submitting interpreter's pool;
+inner async tasks therefore reuse the same lineage instead of starting a pool
+per outer wrapper. Interpreter-to-bytecode callback bridges and operation-owned
+synchronous callback VMs likewise inherit the caller pool. Outer wrappers keep
+their own code owners; this change targets the reproduced inner-task duplication.
+
+A new end-to-end task-policy test compares one versus four sequential jobs through
+parallel_map and regex callback routes. It checks exact outputs in VM/interpreter/
+JIT, requires native participation only in JIT, and requires nonzero compile
+entries to remain flat as job count grows. It is pending CI execution, not a
+measured performance result. The artifact verifier derives integration count from
+exact pinned-source membership rather than hardcoding sixty, allowing the new
+61st test without relaxing name/summary checks; historical verifier controls pass.
+
+Remaining acceptance includes current-source runtime tests, overlapping task and
+error/panic/cancellation reuse controls, bounded retention under diverse code,
+physical resources, full economics diagnostics, all150, production and platforms.
+The older feature/accounting gate41630118425 now reports terminal success; its
+raw artifact still needs independent verification. It does not certify these new
+route changes. No current candidate is merged into accepted main.

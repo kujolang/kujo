@@ -6676,11 +6676,13 @@ impl VM {
         cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
         task_capture_globals: Option<crate::interpreter::TaskCaptureGlobals>,
         jit_requested: bool,
+        code_pool: Option<Arc<VmCodePool>>,
         module_loader: &mut crate::module::ModuleLoader,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         let mut vm = VM::with_callback_policy(jit_requested, cancellation);
         vm.interpreter.task_capture_globals = task_capture_globals;
+        vm.set_task_code_pool(code_pool);
         vm.cooperative_suspend_enabled = false;
         vm.set_capability_policy(policy);
         vm.set_callback_globals(globals);
@@ -6702,6 +6704,10 @@ impl VM {
         // Restore even when the callback returns a language/runtime error.
         std::mem::swap(&mut vm.interpreter.module_loader, module_loader);
         result
+    }
+
+    pub(crate) fn set_task_code_pool(&mut self, pool: Option<Arc<VmCodePool>>) {
+        self.interpreter.task_code_pool = pool;
     }
 
     pub(crate) fn set_task_capture_globals(
@@ -10692,6 +10698,7 @@ mod tests {
                     None,
                     None,
                     jit,
+                    None,
                     &mut loader,
                 );
                 let repeated =
