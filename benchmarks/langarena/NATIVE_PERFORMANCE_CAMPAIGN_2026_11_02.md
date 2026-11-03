@@ -32,7 +32,7 @@ from checksum coverage and runtime optimization acceptance.
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
 | 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | [Tagged-call tactic rejected and removed](NATIVE_CALL_CANDIDATE_2026_11_02.md): microbenchmark gains did not establish useful repeated workload gains; broader call architecture remains open |
-| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); candidate design next |
+| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); [demand-admission tactic rejected](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) after Words/SHA256 failures; loop correctness and owned reuse remain open |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
@@ -184,3 +184,15 @@ Candidate tests/build, negative-index and mixed fallback path coverage, paired
 timing, memory checks and all-50 gates remain pending. No speed claim or accepted
 runtime commit exists. Candidate hashes and test process receipts live under
 `.audit-evidence/native-performance-campaign-2026-11-02/region-*`.
+
+### Demand admission disposition
+
+The [demand-admission candidate](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) and its
+sole revision are rejected. V2 passed library/integration/admission controls but
+failed two of50 JIT test-size workloads: Words checksum and SHA256 iteration.
+Both reproduce on the accepted baseline with loop-only JIT. Runtime policy is
+restored; independently verified worker-native cancellation tests remain. No
+performance comparison or third tactical revision follows an incorrect candidate.
+Next isolate loop reuse/state restoration and iterable corruption as separate
+correctness work, then reassess compilation economics. Local target binaries
+still contain the rejected candidate; use the frozen accepted CLI.
