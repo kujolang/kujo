@@ -68,6 +68,17 @@ fn port_kernels_preserve_input_values_and_roundtrip_binary_data() {
 #[test]
 #[ignore = "full upstream checksum suite; run explicitly with an optimized Kujo binary"]
 fn all_fifty_upstream_checksums_in_both_runtimes() {
+    all_fifty_checksums(&["vm", "interpreter"]);
+}
+
+#[test]
+#[ignore = "full upstream checksum suite including JIT; requires runtime-jit"]
+fn all_fifty_upstream_checksums_in_all_runtimes() {
+    assert!(cfg!(feature = "runtime-jit"), "all-runtime gate requires JIT support");
+    all_fifty_checksums(&["vm", "interpreter", "jit"]);
+}
+
+fn all_fifty_checksums(modes: &[&str]) {
     let dir = tempfile::tempdir().unwrap();
     let port = dir.path().join("port.kujo");
     std::fs::write(&port, source(true)).unwrap();
@@ -75,18 +86,18 @@ fn all_fifty_upstream_checksums_in_both_runtimes() {
         .unwrap_or_else(|| env!("CARGO_BIN_EXE_kujo").into());
     let config =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/langarena/test.json");
-    for interpreter in [false, true] {
+    for mode in modes {
         let mut command = std::process::Command::new(&binary);
         command.arg("run").arg(&port).args(["--scheduler-timeout-ms", "3600000"]);
-        if interpreter {
-            command.arg("--interpreter");
+        if *mode != "vm" {
+            command.arg(format!("--{mode}"));
         }
         let output = command.arg(&config).output().unwrap();
         let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("Runtime: {}\n{stdout}", if interpreter { "interpreter" } else { "vm" });
+        println!("Runtime: {mode}\n{stdout}");
         assert!(
             output.status.success(),
-            "interpreter={interpreter}: {stdout}\n{}",
+            "runtime={mode}: {stdout}\n{}",
             String::from_utf8_lossy(&output.stderr)
         );
         assert!(stdout.contains("Summary: 50, 50, 0"), "{stdout}");

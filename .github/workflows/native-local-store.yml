@@ -29,12 +29,13 @@ jobs:
           cargo test --release --locked --lib -- --nocapture > store-evidence/library.log 2>&1
       - name: Check runtime semantics
         run: |
-          cargo test --release --locked --test jit_local_store_transfer --test jit_call_contracts --test jit_cold_callback --test jit_callback_depth --test imported_vm_callback --test callback_module_cache --test language_task_contracts --test langarena_port_contracts > store-evidence/integrations.log 2>&1
+          cargo test --release --locked --test jit_local_store_transfer --test jit_call_contracts --test jit_cold_callback --test jit_callback_depth --test imported_vm_callback --test callback_module_cache --test language_task_contracts --test langarena_port_contracts --test native_root_release --test call_frame_ownership_contracts --test native_call_transfer --test jit_nested_paths --test native_representation_parity --test collection_ownership_contracts > store-evidence/integrations.log 2>&1
       - name: Build and freeze ordinary candidate CLI
         run: |
           cargo build --release --locked --bin kujo --message-format=json > store-evidence/candidate-build.jsonl 2> store-evidence/candidate-build.stderr
           cp target/release/kujo store-evidence/candidate-kujo
           KUJO_LANGARENA_BINARY="$PWD/store-evidence/candidate-kujo" cargo test --release --locked --test langarena_port_contracts all_fifty_upstream_checksums_in_all_runtimes -- --exact --ignored --nocapture > store-evidence/all150.log 2>&1
+          ruby -e 's=File.read("store-evidence/all150.log"); abort "all-runtime gate missing" unless s.scan(/^Runtime: (vm|interpreter|jit)$/).flatten == %w[vm interpreter jit] && s.scan(/^Summary: 50, 50, 0$/).size == 3 && s.scan(/: OK /).size == 150 && s.include?("1 passed; 0 failed")'
           store-evidence/candidate-kujo run benchmarks/langarena/build.kujo > store-evidence/port-build.log
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -51,6 +52,8 @@ jobs:
           free -k > store-evidence/memory-before.txt
           cat /proc/loadavg > store-evidence/load-before.txt
           ruby benchmarks/langarena/probes/compare-local-store-targets.rb store-evidence/baseline-kujo store-evidence/candidate-kujo store-evidence/timings
+          ruby benchmarks/langarena/probes/test-local-store-verifier.rb > store-evidence/verifier-controls.json
+          ruby benchmarks/langarena/probes/verify-local-store-targets.rb store-evidence "$(cat store-evidence/candidate-source.txt)" > store-evidence/timing-review.json
           free -k > store-evidence/memory-after.txt
           cat /proc/loadavg > store-evidence/load-after.txt
           sha256sum --check store-evidence/binary-hashes.txt > store-evidence/binary-recheck.txt
