@@ -2,8 +2,9 @@
 
 The separate, unaccepted VM code-lifetime candidate passes three targeted tests
 and the full current-source library suite (1,319 passed, eight existing ignores).
-It also passes all 150 test-size benchmark checks. It has not completed
-integration, no-JIT, production-size or platform acceptance.
+It also passes all 150 test-size benchmark checks, the matched generator suites
+and 32 targeted callback/task integration tests. It has not completed no-JIT,
+production-size or platform acceptance.
 
 The new `probes/vm_resource_probe.rs` links three diagnostics to one recorded
 Kujo library. Run it as `COUNT jit|vm live|vm-maps|compiler-maps` on macOS.
@@ -63,8 +64,8 @@ patch. This metadata comparison is not a transitive binary checksum manifest.
 Some candidate RSS observations are higher. For example, the 32-VM JIT live
 probe has median peak RSS 6,828,032 bytes versus baseline 6,680,576 bytes. We do
 not claim an RSS or speed improvement, nor that requested-byte reclamation forces
-the system allocator to return pages to the OS. Longer resource, integration,
-no-JIT, production-size and platform checks remain before runtime acceptance.
+the system allocator to return pages to the OS. Longer resource, no-JIT,
+production-size and platform checks remain before runtime acceptance.
 
 `vm-resource-comparison-2026-11-03.json.gz` preserves both raw matrices, the
 matched-library metadata, comparison verifier and negative-control evidence.
@@ -86,7 +87,7 @@ repeated the coverage/checksum checks and verified all 14 archived artifacts in
 
 These are correctness results, not a timing comparison or production-size
 certification. The memory patch remains separate and unaccepted. The remaining
-integration/no-JIT/platform gates must finish before integration.
+no-JIT/resource/production/platform gates must finish before integration.
 
 ## Generator lifetime regression
 
@@ -111,3 +112,28 @@ generator handler contract. The initial source/failure, corrected source, both
 matched successful suites, build commands, library/binary hashes and verifiers
 are preserved in `vm-memory-generator-2026-11-03.json.gz` (15 hash-verified
 artifacts). No runtime behavior was changed to make this test pass.
+
+## Callback and task lifecycle gate
+
+Nine unchanged integration suites pass **32/32 tests**, with no ignored tests:
+`imported_vm_callback`, `callback_module_cache`, `jit_callback_depth`,
+`language_task_contracts`, `jit_cold_callback`, `task_jit_policy`,
+`task_module_snapshot_contracts`, `task_global_snapshot_contracts` and
+`imported_task_globals_contracts`.
+
+One optimized test harness links the frozen candidate library; subprocess tests
+use the same frozen candidate CLI as the all-150 gate. Explicit `runtime-jit`
+configuration retains native-worker and cancellation controls. The suites cover
+VM/interpreter/JIT callback behavior, import cache recovery, captured values,
+task-global snapshots, capability denial, cancellation and task admission after
+cancellation. Existing deadlines and native-participation assertions are
+unchanged. The runner verifies each suite's presence and every listed test's
+successful result, plus source/library/CLI identities before and after execution.
+
+Independent verification confirms all 32 test identities, nine suite identities,
+zero failed/ignored tests and 19 hash-verified artifacts in
+`vm-memory-lifecycle-2026-11-03.json.gz`. This completes the selected lifecycle
+integration gate; it does not claim universal concurrency or platform coverage.
+The no-JIT build/parity gate remains pending, using CI's
+`runtime-network,runtime-archive,runtime-image` feature set in release mode with
+the generator regression added to its four existing parity suites.
