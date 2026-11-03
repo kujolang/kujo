@@ -85,6 +85,29 @@ repeated the coverage/checksum checks and verified all 14 archived artifacts in
 `vm-memory-checksums-2026-11-03.json.gz`.
 
 These are correctness results, not a timing comparison or production-size
-certification. The memory patch remains separate and unaccepted. Matched
-generator-lifetime regression execution and the remaining integration/no-JIT/
-platform gates must finish before integration.
+certification. The memory patch remains separate and unaccepted. The remaining
+integration/no-JIT/platform gates must finish before integration.
+
+## Generator lifetime regression
+
+The complete generator integration suite passes **28/28 tests on both matched
+baseline and candidate libraries**, built with explicit `runtime-jit` test
+configuration. The new regression retains a generator, its environment and a
+bytecode helper after dropping the original VM. It checks all four combinations
+of creator/resumer JIT enablement, resumes yields and an explicit exception
+handler, checks exhaustion and scope restoration, and calls the retained helper
+before destruction and after transfer to the new VM.
+
+Generator continuation bodies deliberately disable JIT. The test therefore also
+compiles and invokes the helper outside continuation dispatch, and verifies that
+resumption restores the caller's JIT mode. The JIT-disabled resumer cases avoid
+allocating replacement native code that could mask a dangling entry. This is a
+preservation gate, not a benchmark or proof of every escaping-value lifetime.
+
+The first fixture incorrectly expected an undefined-variable load to enter
+`except`; the baseline returned `Undefined variable: missing` (27 passed, one
+failed). The corrected fixture uses explicit `throw`, matching the existing
+generator handler contract. The initial source/failure, corrected source, both
+matched successful suites, build commands, library/binary hashes and verifiers
+are preserved in `vm-memory-generator-2026-11-03.json.gz` (15 hash-verified
+artifacts). No runtime behavior was changed to make this test pass.
