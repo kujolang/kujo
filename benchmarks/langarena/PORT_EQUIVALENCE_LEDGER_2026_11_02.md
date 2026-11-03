@@ -67,8 +67,8 @@ the accepted port. No rows may be checked off based only on matching checksums.
 | Compress::ArithDecode | [52_arithmetic.kujo](src/52_arithmetic.kujo) | Oracle open; checksum/source evidence is separate | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
 | Compress::LZWEncode | [53_lzw.kujo](src/53_lzw.kujo) | [Eight full-byte Rust/all-three-Kujo controls](LZW_PORT_AUDIT_2026_11_02.md); partial | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
 | Compress::LZWDecode | [53_lzw.kujo](src/53_lzw.kujo) | [Eight full-byte Rust/all-three-Kujo controls](LZW_PORT_AUDIT_2026_11_02.md); partial | Complete encoded bytes, decoded roundtrips and dictionary/tree/model transitions. |
-| Distance::Jaro | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
-| Distance::NGram | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Every pair score and pair-generation/order work across adversarial strings. |
+| Distance::Jaro | [20_text_hash.kujo](src/20_text_hash.kujo) | [400 ordered pairs, 4,800 combined score observations against executed Rust](DISTANCE_PAIR_AUDIT_2026_11_03.md); partial | Generated pair/RNG and wrapper state, conversion/work counts, executed Goose and production; per-call byte encoding differs. |
+| Distance::NGram | [20_text_hash.kujo](src/20_text_hash.kujo) | [400 ordered pairs, 4,800 combined score observations plus multiset oracle](DISTANCE_PAIR_AUDIT_2026_11_03.md); partial | Generated pair/RNG and wrapper state, conversion/work counts, executed Goose and production; preserve distinct-key denominator and short-input differences. |
 
 The current implementation priority is completion of the separate memory-lifetime
 gates before ownership-safe code/worker reuse; see the active campaign ledger. Independent port audits may proceed during
