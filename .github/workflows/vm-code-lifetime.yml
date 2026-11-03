@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      field_fusion:
+        description: Run isolated indexed-field fusion gates
+        type: boolean
+        default: false
       sort_controls:
         description: Run identical-binary controls for the frozen local-store sorting comparison
         type: boolean
@@ -34,6 +38,9 @@ permissions:
   actions: read
 
 jobs:
+  field-fusion:
+    if: inputs.field_fusion
+    uses: ./.github/workflows/native-field-fusion.yml
   sort-controls:
     if: inputs.sort_controls
     uses: ./.github/workflows/native-sort-controls.yml
@@ -52,7 +59,7 @@ jobs:
     if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
     uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls }}
+    if: ${{ !inputs.field_fusion && !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
