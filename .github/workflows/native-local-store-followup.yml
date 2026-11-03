@@ -1,0 +1,73 @@
+name: native-local-store-followup
+on:
+  workflow_call:
+    inputs:
+      source_run:
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  state-and-resources:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: ${{ inputs.source_run }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Obtain frozen binaries and verify provenance
+        run: |
+          case "$SOURCE_RUN" in ''|*[!0-9]*) exit 1;; esac
+          mkdir post-evidence
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > post-evidence/source-run.json
+          ruby -rjson -e 'r=JSON.parse(File.read("post-evidence/source-run.json")); abort unless r["status"]=="completed" && r["conclusion"]=="success"'
+          gh run download "$SOURCE_RUN" -n local-store-session-1 -D frozen
+          git fetch --depth=1 origin "$(cat frozen/candidate-source.txt)"
+          git diff --exit-code "$(cat frozen/candidate-source.txt)" HEAD -- src Cargo.toml Cargo.lock benchmarks/langarena/src benchmarks/langarena/test.json
+          ruby -rjson -rdigest -e 'r=JSON.parse(File.read("frozen/timings/report.json")); %w[baseline candidate].each{|v| abort unless Digest::SHA256.file("frozen/#{v}-kujo").hexdigest==r["files"][r["binaries"][v]]}'
+          chmod +x frozen/*-kujo
+          sha256sum frozen/*-kujo > post-evidence/binary-hashes.txt
+          cp frozen/candidate-source.txt frozen/baseline-source.txt post-evidence/
+          rustc -Vv > post-evidence/toolchain.txt
+          lscpu > post-evidence/cpu.txt
+          git rev-parse HEAD > post-evidence/harness-source.txt
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kostya/LangArena
+          ref: 3c9f84ddaeec834c0631747cb789e8cfd602f993
+          path: upstream
+          sparse-checkout: |
+            rust/src
+            goose/src
+      - name: Check exact network states and historical snapshots
+        run: |
+          ruby benchmarks/langarena/probes/audit-neural-state.rb frozen/candidate-kujo upstream post-evidence/neural > post-evidence/neural.log
+          ruby benchmarks/langarena/probes/verify-neural-state.rb post-evidence/neural > post-evidence/neural-independent.json
+      - name: Check complete sorting outputs and wrapper state
+        run: |
+          frozen/candidate-kujo run benchmarks/langarena/build.kujo
+          ruby benchmarks/langarena/probes/audit-sort-state.rb upstream frozen/candidate-kujo post-evidence/sort > post-evidence/sort.log
+          ruby benchmarks/langarena/probes/audit-sort-wrapper-state.rb upstream frozen/candidate-kujo post-evidence/sort-wrapper > post-evidence/sort-wrapper.log
+      - name: Measure peak RSS and native participation separately from timing
+        run: |
+          for variant in baseline candidate; do
+            for runtime in vm jit; do
+              for name in Sort::Quick Sort::Merge Etc::NeuralNet Etc::TextRaytracer; do
+                label="$variant-$runtime-${name//::/-}"
+                flags=()
+                if [ "$runtime" = jit ]; then flags+=(--jit); fi
+                /usr/bin/time -v "frozen/$variant-kujo" run "${flags[@]}" --measurements "$PWD/post-evidence/$label.measurements.json" benchmarks/langarena/port.kujo benchmarks/langarena/test.json "$name" > "post-evidence/$label.out" 2> "post-evidence/$label.resources.txt"
+              done
+            done
+          done
+          sha256sum --check post-evidence/binary-hashes.txt > post-evidence/binary-recheck.txt
+      - name: Preserve state and resource evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: local-store-state-resources
+          retention-days: 7
+          path: post-evidence/

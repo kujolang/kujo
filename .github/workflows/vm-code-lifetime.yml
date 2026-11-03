@@ -7,6 +7,10 @@ on:
         description: Run isolated local-store correctness and paired timing gates
         type: boolean
         default: false
+      post_store_run:
+        description: Completed local-store run whose frozen binaries need state and resource checks
+        type: string
+        default: ''
   workflow_call:
     inputs:
       windows_only:
@@ -15,13 +19,19 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   local-store:
-    if: inputs.local_store_only
+    if: inputs.local_store_only && inputs.post_store_run == ''
     uses: ./.github/workflows/native-local-store.yml
+  post-store:
+    if: inputs.post_store_run != ''
+    uses: ./.github/workflows/native-local-store-followup.yml
+    with:
+      source_run: ${{ inputs.post_store_run }}
   lifetime:
-    if: ${{ !inputs.local_store_only }}
+    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
