@@ -40,7 +40,8 @@ rows.each do |row|
   label = row.values_at('round','runtime','mode','workers','variant').join('-')
   out = File.read(directory + '/samples/' + label + '.out')
   err = File.read(directory + '/samples/' + label + '.err')
-  raise 'raw result' unless out == row['stdout'] && err == row['stderr'] && out.lines.map(&:strip) == ['async-worker-economics: OK'] && err.empty?
+  normal_jit_notice = row['runtime'] == 'jit' && err.match?(/\AJIT opt-in requested; unsupported bytecode regions will use the VM \([^\n]+\)\.\n\z/)
+  raise 'raw result' unless out == row['stdout'] && err == row['stderr'] && out.lines.map(&:strip) == ['async-worker-economics: OK'] && (err.empty? || normal_jit_notice)
   argv = [report['binaries'][row['variant']], 'run', '--scheduler-timeout-ms', '60000']
   argv << '--interpreter' if row['runtime'] == 'interpreter'
   argv << '--jit' if row['runtime'] == 'jit'

@@ -7,7 +7,7 @@ results = []
 Dir.mktmpdir('owner-elapsed-controls') do |directory|
   good = directory + '/good'
   bad = directory + '/bad'
-  File.write(good, "#!/bin/sh\nprintf 'async-worker-economics: OK\\n'\n")
+  File.write(good, "#!/bin/sh\ncase \" $* \" in *' --jit '*) printf 'JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk).\\n' >&2;; esac\nprintf 'async-worker-economics: OK\\n'\n")
   File.write(bad, "#!/bin/sh\nprintf 'wrong checksum\\n'\n")
   File.chmod(0755, good, bad)
   output, error, status = Open3.capture3('ruby', collector, good, good, directory + '/valid')

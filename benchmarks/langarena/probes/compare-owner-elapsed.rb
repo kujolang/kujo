@@ -56,7 +56,8 @@ begin
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
         stdout = File.read(out)
         stderr = File.read(err)
-        passed = status.success? && !timed_out && stdout.lines.map(&:strip) == ['async-worker-economics: OK'] && stderr.empty?
+        normal_jit_notice = cell[:runtime] == 'jit' && stderr.match?(/\AJIT opt-in requested; unsupported bytecode regions will use the VM \([^\n]+\)\.\n\z/)
+        passed = status.success? && !timed_out && stdout.lines.map(&:strip) == ['async-worker-economics: OK'] && (stderr.empty? || normal_jit_notice)
         report[:rows] << cell.merge(round: round, warmup: round == -1, variant: variant,
           argv: argv, process_wall_seconds: elapsed, exit: status.exitstatus,
           signal: status.termsig, timed_out: timed_out, passed: passed,

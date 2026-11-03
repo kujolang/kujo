@@ -11,7 +11,9 @@ clean-host result or a Kujo/Rust/Goose comparison.
 four repetitions of sixteen equal jobs. It covers VM, interpreter and JIT, each
 with direct serial execution and parallel execution at 4, 8 and 16 workers.
 Every sample checks task results, totals and input snapshots through the fixture,
-then requires successful exit, its exact success line and empty stderr.
+then requires successful exit and its exact success line. Stderr must be empty
+or contain only the normal JIT opt-in fallback notice in JIT mode; the notice is
+preserved and does not establish native coverage. Arbitrary stderr is rejected.
 
 One warmup per variant/cell is excluded. Seven subsequent rounds alternate pair
 order and rotate cell order. The report retains all 192 observations (24 warmups,
