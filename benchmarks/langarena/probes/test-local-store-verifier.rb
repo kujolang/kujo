@@ -42,5 +42,11 @@ Dir.mktmpdir('kujo-store-verifier-') do |root|
     _, error, status=Open3.capture3('ruby',File.join(__dir__,'verify-local-store-targets.rb'),root,sha)
     raise "#{name}: #{error}" unless status.success? == (name==:valid)
   end
-  puts JSON.generate({scope:'synthetic verifier controls',passed:controls.keys})
+  File.write(root+'/timings/report.json',original)
+  File.write(root+'/baseline-source.txt',sha)
+  _, error, status=Open3.capture3('ruby',File.join(__dir__,'verify-local-store-targets.rb'),root,sha,sha,sha)
+  raise "explicit baseline: #{error}" unless status.success?
+  _, _, status=Open3.capture3('ruby',File.join(__dir__,'verify-local-store-targets.rb'),root,sha)
+  raise 'unexpected baseline accepted by default' if status.success?
+  puts JSON.generate({scope:'synthetic verifier controls',passed:controls.keys+[:explicit_baseline,:unexpected_baseline]})
 end

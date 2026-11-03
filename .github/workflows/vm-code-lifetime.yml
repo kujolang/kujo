@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      scalar_write:
+        description: Test and measure the isolated scalar indexed-write candidate
+        type: boolean
+        default: false
       sort_controls:
         description: Run identical-binary controls for the frozen local-store sorting comparison
         type: boolean
@@ -34,25 +38,28 @@ permissions:
   actions: read
 
 jobs:
+  scalar-write:
+    if: inputs.scalar_write
+    uses: ./.github/workflows/native-scalar-write.yml
   sort-controls:
-    if: inputs.sort_controls
+    if: inputs.sort_controls && !inputs.scalar_write
     uses: ./.github/workflows/native-sort-controls.yml
   profile:
-    if: inputs.profile_only && !inputs.sort_controls
+    if: inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
     uses: ./.github/workflows/native-bf-profile.yml
   local-store:
-    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
+    if: inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
     uses: ./.github/workflows/native-local-store.yml
   post-store:
-    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
+    if: inputs.post_store_run != '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
     uses: ./.github/workflows/native-local-store-followup.yml
     with:
       source_run: ${{ inputs.post_store_run }}
   owner-workloads:
-    if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls
+    if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write
     uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls }}
+    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write }}
     timeout-minutes: 90
     strategy:
       fail-fast: false

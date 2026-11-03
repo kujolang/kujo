@@ -333,3 +333,21 @@ individually SHA-256-verified files, including raw worker timing/build records,
 profile evidence, baseline identities and fresh sorting measurements. Executables
 are identified by hash and excluded. Local toolchain: rustc/cargo 1.96.0,
 x86_64-apple-darwin; it is not asserted to be the compiler of the frozen binary.
+
+## Next isolated experiment: scalar native indexed writes
+
+Hypothesis: integer-index/scalar-value writes needlessly decode and move two
+full-width dynamic Values before destination lookup. The candidate defers those
+materializations, then uses the existing array COW/bounds rules; nonarrays and
+owned operands retain generic VM behavior. Invalid kinds still fail operand
+validation before destination lookup. This is an experiment, not an accepted gain.
+
+The baseline for this experiment is `c27e3a8b449a406f118a63e35a75e580d7c3c856`,
+which already includes the local-store improvement. A separately linked identical
+Rust helper probe isolates this mechanism; unchanged 16-workload VM/JIT timings
+and all150 checksums determine whether to retain it. Probe gains alone are
+insufficient. Exact-bit NaN/signed-zero, negative/extreme index, unique/shared
+array and all three destination-location unit controls compare directly with the
+VM write contract. A language fixture covers snapshots, errors, owned fallback,
+dictionary and byte writes in all three runtimes. It passes on the accepted Mac
+binary before the candidate build. No candidate test result is yet claimed.

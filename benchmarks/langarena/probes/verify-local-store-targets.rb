@@ -1,12 +1,13 @@
 require 'json'
 require 'digest'
 require 'open3'
-raise 'usage: ARTIFACT_DIRECTORY CANDIDATE_SHA [HARNESS_SHA]' unless (2..3).cover?(ARGV.size)
-root, candidate, harness = ARGV
+raise 'usage: ARTIFACT_DIRECTORY CANDIDATE_SHA [HARNESS_SHA [BASELINE_SHA]]' unless (2..4).cover?(ARGV.size)
+root, candidate, harness, baseline = ARGV
 harness ||= candidate
 raise 'harness identity' unless harness.match?(/\A[0-9a-f]{40}\z/)
 raise 'candidate identity' unless candidate.match?(/\A[0-9a-f]{40}\z/) && File.read(root + '/candidate-source.txt').strip == candidate
-baseline = 'cd5f2b207a8f907d6c263f5a2e405412965344ca'
+baseline ||= 'cd5f2b207a8f907d6c263f5a2e405412965344ca'
+raise 'expected baseline identity' unless baseline.match?(/\A[0-9a-f]{40}\z/)
 raise 'baseline identity' unless File.read(root + '/baseline-source.txt').strip == baseline
 report = JSON.parse(File.read(root + '/timings/report.json'))
 raise 'incomplete collection' unless report['status'] == 'collected-review-pending'

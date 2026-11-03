@@ -1,0 +1,83 @@
+name: native-scalar-write
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        session: [1]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Record identities
+        run: |
+          mkdir scalar-evidence
+          git rev-parse HEAD > scalar-evidence/candidate-source.txt
+          rustc -Vv > scalar-evidence/toolchain.txt
+          lscpu > scalar-evidence/cpu.txt
+          git ls-files -z src tests Cargo.toml Cargo.lock benchmarks/langarena/src benchmarks/langarena/test.json | xargs -0 sha256sum > scalar-evidence/source-hashes.txt
+      - name: Check formatting and native root transfers
+        run: |
+          cargo fmt --check
+          cargo test --release --locked --lib -- --nocapture > scalar-evidence/library.log 2>&1
+      - name: Check runtime semantics
+        run: |
+          cargo test --release --locked --test jit_scalar_indexed_write --test jit_local_store_transfer --test jit_call_contracts --test jit_cold_callback --test jit_callback_depth --test imported_vm_callback --test callback_module_cache --test language_task_contracts --test langarena_port_contracts --test native_root_release --test call_frame_ownership_contracts --test native_call_transfer --test jit_nested_paths --test native_representation_parity --test collection_ownership_contracts > scalar-evidence/integrations.log 2>&1
+      - name: Build and freeze ordinary candidate CLI
+        run: |
+          cargo build --release --locked --lib --bin kujo --message-format=json > scalar-evidence/candidate-build.jsonl 2> scalar-evidence/candidate-build.stderr
+          cp target/release/kujo scalar-evidence/candidate-kujo
+          rustc --edition=2021 -O benchmarks/langarena/probes/native_scalar_indexed_write.rs --extern kujo=target/release/libkujo.rlib -L dependency=target/release/deps -o scalar-evidence/candidate-probe
+          KUJO_LANGARENA_BINARY="$PWD/scalar-evidence/candidate-kujo" cargo test --release --locked --test langarena_port_contracts all_fifty_upstream_checksums_in_all_runtimes -- --exact --ignored --nocapture > scalar-evidence/all150.log 2>&1
+          ruby -e 's=File.read("scalar-evidence/all150.log"); abort "all-runtime gate missing" unless s.scan(/^Runtime: (vm|interpreter|jit)$/).flatten == %w[vm interpreter jit] && s.scan(/^Summary: 50, 50, 0$/).size == 3 && s.scan(/: OK /).size == 150 && s.include?("1 passed; 0 failed")'
+          scalar-evidence/candidate-kujo run benchmarks/langarena/build.kujo > scalar-evidence/port-build.log
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: c27e3a8b449a406f118a63e35a75e580d7c3c856
+          path: baseline
+      - name: Build and freeze accepted baseline with matching flags
+        run: |
+          git -C baseline rev-parse HEAD > scalar-evidence/baseline-source.txt
+          cargo build --manifest-path baseline/Cargo.toml --target-dir target --release --locked --lib --bin kujo --message-format=json > scalar-evidence/baseline-build.jsonl 2> scalar-evidence/baseline-build.stderr
+          cp target/release/kujo scalar-evidence/baseline-kujo
+          rustc --edition=2021 -O benchmarks/langarena/probes/native_scalar_indexed_write.rs --extern kujo=target/release/libkujo.rlib -L dependency=target/release/deps -o scalar-evidence/baseline-probe
+          sha256sum scalar-evidence/*-kujo > scalar-evidence/binary-hashes.txt
+      - name: Alternating uninstrumented measurements after all builds
+        run: |
+          free -k > scalar-evidence/memory-before.txt
+          cat /proc/loadavg > scalar-evidence/load-before.txt
+          ruby benchmarks/langarena/probes/compare-local-store-targets.rb scalar-evidence/baseline-kujo scalar-evidence/candidate-kujo scalar-evidence/timings
+          ruby benchmarks/langarena/probes/test-local-store-verifier.rb > scalar-evidence/verifier-controls.json
+          ruby benchmarks/langarena/probes/verify-local-store-targets.rb scalar-evidence "$(cat scalar-evidence/candidate-source.txt)" "$(cat scalar-evidence/candidate-source.txt)" c27e3a8b449a406f118a63e35a75e580d7c3c856 > scalar-evidence/timing-review.json
+          free -k > scalar-evidence/memory-after.txt
+          cat /proc/loadavg > scalar-evidence/load-after.txt
+          sha256sum --check scalar-evidence/binary-hashes.txt > scalar-evidence/binary-recheck.txt
+          sha256sum --check scalar-evidence/source-hashes.txt > scalar-evidence/source-recheck.txt
+      - name: Isolate scalar helper costs separately from workload timings
+        run: |
+          sha256sum scalar-evidence/*-probe > scalar-evidence/probe-hashes.txt
+          objdump -d --disassemble=jit_indexed_write scalar-evidence/baseline-kujo > scalar-evidence/baseline-helper.asm
+          objdump -d --disassemble=jit_indexed_write scalar-evidence/candidate-kujo > scalar-evidence/candidate-helper.asm
+          for round in 0 1 2 3; do
+            if [ $((round % 2)) -eq 0 ]; then variants="baseline candidate"; else variants="candidate baseline"; fi
+            for variant in $variants; do
+              echo "$round $variant" >> scalar-evidence/probe-order.txt
+              scalar-evidence/$variant-probe > scalar-evidence/probe-$round-$variant.txt
+            done
+          done
+          sha256sum --check scalar-evidence/probe-hashes.txt
+      - name: Preserve evidence even on failure
+
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: scalar-write-session-${{ matrix.session }}
+          retention-days: 7
+          path: scalar-evidence/
