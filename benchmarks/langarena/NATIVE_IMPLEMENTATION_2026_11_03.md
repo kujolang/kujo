@@ -351,3 +351,32 @@ array and all three destination-location unit controls compare directly with the
 VM write contract. A language fixture covers snapshots, errors, owned fallback,
 dictionary and byte writes in all three runtimes. It passes on the accepted Mac
 binary before the candidate build. No candidate test result is yet claimed.
+
+### Independent allocation trace reconstruction
+
+The standalone Rust maintenance decoder `probes/heaptrack_histogram.rs` reads the
+interpreted v3 stream used by Heaptrack 1.3.0. Its record interpretation follows
+[the pinned upstream parser](https://github.com/KDE/heaptrack/blob/v1.3.0/src/analyze/accumulatedtracedata.cpp).
+Positive and malformed-stream controls pass. All 16 original traces independently
+reproduce the exact allocation-call totals printed by Heaptrack. This supersedes
+only the earlier limitation that allocation totals lacked an independent raw
+trace decode; stripped stacks still limit attribution.
+
+| Local-store JIT candidate | Allocation calls | Requests <=16 bytes | Cumulative requested bytes |
+| --- | ---: | ---: | ---: |
+| QuickSort | 1,004,982 | 932,247 | 135,073,707 |
+| MergeSort | 1,659,316 | 1,565,930 | 282,398,838 |
+| NeuralNet | 11,331,648 | 9,597,579 | 1,015,148,526 |
+| TextRaytracer | 5,120,953 | 3,432,458 | 463,761,945 |
+
+These are whole-process request totals, not retained memory or copied bytes.
+NeuralNet's 6/7/8-byte buckets contain 4,084,131 / 2,282,456 / 1,852,051 requests;
+ray's 4-byte bucket contains 1,627,769. Name/field copying is a source-supported
+hypothesis for further isolation, not proven attribution from allocation sizes.
+The archive `local-store-allocation-histograms-2026-11-03.json.gz` preserves all
+16 histograms, input trace/summary hashes, decoder source and provenance.
+
+Scalar-write CI `41722996389` stopped at test compilation because the new test
+incorrectly assumed `Value: PartialEq`. The assertion-only correction compares
+scalar kinds explicitly and retains exact float-bit checks. No candidate runtime
+success or timing result is claimed from that failed run.
