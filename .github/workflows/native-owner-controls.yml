@@ -1,0 +1,40 @@
+name: native-owner-controls
+on:
+  workflow_call:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  controls:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Freeze identities and identical baseline copy
+        run: |
+          mkdir owner-control-evidence
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41711233289" > owner-control-evidence/source-run.json
+          ruby -rjson -e 'r=JSON.parse(File.read("owner-control-evidence/source-run.json")); abort unless r["conclusion"]=="success" && r["head_sha"]=="c54a309f590b42201ce029570db469a2d9c9dcfb"'
+          gh run download 41711233289 -n owner-unchanged-workloads -D frozen
+          ruby -rjson -rdigest -e 'r=JSON.parse(File.read("frozen/timings/report.json")); %w[baseline candidate].each{|v| abort unless Digest::SHA256.file("frozen/#{v}-kujo").hexdigest==r["files"][r["binaries"][v]]}'
+          cp frozen/baseline-kujo frozen/baseline-copy-kujo
+          chmod +x frozen/*-kujo
+          sha256sum frozen/*-kujo > owner-control-evidence/binary-hashes.txt
+          cp frozen/*-source.txt owner-control-evidence/
+          git rev-parse HEAD > owner-control-evidence/harness-source.txt
+          lscpu > owner-control-evidence/cpu.txt
+          cat /proc/loadavg > owner-control-evidence/load-before.txt
+      - name: Counterbalance candidate with two identical baselines
+        run: |
+          ruby benchmarks/langarena/probes/compare-sort-identity-controls.rb frozen owner-control-evidence/samples Etc::NeuralNet
+          sha256sum --check owner-control-evidence/binary-hashes.txt > owner-control-evidence/binary-recheck.txt
+          cat /proc/loadavg > owner-control-evidence/load-after.txt
+      - name: Preserve raw controls
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-neural-identity-controls
+          retention-days: 7
+          path: owner-control-evidence/

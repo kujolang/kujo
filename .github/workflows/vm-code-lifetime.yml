@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
     inputs:
+      owner_controls:
+        description: Recheck frozen owner VM Neural timing against identical baselines
+        type: boolean
+        default: false
       priority_profile:
         description: Sample four priority kernels using the original frozen symbolized experiment
         type: boolean
@@ -42,6 +46,9 @@ permissions:
   actions: read
 
 jobs:
+  owner-controls:
+    if: inputs.owner_controls
+    uses: ./.github/workflows/native-owner-controls.yml
   priority-profile:
     if: inputs.priority_profile
     uses: ./.github/workflows/native-priority-profile.yml
@@ -66,7 +73,7 @@ jobs:
     if: inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile
     uses: ./.github/workflows/native-owner-workloads.yml
   lifetime:
-    if: ${{ !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile }}
+    if: ${{ !inputs.owner_controls && !inputs.local_store_only && inputs.post_store_run == '' && !inputs.owner_workloads && !inputs.profile_only && !inputs.sort_controls && !inputs.scalar_write && !inputs.priority_profile }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
