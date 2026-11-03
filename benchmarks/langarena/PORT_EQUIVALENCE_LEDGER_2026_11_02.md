@@ -19,8 +19,8 @@ the accepted port. No rows may be checked off based only on matching checksums.
 
 | Workload | Kujo source | Current structural evidence | Next comparison gate |
 | --- | --- | --- | --- |
-| Binarytrees::Obj | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete tree shape/values and construction/traversal counts across depths. |
-| Binarytrees::Arena | [10_basic.kujo](src/10_basic.kujo) | Oracle open; checksum/source evidence is separate | Complete tree shape/values and construction/traversal counts across depths. |
+| Binarytrees::Obj | [10_basic.kujo](src/10_basic.kujo) | [16 complete Rust/all-three-Kujo tree controls](TREE_PORT_STATE_AUDIT_2026_11_03.md); partial | Construction/traversal/copy counts, numeric boundaries, production and executed Goose state. |
+| Binarytrees::Arena | [10_basic.kujo](src/10_basic.kujo) | [16 complete Rust/all-three-Kujo tree controls](TREE_PORT_STATE_AUDIT_2026_11_03.md); partial | Construction/traversal/copy counts, numeric boundaries, production and executed Goose state. |
 | Brainfuck::Array | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Output bytes, tape/pointer state and instruction counts, including nested loops. |
 | Brainfuck::Recursion | [20_text_hash.kujo](src/20_text_hash.kujo) | Oracle open; checksum/source evidence is separate | Output bytes, tape/pointer state and instruction counts, including nested loops. |
 | Matmul::Single | [25_matmul.kujo](src/25_matmul.kujo) | Oracle open; checksum/source evidence is separate | Every output cell under the float policy; equal-size worker controls and transfer work. |
