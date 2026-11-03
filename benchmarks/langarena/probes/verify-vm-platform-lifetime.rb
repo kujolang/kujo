@@ -58,6 +58,7 @@ raise 'build result' unless messages.select { |m| m['reason'] == 'build-finished
 workflow, workflow_error, workflow_status = Open3.capture3('git', 'show', "#{commit}:.github/workflows/vm-code-lifetime.yml")
 raise "missing pinned workflow: #{workflow_error}" unless workflow_status.success?
 no_jit_passed = 0
+accounting_passed = 0
 if platform == 'linux-x64' && workflow.include?('name: Test owner boundary without JIT')
   raw['lifetime-no-jit.log'] = File.binread(File.join(out, 'lifetime-no-jit.log'))
   no_jit = raw.fetch('lifetime-no-jit.log').gsub("\r\n", "\n")
@@ -66,9 +67,19 @@ if platform == 'linux-x64' && workflow.include?('name: Test owner boundary witho
   raise 'no-JIT owner result' unless checks.size == 1 && checks[0][0,4] == [1,0,0,0]
   no_jit_passed = 1
 end
+if platform == 'linux-x64' && workflow.include?('name: Test native owner accounting')
+  raw['lifetime-accounting.log'] = File.binread(File.join(out, 'lifetime-accounting.log'))
+  accounting = raw.fetch('lifetime-accounting.log').gsub("\r\n", "\n")
+  expected = %w[jit::tests::owner_accounting_covers_each_native_definition_path jit::tests::loop_statistics_include_reuse_and_mutated_code_identity]
+  raise 'accounting membership' unless accounting.scan(/^test (.+) \.\.\. ok$/).flatten.sort == expected.sort
+  checks = summaries.call(accounting)
+  raise 'accounting results' unless checks.size == 2 && checks.all? { |row| row[0,4] == [1,0,0,0] }
+  accounting_passed = 2
+end
 result = {status:'verified',platform:platform,commit:commit,toolchain:source,
           library_tests:expected_library,library_filtered:lib_summary[0][4],integration_targets:targets,
-          integration_passed:60,total_passed:60+expected_library.size+no_jit_passed,
+          integration_passed:60,total_passed:60+expected_library.size+no_jit_passed+accounting_passed,
+          accounting_passed:accounting_passed,
           no_jit_passed:no_jit_passed,vm_source_sha256:Digest::SHA256.hexdigest(vm_source),
           integration_test_sources:test_sources,
           executable_revocation_test:platform != 'windows-x64',

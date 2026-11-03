@@ -5468,6 +5468,13 @@ pub extern "C" fn jit_make_dict_with_keys(
 
 /// JIT compiler for Kujo bytecode
 pub struct JitCompiler {
+    // Per-owner retention inputs. These are not RSS or allocator-page totals.
+    // Attempts include rejected translations; emitted bytes include definitions
+    // before finalization, so finalization failures cannot erase their cost.
+    pub(crate) compilation_attempts: usize,
+    pub(crate) completed_compilations: usize,
+    pub(crate) native_definitions: usize,
+    pub(crate) emitted_code_bytes: usize,
     // Immutable per compiler: cached code must never cross cancellation policies.
     cancellation_checks: bool,
     /// Cranelift JIT module
@@ -10159,6 +10166,16 @@ struct LoopAdmission {
 }
 
 impl JitCompiler {
+    /// Account successful definitions before clearing Cranelift's code buffer.
+    /// Saturation or a missing buffer prevents a future retention budget from
+    /// treating unknown native storage as free. This does not estimate backend
+    /// allocation overhead, GOT/PLT storage, metadata or code-page rounding.
+    fn record_defined_code(&mut self) {
+        self.native_definitions = self.native_definitions.saturating_add(1);
+        let bytes = self.ctx.compiled_code().map_or(usize::MAX, |code| code.code_buffer().len());
+        self.emitted_code_bytes = self.emitted_code_bytes.saturating_add(bytes);
+    }
+
     /// Release this private VM owner's generated code and data allocations.
     ///
     /// # Safety
@@ -10521,6 +10538,10 @@ impl JitCompiler {
         let module = JITModule::new(builder);
 
         Ok(JitCompiler {
+            compilation_attempts: 0,
+            completed_compilations: 0,
+            native_definitions: 0,
+            emitted_code_bytes: 0,
             module,
             ctx: codegen::Context::new(),
             execution_counts: HashMap::new(),
@@ -10793,6 +10814,7 @@ impl JitCompiler {
         let field_names = self.retain_field_names(chunk);
         let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
+        self.compilation_attempts = self.compilation_attempts.saturating_add(1);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Clear previous context
@@ -11516,8 +11538,10 @@ impl JitCompiler {
             format!("Failed to define function: {}", e)
         })?;
 
+        self.record_defined_code();
         self.module.clear_context(&mut self.ctx);
         self.module.finalize_definitions().map_err(|e| format!("Failed to finalize: {}", e))?;
+        self.completed_compilations = self.completed_compilations.saturating_add(1);
 
         // Get the compiled function pointer
         let code_ptr = self.module.get_finalized_function(func_id);
@@ -11553,6 +11577,7 @@ impl JitCompiler {
         let field_names = self.retain_field_names(chunk);
         let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
+        self.compilation_attempts = self.compilation_attempts.saturating_add(1);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // 1. Check if function is compilable
@@ -12189,8 +12214,10 @@ impl JitCompiler {
             format!("Failed to define function: {}", err_msg)
         })?;
 
+        self.record_defined_code();
         self.module.clear_context(&mut self.ctx);
         self.module.finalize_definitions().map_err(|e| format!("Failed to finalize: {}", e))?;
+        self.completed_compilations = self.completed_compilations.saturating_add(1);
 
         // 8. Get function pointer
         let code_ptr = self.module.get_finalized_function(func_id);
@@ -12219,6 +12246,7 @@ impl JitCompiler {
         let field_names = self.retain_field_names(chunk);
         let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
+        self.compilation_attempts = self.compilation_attempts.saturating_add(1);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Validate: must have exactly one parameter
@@ -12451,10 +12479,12 @@ impl JitCompiler {
             .define_function(func_id, &mut self.ctx)
             .map_err(|e| format!("Failed to define direct-arg function: {:?}", e))?;
 
+        self.record_defined_code();
         self.module.clear_context(&mut self.ctx);
         self.module
             .finalize_definitions()
             .map_err(|e| format!("Failed to finalize direct-arg: {}", e))?;
+        self.completed_compilations = self.completed_compilations.saturating_add(1);
 
         // 8. Get function pointer
         let code_ptr = self.module.get_finalized_function(func_id);
@@ -12581,6 +12611,7 @@ impl JitCompiler {
         let field_names = self.retain_field_names(chunk);
         let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
+        self.compilation_attempts = self.compilation_attempts.saturating_add(1);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Check if script is compilable (all opcodes supported)
@@ -13074,8 +13105,10 @@ impl JitCompiler {
             .define_function(func_id, &mut self.ctx)
             .map_err(|e| format!("Failed to define script: {:?}", e))?;
 
+        self.record_defined_code();
         self.module.clear_context(&mut self.ctx);
         self.module.finalize_definitions().map_err(|e| format!("Failed to finalize: {}", e))?;
+        self.completed_compilations = self.completed_compilations.saturating_add(1);
 
         // Get function pointer
         let code_ptr = self.module.get_finalized_function(func_id);
@@ -16118,6 +16151,47 @@ mod tests {
     }
 
     #[test]
+    fn owner_accounting_covers_each_native_definition_path() {
+        for path in ["offset", "function", "direct", "script"] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.params = vec!["unused".into()];
+            let value = chunk.add_constant(Constant::Int(42));
+            chunk.emit(OpCode::LoadConst(value));
+            chunk.emit(OpCode::Return);
+            match path {
+                "offset" => {
+                    compiler.compile(&chunk, 0).unwrap();
+                }
+                "function" => {
+                    compiler.compile_function(&chunk, "accounted").unwrap();
+                }
+                "direct" => {
+                    compiler.compile_function_with_direct_arg(&chunk, "accounted").unwrap();
+                }
+                "script" => {
+                    compiler.compile_script(&chunk, "accounted").unwrap();
+                }
+                _ => unreachable!(),
+            }
+            assert_eq!(compiler.compilation_attempts, 1, "{path}");
+            assert_eq!(compiler.native_definitions, 1, "{path}");
+            assert_eq!(compiler.completed_compilations, 1, "{path}");
+            assert!(compiler.emitted_code_bytes > 0, "{path}");
+            assert!(compiler.emitted_code_bytes < usize::MAX, "{path}");
+            let bytes = compiler.emitted_code_bytes;
+            // Rejected direct-argument validation must count as an attempt but
+            // cannot invent successful machine-code bytes or definitions.
+            chunk.params.clear();
+            assert!(compiler.compile_function_with_direct_arg(&chunk, "rejected").is_err());
+            assert_eq!(compiler.compilation_attempts, 2, "{path}");
+            assert_eq!(compiler.completed_compilations, 1, "{path}");
+            assert_eq!(compiler.native_definitions, 1, "{path}");
+            assert_eq!(compiler.emitted_code_bytes, bytes, "{path}");
+        }
+    }
+
+    #[test]
     fn loop_statistics_include_reuse_and_mutated_code_identity() {
         let mut parser = crate::parser::Parser::new(
             crate::lexer::tokenize("func scan(n) { mut i := 0 while i < n { i += 1 } return i }")
@@ -16147,8 +16221,14 @@ mod tests {
         assert_eq!(compiler.stats().compiled_functions, 0);
         let first =
             compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        let first_bytes = compiler.emitted_code_bytes;
+        assert!(first_bytes > 0 && first_bytes < usize::MAX);
         let reused =
             compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
+        assert_eq!(compiler.compilation_attempts, 1);
+        assert_eq!(compiler.completed_compilations, 1);
+        assert_eq!(compiler.native_definitions, 1);
+        assert_eq!(compiler.emitted_code_bytes, first_bytes);
         assert_eq!(first as usize, reused as usize);
         assert_eq!(compiler.stats().compiled_functions, 1);
         chunk.name = Some("renamed".into());
@@ -16156,6 +16236,10 @@ mod tests {
         let changed =
             compiler.compile_loop_with_int_dicts(&chunk, start, end, HashSet::new()).unwrap();
         assert_ne!(first as usize, changed as usize);
+        assert_eq!(compiler.compilation_attempts, 2);
+        assert_eq!(compiler.completed_compilations, 2);
+        assert_eq!(compiler.native_definitions, 2);
+        assert!(compiler.emitted_code_bytes > first_bytes);
         assert_eq!(compiler.stats().total_functions, 2);
         assert_eq!(compiler.stats().compiled_functions, 2);
     }

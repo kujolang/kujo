@@ -27,6 +27,20 @@ cancellation-check policy while requiring each invocation's current token. The
 targeted platform workflow also runs the owner boundary without JIT on Linux.
 These checks are pending execution, not proof that task pooling is safe.
 
+The next patch records per-compiler compilation attempts, successful definitions,
+completed finalizations and emitted machine-code bytes across offset/loop,
+function, direct-argument and script compilation. A loop cache hit must not grow
+these counters; changed bytecode must. Rejected compilation increases attempts
+without claiming successfully finalized code. Definition bytes are recorded
+before context clearing/finalization; unknown buffer size saturates accounting
+instead of appearing free. These counters are **not total retained memory**:
+backend code-page rounding, GOT/PLT, compiler metadata and embedded owners need
+separate bounds/resource evidence before pool acceptance. No pool is enabled.
+
+The workflow offers a Linux-only owner/accounting gate to validate the next
+candidate without repeating all platform builds for every preparatory patch.
+Final acceptance still requires the applicable full platform refresh.
+
 Verification is pending. Run the release library suite, no-JIT coverage and
 callback/task/generator contracts before accepting this boundary. The subsequent
 pool requires cancellation-policy matching, lineage propagation, admission/reset

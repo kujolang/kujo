@@ -10,6 +10,7 @@ results = []
 Dir.mktmpdir('kujo-platform-membership-') do |directory|
   files = %w[lifetime-source.txt lifetime-library.log lifetime-integration.log]
   files << 'lifetime-no-jit.log' if File.exist?(File.join(source, 'lifetime-no-jit.log'))
+  files << 'lifetime-accounting.log' if File.exist?(File.join(source, 'lifetime-accounting.log'))
   originals = files.to_h { |name| [name, File.binread(File.join(source, name))] }
   target = 'test vm_generator_resumes_after_its_original_native_code_owner_is_dropped ... ok'
   raise 'missing owner test fixture' unless originals.fetch('lifetime-integration.log').scan(target).size == 1
