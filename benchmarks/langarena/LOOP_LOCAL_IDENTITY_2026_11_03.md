@@ -218,3 +218,16 @@ gate must still be rerun on the corrected commit; this is not a full release pas
 `loop-linux-gates-2026-11-03.json.gz` preserves the source/toolchain receipt,
 optimized test log and inventory verification. The separate memory-lifetime
 candidate is not included in this Linux run.
+
+## Corrected Linux release gate
+
+Run `41591576889` completed successfully on exact commit
+`318ef03530155bb9544226c74d601c1227554924`: all seven jobs passed,
+including the full release gate and optimized loop regressions. The full gate
+log explicitly confirms the unsafe, TODO and VM mismatch freshness tests pass.
+This supersedes the pending rerun above. Runtime source is unchanged by the
+inventory repair; the separate memory candidate is excluded.
+
+`loop-linux-release-pass-2026-11-03.json.gz` preserves the run/job receipts
+and full release log. This closes the recorded Linux gate, not production-size,
+clean-host, memory-candidate or other-platform acceptance.

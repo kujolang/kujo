@@ -32,7 +32,7 @@ from checksum coverage and runtime optimization acceptance.
 | --- | --- | --- |
 | 1. Native array/field access | Guarded direct access or fused operations with fewer helper crossings; errors, snapshots and invalidation preserved | Tactical helper-view experiment rejected; direct-native architecture remains open |
 | 2. Known-callee calls/recursion | Reduce measured VM marshalling and root traffic; preserve dynamic binding, frame limits, callback state and errors | [Tagged-call tactic rejected and removed](NATIVE_CALL_CANDIDATE_2026_11_02.md): microbenchmark gains did not establish useful repeated workload gains; broader call architecture remains open |
-| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); [demand-admission tactic rejected](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) after Words/SHA256 failures; [physical-slot loop fix verified locally and in optimized Linux tests](LOOP_LOCAL_IDENTITY_2026_11_03.md); owned reuse and full release acceptance remain open |
+| 3. JIT admission/worker reuse | Recover cold compilation losses while retaining long-run native coverage; reuse code only under proved ownership/isolation | [64 baseline economics controls pass](JIT_ECONOMICS_ENTRY_2026_11_03.md); late tree and per-job compile costs reproduced; [40 async-route controls pass](JIT_ASYNC_ECONOMICS_2026_11_03.md); [120 admission controls pass](JIT_ADMISSION_CONTROLS_2026_11_03.md); [demand-admission tactic rejected](DEMAND_ADMISSION_CANDIDATE_2026_11_03.md) after Words/SHA256 failures; [physical-slot loop fix verified locally and in optimized Linux tests](LOOP_LOCAL_IDENTITY_2026_11_03.md); corrected Linux release gate passed; owned reuse remains open |
 | 4. VM instruction/value movement | Measure cloning/dispatch; implement supported tactical reductions; evaluate compact representation separately | Pending |
 | 5. Layout/COW/validation | Attribute actual copied bytes; remove avoidable work; evaluate shape-indexed structs/homogeneous storage without weakening snapshots | Pending |
 | 6. Libraries/callbacks/bytes | Identify conversion/comparison costs; optimize confirmed paths with exact ordering, malformed-input and Unicode contracts | Pending |
@@ -200,7 +200,7 @@ The separate [loop-local identity correction](LOOP_LOCAL_IDENTITY_2026_11_03.md)
 is now committed as `537406d8`; all 150 normal test-size checks pass. Optimized
 Linux verification passes 1,356 tests, with eight existing ignores. Full release
 CI failed stale generated inventories; `318ef035` repairs only those inventories
-and records the evidence. Run `41591576889` is the pending full gate on that
-correction. The separate memory candidate remains excluded. Use recorded frozen
+and records the evidence. Run `41591576889` passed all seven Linux jobs on that
+correction, including all three generated-artifact freshness tests. The separate memory candidate remains excluded. Use recorded frozen
 executables rather than assuming a shared target directory contains accepted
 binaries; isolated-worktree builds can also replace dependency metadata.
