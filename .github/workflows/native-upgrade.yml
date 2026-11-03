@@ -7,6 +7,10 @@ on:
         description: Run isolated VM code-lifetime verification instead of upgrade tests
         type: boolean
         default: false
+      code_lifetime_windows_only:
+        description: Limit isolated code-lifetime verification to Windows
+        type: boolean
+        default: false
   push:
     branches: [main]
   pull_request:
@@ -17,6 +21,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/vm-code-lifetime.yml
+    with:
+      windows_only: ${{ inputs.code_lifetime_windows_only }}
 
   native-upgrade:
     if: github.event_name != 'workflow_dispatch' || !inputs.code_lifetime_only

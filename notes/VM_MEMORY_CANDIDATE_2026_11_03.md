@@ -68,3 +68,11 @@ x64/arm64, macOS x64/arm64 and Windows x64. Existing push/PR/default manual upgr
 behavior remains unchanged. This route verifies owner, generator, callback and
 task contracts and uploads logs; it neither publishes artifacts nor releases.
 Platform results remain pending until exact-commit jobs and evidence are reviewed.
+
+Platform run `41613864999` reached all five workers. Windows failed before
+compilation: checkout converted Rust files to CRLF, violating the repository's
+rustfmt newline policy. The raw job log is retained under local evidence as
+`windows-lifetime-checkout-failure.log`. Configure `core.autocrlf=false` before
+checkout; preserve the formatting gate. A Windows-only manual retry option avoids
+restarting the four still-running Linux/macOS jobs. Runtime and test bodies are
+unchanged by this workflow repair; Windows semantic verification remains pending.

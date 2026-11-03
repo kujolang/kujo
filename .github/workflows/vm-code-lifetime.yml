@@ -3,6 +3,10 @@ name: vm-code-lifetime
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      windows_only:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -13,11 +17,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-latest]
+        os: ${{ fromJSON(inputs.windows_only && '["windows-latest"]' || '["ubuntu-22.04","ubuntu-24.04-arm","macos-15-intel","macos-15","windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     env:
       CARGO_BUILD_JOBS: '2'
     steps:
+      - name: Preserve repository line endings on Windows
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: dtolnay/rust-toolchain@stable
       - name: Record exact source and toolchain
