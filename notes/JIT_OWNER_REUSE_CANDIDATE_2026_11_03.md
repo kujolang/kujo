@@ -412,3 +412,16 @@ between uncommitted and pinned source expectations; the fixture now follows each
 source independently. Earlier eight-case resource evidence re-verifies unchanged.
 Actual4096-task execution and concurrent two-owner/lineage resource coverage remain
 pending; no RSS bound or performance claim is added by this extension.
+
+## Combined Linux and all150 gates verified
+
+Linux d5c8ad07 now has independently verified seven-job release success,1333
+library and39 selected integration passes; nine explicit ignores include the
+separately invoked resource diagnostic. All13 owner tests, including the new
+numeric/edited-bytecode regression, pass. All150 checksum source1ff97dcf passes
+independent exact raw-output/source/binary verification;915 file hashes match
+pinned Git blobs and the uploaded CLI hashes to343964c7c36d5dce4b12f83bcd848c0de989a12bac7a2b41f2c3c9893deae8e4.
+Runtime/Cargo/port/input source is identical across these revisions. Eleven
+verifier controls pass. See `JIT_OWNER_COMBINED_GATES_2026_11_03.md` for source,
+run/artifact identities and limitations. Later4096-task resources, platform review,
+concurrent retention and elapsed/production acceptance remain open.
