@@ -50,3 +50,51 @@ passes validate the selected official outputs, not every cell or path element.
 These three workloads remain **partially audited**, not complete. Any diagnostic
 port variant must stay separate from runtime optimization measurements and must
 not silently replace the frozen official inputs.
+
+## Executed state/path controls
+
+`probes/audit-maze-state.rb` now executes the entire unchanged pinned Rust maze
+module, with its original RNG functions, against the unchanged Kujo sources on
+the frozen accepted CLI (`3d6b3ea8e621d6bf8f74ce2cd8f102bc2da0629221b6d3fdc091640ff4e790b3`).
+The harness supplies dimensions directly rather than calling configuration
+constructors. This is a correctness oracle, not a competitive Rust build.
+
+Ten cases cover dimensions 5×5, 8×8 and 17×13 at seeds 1/42/99, plus 200×30 at
+seed 42. Each records creation and three generation cycles, resetting spaces
+before subsequent generations. All **40 states agree across VM, interpreter and
+JIT opt-in** (120 Kujo state observations). The Rust oracle supplies 40 states.
+No native-path coverage or timing claim follows from JIT opt-in alone.
+
+Full cell kinds, interior ordered neighbor lists, RNG state and complete BFS
+paths match Rust in every observation. Rust's unused border neighbor storage
+(`[(0,0);4]`) is normalized to Kujo's empty border adjacency for comparison;
+raw representation equality is not claimed. The differing finish-opening
+implementations produced equal cells in these controls; visit/allocation counts
+remain unmeasured.
+
+Four cases have different A* paths after each generation, with equal lengths:
+
+| Dimensions | Seed | Rust and Kujo path length | Full paths |
+| --- | ---: | ---: | --- |
+| 5×5 | 99 | 5 | Different |
+| 8×8 | 1 | 11 | Different |
+| 8×8 | 42 | 11 | Different |
+| 17×13 | 42 | 33 | Different |
+
+For example, 5×5 seed 99 returns flattened cell indices `[6,11,12,13,18]` in
+Rust and `[6,11,16,17,18]` in Kujo. Both are valid paths in the same generated
+maze. The official test dimensions/seed produce identical complete BFS and A*
+paths of length **1,337**. This diagnostic runs generation/search directly;
+it does not replace the official benchmark wrapper or its checksum gates.
+
+`maze-state-audit-2026-11-02.json.gz` retains generated oracle/probe sources,
+commands, raw outputs, comparison report, runner and upstream license, each
+with its SHA-256. The first orchestration attempt completed language executions
+but failed aggregation on macOS Ruby's missing `filter_map`; the runner uses
+`map.compact` and the successful second run supplies the retained comparison.
+
+Reproduce from the repository root with
+`ruby benchmarks/langarena/probes/audit-maze-state.rb UPSTREAM FROZEN_KUJO NEW_OUTPUT_DIRECTORY`.
+Expansion order/counts, disconnected/small-dimension behavior, production
+resource checks and Goose execution remain open. Equal paths in these cases do
+not prove equal work or complete the three benchmark audits.
