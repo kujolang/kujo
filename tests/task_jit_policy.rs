@@ -58,14 +58,14 @@ fn async_detached_and_callback_work_inherit_jit_only_when_requested() {
         "assert_equal(map([20000,20000], kernel), [199990000,199990000])",
         "func parent() { return await parallel_map([20000,20000],kernel,2) } assert_equal(await await_task(spawn_task(parent)),[199990000,199990000])",
         "func replacement(c) { assert_equal(kernel(20000),199990000) return \"x\" } assert_equal(regex_replace_with(\"aa\",\"a\",replacement),\"xx\")",
-        "shared_set(\"done\",0) spawn { func inner(n) { mut sum := 0 mut i := 0 while i < n { sum += i i += 1 } return sum } let value := inner(20000) shared_set(\"done\",value) } while shared_get(\"done\") == 0 {} assert_equal(shared_get(\"done\"),199990000)",
+        "shared_set(\"gate\", channel()) spawn { func inner(n) { mut sum := 0 mut i := 0 while i < n { sum += i i += 1 } return sum } let gate := shared_get(\"gate\") gate.send(inner(20000)) } let gate := shared_get(\"gate\") assert_equal(gate.receive(),199990000)",
     ] {
         for mode in ["vm", "interpreter", "jit"] {
             if mode == "jit" && !cfg!(feature = "runtime-jit") { continue; }
             if let Some(report) = run(&format!("{kernel}\n{body}\nprint(\"PASS\")"), mode) {
-                let entries = report["counters"]["jit_native_function_entries"].as_u64().unwrap();
+                let entries = report["counters"]["jit_native_boundary_entries"].as_u64().unwrap();
                 if mode == "jit" {
-                    // No kernel call runs in the parent: entries prove worker/bridge execution.
+                    // No parent loops or hot parent calls: entries prove worker/bridge execution.
                     assert!(entries > 0, "{body}: {report}");
                 } else { assert_eq!(entries,0,"JIT enabled without opt-in"); }
             }
@@ -142,11 +142,11 @@ fn native_task_cancellation_crosses_callback_bridges_and_recovers_admission() {
                 // The 16-slot pool therefore had to release all 40 cancelled bodies
                 // before the sentinels were unblocked; no timing sleep is needed.
                 assert!(counts["task_bodies_exited"].as_u64().unwrap() >= 40, "{report}");
-                let entries = counts["jit_native_function_entries"].as_u64().unwrap();
-                if mode == "jit" {
-                    assert!(entries >= 40, "native workers were not entered: {report}");
-                } else {
-                    assert_eq!(entries, 0);
+                // This stresses cancellation before or after compilation. Parent
+                // polling can itself be native; the separate no-parent-loop test
+                // below proves worker-native cancellation participation.
+                if mode != "jit" {
+                    assert_eq!(counts["jit_native_boundary_entries"], 0);
                 }
             }
         }
@@ -186,5 +186,32 @@ fn nested_parallel_workers_preserve_values_capabilities_and_errors() {
             continue;
         }
         run(source, mode);
+    }
+}
+
+#[test]
+fn hot_worker_cancellation_has_no_parent_native_false_positive() {
+    let template = include_str!("fixtures/jit_demand_task_cancellation.kujo");
+    for callable in ["spin", "bridge", "regex_bridge"] {
+        let source = template.replace("spawn_task(spin)", &format!("spawn_task({callable})"));
+        for mode in ["vm", "interpreter", "jit"] {
+            if mode == "jit" && !cfg!(feature = "runtime-jit") {
+                continue;
+            }
+            if let Some(report) = run(&source, mode) {
+                let counts = &report["counters"];
+                for key in ["tasks_admitted", "task_cancellations_published"] {
+                    assert_eq!(counts[key], 4, "{mode}/{callable}/{key}: {report}");
+                }
+                // Body exit can lag published cancellation; the sentinel-pool test above
+                // separately verifies reclamation. This gate proves worker-native entry.
+                let entries = counts["jit_native_boundary_entries"].as_u64().unwrap();
+                if mode == "jit" {
+                    assert!(entries >= 4, "workers did not enter native code: {report}");
+                } else {
+                    assert_eq!(entries, 0);
+                }
+            }
+        }
     }
 }

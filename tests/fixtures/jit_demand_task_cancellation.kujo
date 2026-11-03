@@ -1,0 +1,28 @@
+# No parent loop: any native loop boundary must be inside a worker.
+let gate := channel()
+func spin() {
+    mut i := 0
+    while i < 9223372036854775807 {
+        i += 1
+        if i == 2000 { gate.send(1) }
+    }
+    return i
+}
+func callback(unused) { return spin() }
+func bridge() { return map([0], callback) }
+func replacement(unused) { spin() return "x" }
+func regex_bridge() { return regex_replace_with("a", "a", replacement) }
+func check() {
+    let handle := spawn_task(spin)
+    assert_equal(gate.receive(), 1)
+    assert(cancel_task(handle))
+    mut caught := 0
+    try { await await_task(handle) } except error { caught += 1 }
+    try { await await_task(handle) } except error { caught += 1 }
+    assert_equal(caught, 2)
+}
+check()
+check()
+check()
+check()
+print("PASS")
