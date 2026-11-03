@@ -13011,6 +13011,55 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn task_code_reuse_preserves_numeric_guards_and_bytecode_edits() {
+        let original = function_from_source(
+            "func retained(x) { mut value := x mut i := 0 while i < 1000 { value += 1 i += 1 } return value + 17 }",
+        );
+        let pool = Arc::new(VmCodePool::new(2, 512, 4 << 20, 8 << 20));
+        let run = |function: Value, argument: Value, jit: bool| {
+            VM::execute_language_task(
+                function,
+                vec![argument],
+                Environment::new(),
+                RuntimeCapabilityPolicy::default(),
+                None,
+                Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                jit,
+                if jit { Some(Arc::clone(&pool)) } else { None },
+            )
+            .unwrap()
+        };
+        // Revisit both argument kinds through the same retained code owner.
+        for argument in [Value::Int(2), Value::Float(2.5), Value::Int(2), Value::Float(2.5)] {
+            let baseline = run(original.clone(), argument.clone(), false);
+            let reused = run(original.clone(), argument, true);
+            match (baseline, reused) {
+                (Value::Int(a), Value::Int(b)) => assert_eq!((a, b), (1019, 1019)),
+                (Value::Float(a), Value::Float(b)) => {
+                    assert_eq!(a.to_bits(), 1019.5_f64.to_bits());
+                    assert_eq!(a.to_bits(), b.to_bits());
+                }
+                values => panic!("numeric kind changed: {values:?}"),
+            }
+            let idle = pool.idle.lock().unwrap();
+            assert_eq!(idle.len(), 1);
+            assert!(idle[0].1.jit_compiler.as_ref().unwrap().emitted_code_bytes > 0);
+        }
+        let mut edited = original.clone();
+        let Value::BytecodeFunction { chunk, .. } = &mut edited else { unreachable!() };
+        let old_identity = chunk.code_identity();
+        let slot = chunk.constants.iter().position(|c| matches!(c, Constant::Int(17))).unwrap();
+        chunk.constants[slot] = Constant::Int(29);
+        assert_ne!(old_identity, chunk.code_identity());
+        for jit in [false, true] {
+            assert!(matches!(run(edited.clone(), Value::Int(2), jit), Value::Int(1031)));
+            assert!(matches!(run(original.clone(), Value::Int(2), jit), Value::Int(1019)));
+        }
+        assert_eq!(pool.idle.lock().unwrap().len(), 1);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn task_code_reuse_obeys_each_invocations_capability_policy() {
         let file = tempfile::NamedTempFile::new().unwrap();
         std::fs::write(file.path(), "task-private fixture").unwrap();

@@ -335,3 +335,14 @@ These controls pass locally and are wired before future CI resource collection;
 results are uploaded alongside diagnostics. They validate the evidence parser,
 not resource behavior or an optimization speedup. Existing live runs predate this
 workflow addition and are not restarted.
+
+## Numeric guard and bytecode-edit reuse regression
+
+A new task-path regression alternates integer/float arguments through one retained
+owner and compares exact numeric kinds/results with unpooled VM execution. It then
+edits a constant in cloned bytecode, requires a new code identity, and alternates
+edited/original calls to reject stale dispatch while preserving the original.
+The pool must retain an owner with emitted native code. This is targeted coverage
+of an explicit boundary requirement, not a proof of every specialization or dense
+slot layout. Source-pinned artifact membership includes the new test. Runtime
+execution remains pending CI; no production runtime implementation changed.
