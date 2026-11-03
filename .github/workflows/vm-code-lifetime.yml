@@ -42,6 +42,7 @@ jobs:
       - name: Verify formatting
         run: cargo fmt --check
       - name: Test private code-owner lifetime
+        id: owner
         run: cargo test --release --locked --lib code_owner_lifetime_tests -- --nocapture > lifetime-library.log 2>&1
       - name: Test owner boundary without JIT
         if: matrix.os == 'ubuntu-22.04'
@@ -49,12 +50,13 @@ jobs:
           cargo test --release --locked --no-default-features --lib code_owner_lifetime_tests -- --nocapture > lifetime-no-jit.log 2>&1
           cargo test --release --locked --no-default-features --lib disabled_network_web_helpers_report_feature_error -- --nocapture >> lifetime-no-jit.log 2>&1
       - name: Test native owner accounting
-        if: matrix.os == 'ubuntu-22.04'
+        if: always() && !cancelled() && steps.owner.outcome == 'success' && matrix.os == 'ubuntu-22.04'
         run: |
           cargo test --release --locked --lib owner_accounting_covers_each_native_definition_path -- --nocapture > lifetime-accounting.log 2>&1
           cargo test --release --locked --lib loop_statistics_include_reuse_and_mutated_code_identity -- --nocapture >> lifetime-accounting.log 2>&1
           cargo test --release --locked --lib owner_metadata_accounts_literals_capacity_and_unknown_payloads -- --nocapture >> lifetime-accounting.log 2>&1
       - name: Test retained generators, callbacks and task state
+        if: always() && !cancelled() && steps.owner.outcome == 'success'
         run: >-
           cargo test --release --locked --no-fail-fast --message-format=json
           --test generator_continuation_contracts

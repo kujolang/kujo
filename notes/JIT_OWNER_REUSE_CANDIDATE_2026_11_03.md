@@ -1,5 +1,9 @@
 # Exclusive code-owner reuse candidate
 
+The initial ownership-bundle commit now has a verified seven-job Linux gate;
+see `benchmarks/langarena/JIT_OWNER_LINUX_GATE_2026_11_03.md` for its exact
+1,360-pass scope. Later candidate revisions still require their own gates.
+
 Base: `cd5f2b20` on `codex/native-performance-campaign-20261102`.
 Candidate branch: `codex/jit-owner-reuse-20261103`.
 
@@ -85,3 +89,9 @@ helpers and imports. It adds an explicit disabled-network diagnostic test and
 keeps the no-default-features gate unchanged. Networking-enabled tests remain
 enabled. The correction and new test still need execution; it does not turn the
 earlier failed job into a pass.
+
+The workflow now collects default-feature accounting and integration results
+after a successful owner gate even when the independent no-JIT gate fails.
+Cancellation still stops those steps, and a failed no-JIT step still fails the
+job. This prevents an unrelated feature-configuration failure from hiding later
+default-feature test outcomes; it does not relax acceptance.
