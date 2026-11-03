@@ -31,7 +31,13 @@ Runtime/test commit `ad7b3fd1`; first gate source `52e2e26942e5c3573004295d08460
 CI41730777183 runs full library tests, selected integrations, all150 exact checksums
 and 16-workload alternating VM/JIT comparisons against c27e with matching flags.
 It freezes binary/source hashes, toolchain, build logs, outputs and raw timings.
-CI remains pending; no candidate speed or correctness result is claimed here.
+Initial run41730777183 was intentionally cancelled after source inspection showed
+the first integration fixture compiled to IndexGetInPlace rather than generic
+IndexGet. Fixture-only correction1b6bd81a uses the nested dictionary/array access
+shape present in NeuralNet. Replacement CI41731959897 at
+1b6bd81a3f3bc00a1b92be9f81f79ee2c7814ec1 remains pending; no candidate speed or
+correctness result is claimed here. The corrected fixture passes all three
+runtimes on the frozen accepted Mac binary.
 
 Generated-code unit controls compare scalar kinds/exact floating-point bits,
 owned-array backing, negative/out-of-range indices, error text, prior snapshots,
