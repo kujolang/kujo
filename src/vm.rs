@@ -95,8 +95,8 @@ pub struct VM {
     /// Tracks nested try blocks and their catch handlers
     exception_handlers: Vec<ExceptionHandlerFrame>,
 
-    /// JIT compiler for hot code paths
-    jit_compiler: Option<JitCompiler>,
+    /// Code and every VM dispatch cache that borrows its native entries.
+    code_owner: VmCodeOwner,
 
     /// JIT enabled flag (can be disabled for debugging)
     jit_enabled: bool,
@@ -110,18 +110,6 @@ pub struct VM {
     /// Function call counts for JIT compilation threshold
     /// Maps code identity to number of times it has been called
     function_call_counts: HashMap<u64, usize>,
-
-    /// Cache of JIT-compiled functions
-    /// Maps immutable code identity to compiled native code
-    compiled_functions: HashMap<u64, CompiledFn>,
-
-    /// Enhanced cache with direct-arg variants for recursive functions
-    /// Maps immutable code identity to CompiledFnInfo (includes both standard and direct-arg)
-    compiled_fn_info: HashMap<u64, CompiledFnInfo>,
-
-    /// Cache of var_names for JIT-compiled functions
-    /// This avoids re-computing hash mappings on every call
-    jit_var_names_cache: HashMap<u64, Arc<HashMap<u64, String>>>,
 
     /// Current recursion depth (for optimization and debugging)
     recursion_depth: usize,
@@ -138,11 +126,6 @@ pub struct VM {
 
     /// Maximum recursion depth observed (for profiling)
     max_recursion_depth: usize,
-
-    /// Inline cache for function calls at specific call sites
-    /// Key: (chunk_id, instruction_pointer) uniquely identifies a call site
-    /// Value: Cached function pointer and metadata for fast dispatch
-    inline_cache: HashMap<CallSiteId, InlineCacheEntry>,
 
     /// Cache of integer keys converted to strings for dict operations
     int_key_cache: HashMap<i64, Arc<str>>,
@@ -415,15 +398,27 @@ pub(crate) struct CallFrame {
     prev_chunk: Option<BytecodeChunk>,
 }
 
+/// Exclusively owned code and pointer-dependent dispatch metadata. Invocation
+/// state, roots, globals, admission counts and cancellation tokens stay in the VM.
+/// Never clone this owner or detach a native pointer from its lifetime.
+#[derive(Default)]
+struct VmCodeOwner {
+    jit_compiler: Option<JitCompiler>,
+    compiled_functions: HashMap<u64, CompiledFn>,
+    compiled_fn_info: HashMap<u64, CompiledFnInfo>,
+    jit_var_names_cache: HashMap<u64, Arc<HashMap<u64, String>>>,
+    inline_cache: HashMap<CallSiteId, InlineCacheEntry>,
+}
+
 #[cfg(feature = "runtime-jit")]
-impl Drop for VM {
+impl Drop for VmCodeOwner {
     fn drop(&mut self) {
         if let Some(compiler) = self.jit_compiler.take() {
-            // SAFETY: this VM exclusively owns the compiler and all its native
-            // pointer caches. Execution borrows the VM synchronously, so native
-            // calls have returned before destruction. Snapshots, generators and
-            // returned Values retain bytecode, not these private native pointers.
-            // Dropping the remaining caches never invokes their function pointers.
+            // SAFETY: the containing VM borrows this exclusive owner during
+            // synchronous native execution. Destruction happens after those
+            // frames unwind. All native dispatch caches belong to this owner;
+            // their destruction never invokes cached pointers. Returned values
+            // and suspended execution state retain bytecode, not native entries.
             unsafe { compiler.free_vm_owned_memory() };
         }
     }
@@ -654,14 +649,11 @@ impl VM {
             callback_needs_interpreter_state: true,
             upvalues: Vec::new(),
             exception_handlers: Vec::new(),
-            jit_compiler: None,
+            code_owner: VmCodeOwner::default(),
             jit_enabled: false,
             path_depth_valid: Default::default(),
             function_call_stack: Vec::new(),
             function_call_counts: HashMap::new(),
-            compiled_functions: HashMap::new(),
-            compiled_fn_info: HashMap::new(),
-            jit_var_names_cache: HashMap::new(),
             recursion_depth: 0,
             native_call_depth: 0,
             #[cfg(feature = "runtime-jit")]
@@ -670,7 +662,6 @@ impl VM {
             native_argument_pool: Vec::new(),
             frame_slot_pool: Vec::new(),
             max_recursion_depth: 0,
-            inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
             jit_obj_stack: Vec::new(),
             runtime_handle: tokio::runtime::Handle::try_current().ok(),
@@ -886,7 +877,7 @@ impl VM {
     pub fn set_jit_enabled(&mut self, enabled: bool) {
         self.jit_enabled = enabled;
         self.interpreter.vm_jit_requested = enabled;
-        if let Some(compiler) = self.jit_compiler.as_mut() {
+        if let Some(compiler) = self.code_owner.jit_compiler.as_mut() {
             compiler.set_enabled(enabled);
         }
     }
@@ -900,12 +891,12 @@ impl VM {
         if !self.jit_enabled {
             return false;
         }
-        if self.jit_compiler.is_some() {
+        if self.code_owner.jit_compiler.is_some() {
             return true;
         }
         match JitCompiler::new_with_cancellation(self.interpreter.task_cancellation.is_some()) {
             Ok(compiler) => {
-                self.jit_compiler = Some(compiler);
+                self.code_owner.jit_compiler = Some(compiler);
                 true
             }
             Err(error) => {
@@ -924,7 +915,7 @@ impl VM {
 
     /// Get JIT compilation statistics
     pub fn jit_stats(&self) -> crate::jit::JitStats {
-        self.jit_compiler.as_ref().map_or(
+        self.code_owner.jit_compiler.as_ref().map_or(
             crate::jit::JitStats {
                 total_functions: 0,
                 compiled_functions: 0,
@@ -944,7 +935,7 @@ impl VM {
         &self,
         chunk: &BytecodeChunk,
     ) -> Option<UnsupportedJitSurface> {
-        if let Some(compiler) = self.jit_compiler.as_ref() {
+        if let Some(compiler) = self.code_owner.jit_compiler.as_ref() {
             compiler.first_unsupported_surface(chunk)
         } else {
             JitCompiler::new().ok().and_then(|compiler| compiler.first_unsupported_surface(chunk))
@@ -984,7 +975,7 @@ impl VM {
             return Ok(false);
         }
 
-        if self.compiled_functions.contains_key(&chunk.code_identity()) {
+        if self.code_owner.compiled_functions.contains_key(&chunk.code_identity()) {
             return Ok(true);
         }
 
@@ -993,14 +984,15 @@ impl VM {
         }
 
         let info = self
+            .code_owner
             .jit_compiler
             .as_mut()
             .expect("JIT compiler initialized when JIT is enabled")
             .compile_function_for_vm(chunk, func_name.as_str())
             .map_err(|e| format!("Failed to JIT-compile function '{}': {}", func_name, e))?;
 
-        self.compiled_functions.insert(chunk.code_identity(), info.fn_ptr);
-        self.compiled_fn_info.insert(chunk.code_identity(), info);
+        self.code_owner.compiled_functions.insert(chunk.code_identity(), info.fn_ptr);
+        self.code_owner.compiled_fn_info.insert(chunk.code_identity(), info);
 
         Ok(true)
     }
@@ -2807,6 +2799,7 @@ impl VM {
             // Attempt to compile the entire script
             if script_jit_safe && self.ensure_jit_compiler() {
                 match self
+                    .code_owner
                     .jit_compiler
                     .as_mut()
                     .expect("JIT compiler initialized when JIT is enabled")
@@ -2845,7 +2838,7 @@ impl VM {
                         vm_context.obj_stack_ptr = &mut self.jit_obj_stack as *mut Vec<Value>;
 
                         let cache_key = self.chunk.code_identity();
-                        if !self.jit_var_names_cache.contains_key(&cache_key) {
+                        if !self.code_owner.jit_var_names_cache.contains_key(&cache_key) {
                             let mut cached_var_names = HashMap::new();
                             Self::register_jit_local_names(&self.chunk, &mut cached_var_names);
 
@@ -2866,11 +2859,13 @@ impl VM {
                                 }
                             }
 
-                            self.jit_var_names_cache
+                            self.code_owner
+                                .jit_var_names_cache
                                 .insert(cache_key.clone(), Arc::new(cached_var_names));
                         }
 
                         let var_names_ptr: *mut HashMap<u64, String> = self
+                            .code_owner
                             .jit_var_names_cache
                             .get_mut(&cache_key)
                             .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
@@ -2939,6 +2934,7 @@ impl VM {
                         continue;
                     }
                     if self
+                        .code_owner
                         .jit_compiler
                         .as_ref()
                         .expect("JIT compiler initialized when JIT is enabled")
@@ -2946,6 +2942,7 @@ impl VM {
                     {
                         // Loop is known to be incompatible with JIT
                     } else if self
+                        .code_owner
                         .jit_compiler
                         .as_mut()
                         .expect("JIT compiler initialized when JIT is enabled")
@@ -3050,12 +3047,14 @@ impl VM {
 
                         let can_compile_loop = if int_dict_loop_valid && !int_dict_slots.is_empty()
                         {
-                            self.jit_compiler
+                            self.code_owner
+                                .jit_compiler
                                 .as_ref()
                                 .expect("JIT compiler initialized when JIT is enabled")
                                 .can_compile_loop_with_int_dicts(&self.chunk, jump_target, self.ip)
                         } else {
-                            self.jit_compiler
+                            self.code_owner
+                                .jit_compiler
                                 .as_ref()
                                 .expect("JIT compiler initialized when JIT is enabled")
                                 .can_compile_loop(&self.chunk, jump_target, self.ip)
@@ -3077,7 +3076,8 @@ impl VM {
                             if store_vars.len() > 2 {
                                 // Skip loop JIT for complex update patterns to preserve correctness
                                 // (e.g., multiple dependent variable updates per iteration)
-                                self.jit_compiler
+                                self.code_owner
+                                    .jit_compiler
                                     .as_mut()
                                     .expect("JIT compiler initialized when JIT is enabled")
                                     .block_chunk_loop(
@@ -3091,7 +3091,8 @@ impl VM {
                                 // The JumpBack just marks the end of the loop
                                 let compile_result =
                                     if int_dict_loop_valid && !int_dict_slots.is_empty() {
-                                        self.jit_compiler
+                                        self.code_owner
+                                            .jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
                                             .compile_loop_with_int_dicts(
@@ -3101,7 +3102,8 @@ impl VM {
                                                 int_dict_slots,
                                             )
                                     } else {
-                                        self.jit_compiler
+                                        self.code_owner
+                                            .jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
                                             .compile_loop_with_int_dicts(
@@ -3206,7 +3208,11 @@ impl VM {
                                             &mut self.jit_obj_stack as *mut Vec<Value>;
 
                                         let cache_key = self.chunk.code_identity();
-                                        if !self.jit_var_names_cache.contains_key(&cache_key) {
+                                        if !self
+                                            .code_owner
+                                            .jit_var_names_cache
+                                            .contains_key(&cache_key)
+                                        {
                                             let mut cached_var_names = HashMap::new();
                                             Self::register_jit_local_names(
                                                 &self.chunk,
@@ -3230,13 +3236,14 @@ impl VM {
                                                 }
                                             }
 
-                                            self.jit_var_names_cache.insert(
+                                            self.code_owner.jit_var_names_cache.insert(
                                                 cache_key.clone(),
                                                 Arc::new(cached_var_names),
                                             );
                                         }
 
                                         let var_names_ptr: *mut HashMap<u64, String> = self
+                                            .code_owner
                                             .jit_var_names_cache
                                             .get_mut(&cache_key)
                                             .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
@@ -3255,12 +3262,16 @@ impl VM {
                                         }
 
                                         if let Some(resume_ip) = vm_context.loop_resume_ip {
-                                            self.jit_compiler.as_mut().unwrap().record_loop_exit(
-                                                self.chunk.code_identity(),
-                                                jump_target,
-                                                self.ip,
-                                                resume_ip <= self.ip,
-                                            );
+                                            self.code_owner
+                                                .jit_compiler
+                                                .as_mut()
+                                                .unwrap()
+                                                .record_loop_exit(
+                                                    self.chunk.code_identity(),
+                                                    jump_target,
+                                                    self.ip,
+                                                    resume_ip <= self.ip,
+                                                );
                                             if resume_ip > self.ip
                                                 && std::env::var("DEBUG_JIT").is_ok()
                                             {
@@ -3283,12 +3294,16 @@ impl VM {
 
                                         // The JIT function executed the loop completely
                                         // Skip past the entire compiled loop range (including exit block)
-                                        self.jit_compiler.as_mut().unwrap().record_loop_exit(
-                                            self.chunk.code_identity(),
-                                            jump_target,
-                                            self.ip,
-                                            false,
-                                        );
+                                        self.code_owner
+                                            .jit_compiler
+                                            .as_mut()
+                                            .unwrap()
+                                            .record_loop_exit(
+                                                self.chunk.code_identity(),
+                                                jump_target,
+                                                self.ip,
+                                                false,
+                                            );
                                         self.ip = loop_exit_ip;
                                         continue;
                                     }
@@ -3300,7 +3315,8 @@ impl VM {
                                                 jump_target, e
                                             );
                                         }
-                                        self.jit_compiler
+                                        self.code_owner
+                                            .jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
                                             .block_chunk_loop(
@@ -3320,7 +3336,8 @@ impl VM {
                                     jump_target
                                 );
                             }
-                            self.jit_compiler
+                            self.code_owner
+                                .jit_compiler
                                 .as_mut()
                                 .expect("JIT compiler initialized when JIT is enabled")
                                 .block_chunk_loop(self.chunk.code_identity(), jump_target, self.ip);
@@ -4288,7 +4305,8 @@ impl VM {
                                 // 1. We cache the compiled_fn pointer directly (no string hash)
                                 // 2. We cache var_names to avoid rebuilding on every call
                                 // 3. We validate with a code identity comparison (guard)
-                                if let Some(cache_entry) = self.inline_cache.get_mut(&call_site_id)
+                                if let Some(cache_entry) =
+                                    self.code_owner.inline_cache.get_mut(&call_site_id)
                                 {
                                     // Cache hit! Validate that function hasn't changed (guard)
                                     if cache_entry.expected_code_id == chunk.code_identity() {
@@ -4469,8 +4487,10 @@ impl VM {
                                     if let Some((arg_val, _)) =
                                         crate::native_scalar::encode(&args[0])
                                     {
-                                        if let Some(fn_info) =
-                                            self.compiled_fn_info.get(&chunk.code_identity())
+                                        if let Some(fn_info) = self
+                                            .code_owner
+                                            .compiled_fn_info
+                                            .get(&chunk.code_identity())
                                         {
                                             if let Some(direct_fn) = fn_info.fn_with_arg {
                                                 // ULTRA-FAST PATH: Use direct-arg JIT variant!
@@ -4577,7 +4597,7 @@ impl VM {
 
                                 // Check if we have a JIT-compiled version (standard path)
                                 if let Some(compiled_fn) =
-                                    self.compiled_functions.get(&chunk.code_identity())
+                                    self.code_owner.compiled_functions.get(&chunk.code_identity())
                                 {
                                     // Fast path: Call JIT-compiled version
 
@@ -4594,7 +4614,7 @@ impl VM {
                                     // Get or create var_names from cache
                                     let code_id = chunk.code_identity();
                                     let var_names = if let Some(cached) =
-                                        self.jit_var_names_cache.get(&code_id)
+                                        self.code_owner.jit_var_names_cache.get(&code_id)
                                     {
                                         cached.as_ref().clone()
                                     } else {
@@ -4631,14 +4651,15 @@ impl VM {
                                             }
                                         }
 
-                                        self.jit_var_names_cache
+                                        self.code_owner
+                                            .jit_var_names_cache
                                             .insert(code_id, Arc::new(cached_var_names.clone()));
                                         cached_var_names
                                     };
 
                                     // === POPULATE INLINE CACHE ===
                                     // Store in inline cache for faster lookup next time
-                                    self.inline_cache.insert(
+                                    self.code_owner.inline_cache.insert(
                                         call_site_id,
                                         InlineCacheEntry::new(
                                             chunk.code_identity(),
@@ -4854,6 +4875,7 @@ impl VM {
                                     // Attempt to compile the function with enhanced info
                                     // This creates both standard and direct-arg variants for recursion
                                     match self
+                                        .code_owner
                                         .jit_compiler
                                         .as_mut()
                                         .expect("JIT compiler initialized when JIT is enabled")
@@ -4867,9 +4889,11 @@ impl VM {
                                                 );
                                             }
 
-                                            self.compiled_functions
+                                            self.code_owner
+                                                .compiled_functions
                                                 .insert(chunk.code_identity(), info.fn_ptr);
-                                            self.compiled_fn_info
+                                            self.code_owner
+                                                .compiled_fn_info
                                                 .insert(chunk.code_identity(), info);
 
                                             // The current call already paid the compilation cost.
@@ -8606,10 +8630,11 @@ impl VM {
 
     fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
         let key = chunk.code_identity();
-        if let Some(names) = self.jit_var_names_cache.get(&key) {
+        if let Some(names) = self.code_owner.jit_var_names_cache.get(&key) {
             return Arc::clone(names);
         }
-        self.jit_var_names_cache
+        self.code_owner
+            .jit_var_names_cache
             .entry(key)
             .or_insert_with(|| {
                 use std::hash::{Hash, Hasher};
@@ -8776,7 +8801,7 @@ impl VM {
                 // helper reaches the threshold and strand that helper in fallback.
                 if self.jit_enabled && args.len() == chunk.params.len() {
                     let name = chunk.name.as_deref().unwrap_or("<anonymous>");
-                    if !self.compiled_functions.contains_key(&chunk.code_identity()) {
+                    if !self.code_owner.compiled_functions.contains_key(&chunk.code_identity()) {
                         let count =
                             self.function_call_counts.entry(chunk.code_identity()).or_insert(0);
                         *count = count.saturating_add(1);
@@ -8816,8 +8841,11 @@ impl VM {
                     if args.len() == 1 {
                         if let Some((arg_val, _)) = crate::native_scalar::encode(&args[0]) {
                             // Copy the function info to avoid borrow checker issues
-                            let fn_info_opt =
-                                self.compiled_fn_info.get(&chunk.code_identity()).copied();
+                            let fn_info_opt = self
+                                .code_owner
+                                .compiled_fn_info
+                                .get(&chunk.code_identity())
+                                .copied();
 
                             if let Some(fn_info) = fn_info_opt {
                                 if let Some(direct_fn) = fn_info.fn_with_arg {
@@ -8925,7 +8953,7 @@ impl VM {
 
                     // Copy the function pointer to avoid borrow checker issues
                     let compiled_fn_opt =
-                        self.compiled_functions.get(&chunk.code_identity()).copied();
+                        self.code_owner.compiled_functions.get(&chunk.code_identity()).copied();
 
                     if let Some(compiled_fn) = compiled_fn_opt {
                         // Fast path: Direct JIT → JIT call!
@@ -8944,6 +8972,7 @@ impl VM {
                         let mut func_locals: HashMap<String, Value>;
                         let use_positional_args = !use_fast_args
                             && self
+                                .code_owner
                                 .compiled_fn_info
                                 .get(&chunk.code_identity())
                                 .is_some_and(|info| info.supports_positional_arguments);
@@ -8968,8 +8997,10 @@ impl VM {
 
                         // OPTIMIZATION: Get reference to cached var_names instead of cloning
                         // This avoids HashMap clone on every recursive call
-                        let cached_var_names_exists =
-                            self.jit_var_names_cache.contains_key(&chunk.code_identity());
+                        let cached_var_names_exists = self
+                            .code_owner
+                            .jit_var_names_cache
+                            .contains_key(&chunk.code_identity());
                         if !cached_var_names_exists {
                             // Build var_names once and cache it
                             let mut cached_var_names = HashMap::new();
@@ -9001,12 +9032,14 @@ impl VM {
                                 }
                             }
 
-                            self.jit_var_names_cache
+                            self.code_owner
+                                .jit_var_names_cache
                                 .insert(chunk.code_identity(), Arc::new(cached_var_names));
                         }
 
                         // Get pointer to cached var_names (no clone!)
                         let var_names_ptr: *mut HashMap<u64, String> = self
+                            .code_owner
                             .jit_var_names_cache
                             .get_mut(&chunk.code_identity())
                             .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
@@ -11035,10 +11068,10 @@ mod tests {
             assert!(matches!(result, Value::Int(6)));
             let id = vm.chunk.code_identity();
             assert_eq!(*wrapper_id.get_or_insert(id), id);
-            assert!(vm.inline_cache.len() <= 1);
+            assert!(vm.code_owner.inline_cache.len() <= 1);
         }
-        assert_eq!(vm.inline_cache.len(), 1);
-        assert_eq!(vm.compiled_functions.len(), 1);
+        assert_eq!(vm.code_owner.inline_cache.len(), 1);
+        assert_eq!(vm.code_owner.compiled_functions.len(), 1);
         assert!(vm.call_reused_sync_callback(function, &[], &mut module_loader).is_err());
     }
 
@@ -11067,11 +11100,11 @@ mod tests {
             functions.push(function);
         }
         assert_eq!(
-            vm.compiled_functions.len(),
+            vm.code_owner.compiled_functions.len(),
             2,
             "both bodies must compile, not silently fall back"
         );
-        assert_eq!(vm.compiled_fn_info.len(), 2);
+        assert_eq!(vm.code_owner.compiled_fn_info.len(), 2);
         for _ in 0..4 {
             for (index, function) in functions.iter().enumerate() {
                 let result =
@@ -11100,7 +11133,7 @@ mod tests {
             for call in 1..=threshold+2 {
                 let result = vm.call_function_from_jit(function.clone(), vec![Value::Array(snapshot.clone())]).unwrap();
                 assert!(matches!(result, Value::Int(n) if n == if threshold==1 {21} else {7}));
-                assert_eq!(vm.compiled_functions.contains_key(&code_id), call>=threshold);
+                assert_eq!(vm.code_owner.compiled_functions.contains_key(&code_id), call>=threshold);
                 assert!(matches!(snapshot[0],Value::Int(7)));
             }
             // Invalid arity remains a language error after native promotion.
@@ -12784,17 +12817,60 @@ mod code_owner_lifetime_tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn exclusive_code_owner_survives_vm_and_worker_transfer() {
+        let function = function();
+        let mut original = VM::new();
+        original.set_jit_enabled(true);
+        assert!(original.jit_compile_bytecode_function(&function).unwrap());
+        let retained =
+            original.call_function_from_jit(function.clone(), vec![Value::Int(7)]).unwrap();
+        original.globals.lock().unwrap().define("old_task_only".into(), Value::Int(123));
+        let pointer = *original.code_owner.compiled_functions.values().next().unwrap() as usize;
+        let owner = std::mem::take(&mut original.code_owner);
+        drop(original);
+
+        // Exclusive movement is supported; concurrent sharing is deliberately
+        // absent. No native entry is called until a fresh VM owns the bundle.
+        let returned = std::thread::spawn(move || {
+            let mut next = VM::new();
+            next.set_jit_enabled(true);
+            next.code_owner = owner;
+            assert!(next.globals.lock().unwrap().get("old_task_only").is_none());
+            assert!(next.function_call_counts.is_empty());
+            assert_eq!(next.native_call_depth, 0);
+            assert!(next.jit_compile_bytecode_function(&function).unwrap());
+            assert_eq!(
+                *next.code_owner.compiled_functions.values().next().unwrap() as usize,
+                pointer,
+                "reuse must retain the original compiled entry"
+            );
+            let value = next.call_function_from_jit(function, vec![Value::Int(9)]).unwrap();
+            assert_pair(&value, 9);
+            value
+        })
+        .join()
+        .unwrap();
+        // Both results remain valid after both private code owners are gone.
+        assert_pair(&retained, 7);
+        assert_pair(&returned, 9);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn disabling_jit_does_not_destroy_cached_code() {
         let function = function();
         let mut vm = VM::new();
         vm.set_jit_enabled(true);
         assert!(vm.jit_compile_bytecode_function(&function).unwrap());
-        let pointer = *vm.compiled_functions.values().next().unwrap() as usize;
+        let pointer = *vm.code_owner.compiled_functions.values().next().unwrap() as usize;
         for enabled in [true, false, true, false, true] {
             vm.set_jit_enabled(enabled);
             let result = vm.call_function_from_jit(function.clone(), vec![Value::Int(3)]).unwrap();
             assert_pair(&result, 3);
-            assert_eq!(*vm.compiled_functions.values().next().unwrap() as usize, pointer);
+            assert_eq!(
+                *vm.code_owner.compiled_functions.values().next().unwrap() as usize,
+                pointer
+            );
         }
     }
 
@@ -12884,7 +12960,7 @@ mod code_owner_lifetime_tests {
             let mut vm = VM::new();
             vm.set_jit_enabled(true);
             assert!(vm.jit_compile_bytecode_function(&function()).unwrap());
-            let pointer = *vm.compiled_functions.values().next().unwrap() as usize;
+            let pointer = *vm.code_owner.compiled_functions.values().next().unwrap() as usize;
             assert!(executable(pointer));
             drop(vm);
             assert!(!executable(pointer), "VM-owned entry must no longer be executable");
