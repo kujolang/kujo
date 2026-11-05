@@ -179,3 +179,9 @@ array. It now exits successfully before expanding that empty array. Local
 controls accept the empty consolidation range and an existing valid candidate
 note, and still reject the original invalid note path. No validation rule is
 relaxed for an actual added note.
+
+Post-push CI41961389748 failed before creating any jobs. The native-upgrade
+caller granted only contents:read while the reused lifetime/evidence workflows
+request actions:read. The caller now grants that same read-only permission; no
+write permission, runtime source or test requirement changes. Replacement workflow
+startup is checked separately; the failed run is not a runtime test result.

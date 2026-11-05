@@ -20,6 +20,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.code_lifetime_only
     permissions:
       contents: read
+      actions: read
     uses: ./.github/workflows/vm-code-lifetime.yml
     with:
       windows_only: ${{ inputs.code_lifetime_windows_only }}
