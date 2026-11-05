@@ -14,12 +14,19 @@ npm install
 npm run check
 ```
 
-The dependency check exercises the glob API used by `vscode-languageclient`.
-Do not override minimatch to version 11 while the client calls `makeRe()`:
-version 11 removes that method. GHSA-g3hv-75wg-m249 remains open pending a
-compatible patched dependency or a separately reviewed client adaptation.
-The current client uses optimization level 1; the advisory describes level 2
-amplification. This limits the demonstrated path, but is not a package fix.
+The extension pins `vscode-languageclient` 10.1.0 and overrides its minimatch
+dependency to 11.0.4, fixing GHSA-g3hv-75wg-m249. The client previously called
+the removed `makeRe()` API only to validate patterns. `scripts/patch-languageclient.js`
+adapts those two checks to the parsed pattern set, preserving empty/comment
+rejection and constructor errors while leaving matching to minimatch.
+
+The adaptation verifies complete upstream file hashes before writing, rejects
+unexpected versions/edits, and is idempotent. It runs during installation,
+`npm run check`, and VSIX prepublication, including after an install with
+`--ignore-scripts`. Do not bypass the prepublication check. When upgrading the
+client, review/remove this adaptation and rerun the actual-client regression
+tests; do not restore a global `makeRe()` shim. Tests cover both caller paths,
+file-operation filters, URI patterns, errors and bounded pattern amplification.
 
 ## Run Locally In Extension Host
 

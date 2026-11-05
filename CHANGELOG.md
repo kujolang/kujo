@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Update the VS Code extension's minimatch dependency to 11.0.4 to address
+  GHSA-g3hv-75wg-m249. Adapt the pinned language client's two pattern-validation
+  calls to the new API, with checked installation/packaging and regression tests
+  for file operations, URI patterns and bounded glob expansion.
+
 - Transfer whole-function native SSA local-store operands when the following
   instruction discards them, avoiding a duplicate owned root while preserving
   initialization checks, snapshots and error cleanup. Verified all-runtime

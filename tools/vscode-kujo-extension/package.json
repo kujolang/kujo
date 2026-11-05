@@ -69,10 +69,17 @@
     }
   },
   "scripts": {
-    "check": "node ./scripts/check.js"
+    "postinstall": "node ./scripts/patch-languageclient.js",
+    "vscode:prepublish": "npm run check",
+    "check": "node ./scripts/patch-languageclient.js && node ./scripts/check.js && node --test ./scripts/glob-compat.test.js"
   },
   "dependencies": {
-    "vscode-languageclient": "^10.1.0"
+    "vscode-languageclient": "10.1.0"
+  },
+  "overrides": {
+    "vscode-languageclient": {
+      "minimatch": "11.0.4"
+    }
   },
   "devDependencies": {
     "@types/node": "^20.12.12"
