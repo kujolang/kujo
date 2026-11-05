@@ -11,9 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-- Experimental implementation branch: transfer native SSA local-store operands
-  when the following instruction discards them, avoiding a duplicate owned root.
-  Benchmark and full regression acceptance remain pending; no speed claim yet.
+- Transfer whole-function native SSA local-store operands when the following
+  instruction discards them, avoiding a duplicate owned root while preserving
+  initialization checks, snapshots and error cleanup. Verified all-runtime
+  checksum and full-state/resource gates; see the November 4 performance
+  consolidation ledger for bounded timing evidence and remaining experiments.
 
 - Reclaim private VM-owned JIT code after the VM is destroyed, preserving returned
   values, generators, callbacks and standalone compiler lifetime. Reclamation is

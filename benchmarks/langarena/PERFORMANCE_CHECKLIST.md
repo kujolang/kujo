@@ -1,3 +1,8 @@
+> **2026-11-04:** accepted performance work and retained local-store checkpoint
+> are consolidated into main for future release review. The current branch map,
+> exclusions and remaining gates are in [PERFORMANCE_CONSOLIDATION_2026_11_04.md](PERFORMANCE_CONSOLIDATION_2026_11_04.md).
+> This does not close the full native-performance campaign or publish 1.10.0.
+
 # Kujo performance implementation checklist
 
 **Current work:** the user authorized the new

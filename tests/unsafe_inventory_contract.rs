@@ -162,7 +162,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // Counts include declarations and test blocks, not just production operations.
     // The isolated VM code-owner candidate adds six reviewed sites: two JIT
     // declaration/free sites, one VM destruction call and three macOS mapping
-    // test sites. See notes/VM_MEMORY_CANDIDATE_2026_11_03.md for ownership,
+    // test sites. See benchmarks/langarena/VM_MEMORY_CANDIDATE_2026_11_03.md for ownership,
     // pointer invalidation and OS send-right obligations; public compiler
     // destruction remains unchanged. Candidate platform acceptance is pending.
     // Preserve exact total and module counts so new FFI requires explicit review.
