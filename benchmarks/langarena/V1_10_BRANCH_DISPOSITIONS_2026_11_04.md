@@ -37,6 +37,12 @@ src/tests/Cargo equality and assignment/depth patch equivalence were rechecked.
 
 ## Extension update: blocked, explicitly deferred
 
+**Superseded by the subsequent user-authorized compatibility fix:** the extension
+now pins minimatch11.0.4 and adapts the pinned client's two validation calls using
+verified source hashes. See tools/vscode-kujo-extension/README.md and its
+actual-client regression tests. The blocked attempt below remains historical
+evidence; this extension item is no longer deferred. Branch decisions are unchanged.
+
 The requested minimatch update is **not merged**. Locked10.2.5 remains affected
 by [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 A scoped11.0.4 override makes npm audit clean but breaks the language client's
