@@ -74,7 +74,9 @@ fn all_fifty_upstream_checksums_in_both_runtimes() {
 #[test]
 #[ignore = "full upstream checksum suite including JIT; requires runtime-jit"]
 fn all_fifty_upstream_checksums_in_all_runtimes() {
-    assert!(cfg!(feature = "runtime-jit"), "all-runtime gate requires JIT support");
+    if !cfg!(feature = "runtime-jit") {
+        panic!("all-runtime gate requires JIT support");
+    }
     all_fifty_checksums(&["vm", "interpreter", "jit"]);
 }
 
