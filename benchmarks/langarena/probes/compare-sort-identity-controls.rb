@@ -2,8 +2,8 @@
 require 'json'
 require 'digest'
 require 'fileutils'
-raise 'usage: FROZEN_ARTIFACT NEW_OUTPUT' unless ARGV.size == 2
-frozen, out = ARGV.map { |p| File.expand_path(p) }
+raise 'usage: FROZEN_ARTIFACT NEW_OUTPUT [WORKLOAD...]' unless ARGV.size >= 2
+frozen, out = ARGV.first(2).map { |p| File.expand_path(p) }
 raise 'output exists' if File.exist?(out)
 raise 'diagnostic environment' unless ENV.keys.grep(/\A(?:DEBUG_|DISABLE_.*JIT|KUJO_HASHMAP_PROFILE\z)/).empty?
 binaries = {'baseline_a' => frozen + '/baseline-kujo', 'baseline_b' => frozen + '/baseline-copy-kujo', 'candidate' => frozen + '/candidate-kujo'}
@@ -13,11 +13,13 @@ config = File.expand_path('benchmarks/langarena/test.json')
 port = frozen + '/timings/timed-port.kujo'
 cases = JSON.parse(File.read(config)).to_h { |row| [row.fetch('name'), row] }
 inputs = (binaries.values + [port, config, File.expand_path(__FILE__)]).to_h { |p| [p, Digest::SHA256.file(p).hexdigest] }
-names = %w[Sort::Quick Sort::Merge]
+names = ARGV.drop(2)
+names = %w[Sort::Quick Sort::Merge] if names.empty?
+raise 'unknown or repeated workload' unless names.uniq == names && names.all? { |name| cases.key?(name) }
 orders = binaries.keys.permutation.to_a
 FileUtils.mkdir_p(out)
 FileUtils.cp(port, out + '/timed-port.kujo')
-report = {status: 'running', binaries: binaries, inputs: inputs, orders: orders, rows: [], scope: 'VM sorting diagnostic: twelve counterbalanced triplets and one excluded warmup, with byte-identical baseline A/B. Not clean-host or accepted performance.'}
+report = {status: 'running', binaries: binaries, inputs: inputs, orders: orders, rows: [], scope: 'VM workload diagnostic: twelve counterbalanced triplets and one excluded warmup, with byte-identical baseline A/B. Not clean-host or accepted performance.'}
 save = -> { File.write(out + '/report.json', JSON.pretty_generate(report)) }
 begin
   (-1...12).each do |round|

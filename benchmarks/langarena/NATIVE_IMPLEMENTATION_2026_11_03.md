@@ -1,5 +1,13 @@
 # Native implementation campaign
 
+> **2026-11-04 consolidation:** the user authorized integration of the accepted
+> campaign and retained local-store checkpoint into main. This report preserves
+> experimental history; scalar indexed writes and worker reuse described below
+> are **not included in main**. See [the consolidation ledger](PERFORMANCE_CONSOLIDATION_2026_11_04.md)
+> for current branch dispositions, verification and remaining gates. Historical
+> statements withholding merge authorization are superseded only for the selected
+> accepted/local-store work, not for pending candidates. No release is authorized.
+
 Implementation branch: `codex/native-implementation-20261103`, starting at
 `160f4c9de13660db8c64f6871f8fb222839c4883`. Accepted runtime checkpoint remains
 `cd5f2b207a8f907d6c263f5a2e405412965344ca`. Remote branch tips match these records;
@@ -333,3 +341,111 @@ individually SHA-256-verified files, including raw worker timing/build records,
 profile evidence, baseline identities and fresh sorting measurements. Executables
 are identified by hash and excluded. Local toolchain: rustc/cargo 1.96.0,
 x86_64-apple-darwin; it is not asserted to be the compiler of the frozen binary.
+
+## Next isolated experiment: scalar native indexed writes
+
+Hypothesis: integer-index/scalar-value writes needlessly decode and move two
+full-width dynamic Values before destination lookup. The candidate defers those
+materializations, then uses the existing array COW/bounds rules; nonarrays and
+owned operands retain generic VM behavior. Invalid kinds still fail operand
+validation before destination lookup. This is an experiment, not an accepted gain.
+
+The baseline for this experiment is `c27e3a8b449a406f118a63e35a75e580d7c3c856`,
+which already includes the local-store improvement. A separately linked identical
+Rust helper probe isolates this mechanism; unchanged 16-workload VM/JIT timings
+and all150 checksums determine whether to retain it. Probe gains alone are
+insufficient. Exact-bit NaN/signed-zero, negative/extreme index, unique/shared
+array and all three destination-location unit controls compare directly with the
+VM write contract. A language fixture covers snapshots, errors, owned fallback,
+dictionary and byte writes in all three runtimes. It passes on the accepted Mac
+binary before the candidate build. No candidate test result is yet claimed.
+
+### Independent allocation trace reconstruction
+
+The standalone Rust maintenance decoder `probes/heaptrack_histogram.rs` reads the
+interpreted v3 stream used by Heaptrack 1.3.0. Its record interpretation follows
+[the pinned upstream parser](https://github.com/KDE/heaptrack/blob/v1.3.0/src/analyze/accumulatedtracedata.cpp).
+Positive and malformed-stream controls pass. All 16 original traces independently
+reproduce the exact allocation-call totals printed by Heaptrack. This supersedes
+only the earlier limitation that allocation totals lacked an independent raw
+trace decode; stripped stacks still limit attribution.
+
+| Local-store JIT candidate | Allocation calls | Requests <=16 bytes | Cumulative requested bytes |
+| --- | ---: | ---: | ---: |
+| QuickSort | 1,004,982 | 932,247 | 135,073,707 |
+| MergeSort | 1,659,316 | 1,565,930 | 282,398,838 |
+| NeuralNet | 11,331,648 | 9,597,579 | 1,015,148,526 |
+| TextRaytracer | 5,120,953 | 3,432,458 | 463,761,945 |
+
+These are whole-process request totals, not retained memory or copied bytes.
+NeuralNet's 6/7/8-byte buckets contain 4,084,131 / 2,282,456 / 1,852,051 requests;
+ray's 4-byte bucket contains 1,627,769. Name/field copying is a source-supported
+hypothesis for further isolation, not proven attribution from allocation sizes.
+The archive `local-store-allocation-histograms-2026-11-03.json.gz` preserves all
+16 histograms, input trace/summary hashes, decoder source and provenance.
+
+Scalar-write CI `41722996389` stopped at test compilation because the new test
+incorrectly assumed `Value: PartialEq`. The assertion-only correction compares
+scalar kinds explicitly and retains exact float-bit checks. No candidate runtime
+success or timing result is claimed from that failed run.
+
+### Priority helper attribution follow-up
+
+`native-priority-profile.yml` reuses the original symbolized experiment executable
+SHA `629acef9…` from run `41656109318`, rather than pretending that stripped current
+CLI traces contain named helpers. It requires unchanged priority kernel inputs
+and identical `assignment.rs` / `value.rs` source, checks all four test-size
+outputs in VM/JIT, resolves Rust symbols and rejects fewer than 50 worker samples.
+Samples begin only after each warmup marker. The separate hosted Mac runner does
+not share the scalar comparison's Linux host.
+
+This executable predates the local-store/scalar-write changes and includes the
+separate worker experiment. Its samples can guide investigation of unchanged
+shared helpers; they cannot establish current-candidate performance, native
+instruction coverage or exact native-versus-helper CPU fractions. No runtime or
+benchmark algorithm change accompanies the profiling follow-up.
+
+The profiling follow-up passed in `41725794191` at `6074074f`, artifact
+`13275765423`. Independent review reconstructs every resolved sample from raw
+text, verifies input hashes/outputs, and conserves worker-tree exclusive weights.
+
+| Workload | VM worker samples | JIT worker samples | Selected JIT exclusive observations |
+| --- | ---: | ---: | --- |
+| QuickSort | 1,175 | 1,091 | indexed-write helper 33; memory movement nearest that helper 82 |
+| MergeSort | 1,187 | 809 | path-mutation helper 76; movement nearest assignment write 33 |
+| NeuralNet | 1,019 | 1,141 | root encode 82; Value clone 70; movement nearest root encode 137 |
+| TextRaytracer | 1,150 | 1,148 | root encode 48; field read 38; movement nearest root encode 68 |
+
+These are descriptive sampled occupancies, not additive causal speedup estimates.
+Unknown generated-code frames remain unknown. VM dispatch and opcode cloning also
+appear repeatedly. Environment lookup is prominent but does not reopen the rejected
+caching tactic: concurrent diagnostic-environment observation semantics still apply.
+The QuickSort evidence supports testing scalar indexed-write materialization;
+NeuralNet supports investigating transient struct roots and field access. No named
+helper is deemed responsible solely from a size histogram or CI success status.
+`priority-helper-profiles-2026-11-03.json.gz` retains all raw/resolved samples,
+provenance and the independent verifier. The older experimental executable scope
+above remains binding; this is not a current-candidate or competitor comparison.
+
+## Worker reuse: focused VM Neural identity controls
+
+CI41731130400 at3eeefa72 completed; artifact13277200596. Independent review
+verifies all39 invocations (three excluded warmups), both baseline copies against
+the original frozen baseline hash, the frozen candidate hash, exact outputs,
+source/config/timer identities, and all six three-way orders twice. No rebuild
+or integration of owner runtime code occurred.
+
+Relative to the within-triplet geometric mean of identical baselines, candidate
+median ratios are0.97465 for computation and0.97257 for process elapsed, with only
+one candidate win in12 pairs. Process ratios span0.92579–1.01546. Identical A/B
+baseline ratios themselves have median0.97602 (computation0.97562), so these
+controls do not attribute the candidate loss to a specific runtime mechanism or
+justify subtracting a numeric load correction. The adverse Neural result persists
+in this sample; worker reuse remains **not accepted** despite repeated Matmul gains.
+
+Archive `owner-neural-controls-2026-11-03.json.gz` preserves raw samples, identities,
+CPU/load observations, independent reviewer/results and run provenance with
+per-file hashes. No clean-host or production result is inferred. The next owner
+acceptance decision requires an explanation or mitigation of the observed VM
+regression plus the already-open production/resource/platform gates; it must not
+be merged merely because the CI command succeeded.
