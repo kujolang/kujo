@@ -11,7 +11,15 @@ This extension provides:
 ```bash
 cd tools/vscode-kujo-extension
 npm install
+npm run check
 ```
+
+The dependency check exercises the glob API used by `vscode-languageclient`.
+Do not override minimatch to version 11 while the client calls `makeRe()`:
+version 11 removes that method. GHSA-g3hv-75wg-m249 remains open pending a
+compatible patched dependency or a separately reviewed client adaptation.
+The current client uses optimization level 1; the advisory describes level 2
+amplification. This limits the demonstrated path, but is not a package fix.
 
 ## Run Locally In Extension Host
 

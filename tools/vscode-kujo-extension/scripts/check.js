@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const assert = require('node:assert/strict');
+const { createRequire } = require('node:module');
 
 const extension_root = path.resolve(__dirname, '..');
 
@@ -68,3 +70,21 @@ if (2 !== command_default.length || 'kujo' !== command_default[0] || 'lsp' !== c
 }
 
 console.log('Extension static checks passed.');
+
+// Exercise the dependency resolved by the client, including its validation API.
+// An audit-clean minimatch 11 override removes makeRe and breaks both callers.
+const client_require = createRequire(require.resolve('vscode-languageclient/node'));
+const { Minimatch } = client_require('minimatch');
+for (const [pattern, options, matching, nonmatching] of [
+	['**/*.kujo', { dot: true }, '/workspace/.hidden/main.kujo', '/workspace/main.rs'],
+	['**/*.KUJO', { dot: true, nocase: true }, '/workspace/main.kujo', '/workspace/main.rs'],
+	['/workspace/**/*.kujo', { noext: true }, '/workspace/lib/main.kujo', '/outside/main.kujo'],
+	['/workspace/+(main).kujo', { noext: true }, '/workspace/+(main).kujo', '/workspace/main.kujo'],
+]) {
+	const matcher = new Minimatch(pattern, options);
+	assert.equal(typeof matcher.makeRe, 'function', 'languageclient requires Minimatch.makeRe');
+	assert.ok(matcher.makeRe(), 'languageclient must accept ordinary glob patterns');
+	assert.equal(matcher.match(matching), true);
+	assert.equal(matcher.match(nonmatching), false);
+}
+console.log('Language client glob dependency compatibility checks passed.');
