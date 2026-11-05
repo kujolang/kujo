@@ -1,5 +1,11 @@
 # Performance consolidation — 2026-11-04
 
+**Final 1.10 scope decisions:** see
+[the complete preserved-ref disposition list](V1_10_BRANCH_DISPOSITIONS_2026_11_04.md).
+It supersedes the open adoption decisions below: seven proposals are deferred
+beyond 1.10 and the root-hash experiment is rejected. Historical evidence and
+remaining future validation requirements below are retained, not waived.
+
 ## Decision and boundary
 
 The user authorized consolidating verified improvements into main for a future
