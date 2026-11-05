@@ -173,3 +173,9 @@ Integration guard repair: the old `notes/VM_MEMORY_CANDIDATE_2026_11_03.md`
 violated the field-note naming gate over the full main merge range. Its content
 is preserved byte-for-byte under benchmarks/langarena with its test comment
 reference updated. The gate is retained; no suppression or runtime change.
+
+The field-note guard also exposed Bash3.2 nounset failure on an empty added-note
+array. It now exits successfully before expanding that empty array. Local
+controls accept the empty consolidation range and an existing valid candidate
+note, and still reject the original invalid note path. No validation rule is
+relaxed for an actual added note.

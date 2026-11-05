@@ -39,6 +39,13 @@ while IFS= read -r changed_path; do
 	fi
 done < <(git diff --name-only --diff-filter=A "$base_sha" "$head_sha")
 
+# Bash 3.2 treats expansion of an empty array as unset under nounset.
+# No added notes means there is nothing to validate on any supported shell.
+if (( ${#added_notes[@]} == 0 )); then
+	echo "[field-notes] No new session-note files in range ${base_sha}..${head_sha}"
+	exit 0
+fi
+
 invalid_note_paths=()
 for note_path in "${added_notes[@]}"; do
 	if [[ "$note_path" == "notes/GOTCHAS.md" || "$note_path" == "notes/README.md" || "$note_path" == "notes/FIELD_NOTES_SYSTEM.md" ]]; then
