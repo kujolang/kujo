@@ -12,6 +12,7 @@ fn candidate_identity_matches_cli_lock_packages_and_public_docs() {
     assert_eq!(metadata["intended_tag"], format!("v{version}"));
     assert_eq!(metadata["publication_authorized"], false);
     assert_eq!(metadata["native_archive"], format!("kujo-v{version}-{{platform}}.tar.gz"));
+    assert_eq!(metadata["windows_archive"], format!("kujo-v{version}-windows-x64.zip"));
     assert_eq!(metadata["source_archive"], format!("kujo-v{version}-source.tar.gz"));
     let evidence_note = metadata["evidence_note"].as_str().unwrap();
     assert!(root.join(evidence_note).is_file());

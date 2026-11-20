@@ -5,7 +5,7 @@ Exact published 1.9.0 source: `2cfaf185ad03059c89ef4f72fb061074255d00fc`.
 Updated: 2026-10-22
 Stable release: [v1.9.0](https://github.com/kujolang/kujo/releases/tag/v1.9.0)
 
-> Current crate version: `1.9.0` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.10.0` in [Cargo.toml](Cargo.toml)
 
 Kujo **1.9.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free npm packages. See the

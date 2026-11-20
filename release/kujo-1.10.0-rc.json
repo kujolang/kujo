@@ -1,0 +1,13 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.10.0",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.10.0",
+  "published_stable": "1.9.0",
+  "native_archive": "kujo-v1.10.0-{platform}.tar.gz",
+  "windows_archive": "kujo-v1.10.0-windows-x64.zip",
+  "source_archive": "kujo-v1.10.0-source.tar.gz",
+  "evidence_note": "docs/RELEASE_NOTES_1_10_0.md",
+  "release_theme": "Bounded runtime optimizations, correctness fixes, and dependency hardening.",
+  "publication_authorized": false
+}
