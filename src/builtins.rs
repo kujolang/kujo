@@ -9,7 +9,6 @@ use crate::interpreter::{DictMap, Value};
 use crate::network_policy;
 use crate::runtime_limits;
 use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -34,6 +33,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use time::{Date, OffsetDateTime, UtcDateTime};
 use uuid::Uuid;
 
 mod json_serialize;
@@ -1143,12 +1143,12 @@ fn csv_row_fields(value: &Value) -> Result<std::collections::BTreeMap<&str, &Val
 /// Date/Time functions
 /// Get current Unix timestamp (seconds since epoch)
 pub fn now() -> f64 {
-    Utc::now().timestamp() as f64
+    jiff::Timestamp::now().as_second() as f64
 }
 
 /// Get current UTC time as an ISO-8601 UTC timestamp.
 pub fn now_utc() -> String {
-    Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string()
+    jiff::Timestamp::now().strftime("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
 fn safe_duration_since_unix_epoch(now: SystemTime) -> Duration {
@@ -1228,58 +1228,72 @@ pub fn elapsed(start: f64, end: f64) -> f64 {
     end - start
 }
 
-/// Format a Unix timestamp to a date string
-/// Supports basic format: "YYYY-MM-DD HH:mm:ss"
-pub fn format_date(timestamp: f64, format_str: &str) -> String {
+const DATE_YEARS: std::ops::RangeInclusive<i32> = -262_143..=262_142;
+const INVALID_DATE_RANGE: &str = "Invalid timestamp: value is out of supported range";
+const INVALID_DATE_NUMBER: &str = "Invalid timestamp: value must be a finite number";
+
+fn date_seconds(timestamp: f64) -> Result<i64, String> {
     if !timestamp.is_finite() {
-        return "Invalid timestamp: value must be a finite number".to_string();
+        return Err(INVALID_DATE_NUMBER.to_string());
     }
-    if timestamp < i64::MIN as f64 || timestamp > i64::MAX as f64 {
-        return "Invalid timestamp: value is out of supported range".to_string();
+    if timestamp < i64::MIN as f64 || timestamp >= i64::MAX as f64 {
+        return Err(INVALID_DATE_RANGE.to_string());
     }
+    Ok(timestamp as i64)
+}
 
-    let Some(dt) = Utc.timestamp_opt(timestamp as i64, 0).single() else {
-        return "Invalid timestamp: value is out of supported range".to_string();
+fn date_timestamp(seconds: i64) -> Result<UtcDateTime, String> {
+    let date =
+        UtcDateTime::from_unix_timestamp(seconds).map_err(|_| INVALID_DATE_RANGE.to_string())?;
+    // Keep the previously supported civil-year range for Unix timestamps.
+    if !DATE_YEARS.contains(&date.year()) {
+        return Err(INVALID_DATE_RANGE.to_string());
+    }
+    Ok(date)
+}
+
+fn format_date_tokens(date: UtcDateTime, format_str: &str) -> String {
+    let weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    let year = date.year();
+    let year = match year {
+        0..=9999 => format!("{year:04}"),
+        -9999..=-1 => format!("-{:04}", year.unsigned_abs()),
+        _ => format!("{year:+}"),
     };
+    format_str
+        .replace("ddd", weekdays[usize::from(date.weekday().number_days_from_monday())])
+        .replace("YYYY", &year)
+        .replace("MM", &format!("{:02}", u8::from(date.month())))
+        .replace("DD", &format!("{:02}", date.day()))
+        .replace("HH", &format!("{:02}", date.hour()))
+        .replace("mm", &format!("{:02}", date.minute()))
+        .replace("ss", &format!("{:02}", date.second()))
+}
 
-    // Simple format string replacement
-    let result = format_str
-        .replace("ddd", &dt.format("%a").to_string())
-        .replace("YYYY", &dt.format("%Y").to_string())
-        .replace("MM", &dt.format("%m").to_string())
-        .replace("DD", &dt.format("%d").to_string())
-        .replace("HH", &dt.format("%H").to_string())
-        .replace("mm", &dt.format("%M").to_string())
-        .replace("ss", &dt.format("%S").to_string());
-
-    result
+/// Format a Unix timestamp using Kujo date tokens.
+pub fn format_date(timestamp: f64, format_str: &str) -> String {
+    match date_seconds(timestamp).and_then(date_timestamp) {
+        Ok(date) => format_date_tokens(date, format_str),
+        Err(error) => error,
+    }
 }
 
 /// Format a Unix timestamp in an IANA time zone using the same replacement
 /// tokens as `format_date`.
 pub fn format_date_tz(timestamp: f64, format_str: &str, timezone: &str) -> Result<String, String> {
-    use chrono_tz::Tz;
-
-    if !timestamp.is_finite() {
-        return Err("Invalid timestamp: value must be a finite number".to_string());
-    }
-    if timestamp < i64::MIN as f64 || timestamp > i64::MAX as f64 {
-        return Err("Invalid timestamp: value is out of supported range".to_string());
-    }
-    let tz: Tz = timezone.parse().map_err(|_| format!("Invalid time zone: {timezone}"))?;
-    let dt = Utc
-        .timestamp_opt(timestamp as i64, 0)
-        .single()
-        .ok_or_else(|| "Invalid timestamp: value is out of supported range".to_string())?
-        .with_timezone(&tz);
-    Ok(format_str
-        .replace("ddd", &dt.format("%a").to_string())
-        .replace("YYYY", &dt.format("%Y").to_string())
-        .replace("MM", &dt.format("%m").to_string())
-        .replace("DD", &dt.format("%d").to_string())
-        .replace("HH", &dt.format("%H").to_string())
-        .replace("mm", &dt.format("%M").to_string())
-        .replace("ss", &dt.format("%S").to_string()))
+    let seconds = date_seconds(timestamp)?;
+    // Preserve case-sensitive IANA lookup over the bundled database.
+    let tz = tzdb::TZ_NAMES
+        .contains(&timezone)
+        .then_some(())
+        .and_then(|_| tzdb::tz_by_name(timezone))
+        .ok_or_else(|| format!("Invalid time zone: {timezone}"))?;
+    let utc = date_timestamp(seconds)?.unix_timestamp();
+    let offset =
+        tz.find_local_time_type(utc).map_err(|_| INVALID_DATE_RANGE.to_string())?.ut_offset();
+    let local = UtcDateTime::from_unix_timestamp(utc + i64::from(offset))
+        .map_err(|_| INVALID_DATE_RANGE.to_string())?;
+    Ok(format_date_tokens(local, format_str))
 }
 
 /// Parse a date string to Unix timestamp
@@ -1292,25 +1306,53 @@ pub fn parse_date(date_str: &str, format: &str) -> Result<f64, String> {
         ));
     }
 
-    let parsed_date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").map_err(|error| {
-        format!("parse_date failed: '{}' does not match format 'YYYY-MM-DD' ({})", date_str, error)
-    })?;
-
-    let naive_datetime = parsed_date
-        .and_hms_opt(0, 0, 0)
-        .ok_or_else(|| format!("parse_date failed: '{}' is out of range", date_str))?;
-    let dt: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive_datetime, Utc);
-
-    Ok(dt.timestamp() as f64)
+    let invalid_date =
+        || format!("parse_date failed: '{date_str}' does not match format 'YYYY-MM-DD'");
+    let small_component = |part: &str| {
+        let part = part.trim_start();
+        if part.len() > 2 || !part.bytes().all(|byte| byte.is_ascii_digit()) {
+            return None;
+        }
+        part.parse::<u8>().ok()
+    };
+    let mut parts = date_str.rsplitn(3, '-');
+    let day = parts.next().and_then(small_component).ok_or_else(invalid_date)?;
+    let month = parts
+        .next()
+        .and_then(small_component)
+        .and_then(|month| time::Month::try_from(month).ok())
+        .ok_or_else(invalid_date)?;
+    let year = parts.next().ok_or_else(invalid_date)?.trim_start();
+    if !year.starts_with(['+', '-']) && year.len() > 4 {
+        return Err(invalid_date());
+    }
+    let year = year.parse::<i32>().map_err(|_| invalid_date())?;
+    if !DATE_YEARS.contains(&year) {
+        return Err(format!("parse_date failed: '{date_str}' is out of range"));
+    }
+    let date = Date::from_calendar_date(year, month, day).map_err(|_| invalid_date())?;
+    Ok(date.midnight().assume_utc().unix_timestamp() as f64)
 }
 
 /// Parse an RFC 3339 timestamp and return Unix seconds, preserving the
 /// instant represented by its required UTC offset.
 pub fn parse_datetime(value: &str) -> Result<f64, String> {
-    let parsed = chrono::DateTime::parse_from_rfc3339(value).map_err(|error| {
-        format!("parse_datetime failed: '{}' is not RFC 3339 ({})", value, error)
-    })?;
-    Ok(parsed.timestamp_millis() as f64 / 1000.0)
+    use time::format_description::well_known::Rfc3339;
+
+    let parse = |input| {
+        OffsetDateTime::parse(input, &Rfc3339)
+            .map_err(|error| format!("parse_datetime failed: '{value}' is not RFC 3339 ({error})"))
+    };
+    let nanos = if value.get(17..19) == Some("60") {
+        // OffsetDateTime clamps leap seconds. Parse the preceding second to
+        // preserve accepted offset forms and fractions before advancing it.
+        let mut previous_second = value.to_owned();
+        previous_second.replace_range(17..19, "59");
+        parse(&previous_second)?.unix_timestamp_nanos() + 1_000_000_000
+    } else {
+        parse(value)?.unix_timestamp_nanos()
+    };
+    Ok(nanos.div_euclid(1_000_000) as f64 / 1000.0)
 }
 
 fn kv_store_path() -> Result<PathBuf, String> {
@@ -3201,6 +3243,7 @@ mod tests {
         let error = format_date_tz(0.0, "YYYY-MM-DD", "Mars/Olympus")
             .expect_err("invalid time zone must fail");
         assert!(error.contains("Invalid time zone"));
+        assert!(format_date_tz(0.0, "YYYY-MM-DD", "america/detroit").is_err());
     }
 
     #[test]
@@ -3208,6 +3251,25 @@ mod tests {
         let local = parse_datetime("2026-09-16T09:30:00-04:00").expect("valid RFC 3339");
         let utc = parse_datetime("2026-09-16T13:30:00Z").expect("valid RFC 3339");
         assert_eq!(local, utc);
+    }
+
+    #[test]
+    fn test_datetime_keeps_extended_years_and_unix_millisecond_precision() {
+        let extended = parse_date("+12000-01-02", "YYYY-MM-DD").unwrap();
+        assert_eq!(format_date(extended, "ddd YYYY-MM-DD"), "Sun +12000-01-02");
+        assert_eq!(format_date_tz(extended, "YYYY-MM-DD", "UTC").unwrap(), "+12000-01-02");
+        assert_eq!(format_date(-0.9, "YYYY-MM-DD HH:mm:ss"), "1970-01-01 00:00:00");
+        assert_eq!(parse_datetime("1969-12-31T23:59:59.999999Z").unwrap(), -0.001);
+        assert_eq!(parse_datetime("2016-12-31T23:59:60.250Z").unwrap(), 1_483_228_800.250);
+        assert_eq!(parse_datetime("2016-12-31T18:59:60.250-05:00").unwrap(), 1_483_228_800.250);
+    }
+
+    #[test]
+    fn test_parse_date_keeps_the_civil_component_grammar() {
+        assert_eq!(parse_date(" 1970- 1- 2", "YYYY-MM-DD").unwrap(), 86_400.0);
+        for invalid in ["12000-01-02", "1970-+1-1", "1970-001-001", "1900-02-29"] {
+            assert!(parse_date(invalid, "YYYY-MM-DD").is_err(), "{invalid}");
+        }
     }
 
     #[test]

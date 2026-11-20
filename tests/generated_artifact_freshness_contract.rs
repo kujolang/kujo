@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use jiff::civil::Date;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -87,10 +87,10 @@ fn assert_fresh_date(path: &Path, prefix: &str) {
         .strip_prefix(prefix)
         .unwrap_or_else(|| panic!("{} should parse with {} prefix", path.display(), prefix))
         .trim();
-    let generated_date = NaiveDate::parse_from_str(raw_date, "%Y-%m-%d")
-        .expect("generated date should be YYYY-MM-DD");
-    let today = chrono::Utc::now().date_naive();
-    let age_days = today.signed_duration_since(generated_date).num_days();
+    let generated_date =
+        Date::strptime("%Y-%m-%d", raw_date).expect("generated date should be YYYY-MM-DD");
+    let today = jiff::Timestamp::now().to_zoned(jiff::tz::TimeZone::UTC).date();
+    let age_days = today.duration_since(generated_date).as_secs() / 86_400;
     assert!(
         (0..=FRESHNESS_MAX_AGE_DAYS).contains(&age_days),
         "{} should be regenerated within {} days (found {} days old, date={})",
@@ -179,7 +179,7 @@ fn generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_outpu
     fs::create_dir_all(&temp_dir).expect("failed to create temp dir");
     let output_md = temp_dir.join("vm_mismatch.md");
     let output_csv = temp_dir.join("vm_mismatch.csv");
-    let runner = repo_root().join("target").join("debug").join("kujo");
+    let runner = Path::new(env!("CARGO_BIN_EXE_kujo"));
 
     run_script_with_env(
         "generate_vm_runtime_mismatch_inventory.sh",

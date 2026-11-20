@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [1.10.0] (unpublished candidate)
 
+- Replace the unmaintained Chrono dependencies with maintained date, clock and
+  bundled timezone libraries. The date builtins retain their existing format
+  tokens and Unix timestamp units.
+
 - Enable correctly rounded JSON float parsing. Decimal and exponent values at
   the safe-integer boundary preserve their nearest IEEE-754 value. Integer token
   types, overflow rejection and existing JSON bounds are preserved.

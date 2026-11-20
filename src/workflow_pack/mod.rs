@@ -183,9 +183,9 @@ fn save_report_to_pack(
     pack_dir: &Path,
     project_name: &str,
 ) -> Result<PathBuf, String> {
-    let now = chrono::Local::now();
-    let date_str = now.format("%Y-%m-%d").to_string();
-    let time_str = now.format("%H%M%S").to_string();
+    let now = jiff::Zoned::now();
+    let date_str = now.strftime("%Y-%m-%d");
+    let time_str = now.strftime("%H%M%S");
     let folder_name = format!("{}-{}-{}", project_name, date_str, time_str);
 
     let reports_root = pack_dir.join(".reports");

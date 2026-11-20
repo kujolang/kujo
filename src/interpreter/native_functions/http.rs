@@ -5,7 +5,6 @@
 use crate::interpreter::{DictMap, HttpResponseStreamParts, Interpreter, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -1228,8 +1227,8 @@ fn parse_retry_after(headers: &DictMap) -> Option<i64> {
     if let Ok(seconds) = trimmed.parse::<i64>() {
         return Some(seconds.max(0).saturating_mul(1000));
     }
-    let parsed = DateTime::parse_from_rfc2822(trimmed).ok()?;
-    Some((parsed.with_timezone(&Utc) - Utc::now()).num_milliseconds().max(0))
+    let parsed = jiff::fmt::rfc2822::parse(trimmed).ok()?.timestamp();
+    Some(parsed.duration_since(jiff::Timestamp::now()).as_millis().max(0) as i64)
 }
 
 fn provider_code_from_body(text: &str) -> Option<String> {
@@ -5204,6 +5203,15 @@ mod tests {
             headers.insert("Retry-After".into(), str_value(seconds));
             assert_eq!(parse_retry_after(&headers), Some(expected));
         }
+    }
+
+    #[test]
+    fn retry_after_accepts_an_http_date_and_still_rejects_invalid_dates() {
+        let mut headers = DictMap::default();
+        headers.insert("Retry-After".into(), str_value("Sun, 06 Nov 1994 08:49:37 GMT"));
+        assert_eq!(parse_retry_after(&headers), Some(0));
+        headers.insert("Retry-After".into(), str_value("06 Nov yesterday"));
+        assert_eq!(parse_retry_after(&headers), None);
     }
 
     #[test]

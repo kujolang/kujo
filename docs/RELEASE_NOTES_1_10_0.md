@@ -50,8 +50,9 @@ adaptation retains file-operation matching with the updated minimatch API.
 
 The candidate updates the locked capability, SQLite, compression, TLS,
 cryptographic and I/O dependencies for applicable RustSec advisories.
-The artifact workflow requires a strict audit before builds. Two denied
-maintenance advisories remain on the timezone dependency graph.
+Date and timezone handling now uses maintained dependencies and a bundled IANA
+database for cross-platform consistency. The artifact workflow requires a
+strict audit before builds.
 
 ## Compatibility and upgrade notes
 
