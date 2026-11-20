@@ -210,3 +210,26 @@ jobs:
           KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT: ${{ github.workspace }}/.agent-fixtures
           KUJO_ENABLE_SOCKET_TESTS: "1"
         run: bash scripts/release_gate.sh
+
+      - name: Regenerate inventory evidence after a gate failure
+        if: failure() && hashFiles('target/debug/kujo') != ''
+        env:
+          TZ: UTC
+          KUJO_MISMATCH_FIXTURE_TIMEOUT_SECONDS: "60"
+          KUJO_MISMATCH_CRYPTO_FIXTURE_TIMEOUT_SECONDS: "300"
+        run: |
+          mkdir -p inventory-evidence
+          git rev-parse HEAD > inventory-evidence/source.txt
+          sha256sum target/debug/kujo >> inventory-evidence/source.txt
+          bash scripts/generate_unsafe_inventory.sh --strict --output-md inventory-evidence/UNSAFE_INVENTORY.md --output-csv inventory-evidence/UNSAFE_INVENTORY.csv
+          bash scripts/generate_v1_code_todo_triage.sh --strict --output-md inventory-evidence/V1_CODE_TODO_TRIAGE.md --output-csv inventory-evidence/V1_CODE_TODO_TRIAGE.csv
+          bash scripts/generate_vm_runtime_mismatch_inventory.sh --strict --runner target/debug/kujo --output-md inventory-evidence/VM_RUNTIME_MISMATCH_INVENTORY.md --output-csv inventory-evidence/VM_RUNTIME_MISMATCH_INVENTORY.csv
+
+      - name: Upload generated inventory evidence
+        if: failure() && hashFiles('inventory-evidence/source.txt') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-gate-inventories
+          path: inventory-evidence/
+          if-no-files-found: error
+          retention-days: 7
