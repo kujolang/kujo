@@ -88,6 +88,8 @@ fn seed_hygiene_policy_repo(root: &Path) {
         "LICENSE",
         "README.md",
         "ROADMAP.md",
+        "THIRD_PARTY_NOTICES.md",
+        "deny.toml",
         "install.sh",
         "rustfmt.toml",
     ] {
@@ -132,6 +134,8 @@ fn tracked_root_surface_matches_hygiene_allowlist() {
         "LICENSE".to_string(),
         "README.md".to_string(),
         "ROADMAP.md".to_string(),
+        "THIRD_PARTY_NOTICES.md".to_string(),
+        "deny.toml".to_string(),
         "install.sh".to_string(),
         "rustfmt.toml".to_string(),
     ];

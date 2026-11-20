@@ -28,6 +28,8 @@ Current allowed tracked root files:
 - `LICENSE`
 - `README.md`
 - `ROADMAP.md`
+- `THIRD_PARTY_NOTICES.md`
+- `deny.toml`
 - `install.sh`
 - `rustfmt.toml`
 
