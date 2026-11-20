@@ -1,0 +1,18 @@
+path	head	branch	state	disposition
+<repos>/kujo	523c395d57cf939c14da806eaa1788fd785a71e4	refs/heads/main	Clean at intake	Retain active worktree
+/private/tmp/kujo-capture-census-20261031	f58f0a9deb40c751d55121fcbb69495bc724b7b4	detached	Path unavailable; registered metadata prunable	Retain verified recovery archive and registration
+/private/tmp/kujo-checked-validation-20261101	568dc6127556984833617b3cd64914a2307420a2	refs/heads/codex/checked-assignment-validation-20261101	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-checkpoint-review-20261102	7fd4f499391b9c63b9910426fb68404bb99bb29f	refs/heads/codex/checkpoint-review-20261102	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-depth-cache-hash-20261101	9fb0ed705c59a8da6c6eab36e9f50c3a0722f728	refs/heads/codex/depth-cache-hash-20261101	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-jit-owner-reuse-20261103	1eea508d136a3552b6161c110f140de2692e6c8d	refs/heads/codex/jit-owner-reuse-20261103	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-loop-condition-20261031	eb299e0a699560c80d87d0d81582914ba2c6d956	refs/heads/codex/loop-break-exit-20261031	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-loop-function-fixture-20261031	6d96c151e8b9f3d814043eebe5768ae5c61cde97	refs/heads/codex/loop-function-fixture-20261031	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-loop-reuse-20261101	348a62700179e59beccaefddc7ed4da30992d67b	refs/heads/codex/loop-cache-reuse-20261101	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-loop-stats-20261101	348a62700179e59beccaefddc7ed4da30992d67b	refs/heads/codex/loop-reuse-integration-20261101	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-memory-platform-20261103	089246278e955545d98415f66b851b01803a12ce	refs/heads/codex/native-memory-platform-20261103	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-msrv-lint-20261031	2d3ee2ee6649df6074873d2ec378f25beaeb9ffe	refs/heads/codex/msrv-lint-compat-20261031	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-native-field-fusion-20261103	53b190560217d66ec2b31742ec6affa49a5126ec	refs/heads/codex/native-field-fusion-20261103	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-native-implementation-20261103	49c0d98918bd52dd43639e8866f3a7b815801f77	refs/heads/codex/native-implementation-20261103	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-native-memory-20261103	754453061a98fe3c994b89f1c9308326a50c544d	refs/heads/codex/native-memory-gates-20261103	Path unavailable; registered metadata prunable	Retain registration
+/private/tmp/kujo-vm-code-lifetime-20261101	fc358348d8e590d05d1110d56ee49b88424b8028	refs/heads/codex/vm-code-lifetime-20261101	Path unavailable; registered metadata prunable	Retain verified recovery archive and registration
+<repos>/kujo-nested-dictionary-collections	1ed1866006bdf7b2666e819689b1228613f7807a	refs/heads/codex/repeated-array-reservation-20261031	Clean at intake	Retain active worktree
