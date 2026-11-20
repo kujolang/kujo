@@ -323,6 +323,20 @@
       "verification_method": "source and dependency runtime identity",
       "confidence": "high",
       "remaining_uncertainty": "No production runtime changes or general sandbox assurance"
+    },
+    {
+      "finding_id": "UC-18",
+      "requirement": "Discover optional connectors on agent and team registry pages without granting authority",
+      "classification": "PARTIAL",
+      "repository": "agents.kujolang.ai",
+      "commit_sha": "97b1affa6fc133f561d55ac6a753d2193e09e1ef",
+      "file_path_and_symbol": "scripts/sync-agent-content.py#sync_set; templates/page-home.html; kujo-agents@a7e9d0236d6e64b5db30273b32f4ad8c124f5173 schemas/agent-manifest.schema.json and scripts/generate_runtime_adapters.py#manifests",
+      "supporting_test_or_receipt": "tests/test_sync_agent_content.py, 4 tests passed",
+      "external_source_url": null,
+      "retrieval_timestamp": "2026-11-20T14:46:22Z",
+      "verification_method": "source + executed fixture",
+      "confidence": "high",
+      "remaining_uncertainty": "Compatibility index and setup path are proposed. No provider authorization is performed by the existing static catalog."
     }
   ]
 }

@@ -1,6 +1,6 @@
 # 10. Proof of concept
 
-Status is proposed. No code, accounts or deployment are part of the research. The first authorized implementation is an opt-in single-operator workspace with one fixed Software Factory team and two runnable adapters. Use local/custom plus Slack, with Slack simulated by signed fixtures before a separately approved sandbox trial. Add Matrix after those interfaces pass to establish two independent external networks before claiming external-provider portability.
+Status is proposed. No code, accounts or deployment are part of the research. The first authorized implementation is an opt-in single-operator workspace with one fixed Software Factory team and two runnable transport adapters. Implement the collaboration package and generic host interface outside Software Factory. Prove a WebOps read-only/review host and a standalone fixture against the same contract. Use local/custom plus Slack, with Slack simulated by signed fixtures before a separately approved sandbox trial. Add Matrix after those interfaces pass to establish two independent external networks before claiming external-provider portability.
 
 ## Scope and behavior
 
@@ -57,9 +57,12 @@ Ingress request ID, adapter installation and occurrence ID are required. A direc
 
 ## Implementation boundaries and acceptance tests
 
+The [shared package and registry contract](11-registry-and-factory-integration.md) defines host capability and discovery requirements for this pilot.
+
 | Check | Required result |
 |---|---|
 | Offline end-to-end | Existing installed controller plus deterministic representative worker/proposal fixtures. Start from custom and separately with signed Slack input. Link staged → prepared → submitted → native run, role handoff and review receipt. One same-thread reply crosses surfaces with shared canonical role identity. Test fixture and production-style traces have distinct labels. |
+| Host independence | Shared conformance suite runs with Software Factory absent. WebOps and a standalone fixture register scoped principals and share message and review projections. Software Factory-specific tasks, routes and pack hashes appear only in its host binding or host-specific receipts. |
 | Controller regression | Role schema/proposal restrictions, source digests, Workcell controls, independent review/acceptance, local release accounting and deployment false still hold. Live behavior needs a separately approved bounded mission and its own receipt. |
 | Auth and tenant isolation | Reject forged/stale Slack signatures, missing binding, unauthorized IDs, mismatched channel/installation, revoked grant, cross-workspace object references, fake worker actor and review/approval from a bot. Keep errors externally safe. |
 | Replay and races | Same event twice produces one occurrence, one thread event and at most one staged intent. Conflicting event or intent ID returns conflict. Two callers authorize concurrently and only one crosses submit. An edit/delete after staging cannot change sealed brief/routing. |
