@@ -495,7 +495,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             };
 
                             let column_names: Vec<String> =
-                                stmt.column_names().iter().map(|v| v.to_string()).collect();
+                                stmt.column_names().map(str::to_owned).collect();
 
                             let query_result = if params_refs.is_empty() {
                                 stmt.query([])
@@ -1199,10 +1199,20 @@ mod tests {
         .unwrap();
         assert!(matches!(insert_result, Value::Int(1)));
 
-        let query_result =
-            handle("db_query", &[db.clone(), str_value("SELECT name FROM users ORDER BY id")])
-                .unwrap();
-        assert!(matches!(query_result, Value::Array(rows) if rows.len() == 1));
+        let query_result = handle(
+            "db_query",
+            &[db.clone(), str_value("SELECT id AS user_id, name AS user_name FROM users")],
+        )
+        .unwrap();
+        let Value::Array(rows) = query_result else {
+            panic!("expected SQLite rows, received {query_result:?}");
+        };
+        let [Value::Dict(row)] = rows.as_slice() else {
+            panic!("expected one SQLite row, received {rows:?}");
+        };
+        assert_eq!(row.len(), 2);
+        assert!(matches!(row.get("user_id"), Some(Value::Int(1))));
+        assert!(matches!(row.get("user_name"), Some(Value::Str(name)) if name.as_str() == "alice"));
 
         let close_result = handle("db_close", &[db]).unwrap();
         assert!(matches!(close_result, Value::Bool(true)));
