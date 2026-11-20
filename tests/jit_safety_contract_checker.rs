@@ -1,6 +1,16 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+#[test]
+fn current_jit_unsafe_boundaries_have_lifetime_contracts() {
+    let output = Command::new("bash")
+        .arg("scripts/check_jit_safety_contracts.sh")
+        .current_dir(repo_root())
+        .output()
+        .expect("run JIT safety contract checker");
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
