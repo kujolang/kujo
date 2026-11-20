@@ -1,8 +1,6 @@
-const path = require('path');
 const vscode = require('vscode');
 const {
 	LanguageClient,
-	TransportKind,
 	Trace,
 } = require('vscode-languageclient/node');
 
@@ -26,18 +24,9 @@ function createServerOptions(command_config) {
 	const command = String(command_config[0]);
 	const args = command_config.slice(1).map(String);
 
-	return {
-		run: {
-			command,
-			args,
-			transport: TransportKind.stdio,
-		},
-		debug: {
-			command,
-			args,
-			transport: TransportKind.stdio,
-		},
-	};
+	// The client's default executable transport uses stdio. Setting it
+	// explicitly would also append a --stdio argument, which Kujo rejects.
+	return { command, args };
 }
 
 function activate(context) {
@@ -53,12 +42,14 @@ function activate(context) {
 		return;
 	}
 
+	const watcher = vscode.workspace.createFileSystemWatcher('**/*.kujo');
+	context.subscriptions.push(watcher);
 	const client_options = {
 		documentSelector: [
 			{ scheme: 'file', language: 'kujo' },
 		],
 		synchronize: {
-			fileEvents: vscode.workspace.createFileSystemWatcher('**/*.kujo'),
+			fileEvents: watcher,
 		},
 	};
 
@@ -72,7 +63,7 @@ function activate(context) {
 	const trace_setting = config.get('lsp.trace.server', 'off');
 	client.setTrace(parseTraceLevel(trace_setting));
 
-	context.subscriptions.push(client.start());
+	return client.start();
 }
 
 async function deactivate() {

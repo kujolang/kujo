@@ -56,6 +56,14 @@ name/path used on that machine:
 
 ## Package As VSIX
 
+For an extension-host smoke test, open an isolated workspace containing
+`kujo-host-smoke.kujo`. Give it a function definition on lines 1–3 and a call
+starting on line 4. Set `kujo.lsp.command` to the absolute Kujo binary path
+followed by `lsp` in the workspace's VS Code settings. Start VS Code with
+`--extensionDevelopmentPath` pointing here and `--extensionTestsPath`
+pointing to `scripts/host-smoke.js`. The test writes
+`kujo-host-smoke.passed` in the workspace after a successful hover response.
+
 ```bash
 npm install -g @vscode/vsce
 vsce package
