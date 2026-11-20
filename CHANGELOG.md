@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Require the strict Rust dependency audit before official release artifact
+  builds. Update the locked filesystem capability, SQLite, compression, TLS,
+  cryptography and I/O dependencies where patched versions are available.
+
 - Update the VS Code extension's minimatch dependency to 11.0.4 to address
   GHSA-g3hv-75wg-m249. Adapt the pinned language client's two pattern-validation
   calls to the new API, with checked installation/packaging and regression tests

@@ -1166,6 +1166,12 @@ mod tests {
     }
 
     #[test]
+    fn bundled_sqlite_includes_the_wal_restart_fix() {
+        // RUSTSEC-2026-0459 was fixed in upstream SQLite 3.54.0.
+        assert!(rusqlite::version_number() >= 3_054_000, "linked SQLite: {}", rusqlite::version());
+    }
+
+    #[test]
     fn test_db_connect_execute_query_close_sqlite() {
         let db_path = tmp_db_path("sqlite_basic.db");
 
