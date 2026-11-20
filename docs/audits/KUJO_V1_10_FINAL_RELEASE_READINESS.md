@@ -247,30 +247,30 @@ change and compatibility claims. Historical receipts remain at 1.9.0.
 
 ## K. Final authorization checklist
 
-- [ ] Select the clean candidate SHA. Run `cargo fmt --check`,
-  `cargo clippy --all-targets --all-features -- -D warnings`,
-  `cargo test --locked --no-fail-fast`, `cargo audit --deny warnings`,
-  `cargo deny check`, and
-  `KUJO_ENABLE_SOCKET_TESTS=1 KUJO_RELEASE_GATE_RUN_BENCH=1 bash scripts/release_gate.sh --full`.
-- [ ] Verify generated artifacts using
-  `bash scripts/generate_vm_runtime_mismatch_inventory.sh --strict --runner target/debug/kujo`
-  after building that runner from the same source. Run
-  `cargo test --locked --test generated_artifact_freshness_contract`.
-- [ ] Run `KUJO_RELEASE_TAG=v1.10.0 bash .github/scripts/check-tag-version.sh`
-  and `bash .github/scripts/check-release-state.sh`. For prepublication
-  five-target artifacts run
-  `gh workflow run release-binaries.yml --ref main -f version=v1.10.0`
-  and confirm its head SHA before reviewing its artifacts. This command's
-  branch dispatch uses the nonpublishing path.
-- [ ] Review the release notes, downstream pins, check results, Windows
-  memory limitation, executable identity, upgrade receipts and source checksum.
-  Verify GitHub environment and npm trusted-publisher configuration using
-  owner access without printing credentials.
-- [ ] Only after explicit publication authorization, follow
-  [release process §8](../RELEASE_PROCESS.md#8-tagging-and-publication-order).
-  The owner may sign the reviewed SHA with
-  `git tag -s v1.10.0 <approved-sha> -m 'Kujo v1.10.0'` and push it with
-  `git push origin refs/tags/v1.10.0`. Monitor both GitHub and npm publication
-  jobs, then run the published native and npm smoke workflows.
-- [ ] After verifying both published channels, reconcile the public installer,
-  website, documentation and ecosystem consumers per the release process.
+1. Select the clean candidate SHA. Run `cargo fmt --check`,
+   `cargo clippy --all-targets --all-features -- -D warnings`,
+   `cargo test --locked --no-fail-fast`, `cargo audit --deny warnings`,
+   `cargo deny check`, and
+   `KUJO_ENABLE_SOCKET_TESTS=1 KUJO_RELEASE_GATE_RUN_BENCH=1 bash scripts/release_gate.sh --full`.
+2. Verify generated artifacts using
+   `bash scripts/generate_vm_runtime_mismatch_inventory.sh --strict --runner target/debug/kujo`
+   after building that runner from the same source. Run
+   `cargo test --locked --test generated_artifact_freshness_contract`.
+3. Run `KUJO_RELEASE_TAG=v1.10.0 bash .github/scripts/check-tag-version.sh`
+   and `bash .github/scripts/check-release-state.sh`. For prepublication
+   five-target artifacts run
+   `gh workflow run release-binaries.yml --ref main -f version=v1.10.0`
+   and confirm its head SHA before reviewing its artifacts. This command's
+   branch dispatch uses the nonpublishing path.
+4. Review the release notes, downstream pins, check results, Windows
+   memory limitation, executable identity, upgrade receipts and source checksum.
+   Verify GitHub environment and npm trusted-publisher configuration using
+   owner access without printing credentials.
+5. Only after explicit publication authorization, follow
+   [release process §8](../RELEASE_PROCESS.md#8-tagging-and-publication-order).
+   The owner may sign the reviewed SHA with
+   `git tag -s v1.10.0 <approved-sha> -m 'Kujo v1.10.0'` and push it with
+   `git push origin refs/tags/v1.10.0`. Monitor both GitHub and npm publication
+   jobs, then run the published native and npm smoke workflows.
+6. After verifying both published channels, reconcile the public installer,
+   website, documentation and ecosystem consumers per the release process.
