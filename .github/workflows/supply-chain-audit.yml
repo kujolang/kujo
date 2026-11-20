@@ -1,6 +1,7 @@
 name: supply-chain-audit
 
 on:
+  workflow_call:
   workflow_dispatch:
   schedule:
     - cron: '40 7 * * 1'

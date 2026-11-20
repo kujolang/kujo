@@ -20,6 +20,21 @@ fn tagged_release_packages_and_publishes_the_declared_source_archive() {
 }
 
 #[test]
+fn release_artifacts_require_a_strict_dependency_audit() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let release = fs::read_to_string(root.join(".github/workflows/release-binaries.yml")).unwrap();
+    let audit = fs::read_to_string(root.join(".github/workflows/supply-chain-audit.yml")).unwrap();
+
+    assert!(release.contains("uses: ./.github/workflows/supply-chain-audit.yml"));
+    assert!(release.contains("release-gate:\n    needs: dependency-audit"));
+    assert!(release.contains("build-release-artifacts:\n    needs: release-gate"));
+    assert!(release.contains("pack-source-archive:\n    needs: release-gate"));
+    assert!(audit.contains("on:\n  workflow_call:"));
+    assert!(audit.contains("run: cargo audit --deny warnings"));
+    assert!(!audit.contains("continue-on-error: true"));
+}
+
+#[test]
 fn published_source_archive_is_checksum_and_version_verified() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workflow =

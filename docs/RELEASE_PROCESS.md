@@ -133,6 +133,11 @@ Full gate command order:
 5. Kujo self-test fixtures: `cargo run -- test`
 6. Optional tools when installed: `cargo audit --deny warnings`, `cargo deny check`
 
+The release-binaries workflow requires the reusable supply-chain audit to pass
+before building native or source artifacts. Audit warnings fail that job.
+For local release sign-off, run both dependency checks explicitly and record their
+exit statuses. An optional-tool skip in the local gate does not satisfy sign-off.
+
 Optional benchmark smoke in full mode:
 
 ```bash

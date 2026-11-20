@@ -12,7 +12,13 @@ on:
         type: string
 
 jobs:
+  dependency-audit:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/supply-chain-audit.yml
+
   release-gate:
+    needs: dependency-audit
     runs-on: ubuntu-latest
 
     steps:
@@ -106,6 +112,7 @@ jobs:
         env:
           KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT: ${{ github.workspace }}/.agent-fixtures
           KUJO_ENABLE_SOCKET_TESTS: "1"
+          KUJO_RELEASE_GATE_RUN_BENCH: "1"
         run: bash scripts/release_gate.sh
 
       - name: Validate hardened RAG HTTP request boundary
