@@ -35,6 +35,19 @@ fn release_artifacts_require_a_strict_dependency_audit() {
 }
 
 #[test]
+fn native_upgrade_archives_remain_single_file_and_release_attaches_notices() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workflow = fs::read_to_string(root.join(".github/workflows/release-binaries.yml")).unwrap();
+    assert!(workflow
+        .lines()
+        .any(|line| { line.trim() == r#"tar -czf "${archive_name}" -C dist "${binary_name}""# }));
+    assert!(workflow.contains(
+        "Compress-Archive -Path 'dist/${binary_name}' -DestinationPath '${archive_name}'"
+    ));
+    assert!(workflow.contains("release-artifacts/release-source/THIRD_PARTY_NOTICES.md"));
+}
+
+#[test]
 fn published_source_archive_is_checksum_and_version_verified() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workflow =

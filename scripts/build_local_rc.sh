@@ -17,8 +17,8 @@ mkdir -p "$1"
 out="$(cd "$1" && pwd)"
 mkdir "$out/native"
 cp target/release/kujo "$out/native/kujo"
-cp LICENSE THIRD_PARTY_NOTICES.md "$out/native/"
-tar -czf "$out/kujo-v$version-$platform.tar.gz" -C "$out/native" kujo LICENSE THIRD_PARTY_NOTICES.md
+cp THIRD_PARTY_NOTICES.md "$out/"
+tar -czf "$out/kujo-v$version-$platform.tar.gz" -C "$out/native" kujo
 git archive --format=tar --prefix="kujo-v$version/" HEAD | gzip -n > "$out/kujo-v$version-source.tar.gz"
 for archive in "$out"/*.tar.gz; do
   (cd "$out" && shasum -a 256 "$(basename "$archive")" > "$(basename "$archive").sha256")

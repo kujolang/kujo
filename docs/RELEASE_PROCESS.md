@@ -139,8 +139,8 @@ For local release sign-off, run both dependency checks explicitly and record the
 exit statuses. An optional-tool skip in the local gate does not satisfy sign-off.
 The `deny.toml` license policy restricts the MPL exceptions to the exact two
 shipped crate versions. Update the source links in `THIRD_PARTY_NOTICES.md`
-when those crates change. The native and npm platform packages carry those
-notices with the executables.
+when those crates change. The GitHub release attaches the notice alongside its
+single-executable native archives. The npm platform packages include the notice.
 
 Optional benchmark smoke in full mode:
 
