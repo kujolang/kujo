@@ -69,5 +69,46 @@
   "rehearsal_workflow": 44733061322,
   "locked_verification_workflow": 44739923350,
   "evidence_note": "docs/RELEASE_NOTES_1_10_0.md",
-  "crates_io": "not published: optional and outside canonical native/npm distribution"
+  "crates_io": "not published: optional and outside canonical native/npm distribution",
+  "ecosystem_promotion": {
+    "status": "verified",
+    "website": {
+      "source": "fbfd274f7121da70880acde44983a47ceffe42ba",
+      "workflow": 44762780320,
+      "artifact": 14641189599,
+      "live_verification": "Language, integrations, runtime catalog, example provenance and installer",
+      "installer_sha256": "62c19b54111cd7da3d2cb679031dde6522d6e2bab85e992bc3b110e85f0b0797",
+      "fresh_install": "Mac Intel disposable prefix; published executable matched byte-for-byte and Kennel help ran"
+    },
+    "docs": {
+      "source": "f628ae3e30d4dfdd6fafafa5b4fca5305043b0f4",
+      "verification_workflow": 44760783313,
+      "deployment_commit": "863e59c66fbcb5b45560894668799cf5f778817a",
+      "deployment_workflow": 44760929107,
+      "live_routes_verified": [
+        "/install/",
+        "/upgrade/",
+        "/tools/kujo/",
+        "/ecosystem/releases/",
+        "/ecosystem/core-foundation/",
+        "/release-boundaries/"
+      ],
+      "html_comparison_note": "The comparison removed only Cloudflare email-obfuscation marker comments"
+    },
+    "mcp": {
+      "source": "b2cf46d7b7ac2fc28575105aac011ab6d79c7e99",
+      "verification_workflow": 44760968751,
+      "deployment": "4490ba3a-b2da-4305-9788-9d1212e0c5bc",
+      "catalog_revision": "9e5d02479c1d439ff2a6a6f69acd291b4537c9e092da9c6f93bdc6bc77531807",
+      "live_records_verified": 244,
+      "installer_profiles_verified": 6
+    },
+    "course": {
+      "source": "3eaa4e68ef495a827097cd932e02c58ae65a328b",
+      "verification_workflow": 44760639021,
+      "deployment": "a8053a4b-4202-484e-8e49-d1a000022f66",
+      "live_pages_verified": 55,
+      "production_receipt_commit": "f960c8db0401034b2b239831d940ca2b54721645"
+    }
+  }
 }

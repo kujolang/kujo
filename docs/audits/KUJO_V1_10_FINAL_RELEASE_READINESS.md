@@ -2,11 +2,16 @@
 
 ## A. Executive verdict
 
-**NOT READY.** The strict Rust dependency audit exits 1 on two timezone
-maintenance findings. The checked-in VM/interpreter mismatch receipt also
-exceeds the release gate's seven-day freshness requirement. Candidate CI,
-five-platform package rehearsal and downstream acceptance still need exact-SHA
-evidence. This review authorizes no official tag or publication.
+**READY WITH DISCLOSED LIMITATIONS.** The strict dependency audit, exact-source
+CI, five-platform artifact rehearsal, and published native and npm install checks
+passed for the signed v1.10.0 release. The native upgrade check covered v1.9.0
+on all five targets. The release documents Windows JIT executable-memory
+retention, the qualified custom-enum VM/interpreter difference, and the scope of
+the legacy benchmark runner's results.
+
+[Publication follow-up](#publication-follow-up) records the final candidate and
+verification. Sections B–K preserve the initial audit, including the conditions
+that held before the follow-up fixes and the owner's publication authorization.
 
 ## B. Repository summary
 
@@ -233,6 +238,9 @@ change and compatibility claims. Historical receipts remain at 1.9.0.
 
 ## J. Remaining blockers
 
+The publication follow-up records closure of the release blockers found within
+the verified scope. The initial audit identified the following work.
+
 1. Resolve or obtain an explicit owner policy decision on the two strict
    RustSec failures. Current release policy requires a successful audit.
 2. Regenerate `VM_RUNTIME_MISMATCH_INVENTORY` with an exact candidate binary and
@@ -277,7 +285,7 @@ change and compatibility claims. Historical receipts remain at 1.9.0.
 
 ## Publication follow-up
 
-This audit records the state at initial review. The follow-up candidate was
+The final tagged candidate was
 `5d1eeca402f0dfbd1450452f796417fad0c5aa00` on main. The v1.9.0 baseline remains
 `2cfaf185ad03059c89ef4f72fb061074255d00fc`. Git ancestry counts 756
 reachable commits since v1.9.0. The tree comparison covers 1,336 changed
@@ -320,5 +328,12 @@ audit baseline differs from the final candidate on 55 paths.
   reproduced the existing qualified custom-enum VM/interpreter difference on
   the candidate. The release retains the documented fallback boundaries.
 
-The published release and clean-install evidence are recorded in the
+GitHub and npm published the exact signed candidate. The first hosted npm smoke
+ran during registry propagation. After all package objects were publicly
+available, the second five-platform smoke passed. Native archive checksums,
+npm tarball integrity and signed provenance matched the published candidate.
+The cohort passed the [native upgrade smoke](https://github.com/kujolang/kujo/actions/runs/44756212895)
+and the [npm smoke](https://github.com/kujolang/kujo/actions/runs/44756712657).
+
+The published release, clean-install evidence and ecosystem deployments are recorded in the
 [publication receipt](../../release/kujo-1.10.0-publication.json).
