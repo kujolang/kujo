@@ -58,3 +58,19 @@ fn published_source_archive_is_checksum_and_version_verified() {
     assert!(workflow
         .contains("KUJO_RELEASE_TAG=\"${tag_name}\" bash .github/scripts/check-tag-version.sh"));
 }
+
+#[test]
+fn release_platform_docs_cover_linux_arm64_and_vendored_windows_builds() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let validation = fs::read_to_string(root.join("docs/RELEASE_ARTIFACT_VALIDATION.md")).unwrap();
+    let setup = fs::read_to_string(root.join("docs/SETUP_KUJO_ACTION.md")).unwrap();
+    let workflow = fs::read_to_string(root.join(".github/workflows/release-binaries.yml")).unwrap();
+    let manifest = fs::read_to_string(root.join("Cargo.toml")).unwrap();
+
+    assert!(workflow.contains("os: ubuntu-24.04-arm\n            platform: linux-arm64"));
+    assert!(validation.contains("Linux arm64: `ubuntu-24.04-arm`"));
+    assert!(manifest.lines().any(|line| {
+        line.starts_with("openssl = ") && line.contains("features = [\"vendored\"]")
+    }));
+    assert!(setup.contains("The Windows release workflow compiles vendored OpenSSL through Cargo."));
+}

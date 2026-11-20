@@ -1,0 +1,73 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.10.0",
+  "tag": "v1.10.0",
+  "commit": "5d1eeca402f0dfbd1450452f796417fad0c5aa00",
+  "published_at": "2026-11-20T14:42:42Z",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 44744812698,
+  "native_install_smoke": 44756212895,
+  "native_upgrade_from": "v1.9.0",
+  "npm_install_smoke": 44756712657,
+  "all_five_targets_verified": true,
+  "source_archive_verified": true,
+  "source_archive_sha256": "0cc3c9ea80acf16deec37533cdb08590a80d3703220404e26754e33c076b9efd",
+  "native_artifacts": {
+    "linux-x64": {
+      "archive": "kujo-v1.10.0-linux-x64.tar.gz",
+      "archive_sha256": "a2ad3ebb599ef860281f3b30fa229586c2131b1cdd3bffba636ae8cb256b967a",
+      "executable_sha256": "9b5e06325724f0cb1a0c1b7ce6903c42def58712f3ce1926d34aa005ef2cc519"
+    },
+    "linux-arm64": {
+      "archive": "kujo-v1.10.0-linux-arm64.tar.gz",
+      "archive_sha256": "8bb5ff20076ac268d8d6f7622d569bf4ae61b180ff67f40ffd53e54f147980f9",
+      "executable_sha256": "99affb696128132376c122c8cac72f1017cef420bc90f945d8b897798b390964"
+    },
+    "macos-x64": {
+      "archive": "kujo-v1.10.0-macos-x64.tar.gz",
+      "archive_sha256": "5c4f596df64c0e617b3cf735da9db9a0d1183432b511dcf0ba88d48f87677260",
+      "executable_sha256": "3cab11522ed34d22be09d33ac16d5c4af9887ec0e70f8c4ef93818864d514c14"
+    },
+    "macos-arm64": {
+      "archive": "kujo-v1.10.0-macos-arm64.tar.gz",
+      "archive_sha256": "cd6b03b2b59e1396452b7210e9fb83b47107efd69afd3722d79ff33e4c181900",
+      "executable_sha256": "5a864dd84ae9591b5ce4bdab89fd40d9afe281b0d15595376cfb5e1fe2c4f231"
+    },
+    "windows-x64": {
+      "archive": "kujo-v1.10.0-windows-x64.zip",
+      "archive_sha256": "7a28938d853e75e9550388971a73c4939ef36e1458e8e8e31f5651bf13ec8c0e",
+      "executable_sha256": "fec66ee3da1137836fd3a0cd5149a60d7e6d64a52d56d1457edf8a3781cd63b6"
+    }
+  },
+  "npm_packages": {
+    "@kujolang/kujo-darwin-arm64": {
+      "integrity": "sha512-bhp41G99M1h4YeFZrrxXgwKPTr1/KnoKWalLRkhQ4sF+8gbUDyP+ZB6fOWsw46J5AkeBe5wTvXuJKqwLxYpkpA==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-arm64@1.10.0"
+    },
+    "@kujolang/kujo-darwin-x64": {
+      "integrity": "sha512-5Mp6cweg2J6fJ5yq1NRZsP6fQTbo3ERZ7HNGx/WFZ3RaY5dJxjkWPepc/lXEJ2BmrU4i0mkL5QncR7LIO23LlQ==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-x64@1.10.0"
+    },
+    "@kujolang/kujo-linux-arm64": {
+      "integrity": "sha512-MJWKltgIGSSG/QwJMUeSAQhthQNl7YLl0GKQU3BnYp5lR87iTiCpu/264CvYWL9oNQB8k+KNsZ5N5jawh8Lw8g==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-arm64@1.10.0"
+    },
+    "@kujolang/kujo-linux-x64": {
+      "integrity": "sha512-xO6yGLmBDjN/Fu1GX9WS4UT0xYKyFUHQ21i3fqmjqqHx+ew8QUHoI3rtB3VoiR7p8ILqlXc9Lh/z9qS1X90ErA==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-x64@1.10.0"
+    },
+    "@kujolang/kujo-runtime": {
+      "integrity": "sha512-KKGChZaG4ANiCgrhddrMcIp6z2f2oQAY9prTr6u+s+h5SLUpX6IHPnY7luMmFqFVPvW2r+m+Q7YGwEeHc0lTPw==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-runtime@1.10.0"
+    },
+    "@kujolang/kujo-win32-x64": {
+      "integrity": "sha512-PPyNrobC0IjQjm+vwc/CGYSitdUZeRcWYr2Vpd97ho4g7TonuWbo1drX8EgQKWny9zhWh6hbj3QQG1xHOvfs7g==",
+      "attestation": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-win32-x64@1.10.0"
+    }
+  },
+  "rehearsal_workflow": 44733061322,
+  "locked_verification_workflow": 44739923350,
+  "evidence_note": "docs/RELEASE_NOTES_1_10_0.md",
+  "crates_io": "not published: optional and outside canonical native/npm distribution"
+}

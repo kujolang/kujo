@@ -4,7 +4,7 @@ This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.10.0] (unpublished candidate)
+## [1.10.0] - 2026-11-20
 
 - Replace the unmaintained Chrono dependencies with maintained date, clock and
   bundled timezone libraries. The date builtins retain their existing format

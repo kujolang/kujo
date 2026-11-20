@@ -6,7 +6,8 @@ This document defines reproducible artifact validation steps for Kujo release ca
 
 - Rust toolchain: stable Rust `1.89+`
 - Supported release validation OS targets:
-  - Linux x64: `ubuntu-latest` (GitHub Actions baseline)
+  - Linux x64: `ubuntu-22.04` (tagged build and glibc compatibility baseline)
+  - Linux arm64: `ubuntu-24.04-arm` (GitHub Actions baseline)
   - macOS Intel: `macos-15-intel` (GitHub Actions baseline)
   - macOS Apple Silicon: `macos-15` (GitHub Actions baseline)
   - Windows x64: `windows-latest` (GitHub Actions baseline)
@@ -77,8 +78,8 @@ The clean-environment install + checksum flow is enforced in:
 - `.github/workflows/release-artifact-validation-matrix.yml`
 
 This workflow runs on Linux and macOS for push and pull request events. Tagged
-release archives are built and post-publish smoked for Linux x64, macOS x64,
-macOS arm64, and Windows x64 by the release workflows documented in
+release archives are built and tested after publication on Linux x64 and arm64,
+macOS x64 and arm64, and Windows x64. See the release workflows documented in
 `docs/RELEASE_BINARIES.md`.
 
 ## Evidence Requirements

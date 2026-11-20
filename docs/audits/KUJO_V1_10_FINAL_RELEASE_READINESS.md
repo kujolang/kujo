@@ -274,3 +274,51 @@ change and compatibility claims. Historical receipts remain at 1.9.0.
    jobs, then run the published native and npm smoke workflows.
 6. After verifying both published channels, reconcile the public installer,
    website, documentation and ecosystem consumers per the release process.
+
+## Publication follow-up
+
+This audit records the state at initial review. The follow-up candidate was
+`5d1eeca402f0dfbd1450452f796417fad0c5aa00` on main. The v1.9.0 baseline remains
+`2cfaf185ad03059c89ef4f72fb061074255d00fc`. Git ancestry counts 756
+reachable commits since v1.9.0. The tree comparison covers 1,336 changed
+paths, including squashed and replayed changes present in main. The supplied
+audit baseline differs from the final candidate on 55 paths.
+
+- `5265d914` replaced the two unmaintained date dependencies and retained
+  compatibility checks for the datetime builtins, including extended years,
+  timezone aliases and leap-second representation. The strict RustSec audit
+  passed for the 625 locked crates. The tagged workflow requires that audit.
+- `f8d7fd49` refreshed the checked-in VM and interpreter evidence. The VM-primary
+  and interpreter-primary runs each passed 150 fixture entries and produced the
+  same mismatch inventory as the prior receipt.
+- `0bc45bb5` added the Cargo policy and two version-specific source-availability
+  notices. `2070f879` delivers the notices separately to keep native archives
+  compatible with the v1.9.0 upgrader. `5d1eeca4` locked the two new root paths
+  into the repository hygiene contract. Cargo Deny passed advisories, bans,
+  licenses and sources.
+- The [exact-source CI](https://github.com/kujolang/kujo/actions/runs/44733010328)
+  and [locked Rust gate](https://github.com/kujolang/kujo/actions/runs/44739923350)
+  passed. The locked invocation reported 4,317 passing, zero failing and 28
+  ignored executions. Those are per-invocation counts.
+- [Five-platform rehearsal](https://github.com/kujolang/kujo/actions/runs/44733061322)
+  passed with the socket and benchmark opt-ins enabled. The inspected archives
+  contained one executable each. The five npm payloads carried matching
+  executable bytes and the exact source SHA. The source archive also embedded
+  that SHA.
+- Additional downstream runs passed on macOS Intel with the rehearsal binary:
+  Spec `36da0d7` (108 cases), CaseFile `92e1d9b` (all verification stages),
+  ShipCheck `7eedd9e0` (CLI output contract) and Lens `91049646` (534 cases).
+  Spec's suite reported the same 38 path failures on both runtimes when
+  launched from the symlinked macOS `/tmp` spelling. Both passed all 108
+  cases from the canonical directory. Lens's browser end-to-end matrix was
+  outside this direct runtime invocation.
+- The legacy benchmark runner reported the same 50 unsuccessful fixture/runtime
+  pairs in the candidate and the published v1.9.0 macOS Intel binary. Its exit
+  status did not reflect fixture failures. The pinned workload receipts remain
+  the evidence for performance acceptance.
+- The Windows JIT reclamation disclosure still applies. The course probe also
+  reproduced the existing qualified custom-enum VM/interpreter difference on
+  the candidate. The release retains the documented fallback boundaries.
+
+The published release and clean-install evidence are recorded in the
+[publication receipt](../../release/kujo-1.10.0-publication.json).
