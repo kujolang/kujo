@@ -23,6 +23,13 @@ function copyDirectory(source, destination) {
   fs.cpSync(source, destination, { recursive: true });
 }
 
+function copyBinaryNotices(packageRoot) {
+  const repository = path.resolve(__dirname, '..', '..');
+  for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
+    fs.copyFileSync(path.join(repository, name), path.join(packageRoot, name));
+  }
+}
+
 function createTemporaryDirectory(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
@@ -80,6 +87,7 @@ function pack(directory, destination, dryRun = false) {
 
 module.exports = {
   assertNoLifecycleScripts,
+  copyBinaryNotices,
   copyDirectory,
   createTemporaryDirectory,
   pack,

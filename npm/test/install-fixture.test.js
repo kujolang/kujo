@@ -7,7 +7,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const { targetFor } = require('../runtime');
-const { copyDirectory, pack, writeProvenanceMetadata } = require('../scripts/package-utils');
+const { copyDirectory, pack, readJson } = require('../scripts/package-utils');
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
@@ -23,22 +23,22 @@ test('packed runtime installs from local fixtures with lifecycle scripts disable
     const projectRoot = path.join(root, 'project');
     const runtimeRoot = path.join(packageRoot, 'runtime');
     const targetDirectory = target.packageName.replace('@kujolang/kujo-', '');
-    const nativeRoot = path.join(packageRoot, targetDirectory);
     fs.mkdirSync(packedRoot, { recursive: true });
     fs.mkdirSync(projectRoot, { recursive: true });
     copyDirectory(path.join(npmRoot, 'runtime'), runtimeRoot);
-    copyDirectory(path.join(npmRoot, 'platforms', targetDirectory), nativeRoot);
-    const binary = path.join(nativeRoot, 'bin', target.binaryName);
-    fs.mkdirSync(path.dirname(binary), { recursive: true });
+    const binary = path.join(root, target.binaryName);
     fs.writeFileSync(binary, 'local install fixture\n', { mode: 0o755 });
-    writeProvenanceMetadata(path.join(nativeRoot, 'metadata.json'), {
-      runtimeVersion: '1.2.0',
-      gitCommit: '0000000000000000000000000000000000000000',
-      target: targetDirectory,
-      binaryPath: binary
-    });
+    const version = readJson(path.join(runtimeRoot, 'package.json')).version;
+    const platformPack = spawnSync(process.execPath, [
+      path.join(npmRoot, 'scripts', 'pack-platform.js'),
+      '--target', targetDirectory,
+      '--binary', binary,
+      '--version', version,
+      '--git-commit', '0000000000000000000000000000000000000000',
+      '--output', packedRoot
+    ], { encoding: 'utf8', shell: false });
+    assert.equal(platformPack.status, 0, platformPack.stderr || platformPack.stdout);
 
-    const nativePack = pack(nativeRoot, packedRoot);
     const runtimePack = pack(runtimeRoot, packedRoot);
     fs.writeFileSync(path.join(projectRoot, 'package.json'), '{"private":true}\n');
     const install = spawnSync(npmCommand, [
@@ -48,7 +48,7 @@ test('packed runtime installs from local fixtures with lifecycle scripts disable
       '--no-audit',
       '--no-fund',
       '--package-lock=false',
-      path.join(packedRoot, nativePack.filename),
+      platformPack.stdout.trim(),
       path.join(packedRoot, runtimePack.filename)
     ], { cwd: projectRoot, encoding: 'utf8', shell: false });
     assert.equal(install.status, 0, install.stderr || install.stdout);
@@ -70,10 +70,14 @@ test('packed runtime installs from local fixtures with lifecycle scripts disable
       ...target.packageName.split('/'),
       'metadata.json'
     )));
-    assert.equal(installedMetadata.runtimeVersion, '1.2.0');
+    assert.equal(installedMetadata.runtimeVersion, version);
     assert.equal(installedMetadata.target, targetDirectory);
     assert.match(installedMetadata.gitCommit, /^[0-9a-f]{40}$/);
     assert.match(installedMetadata.sha256, /^[0-9a-f]{64}$/);
+    for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
+      const installedNotice = path.join(projectRoot, 'node_modules', ...target.packageName.split('/'), name);
+      assert.deepEqual(fs.readFileSync(installedNotice), fs.readFileSync(path.join(npmRoot, '..', name)));
+    }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   assertNoLifecycleScripts,
+  copyBinaryNotices,
   copyDirectory,
   createTemporaryDirectory,
   pack,
@@ -39,6 +40,7 @@ const stagingRoot = createTemporaryDirectory(`kujo-npm-${target}-`);
 try {
   const packageRoot = path.join(stagingRoot, target);
   copyDirectory(path.join(npmRoot, 'platforms', target), packageRoot);
+  copyBinaryNotices(packageRoot);
   const manifestPath = path.join(packageRoot, 'package.json');
   const manifest = readJson(manifestPath);
   assertNoLifecycleScripts(manifest, manifestPath);
@@ -59,11 +61,10 @@ try {
   fs.mkdirSync(output, { recursive: true });
 
   const report = pack(packageRoot, output, false);
-  if (!report.files.some((file) => file.path === `bin/${binaryName}`)) {
-    throw new Error(`${manifest.name} package omitted bin/${binaryName}`);
-  }
-  if (!report.files.some((file) => file.path === 'metadata.json')) {
-    throw new Error(`${manifest.name} package omitted metadata.json`);
+  for (const required of manifest.files) {
+    if (!report.files.some((file) => file.path === required)) {
+      throw new Error(`${manifest.name} package omitted ${required}`);
+    }
   }
   process.stdout.write(`${path.join(output, report.filename)}\n`);
 } finally {

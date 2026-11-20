@@ -16,6 +16,8 @@
   "files": [
     "bin/kujo",
     "metadata.json",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "README.md"
   ]
 }

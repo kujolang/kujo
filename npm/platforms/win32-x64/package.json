@@ -13,6 +13,8 @@
   "files": [
     "bin/kujo.exe",
     "metadata.json",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "README.md"
   ]
 }

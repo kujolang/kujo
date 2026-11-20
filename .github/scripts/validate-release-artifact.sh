@@ -50,10 +50,11 @@ echo "[artifact-validate] verifying checksum"
 artifact_root="target/release-artifacts"
 mkdir -p "$artifact_root"
 cp target/release/kujo "$artifact_root/kujo"
+cp LICENSE THIRD_PARTY_NOTICES.md "$artifact_root/"
 tarball="$artifact_root/kujo-local.tar.gz"
 
 echo "[artifact-validate] packaging local release tarball: $tarball"
-tar -czf "$tarball" -C "$artifact_root" kujo
+tar -czf "$tarball" -C "$artifact_root" kujo LICENSE THIRD_PARTY_NOTICES.md
 
 echo "[artifact-validate] generating tarball checksum"
 (
@@ -65,6 +66,8 @@ echo "[artifact-validate] generating tarball checksum"
 extract_root="$(mktemp -d)/kujo-artifact-extract"
 mkdir -p "$extract_root"
 tar -xzf "$tarball" -C "$extract_root"
+cmp LICENSE "$extract_root/LICENSE"
+cmp THIRD_PARTY_NOTICES.md "$extract_root/THIRD_PARTY_NOTICES.md"
 
 echo "[artifact-validate] validating repository-independent artifact run"
 "$extract_root/kujo" --version

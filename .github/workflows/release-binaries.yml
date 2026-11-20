@@ -202,11 +202,12 @@ jobs:
           archive_name="kujo-${RELEASE_NAME}-${{ matrix.platform }}.${{ matrix.archive_ext }}"
           mkdir -p dist
           cp "${binary_path}" "dist/${binary_name}"
+          cp LICENSE THIRD_PARTY_NOTICES.md dist/
 
           if [[ "${{ matrix.archive_kind }}" == "zip" ]]; then
-            pwsh -NoLogo -NoProfile -Command "Compress-Archive -Path 'dist/${binary_name}' -DestinationPath '${archive_name}' -Force"
+            pwsh -NoLogo -NoProfile -Command "Compress-Archive -Path 'dist/${binary_name}', 'dist/LICENSE', 'dist/THIRD_PARTY_NOTICES.md' -DestinationPath '${archive_name}' -Force"
           else
-            tar -czf "${archive_name}" -C dist "${binary_name}"
+            tar -czf "${archive_name}" -C dist "${binary_name}" LICENSE THIRD_PARTY_NOTICES.md
           fi
 
           if command -v sha256sum >/dev/null 2>&1; then

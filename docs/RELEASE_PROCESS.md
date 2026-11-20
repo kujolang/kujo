@@ -137,6 +137,10 @@ The release-binaries workflow requires the reusable supply-chain audit to pass
 before building native or source artifacts. Audit warnings fail that job.
 For local release sign-off, run both dependency checks explicitly and record their
 exit statuses. An optional-tool skip in the local gate does not satisfy sign-off.
+The `deny.toml` license policy restricts the MPL exceptions to the exact two
+shipped crate versions. Update the source links in `THIRD_PARTY_NOTICES.md`
+when those crates change. The native and npm platform packages carry those
+notices with the executables.
 
 Optional benchmark smoke in full mode:
 

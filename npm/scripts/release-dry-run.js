@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   assertNoLifecycleScripts,
+  copyBinaryNotices,
   copyDirectory,
   createTemporaryDirectory,
   pack,
@@ -35,6 +36,7 @@ try {
     assertNoLifecycleScripts(manifest, manifestPath);
 
     if (entry.binary) {
+      copyBinaryNotices(destination);
       const binaryPath = path.join(destination, entry.binary);
       fs.mkdirSync(path.dirname(binaryPath), { recursive: true });
       fs.writeFileSync(binaryPath, 'Kujo npm release dry-run fixture\n', { mode: 0o755 });
