@@ -165,7 +165,7 @@ impl ClientConnection {
         })?;
 
         // return the request
-        Ok(request)
+        Ok(request.with_connection_writer(self.sink.shared_writer()))
     }
 }
 

@@ -121,6 +121,10 @@ impl RefinedTcpStream {
     pub(crate) fn peer_addr(&mut self) -> IoResult<Option<SocketAddr>> {
         self.stream.peer_addr()
     }
+
+    pub(crate) fn abort(&mut self) -> IoResult<()> {
+        self.stream.shutdown(Shutdown::Both)
+    }
 }
 
 impl Drop for RefinedTcpStream {

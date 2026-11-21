@@ -431,23 +431,20 @@ where
         if !do_not_send_body {
             match transfer_encoding {
                 Some(TransferEncoding::Chunked) => {
-                    use chunked_transfer::Encoder;
-
-                    // Flush each read from a streaming response as its own HTTP
-                    // chunk. The default encoder buffers short writes up to 8 KiB,
-                    // and Encoder::flush() does not flush its underlying writer;
-                    // both behaviors can hide incremental data until EOF.
-                    let mut writer = Encoder::with_flush_after_write(writer);
+                    // Only mark a chunked response complete after a clean read.
+                    // Encoder's Drop would also write the terminator on errors.
                     let mut buffer = [0_u8; 16 * 1024];
                     loop {
                         let read = reader.read(&mut buffer)?;
                         if read == 0 {
                             break;
                         }
+                        write!(writer, "{:x}\r\n", read)?;
                         writer.write_all(&buffer[..read])?;
+                        writer.write_all(b"\r\n")?;
                         writer.flush()?;
-                        writer.get_mut().flush()?;
                     }
+                    writer.write_all(b"0\r\n\r\n")?;
                 }
 
                 Some(TransferEncoding::Identity) => {

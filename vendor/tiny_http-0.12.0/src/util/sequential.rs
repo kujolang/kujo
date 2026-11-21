@@ -71,6 +71,10 @@ impl<W: Write + Send> SequentialWriterBuilder<W> {
             next_trigger: None,
         }
     }
+
+    pub(crate) fn shared_writer(&self) -> Arc<Mutex<W>> {
+        self.writer.clone()
+    }
 }
 
 impl<R: Read + Send> Iterator for SequentialReaderBuilder<R> {

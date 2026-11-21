@@ -2,7 +2,11 @@
 
 `http_stream_collect(response, callback)` consumes an incremental response exactly once. Create it with `http_request(url, {"response_stream": true})` without a server-forwarding callback. The collector delivers observed headers/chunks/completion synchronously before the next read and returns `Ok({status, _status, headers, body, _body})`, or `Err(message)` after a read/callback failure. Each event includes HTTP status and observation time; chunk events include raw bytes plus UTF-8-safe `text`. A split code point is held until complete; malformed bytes use replacement decoding, including an unfinished final sequence.
 
-The shorthand `http_request(url, {"response_stream": "collect"}, callback)` opens and consumes in one call. It requires a callback. Unpatched 1.5/1.6 reject that new option value before network I/O. Existing buffered requests and `response_stream: true` server forwarding retain their behavior.
+The shorthand `http_request(url, {"response_stream": "collect"}, callback)` opens and consumes in one call. It requires a callback. Unpatched 1.5/1.6 reject that new option value before network I/O.
+
+When an upstream read fails while forwarding a chunked response, the server
+closes the downstream connection without sending the final chunk marker. The
+client can detect that the response ended prematurely.
 
 Returning `false` or throwing from the callback stops consumption, drops the response and returns a generic error without exception text. Aliases cannot consume twice, including reentrant callback attempts. Ownership is removed from the shared slot before calling user code; no stream mutex is held across callbacks. Reads remain bounded by `max_response_bytes` and the runtime body ceiling, with existing deadlines, destination/redirect checks and network-client capability enforcement. Collection retains a bounded full body for final compatibility; it is not a constant-memory sink API. Read failures are reported through the returned Result; no complete event is synthesized after failure.
 

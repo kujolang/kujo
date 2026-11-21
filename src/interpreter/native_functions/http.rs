@@ -5632,6 +5632,64 @@ mod stream_collect_tests {
     use super::*;
 
     #[test]
+    fn chunked_response_connection_closes_without_terminator_on_body_error() {
+        use std::net::TcpStream;
+
+        struct Body {
+            sent: bool,
+            fail: bool,
+        }
+        impl Read for Body {
+            fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+                if !self.sent {
+                    buf[..5].copy_from_slice(b"hello");
+                    self.sent = true;
+                    return Ok(5);
+                }
+                if self.fail {
+                    return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "upstream ended"));
+                }
+                Ok(0)
+            }
+        }
+
+        for fail in [false, true] {
+            let server = tiny_http::Server::http("127.0.0.1:0").unwrap();
+            let mut client = TcpStream::connect(server.server_addr().to_ip().unwrap()).unwrap();
+            client.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+            let (observed, wait_for_client) = std::sync::mpsc::channel();
+            let server = std::thread::spawn(move || {
+                let request = server.recv().unwrap();
+                let response = tiny_http::Response::new(
+                    tiny_http::StatusCode(200),
+                    Vec::new(),
+                    Body { sent: false, fail },
+                    None,
+                    None,
+                );
+                assert_eq!(request.respond(response).is_err(), fail);
+                if fail {
+                    // Keep the listener and its client loop alive until the client
+                    // observes the response socket close.
+                    wait_for_client.recv_timeout(Duration::from_secs(10)).unwrap();
+                }
+            });
+            let connection = if fail { "" } else { "Connection: close\r\n" };
+            write!(client, "GET / HTTP/1.1\r\nHost: localhost\r\n{connection}\r\n").unwrap();
+            let mut wire = String::new();
+            let result = client.read_to_string(&mut wire);
+            if fail {
+                observed.send(()).unwrap();
+            }
+            server.join().unwrap();
+            result.unwrap();
+            let (headers, body) = wire.split_once("\r\n\r\n").unwrap();
+            assert!(headers.to_ascii_lowercase().contains("transfer-encoding: chunked"));
+            assert_eq!(body, if fail { "5\r\nhello\r\n" } else { "5\r\nhello\r\n0\r\n\r\n" });
+        }
+    }
+
+    #[test]
     fn stream_collect_utf8_split_and_invalid_bytes() {
         let mut pending = vec![b'A', 0xe2];
         assert_eq!(stream_text(&mut pending, false), "A");

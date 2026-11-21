@@ -1,13 +1,14 @@
 use std::io::Error as IoError;
-use std::io::{self, Cursor, ErrorKind, Read, Write};
+use std::io::{self, BufWriter, Cursor, ErrorKind, Read, Write};
 
 use std::fmt;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, Mutex};
 
-use crate::util::{EqualReader, FusedReader};
+use crate::util::{EqualReader, FusedReader, RefinedTcpStream};
 use crate::{HTTPVersion, Header, Method, Response, StatusCode};
 use chunked_transfer::Decoder;
 
@@ -53,6 +54,7 @@ pub struct Request {
 
     // if this writer is empty, then the request has been answered
     response_writer: Option<Box<dyn Write + Send + 'static>>,
+    connection_writer: Option<Arc<Mutex<BufWriter<RefinedTcpStream>>>>,
 
     remote_addr: Option<SocketAddr>,
 
@@ -229,6 +231,7 @@ where
     Ok(Request {
         data_reader: Some(reader),
         response_writer: Some(Box::new(writer) as Box<dyn Write + Send + 'static>),
+        connection_writer: None,
         remote_addr,
         secure,
         method,
@@ -448,15 +451,24 @@ impl Request {
 
         let do_not_send_body = self.method == Method::Head;
 
-        Self::ignore_client_closing_errors(response.raw_print(
-            writer.by_ref(),
-            self.http_version.clone(),
-            &self.headers,
-            do_not_send_body,
-            None,
-        ))?;
-
-        Self::ignore_client_closing_errors(writer.flush())
+        let result = response
+            .raw_print(
+                writer.by_ref(),
+                self.http_version.clone(),
+                &self.headers,
+                do_not_send_body,
+                None,
+            )
+            .and_then(|()| writer.flush());
+        if result.is_err() {
+            if let Some(connection) = &self.connection_writer {
+                // Wait for this response's turn even if the body failed before
+                // writing headers. Close before the next writer can take over.
+                let _ = writer.flush();
+                let _ = connection.lock().unwrap().get_mut().abort();
+            }
+        }
+        Self::ignore_client_closing_errors(result)
     }
 
     fn ignore_client_closing_errors(result: io::Result<()>) -> io::Result<()> {
@@ -471,6 +483,14 @@ impl Request {
 
     pub(crate) fn with_notify_sender(mut self, sender: Sender<()>) -> Self {
         self.notify_when_responded = Some(sender);
+        self
+    }
+
+    pub(crate) fn with_connection_writer(
+        mut self,
+        writer: Arc<Mutex<BufWriter<RefinedTcpStream>>>,
+    ) -> Self {
+        self.connection_writer = Some(writer);
         self
     }
 }
