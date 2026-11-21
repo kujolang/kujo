@@ -6,7 +6,7 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-- Preserve comments and other project metadata when `kujo package-add` edits a manifest.
+- Preserve comments and other project metadata when `kujo package-add` edits a manifest, and prevent concurrent edits from losing dependencies.
 - Limit idle fused SSG rendering to one worker pool and one batch of page names.
 - Record AI cassettes with stable header ordering and fail replay on unreadable cassette paths.
 - Close incomplete HTTP responses on a server-side read failure so clients can detect truncated bodies.

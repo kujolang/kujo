@@ -1116,6 +1116,37 @@ fn report_run_runtime_error_and_exit(
     std::process::exit(code.code());
 }
 
+fn lock_package_manifest(path: &Path) -> std::io::Result<(fs::File, fs::File)> {
+    use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
+    use cap_std::fs::{Dir, OpenOptions};
+    use std::io::{Error, ErrorKind};
+
+    const LOCK_NAME: &str = ".kujo-package-add.lock";
+    let parent = path
+        .parent()
+        .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "missing manifest directory"))?;
+    let name = path
+        .file_name()
+        .filter(|name| *name != LOCK_NAME)
+        .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "invalid manifest filename"))?;
+    let directory = Dir::open_ambient_dir(parent, cap_std::ambient_authority())?;
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).follow(FollowSymlinks::No).nonblock(true);
+    let lock =
+        directory.open_with(LOCK_NAME, options.clone().create(true).truncate(false))?.into_std();
+    if !lock.metadata()?.is_file() {
+        return Err(Error::new(ErrorKind::InvalidInput, "manifest lock must be a regular file"));
+    }
+    // The lock covers reading through publication and stays on a separate inode
+    // so replacement of the manifest never splits the lock among waiters.
+    fs2::FileExt::lock_exclusive(&lock)?;
+    let manifest = directory.open_with(name, &options)?.into_std();
+    if !manifest.metadata()?.is_file() {
+        return Err(Error::new(ErrorKind::InvalidInput, "manifest must be a regular file"));
+    }
+    Ok((lock, manifest))
+}
+
 fn read_kujo_source_for_parse(file: &Path) -> String {
     let max_source_bytes = parser::DEFAULT_MAX_SOURCE_BYTES;
     let file_label = file.to_string_lossy().to_string();
@@ -2046,14 +2077,25 @@ async fn async_main(cli: Option<Cli>) {
         }
 
         Commands::PackageAdd { name, version, manifest } => {
+            use std::io::{Read, Write};
+
             let manifest_path = manifest.unwrap_or_else(|| PathBuf::from("kujo.toml"));
-            let content = match fs::read_to_string(&manifest_path) {
-                Ok(content) => content,
-                Err(err) => {
-                    eprintln!("Failed to read '{}': {}", manifest_path.display(), err);
-                    std::process::exit(CliExitCode::IoError.code());
-                }
+            let report_read_error = |err| -> ! {
+                eprintln!("Failed to read '{}': {}", manifest_path.display(), err);
+                std::process::exit(CliExitCode::IoError.code());
             };
+            let report_write_error = |err| -> ! {
+                eprintln!("Failed to write '{}': {}", manifest_path.display(), err);
+                std::process::exit(CliExitCode::IoError.code());
+            };
+            let target =
+                fs::canonicalize(&manifest_path).unwrap_or_else(|err| report_read_error(err));
+            let (lock, mut manifest_file) =
+                lock_package_manifest(&target).unwrap_or_else(|err| report_write_error(err));
+            let mut content = String::new();
+            if let Err(err) = manifest_file.read_to_string(&mut content) {
+                report_read_error(err);
+            }
             let updated = match package_workflow::add_dependency(&content, &name, &version) {
                 Ok(manifest_content) => manifest_content,
                 Err(message) => {
@@ -2062,10 +2104,24 @@ async fn async_main(cli: Option<Cli>) {
                 }
             };
 
-            if let Err(err) = fs::write(&manifest_path, updated) {
-                eprintln!("Failed to write '{}': {}", manifest_path.display(), err);
-                std::process::exit(CliExitCode::IoError.code());
+            if updated != content {
+                let write_result = (|| -> std::io::Result<()> {
+                    let permissions = manifest_file.metadata()?.permissions();
+                    drop(manifest_file);
+                    let mut staged = tempfile::Builder::new()
+                        .prefix(".kujo-package-add-")
+                        .tempfile_in(target.parent().expect("validated manifest directory"))?;
+                    staged.write_all(updated.as_bytes())?;
+                    staged.as_file().set_permissions(permissions)?;
+                    staged.as_file().sync_all()?;
+                    staged.persist(&target).map_err(|error| error.error)?;
+                    Ok(())
+                })();
+                if let Err(err) = write_result {
+                    report_write_error(err);
+                }
             }
+            drop(lock);
             println!("added dependency {} {}", name, version);
         }
 

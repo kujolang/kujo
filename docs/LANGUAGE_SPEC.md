@@ -458,6 +458,12 @@ from src.core.math import add
 
 - `kujo init` creates a package manifest (`kujo.toml`) and a starter source layout.
 - `kujo package-add <name> --version <range>` updates dependency declarations in the manifest and preserves comments and other project metadata.
+  It serializes edits in the resolved manifest directory via the persistent
+  `.kujo-package-add.lock` file and publishes each change atomically. The
+  directory must be writable. Keep the lock file out of version control and
+  leave it in place while edits may be running. Symlinks continue to resolve
+  to their targets. Atomic replacement creates a new file identity, so other
+  hard links to the old manifest still point to the old contents.
 - `kujo package-install` regenerates the deterministic `kujo.lock` snapshot derived from `kujo.toml`.
 - `kujo package-install --frozen` verifies that the manifest and lockfile remain in sync without rewriting either file.
 - Package workflow imports use the same package-root-aware module resolution rules as ordinary runtime imports, so nested layouts under `src/` remain available on the default VM path.

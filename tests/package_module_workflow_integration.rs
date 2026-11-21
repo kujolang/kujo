@@ -83,6 +83,68 @@ fn package_add_preserves_project_metadata_and_dependency_comments() {
 }
 
 #[test]
+fn concurrent_package_add_preserves_every_dependency() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("kujo.toml");
+    let mut original = String::from(
+        "[package]\nname = \"concurrent-demo\"\nversion = \"0.1.0\"\n[dependencies]\n",
+    );
+    for index in 0..2000 {
+        use std::fmt::Write;
+        writeln!(original, "existing_{index} = \"1\"").unwrap();
+    }
+    fs::write(&path, original).unwrap();
+
+    let names = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta"];
+    let children: Vec<_> = names
+        .iter()
+        .map(|name| {
+            Command::new(kujo_binary())
+                .current_dir(root.path())
+                .args(["package-add", name, "--version", "2"])
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()
+                .unwrap()
+        })
+        .collect();
+    for child in children {
+        let output = child.wait_with_output().unwrap();
+        assert!(output.status.success(), "{}", stderr_text(&output));
+    }
+    let updated = fs::read_to_string(&path).unwrap();
+    let manifest: toml::Value = toml::from_str(&updated).unwrap();
+    let dependencies = manifest["dependencies"].as_table().unwrap();
+    assert_eq!(dependencies.len(), 2000 + names.len());
+    for name in names {
+        assert_eq!(dependencies[name].as_str(), Some("2"));
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn package_add_updates_symlink_target_and_keeps_file_mode() {
+    use std::os::unix::fs::{symlink, PermissionsExt};
+
+    let root = tempfile::tempdir().unwrap();
+    let target = root.path().join("manifest.toml");
+    fs::write(&target, "[package]\nname = \"linked-demo\"\nversion = \"0.1.0\"\n").unwrap();
+    fs::set_permissions(&target, fs::Permissions::from_mode(0o640)).unwrap();
+    let alias = root.path().join("kujo.toml");
+    symlink("manifest.toml", &alias).unwrap();
+
+    let output = run_kujo(&["package-add", "alpha", "--version", "1"], root.path());
+    assert!(output.status.success(), "{}", stderr_text(&output));
+    assert!(fs::symlink_metadata(&alias).unwrap().is_symlink());
+    assert_eq!(fs::metadata(&target).unwrap().permissions().mode() & 0o777, 0o640);
+    let updated = fs::read_to_string(&target).unwrap();
+    assert_eq!(
+        updated.parse::<toml::Value>().unwrap()["dependencies"]["alpha"].as_str(),
+        Some("1")
+    );
+}
+
+#[test]
 fn package_module_workflow_end_to_end_contract() {
     let project_root = unique_temp_dir("package_module_workflow");
     let project_root_str = project_root.to_str().expect("path should be utf-8");
