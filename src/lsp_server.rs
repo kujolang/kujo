@@ -10,14 +10,17 @@ use crate::lsp_references;
 use crate::lsp_rename;
 use crate::type_checker::ModuleAnalysisCache;
 use serde_json::{json, Value};
-use std::collections::{HashMap, HashSet};
+use std::borrow::Cow;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
 const MAX_LSP_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
+const MAX_LSP_HEADER_BYTES: usize = 8 * 1024;
+const MAX_PENDING_CANCELLATIONS: usize = 1024;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LspServerConfig {
@@ -40,7 +43,8 @@ pub struct LspServer {
     deterministic_logging: bool,
     log_sequence: u64,
     request_timeout_ms: u64,
-    cancelled_requests: HashSet<String>,
+    cancelled_requests: VecDeque<Value>,
+    cancelled_request_bytes: usize,
 }
 
 #[derive(Clone)]
@@ -60,7 +64,8 @@ impl LspServer {
             deterministic_logging: config.deterministic_logging,
             log_sequence: 0,
             request_timeout_ms: config.request_timeout_ms.max(1),
-            cancelled_requests: HashSet::new(),
+            cancelled_requests: VecDeque::new(),
+            cancelled_request_bytes: 0,
         }
     }
 
@@ -73,7 +78,7 @@ impl LspServer {
             if message.get("id").is_some() {
                 let id = message.get("id").cloned().unwrap_or(Value::Null);
                 let params = message.get("params");
-                if self.cancelled_requests.remove(&request_id_key(&id)) {
+                if self.take_cancellation(&id) {
                     outbound.push(request_cancelled_response(id));
                 } else {
                     let start = Instant::now();
@@ -121,6 +126,36 @@ impl LspServer {
     #[allow(dead_code)]
     pub fn module_cache_stats(&self) -> crate::type_checker::ModuleCacheStats {
         self.module_cache.stats()
+    }
+
+    fn remember_cancellation(&mut self, id: &Value) {
+        let bytes = cancellation_id_bytes(id);
+        if (!id.is_string() && !id.is_number())
+            || bytes > MAX_LSP_MESSAGE_BYTES
+            || self.cancelled_requests.contains(id)
+        {
+            return;
+        }
+        // The stdio loop processes one message at a time. Cancellations for
+        // requests that already finished can otherwise remain here forever.
+        while self.cancelled_requests.len() == MAX_PENDING_CANCELLATIONS
+            || self.cancelled_request_bytes > MAX_LSP_MESSAGE_BYTES - bytes
+        {
+            let oldest = self.cancelled_requests.pop_front().expect("cancellation budget exceeded");
+            self.cancelled_request_bytes -= cancellation_id_bytes(&oldest);
+        }
+        self.cancelled_requests.push_back(id.clone());
+        self.cancelled_request_bytes += bytes;
+    }
+
+    fn take_cancellation(&mut self, id: &Value) -> bool {
+        if let Some(index) = self.cancelled_requests.iter().position(|pending| pending == id) {
+            self.cancelled_requests.remove(index);
+            self.cancelled_request_bytes -= cancellation_id_bytes(id);
+            true
+        } else {
+            false
+        }
     }
 
     fn handle_request(&mut self, method: &str, id: Value, params: Option<&Value>) -> Value {
@@ -208,8 +243,7 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
-                let source = analysis.source.to_string();
-                let (line, column) = match request_position(params, &source) {
+                let (line, column) = match request_position(params, &analysis.source) {
                     Some(value) => value,
                     None => {
                         return invalid_params_response(id, "Missing or invalid position");
@@ -252,14 +286,14 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
-                let source = analysis.source.to_string();
-                let (line, column) = match request_position(params, &source) {
+                let source = &analysis.source;
+                let (line, column) = match request_position(params, source) {
                     Some(value) => value,
                     None => {
                         return invalid_params_response(id, "Missing or invalid position");
                     }
                 };
-                let line_index = Utf16LineIndex::new(&source);
+                let line_index = Utf16LineIndex::new(source);
 
                 let result = lsp_hover::hover_with_analysis(&analysis, line, column).map(|info| {
                     let start_character = line_index.column(info.line, info.column);
@@ -616,7 +650,7 @@ impl LspServer {
                 let options = formatter_options_from_lsp_params(params);
                 let formatted = formatter::format_source(&source, &options);
 
-                let edits = if formatted == source {
+                let edits = if formatted == source.as_ref() {
                     Vec::new()
                 } else {
                     vec![full_document_text_edit(&source, formatted)]
@@ -797,7 +831,7 @@ impl LspServer {
             "initialized" => Vec::new(),
             "$/cancelRequest" => {
                 if let Some(id) = params.and_then(|value| value.get("id")) {
-                    self.cancelled_requests.insert(request_id_key(id));
+                    self.remember_cancellation(id);
                 }
                 Vec::new()
             }
@@ -878,8 +912,8 @@ impl LspServer {
 
     fn publish_diagnostics_notification(&self, uri: &str) -> Value {
         let state = self.documents.get(uri);
-        let source = state.map(|state| state.analysis.source.to_string()).unwrap_or_default();
-        let line_index = Utf16LineIndex::new(&source);
+        let source = state.map_or("", |state| state.analysis.source.as_ref());
+        let line_index = Utf16LineIndex::new(source);
         let diagnostics = state
             .map(|state| lsp_diagnostics::diagnose_with_analysis(&state.analysis))
             .unwrap_or_default()
@@ -918,15 +952,16 @@ impl LspServer {
         })
     }
 
-    fn resolve_document_source(&self, uri: &str) -> Result<String, String> {
+    fn resolve_document_source(&self, uri: &str) -> Result<Cow<'_, str>, String> {
         if let Some(existing) = self.documents.get(uri) {
-            return Ok(existing.analysis.source.to_string());
+            return Ok(Cow::Borrowed(&existing.analysis.source));
         }
 
         let path = file_uri_to_path(uri)
             .ok_or_else(|| format!("Unable to resolve URI '{}' to a local file", uri))?;
 
         fs::read_to_string(&path)
+            .map(Cow::Owned)
             .map_err(|error| format!("Failed to read '{}': {}", path.display(), error))
     }
 
@@ -943,8 +978,9 @@ impl LspServer {
 
     fn store_document(&mut self, uri: &str, source: String) -> Vec<String> {
         let path = file_uri_to_path(uri).map(|path| fs::canonicalize(&path).unwrap_or(path));
+        let source = Arc::<str>::from(source);
         if let Some(path) = path.as_ref() {
-            self.module_cache.set_source_override(path.clone(), Arc::<str>::from(source.clone()));
+            self.module_cache.set_source_override(path.clone(), Arc::clone(&source));
         }
         let analysis = Arc::new(AnalyzedProgram::analyze(
             source,
@@ -1076,20 +1112,30 @@ pub fn run_stdio_server(config: LspServerConfig) -> i32 {
 
 fn read_lsp_message<R: BufRead>(reader: &mut R) -> io::Result<Option<String>> {
     let mut content_length: Option<usize> = None;
+    let mut header_bytes = 0;
+    let mut line = String::new();
 
     loop {
-        let mut line = String::new();
-        let read = reader.read_line(&mut line)?;
+        line.clear();
+        let remaining = MAX_LSP_HEADER_BYTES - header_bytes;
+        let read = (&mut *reader).take((remaining + 1) as u64).read_line(&mut line)?;
+        if read > remaining {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("LSP headers exceed maximum size ({MAX_LSP_HEADER_BYTES} bytes)"),
+            ));
+        }
 
-        if read == 0 {
-            if content_length.is_none() {
-                return Ok(None);
-            }
+        if read == 0 && header_bytes == 0 {
+            return Ok(None);
+        }
+        if !line.ends_with('\n') {
             return Err(io::Error::new(
                 io::ErrorKind::UnexpectedEof,
                 "EOF before LSP payload body",
             ));
         }
+        header_bytes += read;
 
         if line == "\r\n" || line == "\n" {
             break;
@@ -1098,6 +1144,12 @@ fn read_lsp_message<R: BufRead>(reader: &mut R) -> io::Result<Option<String>> {
         let trimmed = line.trim();
         if let Some((name, value)) = trimmed.split_once(':') {
             if name.eq_ignore_ascii_case("Content-Length") {
+                if content_length.is_some() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Duplicate Content-Length header",
+                    ));
+                }
                 content_length = Some(value.trim().parse::<usize>().map_err(|_| {
                     io::Error::new(io::ErrorKind::InvalidData, "Invalid Content-Length header")
                 })?);
@@ -1180,18 +1232,44 @@ fn utf16_column_to_char_column(source: &str, line: usize, utf16_column: usize) -
     (utf16_offset == utf16_column).then_some(char_column)
 }
 
-struct Utf16LineIndex<'a> {
-    lines: Vec<&'a str>,
+struct Utf16LineIndex {
+    lines: Vec<(usize, usize)>,
+    surrogate_positions: Vec<usize>,
 }
 
-impl<'a> Utf16LineIndex<'a> {
-    fn new(source: &'a str) -> Self {
-        Self { lines: source.split('\n').collect() }
+impl Utf16LineIndex {
+    fn new(source: &str) -> Self {
+        let mut lines = Vec::new();
+        let mut surrogate_positions = Vec::new();
+        let mut line_start = 0;
+        for line in source.split('\n') {
+            let char_count = if line.is_ascii() {
+                line.len()
+            } else {
+                let mut count = 0;
+                for character in line.chars() {
+                    if character.len_utf16() == 2 {
+                        surrogate_positions.push(line_start + count);
+                    }
+                    count += 1;
+                }
+                count
+            };
+            lines.push((line_start, char_count));
+            line_start += char_count + 1;
+        }
+        Self { lines, surrogate_positions }
     }
 
     fn column(&self, line: usize, column: usize) -> usize {
-        let content = self.lines.get(line.saturating_sub(1)).copied().unwrap_or("");
-        content.chars().take(column.saturating_sub(1)).map(char::len_utf16).sum()
+        let Some(&(start, len)) = self.lines.get(line.saturating_sub(1)) else {
+            return 0;
+        };
+        let chars = len.min(column.saturating_sub(1));
+        let first = self.surrogate_positions.partition_point(|&position| position < start);
+        let next =
+            self.surrogate_positions[first..].partition_point(|&position| position < start + chars);
+        chars + next
     }
 }
 
@@ -1408,7 +1486,7 @@ fn token_type_index(kind: &TokenKind) -> Option<u32> {
     }
 }
 
-fn token_source_span(source: &str, token: &Token) -> Option<(usize, usize)> {
+fn token_source_length(source: &str, token: &Token) -> Option<usize> {
     let tail = source.get(token.byte_offset..)?;
     let raw = match &token.kind {
         TokenKind::Identifier(name) | TokenKind::Keyword(name) | TokenKind::Operator(name) => {
@@ -1453,9 +1531,7 @@ fn token_source_span(source: &str, token: &Token) -> Option<(usize, usize)> {
         TokenKind::Eof => return None,
     };
 
-    let line_start = source[..token.byte_offset].rfind('\n').map_or(0, |index| index + 1);
-    let start = source[line_start..token.byte_offset].encode_utf16().count();
-    Some((start, raw.encode_utf16().count()))
+    Some(raw.encode_utf16().count())
 }
 
 fn collect_semantic_token_data(source: &str) -> Vec<u32> {
@@ -1467,13 +1543,13 @@ fn collect_semantic_token_data(source: &str) -> Vec<u32> {
     let mut encoded = Vec::new();
     let mut previous_line = 0usize;
     let mut previous_start = 0usize;
-    let mut emitted_any = false;
+    let mut previous_offset = 0usize;
 
     for token in tokens.iter() {
         let Some(token_type) = token_type_index(&token.kind) else {
             continue;
         };
-        let Some((start_zero, length)) = token_source_span(source, token) else {
+        let Some(length) = token_source_length(source, token) else {
             continue;
         };
         if length == 0 {
@@ -1481,14 +1557,17 @@ fn collect_semantic_token_data(source: &str) -> Vec<u32> {
         }
 
         let line_zero = zero_based(token.line);
-
-        let (delta_line, delta_start) = if !emitted_any {
-            (line_zero, start_zero)
-        } else if line_zero == previous_line {
-            (0, start_zero.saturating_sub(previous_start))
+        // Lexer offsets are ordered. Visit each gap once, resetting the
+        // column after the last newline even if skipped tokens span lines.
+        let gap = &source[previous_offset..token.byte_offset];
+        let start_zero = if let Some((_, line_prefix)) = gap.rsplit_once('\n') {
+            line_prefix.encode_utf16().count()
         } else {
-            (line_zero.saturating_sub(previous_line), start_zero)
+            previous_start + gap.encode_utf16().count()
         };
+        let delta_line = line_zero.saturating_sub(previous_line);
+        let delta_start =
+            if delta_line == 0 { start_zero.saturating_sub(previous_start) } else { start_zero };
 
         encoded.push(delta_line as u32);
         encoded.push(delta_start as u32);
@@ -1498,7 +1577,7 @@ fn collect_semantic_token_data(source: &str) -> Vec<u32> {
 
         previous_line = line_zero;
         previous_start = start_zero;
-        emitted_any = true;
+        previous_offset = token.byte_offset;
     }
 
     encoded
@@ -1669,8 +1748,8 @@ fn request_timeout_response(id: Value, timeout_ms: u64) -> Value {
     })
 }
 
-fn request_id_key(id: &Value) -> String {
-    id.to_string()
+fn cancellation_id_bytes(id: &Value) -> usize {
+    id.as_str().map_or(0, str::len)
 }
 
 #[cfg(test)]
@@ -2220,6 +2299,39 @@ mod tests {
     }
 
     #[test]
+    fn semantic_tokens_keep_utf16_deltas_across_skipped_source() {
+        let encoded = super::collect_semantic_token_data(
+            "print(\"😀\",0007)\r\n// comment\r\n  print(\"ok\", true)\n",
+        );
+        assert_eq!(
+            encoded,
+            [
+                0, 0, 5, 8, 0, // print
+                0, 6, 4, 18, 0, // emoji string
+                0, 5, 4, 19, 0, // 0007
+                2, 2, 5, 8, 0, // indented print
+                0, 6, 4, 18, 0, // "ok"
+                0, 6, 4, 15, 0, // true
+            ]
+        );
+    }
+
+    #[test]
+    fn utf16_line_index_matches_prefix_counting_for_each_column() {
+        let source = "é😀𐐀\r\nabc\n\n中🎨x\n";
+        let index = super::Utf16LineIndex::new(source);
+        for (line, text) in source.split('\n').enumerate() {
+            for column in 0usize..=8 {
+                assert_eq!(
+                    index.column(line + 1, column),
+                    text.chars().take(column.saturating_sub(1)).map(char::len_utf16).sum::<usize>()
+                );
+            }
+        }
+        assert_eq!(index.column(20, 3), 0);
+    }
+
+    #[test]
     fn workspace_symbol_filters_results_by_query() {
         let mut server = LspServer::new(LspServerConfig::default());
 
@@ -2380,6 +2492,32 @@ mod tests {
     }
 
     #[test]
+    fn pending_cancellations_evict_oldest_ids_and_reclaim_consumed_bytes() {
+        use super::{MAX_LSP_MESSAGE_BYTES, MAX_PENDING_CANCELLATIONS};
+
+        let mut server = LspServer::new(LspServerConfig::default());
+        for id in 0..=MAX_PENDING_CANCELLATIONS {
+            server.remember_cancellation(&json!(id));
+        }
+        server.remember_cancellation(&json!(MAX_PENDING_CANCELLATIONS));
+        assert_eq!(server.cancelled_requests.len(), MAX_PENDING_CANCELLATIONS);
+        assert!(!server.take_cancellation(&json!(0)));
+        assert!(server.take_cancellation(&json!(1)));
+        assert!(!server.take_cancellation(&json!(1)));
+
+        let first = json!("a".repeat(MAX_LSP_MESSAGE_BYTES / 2 + 1));
+        let second = json!("b".repeat(MAX_LSP_MESSAGE_BYTES / 2 + 1));
+        server.remember_cancellation(&first);
+        server.remember_cancellation(&second);
+        assert_eq!(server.cancelled_requests.len(), 1);
+        assert!(!server.take_cancellation(&first));
+        assert!(server.take_cancellation(&second));
+        assert_eq!(server.cancelled_request_bytes, 0);
+        server.remember_cancellation(&json!({"invalid": "request id"}));
+        assert!(server.cancelled_requests.is_empty());
+    }
+
+    #[test]
     fn transport_rejects_oversized_content_length_without_allocating() {
         let framed = format!("Content-Length: {}\r\n\r\n", usize::MAX);
         let mut reader = Cursor::new(framed.into_bytes());
@@ -2387,6 +2525,44 @@ mod tests {
         let error = read_lsp_message(&mut reader).expect_err("oversized payload should fail");
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("maximum"));
+    }
+
+    #[test]
+    fn transport_bounds_total_header_bytes_and_accepts_the_exact_limit() {
+        use super::MAX_LSP_HEADER_BYTES;
+        use std::io::ErrorKind;
+
+        let suffix = "Content-Length: 2\r\n\r\n";
+        let prefix = "X-Extra: ";
+        let extra_bytes = MAX_LSP_HEADER_BYTES - prefix.len() - "\r\n".len() - suffix.len();
+        let framed = format!("{prefix}{}\r\n{suffix}{{}}", "a".repeat(extra_bytes));
+        let mut reader = Cursor::new(framed.as_bytes());
+        assert_eq!(read_lsp_message(&mut reader).unwrap().as_deref(), Some("{}"));
+        assert!(read_lsp_message(&mut reader).unwrap().is_none());
+
+        let oversized_line = "x".repeat(MAX_LSP_HEADER_BYTES + 100);
+        let oversized_block = "X-Extra: a\r\n".repeat(MAX_LSP_HEADER_BYTES);
+        for input in [oversized_line, oversized_block] {
+            let mut reader = Cursor::new(input.as_bytes());
+            let error = read_lsp_message(&mut reader).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::InvalidData);
+            assert!(error.to_string().contains("headers exceed maximum size"));
+            assert_eq!(reader.position(), MAX_LSP_HEADER_BYTES as u64 + 1);
+        }
+    }
+
+    #[test]
+    fn transport_rejects_incomplete_and_duplicate_headers() {
+        use std::io::ErrorKind;
+
+        for frame in ["Content-Type: application/json", "Content-Type: application/json\r\n"] {
+            let error = read_lsp_message(&mut Cursor::new(frame)).unwrap_err();
+            assert_eq!(error.kind(), ErrorKind::UnexpectedEof);
+        }
+        let repeated = "Content-Length: 2\r\ncontent-length: 3\r\n\r\n{}";
+        let error = read_lsp_message(&mut Cursor::new(repeated)).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::InvalidData);
+        assert!(error.to_string().contains("Duplicate Content-Length"));
     }
 
     #[test]

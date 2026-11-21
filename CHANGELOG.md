@@ -6,6 +6,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Bound LSP header blocks and pending cancellation state, and reject ambiguous or incomplete message framing.
+- Avoid repeated scans for LSP semantic-token positions and outgoing ranges, and share open-document text with the analysis cache.
 - Enforce the CLI parser source-size limit during reads, including for streamed inputs.
 - Preserve comments and other project metadata when `kujo package-add` edits a manifest, and prevent concurrent edits from losing dependencies.
 - Limit idle fused SSG rendering to one worker pool and one batch of page names.
