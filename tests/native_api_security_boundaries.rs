@@ -266,11 +266,15 @@ fn escape_kujo_string(raw: &str) -> String {
     raw.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-fn run_unzip_script_with_archive<F>(prefix: &str, archive_builder: F) -> (PathBuf, PathBuf, Output)
+fn run_unzip_script_with_archive<F>(
+    prefix: &str,
+    archive_builder: F,
+) -> (tempfile::TempDir, PathBuf, Output)
 where
     F: FnOnce(&Path),
 {
-    let project_root = unique_temp_dir(prefix);
+    let workspace = tempfile::Builder::new().prefix(prefix).tempdir().unwrap();
+    let project_root = workspace.path();
     let zip_path = project_root.join("payload.zip");
     let output_dir = project_root.join("unzipped");
     archive_builder(&zip_path);
@@ -285,10 +289,10 @@ where
 
     let output = run_kujo(
         &["run", script_path.to_str().expect("script path should be utf-8"), "--interpreter"],
-        &project_root,
+        project_root,
     );
 
-    (project_root, output_dir, output)
+    (workspace, output_dir, output)
 }
 
 fn assert_unzip_failure(output: &Output, expected_runtime_error: &str) {
@@ -2456,7 +2460,7 @@ fn unzip_rejects_parent_traversal_entries() {
 
     assert_unzip_failure(&output, "parent directory traversal component");
     assert!(
-        !project_root.join("escape.txt").exists(),
+        !project_root.path().join("escape.txt").exists(),
         "zip traversal entry should not write files outside extraction root"
     );
 }
@@ -2574,7 +2578,7 @@ fn unzip_extracts_safe_nested_entries() {
     assert!(
         first_file.exists() && second_file.exists(),
         "expected safe nested files to be extracted under output directory; output root={} stdout={} stderr={}",
-        project_root.display(),
+        project_root.path().display(),
         stdout_text(&output),
         stderr_text(&output)
     );
