@@ -293,7 +293,11 @@ fn git_repository_checks() -> Vec<CheckResult> {
                     label: "Git working tree".to_string(),
                     status: CheckStatus::Warn,
                     severity: CheckSeverity::Medium,
-                    observed: Some(format!("{} changed paths", dirty_entries.len())),
+                    observed: Some(if result.stdout_truncated {
+                        "changed paths (preview truncated)".to_string()
+                    } else {
+                        format!("{} changed paths", dirty_entries.len())
+                    }),
                     expected: Some("clean".to_string()),
                     message: Some(format!("Repository has uncommitted changes ({})", preview)),
                     suggested_fix: Some(

@@ -24,6 +24,11 @@ Notes:
 - For automation, treat any non-zero exit as failure unless a command-specific policy explicitly documents otherwise.
 - `tests/cli_contracts.rs` and `tests/cli_json_contracts.rs` lock these exit-code contracts.
 
+For `kujo doctor --json`, the `repo.working_tree` check reports an exact
+changed-path count when the Git status preview fits. When Git status exceeds
+the preview budget, the check retains its warning and reports
+`changed paths (preview truncated)` in `observed`.
+
 ## Error Shape Policy
 
 Current stable v1.0.0 baseline for CLI `--json` mode:

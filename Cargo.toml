@@ -127,6 +127,9 @@ cranelift-native = { version = "0.113.1", optional = true }
 target-lexicon = { version = "0.12", optional = true }
 stacker = "0.1.25"
 
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1.6", features = ["event"] }
+
 [target.'cfg(windows)'.dependencies]
 windows-native-keyring-store = { version = "1.1.0", optional = true }
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_System_Diagnostics_ToolHelp"] }

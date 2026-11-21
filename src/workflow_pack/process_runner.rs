@@ -4,7 +4,8 @@
 // Supports command+args execution, output capture, timeouts, and truncation.
 #![allow(dead_code)]
 
-use std::process::{Command, Output};
+use crate::interpreter::native_functions::system::run_workflow_process;
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
 /// Result of running an external process.
@@ -78,58 +79,42 @@ pub fn run_command_with_limits(
 
     let mut cmd = Command::new(program);
     cmd.args(args);
-    cmd.stdout(std::process::Stdio::piped());
-    cmd.stderr(std::process::Stdio::piped());
+    if timeout.is_none() {
+        // Preserve the EOF behavior of the previous Command::output path.
+        cmd.stdin(Stdio::null());
+    }
 
-    // Build display command line.
     let command_line = format!("{} {}", program, args.join(" "));
+    // Retain enough lookahead to decode a UTF-8 character at the byte boundary.
+    let output =
+        run_workflow_process(cmd, timeout, max_output_bytes.saturating_add(3), &command_line)?;
+    if let Some(timeout) = timeout.filter(|_| output.timed_out) {
+        return Err(format!("Command '{}' timed out after {:?}", command_line, timeout));
+    }
+    if output.cancelled {
+        return Err(format!("Command '{}' was cancelled", command_line));
+    }
 
-    let output: Output = if let Some(timeout_dur) = timeout {
-        // Spawn and wait with timeout.
-        let mut child =
-            cmd.spawn().map_err(|e| format!("Failed to spawn '{}': {}", command_line, e))?;
-
-        // Simple polling-based timeout approach.
-        let poll_interval = Duration::from_millis(100);
-        let mut elapsed = Duration::from_millis(0);
-
-        loop {
-            match child.try_wait() {
-                Ok(Some(_status)) => {
-                    let output = child
-                        .wait_with_output()
-                        .map_err(|e| format!("Failed to wait on '{}': {}", command_line, e))?;
-                    // Reconstruct output with status for consistency.
-                    return build_process_result(
-                        command_line,
-                        output,
-                        start.elapsed(),
-                        max_output_bytes,
-                        max_output_lines,
-                    );
-                }
-                Ok(None) => {
-                    if elapsed >= timeout_dur {
-                        let _ = child.kill();
-                        let _ = child.wait();
-                        return Err(format!(
-                            "Command '{}' timed out after {:?}",
-                            command_line, timeout_dur
-                        ));
-                    }
-                    std::thread::sleep(poll_interval);
-                    elapsed += poll_interval;
-                }
-                Err(e) => {
-                    return Err(format!("Failed to check status of '{}': {}", command_line, e));
-                }
-            }
-        }
-    } else {
-        cmd.output().map_err(|e| format!("Failed to execute '{}': {}", command_line, e))?
-    };
-
-    build_process_result(command_line, output, start.elapsed(), max_output_bytes, max_output_lines)
+    let (stdout, stdout_truncated) = truncate_output(
+        &String::from_utf8_lossy(&output.stdout),
+        max_output_bytes,
+        max_output_lines,
+    );
+    let (stderr, stderr_truncated) = truncate_output(
+        &String::from_utf8_lossy(&output.stderr),
+        max_output_bytes,
+        max_output_lines,
+    );
+    Ok(ProcessResult {
+        command_line,
+        success: output.success,
+        exit_code: output.exit_code,
+        stdout,
+        stderr,
+        stdout_truncated: stdout_truncated || output.stdout_truncated,
+        stderr_truncated: stderr_truncated || output.stderr_truncated,
+        duration: start.elapsed(),
+    })
 }
 
 /// Run a command and return only the first line of stdout (trimmed).
@@ -151,51 +136,23 @@ pub fn command_exists(program: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Build a ProcessResult from raw process output.
-fn build_process_result(
-    command_line: String,
-    output: Output,
-    duration: Duration,
-    max_output_bytes: usize,
-    max_output_lines: usize,
-) -> Result<ProcessResult, String> {
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-
-    let (stdout, stdout_truncated) = truncate_output(&stdout, max_output_bytes, max_output_lines);
-    let (stderr, stderr_truncated) = truncate_output(&stderr, max_output_bytes, max_output_lines);
-
-    Ok(ProcessResult {
-        command_line,
-        success: output.status.success(),
-        exit_code: output.status.code(),
-        stdout,
-        stderr,
-        stdout_truncated,
-        stderr_truncated,
-        duration,
-    })
-}
-
-/// Truncate output that exceeds line or byte limits.
+/// Apply both output limits to the retained UTF-8 preview.
 fn truncate_output(output: &str, max_bytes: usize, max_lines: usize) -> (String, bool) {
-    let lines: Vec<&str> = output.lines().collect();
-
-    if lines.len() > max_lines {
-        let truncated: String = lines[..max_lines].join("\n") + "\n... (output truncated)";
-        return (truncated, true);
+    const MARKER: &str = "\n... (output truncated)";
+    let mut boundary = output.len().min(max_bytes);
+    while !output.is_char_boundary(boundary) {
+        boundary -= 1;
     }
+    let preview = &output[..boundary];
 
-    if output.len() > max_bytes {
-        let mut boundary = max_bytes.min(output.len());
-        while boundary > 0 && !output.is_char_boundary(boundary) {
-            boundary -= 1;
-        }
-        let truncated = output[..boundary].to_string() + "\n... (output truncated)";
-        return (truncated, true);
+    if preview.lines().nth(max_lines).is_some() {
+        let retained = preview.lines().take(max_lines).collect::<Vec<_>>().join("\n");
+        return (retained + MARKER, true);
     }
-
-    (output.to_string(), false)
+    if boundary < output.len() {
+        return (preview.to_string() + MARKER, true);
+    }
+    (preview.to_string(), false)
 }
 
 #[cfg(test)]
@@ -252,6 +209,52 @@ mod tests {
             truncate_output(short, MAX_CAPTURED_OUTPUT_BYTES, MAX_CAPTURED_OUTPUT_LINES);
         assert!(!was_truncated);
         assert_eq!(truncated, short);
+    }
+
+    #[test]
+    fn truncate_output_honors_both_limits_and_keeps_valid_utf8() {
+        let (preview, truncated) = truncate_output("aé\nb\nc", 2, 1);
+        assert!(truncated);
+        assert_eq!(preview, "a\n... (output truncated)");
+        let (preview, truncated) = truncate_output("a\r\nb\r\nc", 100, 2);
+        assert!(truncated);
+        assert_eq!(preview, "a\nb\n... (output truncated)");
+    }
+
+    #[test]
+    #[ignore = "invoked as a child by the bounded capture test"]
+    fn noisy_child() {
+        use std::io::Write;
+        let block = [b'x'; 8192];
+        for _ in 0..64 {
+            std::io::stdout().write_all(&block).unwrap();
+            std::io::stderr().write_all(&block).unwrap();
+        }
+    }
+
+    #[test]
+    fn drains_both_pipes_while_retaining_only_bounded_previews() {
+        let program = std::env::current_exe().unwrap();
+        let (_, module) = module_path!().split_once("::").unwrap();
+        let child = format!("{module}::noisy_child");
+        for timeout in [Some(Duration::from_secs(5)), None] {
+            let result = run_command(
+                program.to_str().unwrap(),
+                &["--ignored", "--exact", "--nocapture", &child],
+                timeout,
+            )
+            .expect("child should finish after writing to both pipes");
+            assert!(result.success);
+            for (preview, truncated) in
+                [(result.stdout, result.stdout_truncated), (result.stderr, result.stderr_truncated)]
+            {
+                assert!(truncated);
+                assert!(
+                    preview.len() <= MAX_CAPTURED_OUTPUT_BYTES + "\n... (output truncated)".len()
+                );
+                assert!(preview.ends_with("(output truncated)"));
+            }
+        }
     }
 
     #[test]

@@ -2772,6 +2772,7 @@ dependencies = [
  "reqwest",
  "rpassword",
  "rusqlite",
+ "rustix",
  "rustyline",
  "same-file",
  "semver",

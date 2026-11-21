@@ -669,6 +669,37 @@ fn cli_doctor_lists_profiles() {
 }
 
 #[test]
+fn cli_doctor_marks_git_status_preview_as_truncated() {
+    let workspace = tempfile::tempdir().unwrap();
+    let initialized = Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(workspace.path())
+        .output()
+        .unwrap();
+    assert!(initialized.status.success());
+    for index in 0..80 {
+        write_fixture(&workspace.path().join(format!("path-{index:03}.txt")), "");
+    }
+    let staged = Command::new("git")
+        .args(["add", "--force", "--", "."])
+        .current_dir(workspace.path())
+        .output()
+        .unwrap();
+    assert!(staged.status.success());
+
+    let output = run_kujo_in_dir(&["doctor", "--json"], workspace.path());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let working_tree = report["checks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|check| check["id"] == "repo.working_tree")
+        .unwrap();
+    assert_eq!(working_tree["status"], "warn");
+    assert_eq!(working_tree["observed"], "changed paths (preview truncated)");
+}
+
+#[test]
 fn cli_doctor_profile_preserves_large_structured_output_and_deep_argument() {
     let workspace = unique_temp_dir("cli_doctor_profile_context");
     let pack_dir = workspace.join(".kujo").join("packs").join("email-doctor");

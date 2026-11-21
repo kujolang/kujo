@@ -4,6 +4,12 @@ This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Drain workflow command output while the child runs, enforce both preview limits,
+  and preserve UTF-8 at truncation boundaries. Doctor no longer reports an exact
+  changed-path count when the Git preview was truncated.
+
 ## [1.10.0] - 2026-11-20
 
 - Replace the unmaintained Chrono dependencies with maintained date, clock and

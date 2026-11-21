@@ -485,7 +485,9 @@ This preserves cassette schemas and redaction; it does not promise crash-durable
 storage or permit sharing the directory with hostile local writers.
 
 Process deadlines remain active while draining inherited stdout/stderr after the
-initial child exits. Unix timeout/cancellation terminates its process group.
+initial child exits. On Unix, timeout and cancellation terminate the command's
+process group and end pending pipe reads. An open writer outside that group
+can remain alive, and the cancelled result contains only output already read.
 Windows native commands start suspended, enter a non-breakaway, kill-on-close job,
 and resume only after admission. Timeout/cancellation terminates that job, including
 descendants retaining output pipes after the direct child exits. Closing the command

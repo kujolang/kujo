@@ -13,6 +13,8 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 #[cfg(unix)]
+use std::os::fd::AsFd;
+#[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -69,15 +71,15 @@ impl Default for ProcessExecOptions {
 }
 
 #[derive(Clone, Debug)]
-struct ProcessExecutionResult {
-    exitcode: i64,
-    success: bool,
-    timed_out: bool,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
-    stdout_truncated: bool,
-    stderr_truncated: bool,
-    cancelled: bool,
+pub(crate) struct ProcessExecutionResult {
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) success: bool,
+    pub(crate) timed_out: bool,
+    pub(crate) stdout: Vec<u8>,
+    pub(crate) stderr: Vec<u8>,
+    pub(crate) stdout_truncated: bool,
+    pub(crate) stderr_truncated: bool,
+    pub(crate) cancelled: bool,
 }
 
 static PROCESS_CANCEL_REQUESTED: AtomicBool = AtomicBool::new(false);
@@ -530,8 +532,34 @@ impl StreamSink {
     }
 }
 
-fn collect_stream_with_limit<R: Read>(
-    mut reader: R,
+#[cfg(unix)]
+fn read_process_pipe(
+    reader: &mut (impl Read + AsFd),
+    chunk: &mut [u8],
+    cancelled: &AtomicBool,
+) -> std::io::Result<usize> {
+    use rustix::event::{poll, PollFd, PollFlags, Timespec};
+    const PIPE_CANCEL_POLL: Timespec = Timespec { tv_sec: 0, tv_nsec: 50_000_000 };
+    while !cancelled.load(Ordering::SeqCst) {
+        if poll(&mut [PollFd::new(&*reader, PollFlags::IN)], Some(&PIPE_CANCEL_POLL))? != 0 {
+            return reader.read(chunk);
+        }
+    }
+    Ok(0)
+}
+
+#[cfg(not(unix))]
+fn read_process_pipe(
+    reader: &mut impl Read,
+    chunk: &mut [u8],
+    _cancelled: &AtomicBool,
+) -> std::io::Result<usize> {
+    // On Windows the job owns all pipe writers and closes them when terminated.
+    reader.read(chunk)
+}
+
+fn collect_stream_with_limit(
+    mut read: impl FnMut(&mut [u8]) -> std::io::Result<usize>,
     max_output_bytes: usize,
     stream_name: &'static str,
     stream_channel: Option<SyncSender<Value>>,
@@ -552,14 +580,25 @@ fn collect_stream_with_limit<R: Read>(
     let mut chunk = [0_u8; 8192];
 
     loop {
-        let read_count = reader.read(&mut chunk).map_err(|error| error.to_string())?;
+        let read_count = match read(&mut chunk) {
+            Ok(count) => count,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error.to_string()),
+        };
         if 0 == read_count {
             break;
         }
-        let output = redactor.push(&chunk[..read_count]);
+        let bytes = &chunk[..read_count];
+        let redacted;
+        let output = if redactor.secrets.is_empty() {
+            bytes
+        } else {
+            redacted = redactor.push(bytes);
+            &redacted
+        };
         if !output.is_empty() {
             if let Some(sink) = &mut sink {
-                sink.emit(&output)?;
+                sink.emit(output)?;
             }
             if collected.len() < max_output_bytes {
                 let remaining = max_output_bytes - collected.len();
@@ -688,8 +727,30 @@ fn run_command_with_options(
     stdin_input: Option<Vec<u8>>,
     command_label: &str,
 ) -> Result<ProcessExecutionResult, Value> {
-    run_command_with_spawn_error(command, options, stdin_input, command_label, |error| {
-        error_object(format!("Failed to spawn process '{}': {}", command_label, error))
+    run_command_with_spawn_error(
+        command,
+        options,
+        stdin_input,
+        command_label,
+        Some(Duration::from_millis(options.timeout_ms)),
+        |error| error_object(format!("Failed to spawn process '{}': {}", command_label, error)),
+    )
+}
+
+pub(crate) fn run_workflow_process(
+    command: Command,
+    timeout: Option<Duration>,
+    max_output_bytes: usize,
+    command_label: &str,
+) -> Result<ProcessExecutionResult, String> {
+    let options = ProcessExecOptions { max_output_bytes, ..ProcessExecOptions::default() };
+    run_command_with_spawn_error(command, &options, None, command_label, timeout, |error| {
+        let action = if timeout.is_some() { "spawn" } else { "execute" };
+        error_object(format!("Failed to {action} '{command_label}': {error}"))
+    })
+    .map_err(|error| match error {
+        Value::ErrorObject { message, .. } => message,
+        other => format!("{other:?}"),
     })
 }
 
@@ -699,6 +760,7 @@ fn run_command_with_spawn_error(
     options: &ProcessExecOptions,
     stdin_input: Option<Vec<u8>>,
     command_label: &str,
+    timeout: Option<Duration>,
     spawn_error: impl FnOnce(std::io::Error) -> Value,
 ) -> Result<ProcessExecutionResult, Value> {
     install_process_signal_handler();
@@ -758,13 +820,13 @@ fn run_command_with_spawn_error(
         Ok(())
     };
 
-    let Some(stdout_reader) = child.stdout.take() else {
+    let Some(mut stdout_reader) = child.stdout.take() else {
         return Err(error_object(format!(
             "Failed to capture stdout for process '{}'",
             command_label
         )));
     };
-    let Some(stderr_reader) = child.stderr.take() else {
+    let Some(mut stderr_reader) = child.stderr.take() else {
         return Err(error_object(format!(
             "Failed to capture stderr for process '{}'",
             command_label
@@ -780,13 +842,13 @@ fn run_command_with_spawn_error(
         let redact_values = options.redact_values.clone();
         thread::spawn(move || {
             collect_stream_with_limit(
-                stdout_reader,
+                |chunk| read_process_pipe(&mut stdout_reader, chunk, &cancel_flag),
                 max_output_bytes,
                 "stdout",
                 stream_channel,
                 stream_file_path,
                 redact_values,
-                cancel_flag,
+                cancel_flag.clone(),
             )
         })
     };
@@ -797,17 +859,16 @@ fn run_command_with_spawn_error(
         let redact_values = options.redact_values.clone();
         thread::spawn(move || {
             collect_stream_with_limit(
-                stderr_reader,
+                |chunk| read_process_pipe(&mut stderr_reader, chunk, &cancel_flag),
                 max_output_bytes,
                 "stderr",
                 stream_channel,
                 stream_file_path,
                 redact_values,
-                cancel_flag,
+                cancel_flag.clone(),
             )
         })
     };
-    let timeout = Duration::from_millis(options.timeout_ms);
     let start = Instant::now();
     let mut timed_out = false;
     let mut cancelled = false;
@@ -838,7 +899,7 @@ fn run_command_with_spawn_error(
                         }
                     }
                 }
-                if start.elapsed() >= timeout {
+                if timeout.is_some_and(|timeout| start.elapsed() >= timeout) {
                     timed_out = true;
                     cancel_flag.store(true, Ordering::SeqCst);
                     terminate(&mut child)?;
@@ -896,7 +957,7 @@ fn run_command_with_spawn_error(
         }
     };
     Ok(ProcessExecutionResult {
-        exitcode: status.code().unwrap_or(-1) as i64,
+        exit_code: status.code(),
         success: status.success() && !timed_out && !cancelled,
         timed_out,
         stdout,
@@ -915,13 +976,20 @@ pub(super) fn run_gif_converter(command: Command) -> Value {
 fn run_gif_converter_with_options(mut command: Command, options: &ProcessExecOptions) -> Value {
     // Command::output previously supplied EOF rather than inherited interactive input.
     command.stdin(Stdio::null());
-    let result = run_command_with_spawn_error(command, options, None, "gif2webp", |error| {
-        if error.kind() == std::io::ErrorKind::NotFound {
-            Value::Error("gif_to_webp requires the 'gif2webp' CLI tool to be installed and available in PATH".to_string())
-        } else {
-            Value::Error(format!("gif_to_webp command failed: {}", error))
-        }
-    });
+    let result = run_command_with_spawn_error(
+        command,
+        options,
+        None,
+        "gif2webp",
+        Some(Duration::from_millis(options.timeout_ms)),
+        |error| {
+            if error.kind() == std::io::ErrorKind::NotFound {
+                Value::Error("gif_to_webp requires the 'gif2webp' CLI tool to be installed and available in PATH".to_string())
+            } else {
+                Value::Error(format!("gif_to_webp command failed: {}", error))
+            }
+        },
+    );
     match result {
         Ok(output) if output.timed_out => {
             Value::Error(format!("gif_to_webp timed out after {}ms", options.timeout_ms))
@@ -951,7 +1019,7 @@ fn run_gif_converter_with_options(mut command: Command, options: &ProcessExecOpt
 
 fn process_result_to_value(result: ProcessExecutionResult) -> Value {
     let mut fields = HashMap::new();
-    fields.insert("exitcode".to_string(), Value::Int(result.exitcode));
+    fields.insert("exitcode".to_string(), Value::Int(i64::from(result.exit_code.unwrap_or(-1))));
     fields.insert(
         "stdout".to_string(),
         Value::Str(Arc::new(String::from_utf8_lossy(&result.stdout).to_string())),
@@ -1726,7 +1794,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if !result.success {
                 return Some(error_object(format!(
                     "execute() command failed with exit code {}: {}",
-                    result.exitcode,
+                    result.exit_code.unwrap_or(-1),
                     String::from_utf8_lossy(&result.stderr)
                 )));
             }
@@ -1908,7 +1976,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         return Some(error_object(format!(
                             "Command '{}' failed with exit code {}: {}",
                             cmd_parts.join(" "),
-                            run_result.exitcode,
+                            run_result.exit_code.unwrap_or(-1),
                             String::from_utf8_lossy(&run_result.stderr)
                         )));
                     }
@@ -1950,6 +2018,36 @@ mod tests {
 
     fn string_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn cancelled_pipe_read_finishes_with_writer_open() {
+        use std::io::Write;
+        use std::os::unix::net::UnixStream;
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        let (mut reader, mut writer) = UnixStream::pair().unwrap();
+        writer.write_all(b"x").unwrap();
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let (ready_tx, ready_rx) = mpsc::channel();
+        let (result_tx, result_rx) = mpsc::channel();
+        let reader_cancelled = Arc::clone(&cancelled);
+        let worker = std::thread::spawn(move || {
+            let mut byte = [0];
+            assert_eq!(
+                super::read_process_pipe(&mut reader, &mut byte, &reader_cancelled).unwrap(),
+                1
+            );
+            assert_eq!(byte, [b'x']);
+            ready_tx.send(()).unwrap();
+            let result = super::read_process_pipe(&mut reader, &mut byte, &reader_cancelled);
+            result_tx.send(result).unwrap();
+        });
+        ready_rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        cancelled.store(true, Ordering::SeqCst);
+        assert_eq!(result_rx.recv_timeout(Duration::from_secs(2)).unwrap().unwrap(), 0);
+        worker.join().unwrap();
     }
 
     #[test]

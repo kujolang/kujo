@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-11-20
+Generated: 2026-11-21
 Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
@@ -45,11 +45,11 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/interpreter/native_functions/process_job_windows.rs | 107 | executable | src_executable_other |             let thread = unsafe { OwnedHandle::from_raw_handle(raw) }; |
 | src/interpreter/native_functions/process_job_windows.rs | 110 | executable | src_executable_other |             if unsafe { ResumeThread(thread.as_raw_handle()) } == u32::MAX { |
 | src/interpreter/native_functions/process_job_windows.rs | 117 | executable | src_executable_other |         found = unsafe { Thread32Next(snapshot.as_raw_handle(), &mut entry) }; |
-| src/interpreter/native_functions/system.rs | 94 | executable | src_executable_other |         unsafe { |
-| src/interpreter/native_functions/system.rs | 611 | executable | src_executable_other |     unsafe { |
-| src/interpreter/native_functions/system.rs | 629 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
-| src/interpreter/native_functions/system.rs | 661 | executable | src_executable_other |     let handle = unsafe { |
-| src/interpreter/native_functions/system.rs | 674 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
+| src/interpreter/native_functions/system.rs | 96 | executable | src_executable_other |         unsafe { |
+| src/interpreter/native_functions/system.rs | 650 | executable | src_executable_other |     unsafe { |
+| src/interpreter/native_functions/system.rs | 668 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/system.rs | 700 | executable | src_executable_other |     let handle = unsafe { |
+| src/interpreter/native_functions/system.rs | 713 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
 | src/interpreter/native_functions/tls.rs | 691 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
 | src/interpreter/native_functions/web_data.rs | 372 | executable | src_executable_other |         let result = unsafe { libc::renamex_np(src.as_ptr(), dst.as_ptr(), libc::RENAME_EXCL) }; |
 | src/interpreter/native_functions/web_data.rs | 374 | executable | src_executable_other |         let result = unsafe { |

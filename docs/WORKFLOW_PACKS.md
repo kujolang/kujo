@@ -272,6 +272,11 @@ Discovery order (first match wins for built-in namespace protection):
 3. **User-local packs** — `~/.kujo/packs/<pack-name>/kujo-pack.yaml`
 4. **Env-path packs** — `KUJO_PACK_PATH=/path/to/pack-a:/path/to/pack-b`
 
+External commands have a 30-second deadline that includes draining stdout and
+stderr. On Unix, reaching the deadline terminates the command's process group
+and stops the capture readers. Kujo retains up to 1 MiB and 10,000 lines of each
+stream, plus a truncation marker when needed.
+
 ## Creating a Custom Workflow Pack
 
 ### 1. Create the pack directory
