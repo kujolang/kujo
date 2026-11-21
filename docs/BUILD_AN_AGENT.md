@@ -157,3 +157,10 @@ knowledge profile at `examples/owned-agent-project`.
 `auth ... --json` emit versioned machine-readable payloads. `kujo doctor agent
 --json` reuses the canonical Doctor report. There is deliberately no `kujo agent
 doctor` command.
+
+The Doctor report's secret-like values check inspects regular project files up
+to 1 MiB. It skips symbolic links, special files, `.env.local`, and
+`.env.example`, and excludes transient credential staging files. A finding lists
+relative file paths and omits credential values. Project credential updates
+serialize through `.kujo-agent/credential.lock` and atomically replace
+`.env.local` after writing the new contents.

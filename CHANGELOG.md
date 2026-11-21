@@ -10,6 +10,10 @@ This file records user-visible changes to Kujo, following
   and preserve UTF-8 at truncation boundaries. Doctor no longer reports an exact
   changed-path count when the Git preview was truncated.
 - Load sibling workflow packs in path order and apply each registration atomically.
+- Limit the Agent Project doctor's credential scan to small, regular, non-symlink
+  files inside the project.
+- Serialize concurrent project credential updates and atomically replace the
+  private credential file on each successful change.
 
 ## [1.10.0] - 2026-11-20
 

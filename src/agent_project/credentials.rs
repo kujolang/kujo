@@ -1,10 +1,14 @@
 use super::*;
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
+use cap_std::fs::{Dir, OpenOptions};
+use fs2::FileExt;
 use std::io::{self, IsTerminal, Read, Write};
 
 #[cfg(feature = "runtime-network")]
 const KEYRING_SERVICE: &str = "ai.kujo.agent";
 const TEST_STORE_ENV: &str = "KUJO_AGENT_TEST_CREDENTIAL_STORE";
 const PROJECT_ENV_FILE: &str = ".env.local";
+pub(super) const CREDENTIAL_TEMP_PREFIX: &str = ".kujo-credential-";
 const MAX_CREDENTIAL_BYTES: usize = 64 * 1024;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -414,38 +418,80 @@ fn update_test_store(path: &Path, name: &str, value: Option<&str>) -> Result<(),
     secure_atomic_write(path, &format!("{}\n", serde_json::to_string_pretty(&entries).unwrap()))
 }
 
-fn read_project_secret(root: &Path, name: &str) -> Result<Option<String>, AgentError> {
-    let path = root.join(PROJECT_ENV_FILE);
-    if !path.exists() {
-        return Ok(None);
+fn project_directory(root: &Path) -> Result<Dir, AgentError> {
+    Dir::open_ambient_dir(root, cap_std::ambient_authority()).map_err(|e| ioerr(e.to_string()))
+}
+
+fn lock_project_credentials(root: &Dir) -> Result<std::fs::File, AgentError> {
+    const LOCK_DIR: &str = ".kujo-agent";
+    match root.create_dir(LOCK_DIR) {
+        Ok(()) => {}
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
+        Err(e) => return Err(ioerr(format!("Could not create credential lock directory: {e}"))),
     }
-    reject_symlink(&path, PROJECT_ENV_FILE)?;
-    require_private_permissions(&path)?;
-    Ok(parse_env_file(&fs::read_to_string(path).map_err(|e| ioerr(e.to_string()))?)?.remove(name))
+    let directory = root
+        .open_dir_nofollow(LOCK_DIR)
+        .map_err(|e| ioerr(format!("Could not open credential lock directory: {e}")))?;
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create_new(true).follow(FollowSymlinks::No).nonblock(true);
+    let lock = match directory.open_with("credential.lock", &options) {
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
+            directory.open_with("credential.lock", options.create_new(false))
+        }
+        result => result,
+    }
+    .map_err(|e| ioerr(format!("Could not open project credential lock: {e}")))?;
+    if !lock.metadata().map_err(|e| ioerr(e.to_string()))?.is_file() {
+        return Err(ioerr("Project credential lock must be a regular file."));
+    }
+    // Keep the lock file in place so concurrent waiters always lock the same inode.
+    let lock = lock.into_std();
+    FileExt::lock_exclusive(&lock)
+        .map_err(|e| ioerr(format!("Could not lock project credentials: {e}")))?;
+    Ok(lock)
+}
+
+fn read_project_entries(root: &Dir, path: &Path) -> Result<BTreeMap<String, String>, AgentError> {
+    match root.symlink_metadata(PROJECT_ENV_FILE) {
+        Ok(metadata) if metadata.is_file() => {}
+        Ok(metadata) if metadata.is_symlink() => {
+            return Err(usage(format!("Refusing symlinked {PROJECT_ENV_FILE}.")));
+        }
+        Ok(_) => return Err(usage(format!("{PROJECT_ENV_FILE} must be a regular file."))),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(BTreeMap::new()),
+        Err(e) => return Err(ioerr(e.to_string())),
+    }
+    let mut options = OpenOptions::new();
+    options.read(true).follow(FollowSymlinks::No).nonblock(true);
+    let mut file = root.open_with(PROJECT_ENV_FILE, &options).map_err(|e| ioerr(e.to_string()))?;
+    let metadata = file.metadata().map_err(|e| ioerr(e.to_string()))?;
+    if !metadata.is_file() {
+        return Err(usage(format!("{PROJECT_ENV_FILE} must be a regular file.")));
+    }
+    require_private_permissions(path, &metadata)?;
+    let mut source = String::new();
+    file.read_to_string(&mut source).map_err(|e| ioerr(e.to_string()))?;
+    parse_env_file(&source)
+}
+
+fn read_project_secret(root: &Path, name: &str) -> Result<Option<String>, AgentError> {
+    Ok(read_project_entries(&project_directory(root)?, &root.join(PROJECT_ENV_FILE))?.remove(name))
 }
 
 fn write_project_secret(root: &Path, name: &str, value: &str) -> Result<(), AgentError> {
     let path = root.join(PROJECT_ENV_FILE);
-    let mut entries = if path.exists() {
-        reject_symlink(&path, PROJECT_ENV_FILE)?;
-        require_private_permissions(&path)?;
-        parse_env_file(&fs::read_to_string(&path).map_err(|e| ioerr(e.to_string()))?)?
-    } else {
-        BTreeMap::new()
-    };
+    let directory = project_directory(root)?;
+    let _lock = lock_project_credentials(&directory)?;
+    let mut entries = read_project_entries(&directory, &path)?;
     entries.insert(name.to_string(), value.to_string());
     secure_atomic_write(&path, &render_env_file(&entries))
 }
 
 fn remove_project_secret(root: &Path, name: &str) -> Result<bool, AgentError> {
     let path = root.join(PROJECT_ENV_FILE);
-    if !path.exists() {
-        return Ok(false);
-    }
-    reject_symlink(&path, PROJECT_ENV_FILE)?;
-    require_private_permissions(&path)?;
-    let mut entries =
-        parse_env_file(&fs::read_to_string(&path).map_err(|e| ioerr(e.to_string()))?)?;
+    let directory = project_directory(root)?;
+    let _lock = lock_project_credentials(&directory)?;
+    let mut entries = read_project_entries(&directory, &path)?;
     let existed = entries.remove(name).is_some();
     if existed {
         secure_atomic_write(&path, &render_env_file(&entries))?;
@@ -492,10 +538,12 @@ fn reject_symlink(path: &Path, label: &str) -> Result<(), AgentError> {
 }
 
 #[cfg(unix)]
-fn require_private_permissions(path: &Path) -> Result<(), AgentError> {
-    use std::os::unix::fs::PermissionsExt;
-    let mode = fs::metadata(path).map_err(|e| ioerr(e.to_string()))?.permissions().mode();
-    if mode & 0o077 != 0 {
+fn require_private_permissions(
+    path: &Path,
+    metadata: &cap_std::fs::Metadata,
+) -> Result<(), AgentError> {
+    use cap_std::fs::PermissionsExt;
+    if metadata.permissions().mode() & 0o077 != 0 {
         return Err(fail(format!(
             "{} must be private (chmod 600) before Kujo will read it.",
             path.display()
@@ -505,38 +553,68 @@ fn require_private_permissions(path: &Path) -> Result<(), AgentError> {
 }
 
 #[cfg(not(unix))]
-fn require_private_permissions(_path: &Path) -> Result<(), AgentError> {
+fn require_private_permissions(
+    _path: &Path,
+    _metadata: &cap_std::fs::Metadata,
+) -> Result<(), AgentError> {
     Ok(())
 }
 
 fn secure_atomic_write(path: &Path, body: &str) -> Result<(), AgentError> {
     let parent = path.parent().ok_or_else(|| usage("Credential path has no parent directory."))?;
     fs::create_dir_all(parent).map_err(|e| ioerr(e.to_string()))?;
-    let temp = parent.join(format!(".kujo-credential-{}.tmp", std::process::id()));
-    if temp.exists() {
-        return Err(ioerr("Credential staging file already exists."));
+    let mut temp = tempfile::Builder::new()
+        .prefix(CREDENTIAL_TEMP_PREFIX)
+        .suffix(".tmp")
+        .tempfile_in(parent)
+        .map_err(|e| ioerr(e.to_string()))?;
+    temp.write_all(body.as_bytes()).map_err(|e| ioerr(e.to_string()))?;
+    temp.as_file().sync_all().map_err(|e| ioerr(e.to_string()))?;
+    match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.is_file() => {}
+        Ok(_) => return Err(usage("Credential file must be a regular file.")),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+        Err(e) => return Err(ioerr(e.to_string())),
     }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        let mut file = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .mode(0o600)
-            .open(&temp)
-            .map_err(|e| ioerr(e.to_string()))?;
-        file.write_all(body.as_bytes()).map_err(|e| ioerr(e.to_string()))?;
-        file.sync_all().map_err(|e| ioerr(e.to_string()))?;
+    temp.persist(path)
+        .map_err(|e| ioerr(format!("Could not promote credential file: {}", e.error)))?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn concurrent_project_credential_updates_preserve_every_entry() {
+        let root = tempfile::tempdir().unwrap();
+        let barrier = std::sync::Barrier::new(12);
+        std::thread::scope(|scope| {
+            for i in 0..12 {
+                let root = root.path();
+                let barrier = &barrier;
+                scope.spawn(move || {
+                    barrier.wait();
+                    write_project_secret(root, &format!("TEST_{i}"), "placeholder")
+                        .unwrap_or_else(|error| panic!("{}", error.message));
+                });
+            }
+        });
+        let root = root.path();
+        let directory = project_directory(root).unwrap_or_else(|error| panic!("{}", error.message));
+        let entries = read_project_entries(&directory, &root.join(PROJECT_ENV_FILE))
+            .unwrap_or_else(|error| panic!("{}", error.message));
+        assert_eq!(entries.len(), 12);
+        assert!(entries.values().all(|value| value == "placeholder"));
     }
-    #[cfg(not(unix))]
-    fs::write(&temp, body).map_err(|e| ioerr(e.to_string()))?;
-    if path.exists() {
-        reject_symlink(path, "credential file")?;
-        #[cfg(windows)]
-        fs::remove_file(path).map_err(|e| ioerr(e.to_string()))?;
+
+    #[test]
+    fn failed_credential_publication_cleans_up_staging_file() {
+        let root = tempfile::tempdir().unwrap();
+        let destination = root.path().join("existing");
+        fs::create_dir(&destination).unwrap();
+        assert!(secure_atomic_write(&destination, "placeholder").is_err());
+        assert!(destination.is_dir());
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
     }
-    fs::rename(&temp, path).map_err(|e| {
-        let _ = fs::remove_file(&temp);
-        ioerr(format!("Could not promote credential file: {e}"))
-    })
 }

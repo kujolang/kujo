@@ -1,4 +1,9 @@
 use super::*;
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
+use cap_std::fs::{Dir, OpenOptions};
+use std::io::Read;
+
+const SECRET_SCAN_FILE_BYTES: u64 = 1_048_576;
 
 pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
     let mut checks = Vec::new();
@@ -29,7 +34,8 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
                     None,
                 ));
             }
-            for (name, details) in declared_dependencies(&root) {
+            let dependencies = declared_dependencies(&root);
+            for (name, details) in &dependencies {
                 let installed = details.get("installed").and_then(Value::as_bool).unwrap_or(false);
                 checks.push(check(
                     &format!("agent.dependencies.{name}"),
@@ -151,7 +157,6 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
                 }),
             ));
             if deep {
-                let dependencies = declared_dependencies(&root);
                 let pins_valid = !dependencies.is_empty()
                     && dependencies.values().all(|details| {
                         details
@@ -199,36 +204,55 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
 }
 
 fn secret_like_files(root: &Path) -> Vec<String> {
-    fn walk(root: &Path, current: &Path, depth: usize, matches: &mut Vec<String>) {
+    fn walk(directory: &Dir, relative: &Path, depth: usize, matches: &mut Vec<String>) {
         if depth > 8 {
             return;
         }
-        let Ok(entries) = fs::read_dir(current) else {
+        let Ok(entries) = directory.entries() else {
             return;
         };
         for entry in entries.flatten() {
-            let path = entry.path();
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
             let name = entry.file_name();
-            let name = name.to_string_lossy();
-            if path.is_dir() {
+            let path = relative.join(&name);
+            if file_type.is_dir() {
                 if matches!(
-                    name.as_ref(),
+                    name.to_string_lossy().as_ref(),
                     ".git" | "kennel_packages" | ".kennel_tmp" | ".eval-results" | ".runledger"
                 ) {
                     continue;
                 }
-                walk(root, &path, depth + 1, matches);
+                if let Ok(child) = directory.open_dir_nofollow(&name) {
+                    walk(&child, &path, depth + 1, matches);
+                }
                 continue;
             }
-            if name == ".env.example"
+            if !file_type.is_file()
+                || name == ".env.example"
                 || name == ".env.local"
-                || path.metadata().map(|m| m.len() > 1_048_576).unwrap_or(true)
+                || name.to_string_lossy().starts_with(credentials::CREDENTIAL_TEMP_PREFIX)
             {
                 continue;
             }
-            let Ok(source) = fs::read_to_string(&path) else {
+            let mut options = OpenOptions::new();
+            options.read(true).follow(FollowSymlinks::No).nonblock(true);
+            let Ok(file) = directory.open_with(&name, &options) else {
                 continue;
             };
+            let Ok(metadata) = file.metadata() else {
+                continue;
+            };
+            if !metadata.is_file() || metadata.len() > SECRET_SCAN_FILE_BYTES {
+                continue;
+            }
+            let mut source = String::new();
+            if file.take(SECRET_SCAN_FILE_BYTES + 1).read_to_string(&mut source).is_err()
+                || source.len() as u64 > SECRET_SCAN_FILE_BYTES
+            {
+                continue;
+            }
             let has_secret_prefix = source.lines().any(|line| {
                 let trimmed = line.trim();
                 if trimmed.starts_with('#') {
@@ -253,13 +277,14 @@ fn secret_like_files(root: &Path) -> Vec<String> {
                     || trimmed.contains("\"token\": \"sk-")
             });
             if has_secret_prefix {
-                matches
-                    .push(path.strip_prefix(root).unwrap_or(&path).to_string_lossy().into_owned());
+                matches.push(path.to_string_lossy().into_owned());
             }
         }
     }
     let mut matches = Vec::new();
-    walk(root, root, 0, &mut matches);
+    if let Ok(directory) = Dir::open_ambient_dir(root, cap_std::ambient_authority()) {
+        walk(&directory, Path::new(""), 0, &mut matches);
+    }
     matches.sort();
     matches.dedup();
     matches
@@ -285,5 +310,44 @@ fn check(
         category: Some("agent".into()),
         observed_major: None,
         minimum_major: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn secret_scan_reports_sorted_small_project_files() {
+        let root = tempfile::tempdir().unwrap();
+        fs::create_dir(root.path().join("config")).unwrap();
+        fs::write(root.path().join("config/model.env"), "OPENAI_API_KEY=placeholder").unwrap();
+        fs::write(root.path().join(".env"), "BEARER_TOKEN=placeholder").unwrap();
+        fs::write(root.path().join(".env.local"), "BEARER_TOKEN=placeholder").unwrap();
+        fs::write(root.path().join(".env.example"), "BEARER_TOKEN=placeholder").unwrap();
+        let mut large = "MCP_TOKEN=placeholder\n".to_string();
+        large.push_str(&" ".repeat(SECRET_SCAN_FILE_BYTES as usize));
+        fs::write(root.path().join("large.env"), large).unwrap();
+
+        assert_eq!(
+            secret_like_files(root.path()),
+            [
+                ".env".to_string(),
+                Path::new("config").join("model.env").to_string_lossy().into_owned()
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn secret_scan_does_not_follow_linked_files_or_directories() {
+        let root = tempfile::tempdir().unwrap();
+        let other = tempfile::tempdir().unwrap();
+        let config = other.path().join("settings.env");
+        fs::write(&config, "MCP_TOKEN=placeholder").unwrap();
+        std::os::unix::fs::symlink(config, root.path().join("linked.env")).unwrap();
+        std::os::unix::fs::symlink(other.path(), root.path().join("linked")).unwrap();
+
+        assert!(secret_like_files(root.path()).is_empty());
     }
 }
