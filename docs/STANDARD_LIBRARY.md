@@ -758,6 +758,10 @@ environment read. See the security posture's hardening corrections for migration
 runtime error and leaves the shared integer unchanged; it does not poison the
 shared store or wrap in optimized builds.
 
+The fused SSG renderer keeps one idle worker pool and reuses page-name tables
+for one batch size, up to 65,536 pages. Larger batches are still rendered with
+page-name storage scoped to the active call.
+
 ### Explicit numeric formatting and wrapping
 
 - `format_fixed(value, precision)` returns fixed decimal text with exactly

@@ -11,9 +11,8 @@ use crate::vm::{VmExecutionResult, VM};
 use futures::stream::{FuturesUnordered, StreamExt};
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
-use std::collections::HashMap;
 use std::io::{Error, ErrorKind, IoSlice, Read, Write};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 use tokio::io::AsyncWriteExt;
 
@@ -23,12 +22,60 @@ const SSG_HTML_SUFFIX: &str = "</article></body></html>";
 const SSG_PROFILE_ASYNC_ENV: &str = "KUJO_BENCH_SSG_PROFILE_ASYNC";
 const SSG_SKIP_FLUSH_ENV: &str = "KUJO_SSG_SKIP_FLUSH";
 
-static SSG_RAYON_POOL_CACHE: OnceLock<Mutex<HashMap<usize, Arc<rayon::ThreadPool>>>> =
-    OnceLock::new();
-static SSG_RENDER_PREFIX_CACHE: OnceLock<Mutex<HashMap<usize, Arc<Vec<Arc<str>>>>>> =
-    OnceLock::new();
-static SSG_OUTPUT_FILE_SUFFIX_CACHE: OnceLock<Mutex<HashMap<usize, Arc<Vec<Arc<str>>>>>> =
-    OnceLock::new();
+const SSG_MAX_CACHED_PAGES: usize = 65_536;
+
+static SSG_RAYON_POOL_CACHE: Mutex<Option<Arc<rayon::ThreadPool>>> = Mutex::new(None);
+static SSG_PAGE_NAMES_CACHE: Mutex<Option<SsgPageNames>> = Mutex::new(None);
+
+#[derive(Clone)]
+struct SsgPageNames {
+    output_suffixes: Arc<Vec<Arc<str>>>,
+    render_prefixes: Arc<Vec<Arc<str>>>,
+}
+
+impl SsgPageNames {
+    fn build(file_count: usize) -> Self {
+        let mut output_suffixes = Vec::with_capacity(file_count);
+        let mut render_prefixes = Vec::with_capacity(file_count);
+        for index in 0..file_count {
+            output_suffixes.push(Arc::from(format!("post_{index}.html")));
+            render_prefixes
+                .push(Arc::from(format!("{SSG_HTML_PREFIX_START}{index}{SSG_HTML_PREFIX_END}")));
+        }
+        Self {
+            output_suffixes: Arc::new(output_suffixes),
+            render_prefixes: Arc::new(render_prefixes),
+        }
+    }
+
+    fn get_or_build(cache: &Mutex<Option<Self>>, file_count: usize) -> Self {
+        if file_count > SSG_MAX_CACHED_PAGES {
+            return Self::build(file_count);
+        }
+        {
+            let cached = cache.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+            if let Some(names) =
+                cached.as_ref().filter(|names| names.output_suffixes.len() == file_count)
+            {
+                return names.clone();
+            }
+        }
+
+        let names = Self::build(file_count);
+        let previous = {
+            let mut cached = cache.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+            if let Some(current) =
+                cached.as_ref().filter(|names| names.output_suffixes.len() == file_count)
+            {
+                return current.clone();
+            }
+            cached.replace(names.clone())
+        };
+        // Release an evicted batch outside the lock. Active callers keep their Arcs.
+        drop(previous);
+        names
+    }
+}
 
 #[derive(Clone)]
 enum RayonMapInput {
@@ -37,76 +84,11 @@ enum RayonMapInput {
     DictLen(usize),
 }
 
-fn ssg_render_prefix_cache() -> &'static Mutex<HashMap<usize, Arc<Vec<Arc<str>>>>> {
-    SSG_RENDER_PREFIX_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn ssg_output_file_suffix_cache() -> &'static Mutex<HashMap<usize, Arc<Vec<Arc<str>>>>> {
-    SSG_OUTPUT_FILE_SUFFIX_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn ssg_get_or_build_render_prefixes(file_count: usize) -> Arc<Vec<Arc<str>>> {
-    {
-        let cache =
-            ssg_render_prefix_cache().lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        if let Some(prefixes) = cache.get(&file_count) {
-            return prefixes.clone();
-        }
-    }
-
-    let mut prefixes = Vec::with_capacity(file_count);
-    for index in 0..file_count {
-        let index_text = index.to_string();
-        let mut prefix = String::with_capacity(
-            SSG_HTML_PREFIX_START.len() + index_text.len() + SSG_HTML_PREFIX_END.len(),
-        );
-        prefix.push_str(SSG_HTML_PREFIX_START);
-        prefix.push_str(index_text.as_str());
-        prefix.push_str(SSG_HTML_PREFIX_END);
-        prefixes.push(Arc::<str>::from(prefix));
-    }
-    let new_prefixes = Arc::new(prefixes);
-
-    let mut cache =
-        ssg_render_prefix_cache().lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    if let Some(existing) = cache.get(&file_count) {
-        return existing.clone();
-    }
-    cache.insert(file_count, new_prefixes.clone());
-    new_prefixes
-}
-
-fn ssg_get_or_build_output_file_suffixes(file_count: usize) -> Arc<Vec<Arc<str>>> {
-    {
-        let cache =
-            ssg_output_file_suffix_cache().lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        if let Some(suffixes) = cache.get(&file_count) {
-            return suffixes.clone();
-        }
-    }
-
-    let mut suffixes = Vec::with_capacity(file_count);
-    for index in 0..file_count {
-        suffixes.push(Arc::<str>::from(format!("post_{}.html", index)));
-    }
-    let new_suffixes = Arc::new(suffixes);
-
-    let mut cache =
-        ssg_output_file_suffix_cache().lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    if let Some(existing) = cache.get(&file_count) {
-        return existing.clone();
-    }
-    cache.insert(file_count, new_suffixes.clone());
-    new_suffixes
-}
-
 fn ssg_get_cached_output_suffixes_and_prefixes(
     file_count: usize,
 ) -> (Arc<Vec<Arc<str>>>, Arc<Vec<Arc<str>>>) {
-    (
-        ssg_get_or_build_output_file_suffixes(file_count),
-        ssg_get_or_build_render_prefixes(file_count),
-    )
+    let names = SsgPageNames::get_or_build(&SSG_PAGE_NAMES_CACHE, file_count);
+    (names.output_suffixes, names.render_prefixes)
 }
 
 fn ssg_build_output_paths_and_prefixes_for_batch(
@@ -135,7 +117,11 @@ fn ssg_build_output_paths_for_batch(output_dir: &str, file_count: usize) -> Vec<
 
 #[cfg(test)]
 fn ssg_build_render_prefixes_for_batch(file_count: usize) -> Vec<String> {
-    ssg_get_or_build_render_prefixes(file_count).iter().map(|p| p.to_string()).collect()
+    ssg_get_cached_output_suffixes_and_prefixes(file_count)
+        .1
+        .iter()
+        .map(|p| p.to_string())
+        .collect()
 }
 
 #[cfg(test)]
@@ -314,36 +300,24 @@ fn ssg_rayon_cpu_cap() -> usize {
     std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)
 }
 
-fn ssg_rayon_pool_cache() -> &'static Mutex<HashMap<usize, Arc<rayon::ThreadPool>>> {
-    SSG_RAYON_POOL_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-fn ssg_get_or_create_rayon_pool(rayon_threads: usize) -> Result<Arc<rayon::ThreadPool>, String> {
-    {
-        let cache = ssg_rayon_pool_cache().lock().map_err(|e| {
-            format!("ssg_read_render_and_write_pages() thread-pool cache lock failed: {}", e)
-        })?;
-
-        if let Some(existing_pool) = cache.get(&rayon_threads) {
-            return Ok(existing_pool.clone());
-        }
+fn ssg_get_or_create_rayon_pool(
+    cache: &Mutex<Option<Arc<rayon::ThreadPool>>>,
+    rayon_threads: usize,
+) -> Result<Arc<rayon::ThreadPool>, String> {
+    let mut cached = cache.lock().map_err(|e| {
+        format!("ssg_read_render_and_write_pages() thread-pool cache lock failed: {}", e)
+    })?;
+    if let Some(pool) = cached.as_ref().filter(|pool| pool.current_num_threads() == rayon_threads) {
+        return Ok(pool.clone());
     }
-
-    let new_pool =
+    let pool =
         Arc::new(ThreadPoolBuilder::new().num_threads(rayon_threads).build().map_err(|e| {
             format!("ssg_read_render_and_write_pages() failed to initialize thread pool: {}", e)
         })?);
-
-    let mut cache = ssg_rayon_pool_cache().lock().map_err(|e| {
-        format!("ssg_read_render_and_write_pages() thread-pool cache lock failed: {}", e)
-    })?;
-
-    if let Some(existing_pool) = cache.get(&rayon_threads) {
-        return Ok(existing_pool.clone());
-    }
-
-    cache.insert(rayon_threads, new_pool.clone());
-    Ok(new_pool)
+    let previous = cached.replace(pool.clone());
+    drop(cached);
+    drop(previous);
+    Ok(pool)
 }
 
 fn ssg_stage_profile_enabled_from_env() -> bool {
@@ -388,7 +362,7 @@ fn ssg_run_rayon_read_render_write(
     // cause thread over-subscription and context-switch thrash on typical hardware.
     let cpu_cap = ssg_rayon_cpu_cap();
     let rayon_threads = concurrency_limit.min(cpu_cap).max(1);
-    let pool = ssg_get_or_create_rayon_pool(rayon_threads)?;
+    let pool = ssg_get_or_create_rayon_pool(&SSG_RAYON_POOL_CACHE, rayon_threads)?;
 
     // Single-pass: each Rayon task reads, renders, and writes its own file.
     // No barrier between read and render+write stages — write I/O starts as soon
@@ -483,7 +457,7 @@ fn ssg_run_rayon_read_render_write_with_reused_output_path_buffer(
 
     let cpu_cap = ssg_rayon_cpu_cap();
     let rayon_threads = concurrency_limit.min(cpu_cap).max(1);
-    let pool = ssg_get_or_create_rayon_pool(rayon_threads)?;
+    let pool = ssg_get_or_create_rayon_pool(&SSG_RAYON_POOL_CACHE, rayon_threads)?;
     let output_dir = Arc::new(output_dir);
 
     let suffix_max_len = output_file_suffixes.iter().map(|suffix| suffix.len()).max().unwrap_or(0);
@@ -3401,35 +3375,31 @@ mod tests {
     }
 
     #[test]
-    fn test_ssg_build_output_paths_and_prefixes_for_batch_reuses_cached_prefixes_for_same_count() {
-        let (_paths_a, prefixes_a) =
-            ssg_build_output_paths_and_prefixes_for_batch("tmp/output-a", 4);
-        let (_paths_b, prefixes_b) =
-            ssg_build_output_paths_and_prefixes_for_batch("tmp/output-b", 4);
+    fn ssg_page_names_cache_reuses_and_evicts_complete_batches() {
+        let cache = Mutex::new(None);
+        let first = SsgPageNames::get_or_build(&cache, 3);
+        let repeated = SsgPageNames::get_or_build(&cache, 3);
+        assert!(Arc::ptr_eq(&first.output_suffixes, &repeated.output_suffixes));
+        assert!(Arc::ptr_eq(&first.render_prefixes, &repeated.render_prefixes));
 
-        assert!(
-            Arc::ptr_eq(&prefixes_a, &prefixes_b),
-            "expected cached render prefixes to be reused for identical file_count"
-        );
+        let next = SsgPageNames::get_or_build(&cache, 2);
+        assert_eq!(next.output_suffixes.len(), 2);
+        assert_eq!(first.output_suffixes[2].as_ref(), "post_2.html");
+        assert_eq!(first.render_prefixes[2].as_ref(), "<html><body><h1>Post 2</h1><article>");
+        let rebuilt = SsgPageNames::get_or_build(&cache, 3);
+        assert!(!Arc::ptr_eq(&first.output_suffixes, &rebuilt.output_suffixes));
+        assert_eq!(first.output_suffixes, rebuilt.output_suffixes);
+        assert_eq!(first.render_prefixes, rebuilt.render_prefixes);
     }
 
     #[test]
-    fn test_ssg_get_or_build_output_file_suffixes_reuses_cached_arc_for_same_count() {
-        let suffixes_a = ssg_get_or_build_output_file_suffixes(3);
-        let suffixes_b = ssg_get_or_build_output_file_suffixes(3);
-        let suffixes_c = ssg_get_or_build_output_file_suffixes(2);
-
-        assert!(
-            Arc::ptr_eq(&suffixes_a, &suffixes_b),
-            "expected cached output suffixes to be reused for identical file_count"
-        );
-        assert!(
-            !Arc::ptr_eq(&suffixes_a, &suffixes_c),
-            "expected different output suffix cache entries for different file counts"
-        );
-        assert_eq!(suffixes_a[0].as_ref(), "post_0.html");
-        assert_eq!(suffixes_a[1].as_ref(), "post_1.html");
-        assert_eq!(suffixes_a[2].as_ref(), "post_2.html");
+    fn ssg_oversized_page_batch_is_usable_without_being_retained() {
+        let cache = Mutex::new(None);
+        let small = SsgPageNames::get_or_build(&cache, 2);
+        let oversized = SsgPageNames::get_or_build(&cache, SSG_MAX_CACHED_PAGES + 1);
+        assert_eq!(oversized.output_suffixes[SSG_MAX_CACHED_PAGES].as_ref(), "post_65536.html");
+        let retained = SsgPageNames::get_or_build(&cache, 2);
+        assert!(Arc::ptr_eq(&small.output_suffixes, &retained.output_suffixes));
     }
 
     #[test]
@@ -5405,25 +5375,18 @@ mod tests {
     }
 
     #[test]
-    fn test_ssg_get_or_create_rayon_pool_reuses_existing_pool_for_same_size() {
-        let pool_a = ssg_get_or_create_rayon_pool(1).unwrap();
-        let pool_b = ssg_get_or_create_rayon_pool(1).unwrap();
-
-        assert!(
-            Arc::ptr_eq(&pool_a, &pool_b),
-            "expected the same cached Rayon pool Arc for identical thread count"
-        );
-    }
-
-    #[test]
-    fn test_ssg_get_or_create_rayon_pool_distinguishes_thread_counts() {
-        let pool_one = ssg_get_or_create_rayon_pool(1).unwrap();
-        let pool_two = ssg_get_or_create_rayon_pool(2).unwrap();
-
-        assert!(
-            !Arc::ptr_eq(&pool_one, &pool_two),
-            "expected different cached Rayon pools for different thread counts"
-        );
+    fn ssg_pool_cache_reuses_same_size_and_eviction_preserves_active_pool() {
+        let cache = Mutex::new(None);
+        let pool_one = ssg_get_or_create_rayon_pool(&cache, 1).unwrap();
+        let reused = ssg_get_or_create_rayon_pool(&cache, 1).unwrap();
+        assert!(Arc::ptr_eq(&pool_one, &reused));
+        let pool_two = ssg_get_or_create_rayon_pool(&cache, 2).unwrap();
+        assert_eq!(pool_two.install(rayon::current_num_threads), 2);
+        assert_eq!(pool_one.install(rayon::current_num_threads), 1);
+        drop(reused);
+        let evicted = Arc::downgrade(&pool_one);
+        drop(pool_one);
+        assert!(evicted.upgrade().is_none());
     }
 
     #[test]
