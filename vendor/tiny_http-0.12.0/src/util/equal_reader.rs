@@ -65,11 +65,11 @@ where
 {
     fn drop(&mut self) {
         let mut remaining_to_read = self.size;
+        let mut buf = [0; 8192];
 
         while remaining_to_read > 0 {
-            let mut buf = vec![0; remaining_to_read];
-
-            match self.reader.read(&mut buf) {
+            let read_size = remaining_to_read.min(buf.len());
+            match self.reader.read(&mut buf[..read_size]) {
                 Err(e) => {
                     self.last_read_signal.send(Err(e)).ok();
                     break;
@@ -127,5 +127,27 @@ mod tests {
         let mut string = String::new();
         org_reader.read_to_string(&mut string).unwrap();
         assert_eq!(string, " world");
+    }
+
+    #[test]
+    fn discards_unread_body_in_bounded_chunks() {
+        struct Measured {
+            remaining: usize,
+            largest_read: usize,
+        }
+        impl Read for Measured {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                self.largest_read = self.largest_read.max(buf.len());
+                let read = self.remaining.min(buf.len());
+                buf[..read].fill(0);
+                self.remaining -= read;
+                Ok(read)
+            }
+        }
+        let body_length = 32 * 1024 + 1;
+        let mut source = Measured { remaining: body_length + 1, largest_read: 0 };
+        drop(EqualReader::new(&mut source, body_length).0);
+        assert_eq!(source.largest_read, 8192);
+        assert_eq!(source.remaining, 1);
     }
 }

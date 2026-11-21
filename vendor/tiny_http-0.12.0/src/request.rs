@@ -447,6 +447,9 @@ impl Request {
     where
         R: Read,
     {
+        // Release the socket writer before dropping the request reader. A client
+        // using Connection: close may wait for EOF before closing its write side.
+        let connection_writer = self.connection_writer.take();
         let mut writer = self.extract_writer_impl();
 
         let do_not_send_body = self.method == Method::Head;
@@ -461,7 +464,7 @@ impl Request {
             )
             .and_then(|()| writer.flush());
         if result.is_err() {
-            if let Some(connection) = &self.connection_writer {
+            if let Some(connection) = connection_writer {
                 // Wait for this response's turn even if the body failed before
                 // writing headers. Close before the next writer can take over.
                 let _ = writer.flush();
