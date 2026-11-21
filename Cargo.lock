@@ -2790,6 +2790,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "toml",
+ "toml_edit 0.22.27",
  "tzdb",
  "url",
  "urlencoding",

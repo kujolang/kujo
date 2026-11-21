@@ -457,7 +457,7 @@ from src.core.math import add
 ### 5.11 Package workflow and lockfile determinism
 
 - `kujo init` creates a package manifest (`kujo.toml`) and a starter source layout.
-- `kujo package-add <name> --version <range>` updates dependency declarations in the manifest.
+- `kujo package-add <name> --version <range>` updates dependency declarations in the manifest and preserves comments and other project metadata.
 - `kujo package-install` regenerates the deterministic `kujo.lock` snapshot derived from `kujo.toml`.
 - `kujo package-install --frozen` verifies that the manifest and lockfile remain in sync without rewriting either file.
 - Package workflow imports use the same package-root-aware module resolution rules as ordinary runtime imports, so nested layouts under `src/` remain available on the default VM path.

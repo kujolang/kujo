@@ -113,11 +113,26 @@ pub fn add_dependency(content: &str, name: &str, version: &str) -> Result<String
         return Err("Dependency version must not be empty".to_string());
     }
 
-    let mut manifest = parse_manifest(content)?;
-    manifest.dependencies.insert(name.to_string(), version.to_string());
-
-    toml::to_string_pretty(&manifest)
-        .map_err(|error| format!("Failed to serialize kujo.toml: {}", error))
+    parse_manifest(content)?;
+    let mut document = content
+        .parse::<toml_edit::DocumentMut>()
+        .map_err(|error| format!("Invalid kujo.toml: {error}"))?;
+    let dependencies = document
+        .entry("dependencies")
+        .or_insert_with(|| toml_edit::Item::Table(toml_edit::Table::new()))
+        .as_table_like_mut()
+        .ok_or_else(|| "Invalid kujo.toml: dependencies must be a table".to_string())?;
+    let mut replacement = toml_edit::Value::from(version);
+    if let Some(existing) = dependencies.get_mut(name).and_then(toml_edit::Item::as_value_mut) {
+        if existing.as_str() == Some(version) {
+            return Ok(content.to_owned());
+        }
+        *replacement.decor_mut() = existing.decor().clone();
+        *existing = replacement;
+    } else {
+        dependencies.insert(name, toml_edit::Item::Value(replacement));
+    }
+    Ok(document.to_string())
 }
 
 fn validate_manifest(manifest: &KujoManifest, trust: PackageTrust) -> Result<(), String> {

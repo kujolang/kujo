@@ -40,6 +40,49 @@ fn parse_stdout_json(output: &Output) -> Value {
 }
 
 #[test]
+fn package_add_preserves_project_metadata_and_dependency_comments() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("kujo.toml");
+    let project_metadata = concat!(
+        "# Project manifest\n",
+        "[package]\nname = 'formatting-demo'\nversion = '0.1.0'\n",
+        "[tool.workflow]\ntarget = 'local' # maintained alongside the lockfile\n",
+    );
+    for (dependencies, changed) in [
+        (
+            "[dependencies]\nalpha = '1' # keep this note\n",
+            "[dependencies]\nalpha = \"2\" # keep this note\n",
+        ),
+        (
+            "dependencies.alpha = '1' # keep this note\n",
+            "dependencies.alpha = \"2\" # keep this note\n",
+        ),
+        (
+            "dependencies = { alpha = '1' } # keep this note\n",
+            "dependencies = { alpha = \"2\" } # keep this note\n",
+        ),
+    ] {
+        let original = format!("{dependencies}{project_metadata}");
+        fs::write(&path, &original).unwrap();
+        let unchanged = run_kujo(&["package-add", "alpha", "--version", "1"], root.path());
+        assert!(unchanged.status.success(), "{}", stderr_text(&unchanged));
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+
+        let updated = run_kujo(&["package-add", "alpha", "--version", "2"], root.path());
+        assert!(updated.status.success(), "{}", stderr_text(&updated));
+        assert_eq!(fs::read_to_string(&path).unwrap(), format!("{changed}{project_metadata}"));
+
+        let added = run_kujo(&["package-add", "example.beta", "--version", "3"], root.path());
+        assert!(added.status.success(), "{}", stderr_text(&added));
+        let body = fs::read_to_string(&path).unwrap();
+        assert!(body.contains(project_metadata), "{body}");
+        let manifest: toml::Value = toml::from_str(&body).unwrap();
+        assert_eq!(manifest["dependencies"]["alpha"].as_str(), Some("2"));
+        assert_eq!(manifest["dependencies"]["example.beta"].as_str(), Some("3"));
+    }
+}
+
+#[test]
 fn package_module_workflow_end_to_end_contract() {
     let project_root = unique_temp_dir("package_module_workflow");
     let project_root_str = project_root.to_str().expect("path should be utf-8");
