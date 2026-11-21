@@ -8,7 +8,7 @@ use crate::{builtins, network_policy};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -432,7 +432,7 @@ struct StoredAiCassetteRequest {
 #[derive(Debug, Deserialize, Serialize)]
 struct StoredAiCassetteResponse {
     status: i64,
-    headers: HashMap<String, String>,
+    headers: BTreeMap<String, String>,
     body: String,
 }
 
@@ -1434,8 +1434,8 @@ fn cassette_path(dir: &Path, key: &str) -> PathBuf {
     dir.join(format!("{}.json", key))
 }
 
-fn redact_ai_headers(headers: &DictMap) -> HashMap<String, String> {
-    let mut redacted = HashMap::new();
+fn redact_ai_headers(headers: &DictMap) -> BTreeMap<String, String> {
+    let mut redacted = BTreeMap::new();
     for (name, value) in headers.iter() {
         let Value::Str(text) = value else {
             continue;
@@ -1450,7 +1450,7 @@ fn redact_ai_headers(headers: &DictMap) -> HashMap<String, String> {
     redacted
 }
 
-fn cassette_headers_to_dict(headers: &HashMap<String, String>) -> DictMap {
+fn cassette_headers_to_dict(headers: &BTreeMap<String, String>) -> DictMap {
     let mut dict = DictMap::default();
     for (name, value) in headers {
         dict.insert(name.as_str().into(), Value::Str(Arc::new(value.clone())));
@@ -1545,18 +1545,18 @@ fn replay_ai_cassette(
     key: &str,
 ) -> Result<Option<AiHttpResponse>, String> {
     let path = cassette_path(dir, key);
-    if !path.exists() {
-        return Ok(None);
-    }
-
-    let contents = fs::read_to_string(&path).map_err(|error| {
-        format!(
-            "{} failed: kind:\"replay_miss\" cassette '{}' could not be read: {}",
-            surface,
-            path.display(),
-            error
-        )
-    })?;
+    let contents = match fs::read_to_string(&path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!(
+                "{} failed: kind:\"replay_miss\" cassette '{}' could not be read: {}",
+                surface,
+                path.display(),
+                error
+            ))
+        }
+    };
     let cassette: StoredAiCassette = serde_json::from_str(&contents).map_err(|error| {
         format!("{} failed: cassette '{}' was not valid JSON ({})", surface, path.display(), error)
     })?;
@@ -1607,13 +1607,9 @@ fn store_ai_cassette(
             error
         )
     })?;
-    let normalized_json = builtins::to_json(normalized_request)
-        .and_then(|json| {
-            serde_json::from_str::<serde_json::Value>(&json).map_err(|e| e.to_string())
-        })
-        .map_err(|error| {
-            format!("{} failed: cassette request serialization error: {}", surface, error)
-        })?;
+    let normalized_json = builtins::kujo_value_to_json(normalized_request).map_err(|error| {
+        format!("{} failed: cassette request serialization error: {}", surface, error)
+    })?;
     let cassette = StoredAiCassette {
         _cassette_version: AI_CASSETTE_VERSION,
         request_meta: StoredAiCassetteRequest {
@@ -1629,8 +1625,6 @@ fn store_ai_cassette(
             body: redact_ai_error_text(body, config),
         },
     };
-    let serialized = serde_json::to_string_pretty(&cassette)
-        .map_err(|error| format!("{} failed: cassette serialization error: {}", surface, error))?;
     let path = cassette_path(dir, key);
     let mut temporary = tempfile::Builder::new()
         .prefix(".kujo-ai-cassette-")
@@ -1638,14 +1632,20 @@ fn store_ai_cassette(
         .map_err(|error| {
             format!("{} failed: could not create AI cassette staging file: {}", surface, error)
         })?;
-    temporary.write_all(serialized.as_bytes()).map_err(|error| {
-        format!(
-            "{} failed: could not write AI cassette '{}': {}",
-            surface,
-            temporary.path().display(),
-            error
-        )
-    })?;
+    {
+        let mut writer = io::BufWriter::new(&mut temporary);
+        serde_json::to_writer_pretty(&mut writer, &cassette).map_err(|error| {
+            format!("{} failed: cassette serialization error: {}", surface, error)
+        })?;
+        writer.flush().map_err(|error| {
+            format!(
+                "{} failed: could not flush AI cassette '{}': {}",
+                surface,
+                path.display(),
+                error
+            )
+        })?;
+    }
     temporary.persist(&path).map(|_| ()).map_err(|error| {
         format!(
             "{} failed: could not finalize AI cassette '{}': {}",
@@ -4824,6 +4824,7 @@ mod tests {
         let mut response_headers = DictMap::default();
         response_headers.insert("Authorization".into(), str_value("Bearer response-secret"));
         response_headers.insert("X-Usage".into(), str_value("1"));
+        response_headers.insert("A-Cache".into(), str_value("none"));
 
         store_ai_cassette(
             "ai_chat",
@@ -4842,6 +4843,15 @@ mod tests {
         assert!(!cassette_text.contains("response-secret"));
         assert!(!cassette_text.contains("Bearer"));
         assert!(cassette_text.contains("[redacted]"));
+        let headers_text = cassette_text.split_once("\"response\": {").unwrap().1;
+        assert!(
+            headers_text.find("\"A-Cache\"").unwrap()
+                < headers_text.find("\"Authorization\"").unwrap()
+        );
+        assert!(
+            headers_text.find("\"Authorization\"").unwrap()
+                < headers_text.find("\"X-Usage\"").unwrap()
+        );
 
         let replayed = replay_ai_cassette("ai_chat", &temp_dir, &key)
             .expect("replay lookup should parse")
@@ -4851,6 +4861,21 @@ mod tests {
             matches!(replayed.json, Some(Value::Dict(body)) if matches!(body.get("ok"), Some(Value::Bool(true))))
         );
         let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn replay_cassette_distinguishes_missing_and_unreadable_paths() {
+        let directory = tempfile::tempdir().unwrap();
+        assert!(replay_ai_cassette("ai_chat", directory.path(), "absent").unwrap().is_none());
+        fs::write(cassette_path(directory.path(), "invalid"), [0xff]).unwrap();
+        let result = replay_ai_cassette("ai_chat", directory.path(), "invalid");
+        assert!(matches!(result, Err(error) if error.contains("could not be read")));
+        #[cfg(unix)]
+        {
+            let non_directory = cassette_path(directory.path(), "invalid");
+            let result = replay_ai_cassette("ai_chat", &non_directory, "absent");
+            assert!(matches!(result, Err(error) if error.contains("could not be read")));
+        }
     }
 
     #[test]

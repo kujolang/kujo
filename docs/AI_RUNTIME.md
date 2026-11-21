@@ -43,6 +43,10 @@ serialization buffering, not provider input tokens or wire payload size.
 
 Kujo AI helpers can replay committed response cassettes without opening a socket. This keeps `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` deterministic in tests and examples.
 
+Recorded cassettes order response header keys consistently. In fallthrough replay
+mode, a missing cassette permits a network request. An unreadable cassette
+produces an error.
+
 Environment controls:
 
 - `KUJO_AI_RECORD=<dir>` writes successful AI responses to `<dir>/<hash>.json`.
