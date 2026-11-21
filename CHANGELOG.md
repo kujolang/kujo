@@ -14,6 +14,8 @@ This file records user-visible changes to Kujo, following
   files inside the project.
 - Serialize concurrent project credential updates and atomically replace the
   private credential file on each successful change.
+- Reduce `vec_top_k` work for small result sets without changing score or tie
+  ordering or input validation.
 
 ## [1.10.0] - 2026-11-20
 

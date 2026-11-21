@@ -132,8 +132,14 @@ fn handle_vec_top_k(arg_values: &[Value]) -> Value {
     if scored.iter().any(|(_, score)| !score.is_finite()) {
         return Value::Error("vec_top_k() score is not finite; reduce input magnitude".to_string());
     }
-    scored.sort_by(|left, right| right.1.total_cmp(&left.1).then_with(|| left.0.cmp(&right.0)));
-    scored.truncate(limit);
+    let score_order = |left: &(usize, f64), right: &(usize, f64)| {
+        right.1.total_cmp(&left.1).then_with(|| left.0.cmp(&right.0))
+    };
+    if limit < scored.len() {
+        scored.select_nth_unstable_by(limit, score_order);
+        scored.truncate(limit);
+    }
+    scored.sort_unstable_by(score_order);
 
     Value::Array(Arc::new(scored.into_iter().map(score_entry_value).collect()))
 }
@@ -167,7 +173,7 @@ fn numeric_vector(function: &str, arg_name: &str, value: &Value) -> Result<Vec<f
     values
         .iter()
         .enumerate()
-        .map(|(index, value)| finite_number(function, &format!("{arg_name}[{index}]"), value))
+        .map(|(index, value)| finite_number(function, arg_name, index, value))
         .collect()
 }
 
@@ -210,19 +216,26 @@ fn numeric_matrix(
         .collect()
 }
 
-fn finite_number(function: &str, location: &str, value: &Value) -> Result<f64, Value> {
+fn finite_number(
+    function: &str,
+    vector_name: &str,
+    index: usize,
+    value: &Value,
+) -> Result<f64, Value> {
     let number = match value {
         Value::Int(n) => *n as f64,
         Value::Float(n) => *n,
         _ => {
             return Err(Value::Error(format!(
-                "{function}() expects {location} to be a finite number"
+                "{function}() expects {vector_name}[{index}] to be a finite number"
             )))
         }
     };
 
     if !number.is_finite() {
-        return Err(Value::Error(format!("{function}() expects {location} to be finite")));
+        return Err(Value::Error(format!(
+            "{function}() expects {vector_name}[{index}] to be finite"
+        )));
     }
 
     Ok(number)
@@ -424,18 +437,35 @@ mod tests {
             rows.push(if index == 7 { arr(&[1.0, 0.0]) } else { arr(&[0.0, 1.0]) });
         }
 
-        let result = handle("vec_top_k", &[query, matrix(rows), Value::Int(2_000)]).unwrap();
+        let rows = matrix(rows);
+        let partial = handle("vec_top_k", &[query.clone(), rows.clone(), Value::Int(3)]).unwrap();
+        let result = handle("vec_top_k", &[query, rows, Value::Int(2_000)]).unwrap();
         match result {
             Value::Array(entries) => {
                 assert_eq!(entries.len(), VEC_TOP_K_PARALLEL_THRESHOLD + 1);
-                let first = match &entries[0] {
-                    Value::Dict(map) => map,
-                    other => panic!("expected dict entry, got {other:?}"),
-                };
-                assert!(matches!(first.get("index"), Some(Value::Int(7))));
+                let Value::Array(partial) = partial else { panic!("expected partial results") };
+                assert_eq!(partial.len(), 3);
+                for (results, expected_indices) in
+                    [(&entries[..3], [7, 0, 1]), (&partial[..], [7, 0, 1])]
+                {
+                    for (entry, expected) in results.iter().zip(expected_indices) {
+                        let Value::Dict(map) = entry else { panic!("expected dict entry") };
+                        assert!(matches!(map.get("index"), Some(Value::Int(i)) if *i == expected));
+                    }
+                }
             }
             other => panic!("expected top_k array, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn vector_top_k_preserves_indexed_diagnostics_even_when_k_is_zero() {
+        let rows = matrix(vec![arr(&[1.0]), Value::Array(Arc::new(vec![Value::Null]))]);
+        let result = handle("vec_top_k", &[arr(&[1.0]), rows, Value::Int(0)]).unwrap();
+        assert!(matches!(
+            result,
+            Value::Error(message) if message == "vec_top_k() expects matrix[1][0] to be a finite number"
+        ));
     }
 
     #[test]

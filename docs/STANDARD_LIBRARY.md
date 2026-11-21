@@ -111,7 +111,7 @@ Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / 
 - Norms and cosine scores use scaling to avoid intermediate square overflow and underflow. A norm whose actual magnitude is not representable still returns an error; normalization retains that norm-error contract.
 - `vec_top_k` scores rows by cosine similarity, returns dictionaries `{index, score}`, sorts by descending score with stable ascending-index tie-breaks, and returns all rows when `k` exceeds row count.
 - Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
-- `vec_top_k` uses Rayon parallel iteration for large matrices; vector helpers have no capability gate and do not store or index vectors.
+- `vec_top_k` uses Rayon parallel scoring for large matrices and orders only the selected rows when `k` is smaller than the matrix. Vector helpers have no capability gate and do not store or index vectors.
 
 Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 
