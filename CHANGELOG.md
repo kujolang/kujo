@@ -9,6 +9,7 @@ This file records user-visible changes to Kujo, following
 - Drain workflow command output while the child runs, enforce both preview limits,
   and preserve UTF-8 at truncation boundaries. Doctor no longer reports an exact
   changed-path count when the Git preview was truncated.
+- Load sibling workflow packs in path order and apply each registration atomically.
 
 ## [1.10.0] - 2026-11-20
 

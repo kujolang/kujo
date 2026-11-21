@@ -5,7 +5,6 @@
 
 use crate::reserved_names;
 use crate::workflow_pack::discovery::{DiscoveredPack, PackSource};
-use crate::workflow_pack::manifest::{CommandDef, DoctorProfileDef};
 use crate::workflow_pack::process_runner;
 use crate::workflow_pack::types::{
     CheckResult, CheckSeverity, CheckStatus, CommandContext, DoctorReport,
@@ -81,49 +80,7 @@ impl WorkflowRegistry {
         pack: &DiscoveredPack,
         handlers: BTreeMap<String, CommandHandler>,
     ) -> Result<(), String> {
-        let namespace = pack.manifest.namespace.clone();
-        let pack_id = pack.manifest.id.clone();
-
-        self.namespaces.insert(
-            namespace.clone(),
-            NamespaceInfo {
-                pack_id: pack_id.clone(),
-                name: pack.manifest.name.clone(),
-                description: pack.manifest.description.clone(),
-                version: pack.manifest.version.clone(),
-                source: PackSource::Builtin,
-            },
-        );
-
-        for cmd_def in &pack.manifest.commands {
-            let handler = handlers.get(&cmd_def.name).cloned().ok_or_else(|| {
-                format!(
-                    "Built-in pack '{}' declares command '{}' but no handler was provided.",
-                    pack_id, cmd_def.name
-                )
-            })?;
-
-            self.insert_command(
-                namespace.clone(),
-                cmd_def,
-                pack_id.clone(),
-                PackSource::Builtin,
-                true,
-                pack.pack_dir.clone(),
-                Some(handler),
-            )?;
-        }
-
-        for profile in &pack.manifest.contributes.doctor_profiles {
-            self.insert_doctor_profile(
-                profile,
-                pack_id.clone(),
-                PackSource::Builtin,
-                pack.pack_dir.clone(),
-            )?;
-        }
-
-        Ok(())
+        self.register_pack(pack, Some(handlers))
     }
 
     /// Register a discovered (external) pack.
@@ -159,117 +116,104 @@ impl WorkflowRegistry {
             }
         }
 
+        self.register_pack(pack, None)
+    }
+
+    fn register_pack(
+        &mut self,
+        pack: &DiscoveredPack,
+        handlers: Option<BTreeMap<String, CommandHandler>>,
+    ) -> Result<(), String> {
+        let manifest = &pack.manifest;
+        let namespace = &manifest.namespace;
+        let pack_id = &manifest.id;
+        let is_builtin = handlers.is_some();
+        let source = if is_builtin { PackSource::Builtin } else { pack.source.clone() };
+
+        // Stage entries so any rejected command or profile leaves the registry intact.
+        let mut commands = BTreeMap::new();
+        for definition in &manifest.commands {
+            let handler = handlers
+                .as_ref()
+                .map(|handlers| {
+                    handlers.get(&definition.name).copied().ok_or_else(|| {
+                        format!(
+                            "Built-in pack '{}' declares command '{}' but no handler was provided.",
+                            pack_id, definition.name
+                        )
+                    })
+                })
+                .transpose()?;
+            let key = (namespace.clone(), definition.name.clone());
+            if let Some(existing) = self.commands.get(&key).or_else(|| commands.get(&key)) {
+                if existing.is_builtin && !is_builtin {
+                    return Err(format!(
+                        "Command '{}.{}' is already registered by built-in pack '{}'. External packs cannot override built-in commands.",
+                        namespace, definition.name, existing.pack_id
+                    ));
+                }
+                return Err(format!(
+                    "Command '{}.{}' is already registered by pack '{}'.",
+                    namespace, definition.name, existing.pack_id
+                ));
+            }
+            commands.insert(
+                key,
+                RegisteredCommand {
+                    namespace: namespace.clone(),
+                    command_name: definition.name.clone(),
+                    pack_id: pack_id.clone(),
+                    pack_source: source.clone(),
+                    summary: definition.summary.clone(),
+                    is_builtin,
+                    pack_dir: pack.pack_dir.clone(),
+                    entry: definition.entry.clone(),
+                    handler,
+                },
+            );
+        }
+
+        let mut profiles = BTreeMap::new();
+        for profile in &manifest.contributes.doctor_profiles {
+            if let Some(existing) =
+                self.doctor_profiles.get(&profile.name).or_else(|| profiles.get(&profile.name))
+            {
+                if existing.pack_source == PackSource::Builtin && source != PackSource::Builtin {
+                    return Err(format!(
+                        "Doctor profile '{}' is already registered by built-in pack '{}'. External packs cannot override built-in profiles.",
+                        profile.name, existing.pack_id
+                    ));
+                }
+                return Err(format!(
+                    "Doctor profile '{}' is already registered by pack '{}'.",
+                    profile.name, existing.pack_id
+                ));
+            }
+            profiles.insert(
+                profile.name.clone(),
+                RegisteredDoctorProfile {
+                    profile_name: profile.name.clone(),
+                    pack_id: pack_id.clone(),
+                    pack_source: source.clone(),
+                    entry: profile.entry.clone(),
+                    summary: profile.summary.clone(),
+                    pack_dir: pack.pack_dir.clone(),
+                },
+            );
+        }
+
         self.namespaces.insert(
             namespace.clone(),
             NamespaceInfo {
                 pack_id: pack_id.clone(),
-                name: pack.manifest.name.clone(),
-                description: pack.manifest.description.clone(),
-                version: pack.manifest.version.clone(),
-                source: pack.source.clone(),
+                name: manifest.name.clone(),
+                description: manifest.description.clone(),
+                version: manifest.version.clone(),
+                source,
             },
         );
-
-        for cmd_def in &pack.manifest.commands {
-            self.insert_command(
-                namespace.clone(),
-                cmd_def,
-                pack_id.clone(),
-                pack.source.clone(),
-                false,
-                pack.pack_dir.clone(),
-                None, // External commands have no Rust handler.
-            )?;
-        }
-
-        for profile in &pack.manifest.contributes.doctor_profiles {
-            self.insert_doctor_profile(
-                profile,
-                pack_id.clone(),
-                pack.source.clone(),
-                pack.pack_dir.clone(),
-            )?;
-        }
-
-        Ok(())
-    }
-
-    fn insert_command(
-        &mut self,
-        namespace: String,
-        cmd_def: &CommandDef,
-        pack_id: String,
-        source: PackSource,
-        is_builtin: bool,
-        pack_dir: PathBuf,
-        handler: Option<CommandHandler>,
-    ) -> Result<(), String> {
-        let key = (namespace.clone(), cmd_def.name.clone());
-
-        if let Some(existing) = self.commands.get(&key) {
-            if existing.is_builtin && !is_builtin {
-                return Err(format!(
-                    "Command '{}.{}' is already registered by built-in pack '{}'. \
-					 External packs cannot override built-in commands.",
-                    namespace, cmd_def.name, existing.pack_id
-                ));
-            }
-            return Err(format!(
-                "Command '{}.{}' is already registered by pack '{}'.",
-                namespace, cmd_def.name, existing.pack_id
-            ));
-        }
-
-        self.commands.insert(
-            key,
-            RegisteredCommand {
-                namespace,
-                command_name: cmd_def.name.clone(),
-                pack_id,
-                pack_source: source,
-                summary: cmd_def.summary.clone(),
-                is_builtin,
-                pack_dir,
-                entry: cmd_def.entry.clone(),
-                handler,
-            },
-        );
-
-        Ok(())
-    }
-
-    fn insert_doctor_profile(
-        &mut self,
-        profile: &DoctorProfileDef,
-        pack_id: String,
-        source: PackSource,
-        pack_dir: PathBuf,
-    ) -> Result<(), String> {
-        if let Some(existing) = self.doctor_profiles.get(&profile.name) {
-            if existing.pack_source == PackSource::Builtin && source != PackSource::Builtin {
-                return Err(format!(
-                    "Doctor profile '{}' is already registered by built-in pack '{}'. \
-					 External packs cannot override built-in profiles.",
-                    profile.name, existing.pack_id
-                ));
-            }
-            return Err(format!(
-                "Doctor profile '{}' is already registered by pack '{}'.",
-                profile.name, existing.pack_id
-            ));
-        }
-
-        self.doctor_profiles.insert(
-            profile.name.clone(),
-            RegisteredDoctorProfile {
-                profile_name: profile.name.clone(),
-                pack_id,
-                pack_source: source,
-                entry: profile.entry.clone(),
-                summary: profile.summary.clone(),
-                pack_dir,
-            },
-        );
+        self.commands.extend(commands);
+        self.doctor_profiles.extend(profiles);
         Ok(())
     }
 
@@ -436,10 +380,11 @@ impl WorkflowRegistry {
 
                 if proc_result.stdout_truncated {
                     return Err(format!(
-                        "Command '{}.{}' exceeded the {}-byte structured output limit.",
+                        "Command '{}.{}' exceeded the structured output limit ({} bytes or {} lines).",
                         cmd.namespace,
                         cmd.command_name,
-                        process_runner::MAX_STRUCTURED_OUTPUT_BYTES
+                        process_runner::MAX_STRUCTURED_OUTPUT_BYTES,
+                        process_runner::MAX_STRUCTURED_OUTPUT_LINES
                     ));
                 }
 
@@ -490,10 +435,13 @@ impl WorkflowRegistry {
 
 fn truncate_str(s: &str, max_len: usize) -> String {
     if s.len() <= max_len {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_len])
+        return s.to_string();
     }
+    let mut boundary = max_len;
+    while !s.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    format!("{}...", &s[..boundary])
 }
 
 impl Default for WorkflowRegistry {
@@ -505,7 +453,9 @@ impl Default for WorkflowRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::workflow_pack::manifest::{Contributions, DoctorProfileDef, PackManifest};
+    use crate::workflow_pack::manifest::{
+        CommandDef, Contributions, DoctorProfileDef, PackManifest,
+    };
 
     fn make_pack(id: &str, ns: &str, cmds: Vec<CommandDef>, source: PackSource) -> DiscoveredPack {
         DiscoveredPack {
@@ -737,6 +687,40 @@ mod tests {
             r.resolve_doctor_profile("wordpress").expect("doctor profile should be discoverable");
         assert_eq!(profile.pack_id, "acme");
         assert_eq!(profile.entry, "commands/doctor-wordpress.kujo");
+    }
+
+    #[test]
+    fn conflicting_profile_rejects_the_whole_pack() {
+        let mut registry = WorkflowRegistry::new();
+        let mut first = make_pack("first", "team", vec![], PackSource::ProjectLocal);
+        first.manifest.contributes.doctor_profiles.push(DoctorProfileDef {
+            name: "local-check".to_string(),
+            entry: "check.kujo".to_string(),
+            summary: "Local check".to_string(),
+        });
+        registry.register_discovered_pack(&first).unwrap();
+
+        let mut rejected = first.clone();
+        rejected.manifest.id = "second".to_string();
+        rejected.manifest.commands.push(CommandDef {
+            name: "status".to_string(),
+            summary: "Status".to_string(),
+            entry: "status.kujo".to_string(),
+            safe: true,
+            writes_files: false,
+            runs_processes: false,
+            requires_network: false,
+        });
+        assert!(registry.register_discovered_pack(&rejected).is_err());
+        assert_eq!(registry.get_namespace("team").unwrap().pack_id, "first");
+        assert!(registry.resolve("team", "status").is_none());
+        assert_eq!(registry.resolve_doctor_profile("local-check").unwrap().pack_id, "first");
+    }
+
+    #[test]
+    fn fallback_preview_does_not_split_non_ascii_output() {
+        let output = format!("{}é tail", "a".repeat(499));
+        assert_eq!(truncate_str(&output, 500), format!("{}...", "a".repeat(499)));
     }
 
     #[test]

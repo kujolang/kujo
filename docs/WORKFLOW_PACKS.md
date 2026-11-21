@@ -50,7 +50,8 @@ kujo release readiness      # Release team: pre-release validation
 
 ## Built-in Packs
 
-Kujo currently ships with **no built-in workflow packs**. The workflow pack system is designed so that teams can create and distribute external packs without modifying Kujo core.
+Kujo registers the built-in `doctor` pack with its generic profile. Teams can
+create and distribute external packs that add commands and doctor profiles.
 
 ## Walkthrough: An Example Pack
 
@@ -272,10 +273,16 @@ Discovery order (first match wins for built-in namespace protection):
 3. **User-local packs** — `~/.kujo/packs/<pack-name>/kujo-pack.yaml`
 4. **Env-path packs** — `KUJO_PACK_PATH=/path/to/pack-a:/path/to/pack-b`
 
+Kujo visits sibling pack directories in path order within the project and user
+locations. If a command or doctor profile collides with an existing entry, Kujo
+rejects the entire pack and preserves the entries that were already registered.
+
 External commands have a 30-second deadline that includes draining stdout and
 stderr. On Unix, reaching the deadline terminates the command's process group
 and stops the capture readers. Kujo retains up to 1 MiB and 10,000 lines of each
-stream, plus a truncation marker when needed.
+stream, plus a truncation marker when needed. A truncated stdout report is
+rejected with an error that names both limits. Human-readable fallback previews
+end on a UTF-8 character boundary.
 
 ## Creating a Custom Workflow Pack
 

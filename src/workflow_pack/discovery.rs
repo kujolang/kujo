@@ -142,8 +142,18 @@ fn discover_in_directory(
         }
     };
 
-    for entry in entries.flatten() {
-        let entry_path = entry.path();
+    let mut paths = Vec::new();
+    for entry in entries {
+        match entry {
+            Ok(entry) => paths.push(entry.path()),
+            Err(error) => errors.push(DiscoveryError {
+                path: dir.to_path_buf(),
+                message: format!("Failed to read directory entry: {error}"),
+            }),
+        }
+    }
+    paths.sort_unstable();
+    for entry_path in paths {
         if !entry_path.is_dir() {
             continue;
         }
@@ -227,5 +237,26 @@ mod tests {
         let (packs, errors) = discover_all_packs(vec![], Path::new("/nonexistent"));
         assert!(errors.is_empty());
         assert!(packs.is_empty());
+    }
+
+    #[test]
+    fn local_pack_discovery_sorts_sibling_directories() {
+        let root = tempfile::tempdir().unwrap();
+        for name in ["zulu", "alpha", "mike"] {
+            let dir = root.path().join(name);
+            std::fs::create_dir(&dir).unwrap();
+            std::fs::write(
+                dir.join(manifest::MANIFEST_FILENAME),
+                format!(
+                    "id: {name}\nnamespace: team\nname: {name}\nversion: '1'\ncommands:\n  - name: status\n    summary: Report status\n    entry: status.kujo\n"
+                ),
+            )
+            .unwrap();
+        }
+
+        let (packs, errors) = discover_in_directory(root.path(), PackSource::ProjectLocal);
+        assert!(errors.is_empty(), "{errors:?}");
+        let ids: Vec<_> = packs.iter().map(|pack| pack.manifest.id.as_str()).collect();
+        assert_eq!(ids, ["alpha", "mike", "zulu"]);
     }
 }
