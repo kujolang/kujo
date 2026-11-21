@@ -79,6 +79,7 @@ pub fn source_size_limit_diagnostic(
     }
 }
 
+#[allow(dead_code)] // Public convenience for callers that already have source text.
 pub fn validate_source_size(source: &str, max_source_bytes: usize) -> Result<(), ParseDiagnostic> {
     let source_bytes = source.len();
     if source_bytes > max_source_bytes {

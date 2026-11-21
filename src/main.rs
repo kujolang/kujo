@@ -1148,32 +1148,48 @@ fn lock_package_manifest(path: &Path) -> std::io::Result<(fs::File, fs::File)> {
 }
 
 fn read_kujo_source_for_parse(file: &Path) -> String {
+    use std::io::{self, Read};
+
     let max_source_bytes = parser::DEFAULT_MAX_SOURCE_BYTES;
     let file_label = file.to_string_lossy().to_string();
-
-    if let Ok(metadata) = fs::metadata(file) {
-        if metadata.is_file() && metadata.len() > max_source_bytes as u64 {
-            let diagnostic =
-                parser::source_size_limit_diagnostic(metadata.len() as usize, max_source_bytes);
-            report_parser_diagnostics_and_exit(&file_label, &[diagnostic]);
-        }
-    }
-
-    let code = match fs::read_to_string(file) {
-        Ok(content) => content,
-        Err(err) => {
-            report_cli_error_and_exit(
-                format!("Failed to read .kujo file '{}': {}", file.display(), err),
-                CliExitCode::IoError,
-            );
-        }
+    let report_read_error = |err| -> ! {
+        report_cli_error_and_exit(
+            format!("Failed to read .kujo file '{}': {}", file.display(), err),
+            CliExitCode::IoError,
+        )
     };
 
-    if let Err(diagnostic) = parser::validate_source_size(&code, max_source_bytes) {
+    let source_file = fs::File::open(file).unwrap_or_else(|err| report_read_error(err));
+    let known_size = source_file
+        .metadata()
+        .ok()
+        .filter(|metadata| metadata.is_file())
+        .map_or(0, |metadata| usize::try_from(metadata.len()).unwrap_or(usize::MAX));
+    if known_size > max_source_bytes {
+        let diagnostic = parser::source_size_limit_diagnostic(known_size, max_source_bytes);
         report_parser_diagnostics_and_exit(&file_label, &[diagnostic]);
     }
 
-    code
+    let mut bytes = Vec::with_capacity(known_size + usize::from(known_size > 0));
+    if let Err(err) = source_file.take(max_source_bytes as u64 + 1).read_to_end(&mut bytes) {
+        report_read_error(err);
+    }
+    if bytes.len() > max_source_bytes {
+        let mut diagnostic = parser::source_size_limit_diagnostic(bytes.len(), max_source_bytes);
+        diagnostic.message = format!(
+            "Source size (at least {} bytes) exceeds maximum allowed {} bytes",
+            bytes.len(),
+            max_source_bytes
+        );
+        report_parser_diagnostics_and_exit(&file_label, &[diagnostic]);
+    }
+
+    String::from_utf8(bytes).unwrap_or_else(|_| {
+        report_read_error(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "stream did not contain valid UTF-8",
+        ))
+    })
 }
 
 fn parse_kujo_program(file: &Path) -> (String, String, Vec<ast::Stmt>) {

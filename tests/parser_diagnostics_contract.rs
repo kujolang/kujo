@@ -403,3 +403,32 @@ fn cli_run_accepts_source_at_max_size_boundary() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn cli_run_enforces_the_source_limit_on_streams() {
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let mut child = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["run", "/dev/stdin"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn Kujo with a source pipe");
+    let mut input = child.stdin.take().expect("piped stdin");
+    input.write_all(&vec![b' '; DEFAULT_MAX_SOURCE_BYTES + 1]).unwrap();
+    // The diagnostic uses the observed prefix size even if more data
+    // becomes available. A bounded reader may already have closed the pipe.
+    if let Err(error) = input.write_all(b"more source") {
+        assert_eq!(error.kind(), std::io::ErrorKind::BrokenPipe);
+    }
+    drop(input);
+
+    let output = child.wait_with_output().expect("wait for Kujo");
+    assert_eq!(output.status.code(), Some(3));
+    let stderr = String::from_utf8(output.stderr).expect("UTF-8 diagnostic");
+    assert!(stderr.contains("[KUJOPARSE001]"));
+    assert!(stderr.contains("Source size (at least 1048577 bytes) exceeds maximum"));
+}

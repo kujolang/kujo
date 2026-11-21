@@ -35,7 +35,7 @@ Repository tests and fixtures remain the executable source of truth for implemen
 - Kujo source files use the `.kujo` extension.
 - Source text is UTF-8.
 - Line endings `\n` and `\r\n` are accepted by parser/lexer pathways.
-- CLI parse entrypoints reject source files larger than `1,048,576` bytes with a parser diagnostic (`KUJOPARSE001`).
+- The `kujo` CLI enforces a `1,048,576`-byte source limit for `run`, `test-run`, and its file-based parse and LSP helper commands. These commands reject oversized input with `KUJOPARSE001`. When the size cannot be determined in advance, Kujo reads at most one byte beyond the limit and reports the observed lower bound.
 
 ## 3. Lexical Model
 
