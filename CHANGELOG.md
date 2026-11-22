@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse bytecode call metadata for JIT dispatch and move captured bindings into VM frames.
+- Validate interpreter function and method arity without copying parameter metadata on valid calls.
+- Avoid copying and allocating temporary strings in the `join` builtin.
 - Bound LSP header blocks and pending cancellation state, and reject ambiguous or incomplete message framing.
 - Avoid repeated scans for LSP semantic-token positions and outgoing ranges, and share open-document text with the analysis cache.
 - Enforce the CLI parser source-size limit during reads, including for streamed inputs.
