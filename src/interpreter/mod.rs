@@ -2902,8 +2902,9 @@ impl Interpreter {
                 result
             }
             Value::GeneratorDef(params, body, captured) => {
-                let arity = Self::function_arity("<anonymous generator>", params);
-                if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
+                if let Some(error) =
+                    self.validate_function_arity("<anonymous generator>", params, args.len())
+                {
                     return error;
                 }
 
@@ -2915,8 +2916,11 @@ impl Interpreter {
             },
             Value::Function(params, body, captured_env) => {
                 let body_ref = body.get();
-                let arity = Self::function_arity(name.unwrap_or("<anonymous function>"), params);
-                if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
+                if let Some(error) = self.validate_function_arity(
+                    name.unwrap_or("<anonymous function>"),
+                    params,
+                    args.len(),
+                ) {
                     return error;
                 }
 
@@ -3125,8 +3129,9 @@ impl Interpreter {
             {
                 if let Some(Value::Function(params, body, _captured_env)) = methods.get(method_name)
                 {
-                    let arity = Self::struct_method_arity(name, method_name, params);
-                    if let Some(error) = self.validate_callable_arity(&arity, 1) {
+                    if let Some(error) =
+                        self.validate_struct_method_arity(name, method_name, params, 1)
+                    {
                         return Some(error);
                     }
 
@@ -3197,8 +3202,9 @@ impl Interpreter {
             {
                 if let Some(Value::Function(params, body, _captured_env)) = methods.get(method_name)
                 {
-                    let arity = Self::struct_method_arity(name, method_name, params);
-                    if let Some(error) = self.validate_callable_arity(&arity, 0) {
+                    if let Some(error) =
+                        self.validate_struct_method_arity(name, method_name, params, 0)
+                    {
                         return Some(error);
                     }
 
@@ -4569,19 +4575,33 @@ impl Interpreter {
         arity.validate(received_args).err().map(Value::Error)
     }
 
-    fn function_arity(name: impl Into<String>, params: &[String]) -> CallableArity {
-        CallableArity::exact(name, params.to_vec())
+    fn validate_function_arity(
+        &self,
+        name: &str,
+        params: &[String],
+        received_args: usize,
+    ) -> Option<Value> {
+        if received_args == params.len() {
+            return None;
+        }
+        self.validate_callable_arity(&CallableArity::exact(name, params.to_vec()), received_args)
     }
 
-    fn struct_method_arity(
+    fn validate_struct_method_arity(
+        &self,
         struct_name: &str,
         method_name: &str,
         params: &[String],
-    ) -> CallableArity {
-        let has_self = params.first().map(|p| p == "self").unwrap_or(false);
-        let external_params: Vec<String> =
-            if has_self { params.iter().skip(1).cloned().collect() } else { params.to_vec() };
-        CallableArity::exact(format!("{}.{}", struct_name, method_name), external_params)
+        received_args: usize,
+    ) -> Option<Value> {
+        let has_self = params.first().is_some_and(|name| name == "self");
+        let external_params = &params[usize::from(has_self)..];
+        if received_args == external_params.len() {
+            return None;
+        }
+        let arity =
+            CallableArity::exact(format!("{struct_name}.{method_name}"), external_params.to_vec());
+        self.validate_callable_arity(&arity, received_args)
     }
 
     fn create_struct_generator_method(
@@ -4595,8 +4615,9 @@ impl Interpreter {
         captured: &Option<Arc<Mutex<Environment>>>,
         args: &[Value],
     ) -> Value {
-        let arity = Self::struct_method_arity(struct_name, method_name, params);
-        if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
+        if let Some(error) =
+            self.validate_struct_method_arity(struct_name, method_name, params, args.len())
+        {
             return error;
         }
 
@@ -6620,10 +6641,12 @@ impl Interpreter {
                                     return error.clone();
                                 }
 
-                                let arity = Self::struct_method_arity(name, field, params);
-                                if let Some(error) =
-                                    self.validate_callable_arity(&arity, evaluated_args.len())
-                                {
+                                if let Some(error) = self.validate_struct_method_arity(
+                                    name,
+                                    field,
+                                    params,
+                                    evaluated_args.len(),
+                                ) {
                                     return error;
                                 }
 
@@ -6768,10 +6791,7 @@ impl Interpreter {
                             return error.clone();
                         }
 
-                        let arity = Self::function_arity(callable_name.clone(), &params);
-                        if let Some(error) =
-                            self.validate_callable_arity(&arity, evaluated_args.len())
-                        {
+                        if let Some(error) = self.validate_function_arity(&callable_name, &params, evaluated_args.len()) {
                             self.call_stack.pop();
                             return error;
                         }
@@ -6896,8 +6916,7 @@ impl Interpreter {
                             return error.clone();
                         }
 
-                        let arity = Self::function_arity(callable_name.clone(), params);
-                        if let Some(error) = self.validate_callable_arity(&arity, args_vec.len()) {
+                        if let Some(error) = self.validate_function_arity(&callable_name, params, args_vec.len()) {
                             return error;
                         }
 
@@ -6947,9 +6966,8 @@ impl Interpreter {
                                 return error.clone();
                             }
 
-                            let arity = Self::function_arity(name, &params);
                             if let Some(error) =
-                                self.validate_callable_arity(&arity, evaluated_args.len())
+                                self.validate_function_arity(name, &params, evaluated_args.len())
                             {
                                 self.call_stack.pop();
                                 return error;
@@ -7079,9 +7097,8 @@ impl Interpreter {
                                 return error.clone();
                             }
 
-                            let arity = Self::function_arity(name, params);
                             if let Some(error) =
-                                self.validate_callable_arity(&arity, args_vec.len())
+                                self.validate_function_arity(name, params, args_vec.len())
                             {
                                 return error;
                             }
@@ -8335,10 +8352,12 @@ impl Interpreter {
                             if let Some(Value::Function(params, body, _captured_env)) =
                                 methods.get(method)
                             {
-                                let arity = Self::struct_method_arity(&name, method, params);
-                                if let Some(error) =
-                                    self.validate_callable_arity(&arity, args.len())
-                                {
+                                if let Some(error) = self.validate_struct_method_arity(
+                                    &name,
+                                    method,
+                                    params,
+                                    args.len(),
+                                ) {
                                     return error;
                                 }
 
