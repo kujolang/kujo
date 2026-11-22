@@ -191,6 +191,9 @@
 /.email/
 /.email-test*/
 /.totalrecall.local
+*.watchdog-config.lock
+*.watchdog-export.lock
+.watchdog-config-*.tmp
 /data/rag_index*.json
 /data/*.db
 /data/*.db-shm

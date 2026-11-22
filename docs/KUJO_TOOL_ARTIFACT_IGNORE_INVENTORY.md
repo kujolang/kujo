@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-10-18
+Last updated: 2026-11-22
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -59,7 +59,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Ward | `data/ward.db`, JSON fallback state such as `data/alerts.json`, dated `data/artifacts/<YYYY-MM-DD>/` reports including `report.md` and `alerts.json`, generated `dashboard/index.html`, and `logs/` | Config examples under `config/*.example.yaml` are source-worthy; live `config/repos.yaml`, token-bearing env, generated dashboard, local alert DB, and report artifacts are local operator state. |
 | Email | `.email/` default state directory including `email.db`, SQLite sidecars, message blobs, outbound wires, evidence, provider evidence, HTTP upload spools, SMTP spools/quarantine, generated credential/key files, and TLS material; `.email-test*/` fixture state roots | `KUJO_EMAIL_STATE_DIR` defaults to `.email`; examples and operations docs write mode-0600 secrets under that root. Shared `.kujo/packs/email/` Doctor pack files are source-worthy and intentionally not covered by the `.kujo/pi/` rule. |
 | RAG | `data/rag_index*.json`, `results/`, `results/**/*.json`, `results/**/*.log`, `results/**/*.db*`, `results/privacy/`, `release-manifest.json` | Some release/docs artifacts may be intentional; default local index is generated. |
-| Watchdog | `data/watchdog.db`, SQLite sidecars such as `data/watchdog.db-shm`, `data/watchdog.db-wal`, and `data/watchdog.db-journal`, `data/backups/watchdog-backup-*.db*`, `backups/*.db*`, `.watchdog-backup-result-*.json`, `watchdog_proxy_config.json`, `tmp/*.db*`, `tmp/*.log`, `tmp/*.json`, copied browser/vendor assets in `tmp/` | Dashboard source remains tracked elsewhere; local proxy config can contain operational endpoint/auth settings. |
+| Watchdog | `data/watchdog.db`, SQLite sidecars such as `data/watchdog.db-shm`, `data/watchdog.db-wal`, and `data/watchdog.db-journal`, `data/backups/watchdog-backup-*.db*`, `backups/*.db*`, `.watchdog-backup-result-*.json`, `watchdog_proxy_config.json`, `tmp/*.db*`, `tmp/*.log`, `tmp/*.json`, copied browser/vendor assets in `tmp/`, `<config>.watchdog-config.lock`, `<database>.watchdog-export.lock`, and `.watchdog-config-<uuid>.tmp` atomic-write staging files | Dashboard source remains tracked elsewhere; local proxy config can contain operational endpoint/auth settings. Lock files remain beside caller-selected config/database paths while Watchdog is running; staging files are cleaned after atomic replacement but can remain after interruption. |
 | AI Chat | `.env`, `data/ai_chat.db`, `data/audit.log`, weekly tool-audit reports under `data/audits/`, `data/backups/*.db*`, `data/benchmark-runs/`, `data/tool-artifacts/`, `node_modules/` | Secrets stay untracked; browser screenshots, weekly audit reports, and benchmark telemetry are local evidence unless intentionally published. |
 | CMS | `results/*.db*`, `results/*.log` | Test/integration state. |
 | CRUD API | `.tmp/*.db*`, `.tmp/*.log`, `.tmp/*.body`, `.tmp/*.out`, frontend build output | Local smoke-test state. |
@@ -112,6 +112,7 @@ serve multiple rows in the inventory:
 - `/.fence/cache-v1.json` covers Fence's optional import-extraction cache without blanket-ignoring caller-selected `.fence/**` report roots; `/.audit-evidence/` covers raw local hardening, benchmark, and qualification evidence referenced by Fence and StoryDesk docs.
 - `/.muzzle/state/` and `/.muzzle/.kujo_cache/` cover Muzzle execution state and cache files beside the existing log/report ignores.
 - `/.email/` and `/.email-test*/` cover Kujo Email's default operator state, generated secrets, retained evidence/spools, SQLite store, and local fixture state while leaving shared Doctor packs under `.kujo/packs/email/` trackable.
+- `*.watchdog-config.lock`, `*.watchdog-export.lock`, and `.watchdog-config-*.tmp` cover Watchdog's per-config/per-database advisory locks and atomic configuration-write leftovers, including caller-selected paths, without ignoring the configuration or database contents themselves.
 - `/data/*.db`, `/data/*.db-shm`, `/data/*.db-wal`, `/data/*.db-journal`, `/data/*.sqlite-journal`, `/data/*.sqlite3-journal`, `/data/*.log`, `/*.db-shm`, `/*.db-wal`, `/*.db-journal`, `/*.sqlite`, `/*.sqlite-journal`, `/*.sqlite3`, and `/*.sqlite3-journal` cover SQLite/log sidecars emitted by Watchdog, AI Chat, CMS, CRUD API, RAG, Email when the state root is caller-selected, and related local state.
 - `/data/audits/` covers AI Chat weekly tool-audit JSON/Markdown reports written by `scripts/weekly-tool-audit.js`.
 - `/tests/tmp/`, `/tests/*.out`, `*.tmp-*`, and `*.bak` cover local test harness output and atomic-write leftovers.
