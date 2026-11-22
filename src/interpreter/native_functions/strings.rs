@@ -7,6 +7,7 @@ use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::borrow::Cow;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
@@ -48,7 +49,7 @@ fn safe_markdown_url(url: &str) -> String {
 }
 
 fn inline_markdown_native(text: &str) -> String {
-    let mut out = lc_escape(text);
+    let mut out = lc_escape(text).into_owned();
     if out.contains("![") {
         out = MD_IMG
             .replace_all(&out, |captures: &regex::Captures| {
@@ -185,19 +186,34 @@ fn render_markdown_native(markdown: &str) -> String {
 // Byte-identical port of build.kujo's listing_card_html + its helpers
 // (route_to_path, listing_card_media_url, listing_card_tags_html). Called 25×
 // per listing page over hundreds of pages on large sites.
-fn lc_escape(source: &str) -> String {
+fn lc_escape(source: &str) -> Cow<'_, str> {
+    let Some(start) =
+        source.as_bytes().iter().position(|byte| matches!(byte, b'&' | b'<' | b'>' | b'"' | b'\''))
+    else {
+        return Cow::Borrowed(source);
+    };
+
     let mut out = String::with_capacity(source.len() + 16);
-    for c in source.chars() {
-        match c {
+    // All delimiter bytes are ASCII and therefore UTF-8 boundaries.
+    out.push_str(&source[..start]);
+    for character in source[start..].chars() {
+        match character {
             '&' => out.push_str("&amp;"),
             '<' => out.push_str("&lt;"),
             '>' => out.push_str("&gt;"),
             '"' => out.push_str("&quot;"),
             '\'' => out.push_str("&apos;"),
-            _ => out.push(c),
+            _ => out.push(character),
         }
     }
-    out
+    Cow::Owned(out)
+}
+
+fn borrowed_or_stringified(value: &Value) -> Cow<'_, str> {
+    match value {
+        Value::Str(text) => Cow::Borrowed(text),
+        other => Cow::Owned(crate::interpreter::Interpreter::stringify_value(other)),
+    }
 }
 
 fn lc_route_to_path(route: &str) -> String {
@@ -246,20 +262,20 @@ fn render_listing_card_native(
     title: &str,
     excerpt: &str,
     featured_image: &str,
-    terms: &[String],
+    terms: &[Value],
     action_label: &str,
 ) -> String {
-    let safe_href = lc_escape(&lc_route_to_path(route));
+    let href = lc_route_to_path(route);
+    let safe_href = lc_escape(&href);
     let safe_title = lc_escape(title);
     let safe_excerpt = lc_escape(excerpt);
     let media_url = lc_media_url(featured_image);
     let safe_media_url = lc_escape(&media_url);
-    let title_attr = lc_escape(title);
 
     let mut tags_html = String::new();
     for term in terms.iter().take(3) {
         tags_html.push_str("<span class=\"tag listing-tag\">");
-        tags_html.push_str(&lc_escape(term));
+        tags_html.push_str(&lc_escape(&borrowed_or_stringified(term)));
         tags_html.push_str("</span>");
     }
     let tags_block = if tags_html.is_empty() {
@@ -280,7 +296,7 @@ fn render_listing_card_native(
     } else {
         format!(
             "<a class=\"listing-card-image-link\" href=\"{}\"><img src=\"{}\" alt=\"Featured image for {}\" class=\"listing-card-image\" loading=\"lazy\" decoding=\"async\"></a>",
-            safe_href, safe_media_url, title_attr
+            safe_href, safe_media_url, safe_title
         )
     };
 
@@ -748,28 +764,21 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
         // five-entity escape (&, <, >, ", ') exactly, but in one native pass
         // instead of five interpreted string replacements — a hot path for SSG
         // rendering. Accepts any value and stringifies it for ergonomics.
-        "escape_xml" => {
-            if let Some(value) = args.first() {
-                let source = match value {
-                    Value::Str(s) => s.as_ref().clone(),
-                    other => crate::interpreter::Interpreter::stringify_value(other),
+        "escape_xml" => match args.first() {
+            Some(Value::Str(text)) => match lc_escape(text) {
+                Cow::Borrowed(_) => Value::Str(Arc::clone(text)),
+                Cow::Owned(escaped) => Value::Str(Arc::new(escaped)),
+            },
+            Some(value) => {
+                let source = crate::interpreter::Interpreter::stringify_value(value);
+                let escaped = match lc_escape(&source) {
+                    Cow::Owned(escaped) => escaped,
+                    Cow::Borrowed(_) => source,
                 };
-                let mut out = String::with_capacity(source.len() + 16);
-                for c in source.chars() {
-                    match c {
-                        '&' => out.push_str("&amp;"),
-                        '<' => out.push_str("&lt;"),
-                        '>' => out.push_str("&gt;"),
-                        '"' => out.push_str("&quot;"),
-                        '\'' => out.push_str("&apos;"),
-                        _ => out.push(c),
-                    }
-                }
-                Value::Str(Arc::new(out))
-            } else {
-                Value::Error("escape_xml() requires one argument".to_string())
+                Value::Str(Arc::new(escaped))
             }
-        }
+            None => Value::Error("escape_xml() requires one argument".to_string()),
+        },
 
         // Native markdown renderer for the SSG hot path (one of the largest
         // per-page costs when interpreted). Byte-identical to the Kujo version.
@@ -787,23 +796,17 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             if args.len() != 6 {
                 return Some(Value::Error("render_listing_card() expects 6 arguments".to_string()));
             }
-            let s = |v: &Value| -> String {
-                match v {
-                    Value::Str(t) => t.as_ref().clone(),
-                    other => crate::interpreter::Interpreter::stringify_value(other),
-                }
-            };
-            let terms: Vec<String> = match &args[4] {
-                Value::Array(arr) => arr.iter().map(s).collect(),
-                _ => Vec::new(),
+            let terms = match &args[4] {
+                Value::Array(arr) => arr.as_slice(),
+                _ => &[],
             };
             Value::Str(Arc::new(render_listing_card_native(
-                &s(&args[0]),
-                &s(&args[1]),
-                &s(&args[2]),
-                &s(&args[3]),
-                &terms,
-                &s(&args[5]),
+                &borrowed_or_stringified(&args[0]),
+                &borrowed_or_stringified(&args[1]),
+                &borrowed_or_stringified(&args[2]),
+                &borrowed_or_stringified(&args[3]),
+                terms,
+                &borrowed_or_stringified(&args[5]),
             )))
         }
 
@@ -1436,6 +1439,44 @@ mod tests {
 
     fn str_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
+    }
+
+    #[test]
+    fn xml_escape_preserves_unicode_and_escapes_all_delimiters() {
+        let escaped = handle("escape_xml", &[str_value("é<&>🐕\"'")]).unwrap();
+        assert!(
+            matches!(escaped, Value::Str(text) if text.as_str() == "é&lt;&amp;&gt;🐕&quot;&apos;")
+        );
+        let unchanged = handle("escape_xml", &[str_value("é 🐕")]).unwrap();
+        assert!(matches!(unchanged, Value::Str(text) if text.as_str() == "é 🐕"));
+        let number = handle("escape_xml", &[Value::Int(42)]).unwrap();
+        assert!(matches!(number, Value::Str(text) if text.as_str() == "42"));
+    }
+
+    #[test]
+    fn listing_card_escapes_title_and_renders_only_three_terms() {
+        let args = [
+            str_value("/news/"),
+            str_value("é <\""),
+            str_value("excerpt"),
+            str_value("/images/news.png"),
+            Value::Array(Arc::new(vec![
+                str_value("one & two"),
+                Value::Int(42),
+                str_value("three"),
+                str_value("unused"),
+            ])),
+            str_value("Read"),
+        ];
+        let Value::Str(html) = handle("render_listing_card", &args).unwrap() else {
+            panic!("expected card HTML");
+        };
+        assert!(html.contains("alt=\"Featured image for é &lt;&quot;\""));
+        assert!(html.contains(">é &lt;&quot;</a>"));
+        assert!(html.contains(">one &amp; two</span>"));
+        assert!(html.contains(">42</span>"));
+        assert!(html.contains(">three</span>"));
+        assert!(!html.contains("unused"));
     }
 
     #[test]
