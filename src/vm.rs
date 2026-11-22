@@ -968,15 +968,7 @@ impl VM {
             _ => return Ok(false),
         };
 
-        let has_map_fusion_op = chunk.instructions.iter().any(|op| {
-            matches!(
-                op,
-                OpCode::SumIntMapUntilLocalInPlace(_, _, _, _)
-                    | OpCode::FillIntMapWithDoubleUntilLocalInPlace(_, _, _)
-            )
-        });
-
-        if std::env::var("DISABLE_FUNCTION_JIT").is_ok() || has_map_fusion_op {
+        if std::env::var("DISABLE_FUNCTION_JIT").is_ok() || chunk.call_metadata().has_map_fusion {
             return Ok(false);
         }
 
@@ -2910,13 +2902,7 @@ impl VM {
         }
 
         // Interpreter fallback or JIT disabled
-        let contains_map_fusion_op = self.chunk.instructions.iter().any(|instruction| {
-            matches!(
-                instruction,
-                OpCode::SumIntMapUntilLocalInPlace(_, _, _, _)
-                    | OpCode::FillIntMapWithDoubleUntilLocalInPlace(_, _, _)
-            )
-        });
+        let contains_map_fusion_op = self.jit_enabled && self.chunk.call_metadata().has_map_fusion;
 
         loop {
             if self.interpreter.task_is_cancelled() {
@@ -4299,10 +4285,7 @@ impl VM {
                                             // Create locals HashMap for the function parameters
                                             let mut func_locals = HashMap::new();
 
-                                            let has_loop = chunk
-                                                .instructions
-                                                .iter()
-                                                .any(|op| matches!(op, OpCode::JumpBack(_)));
+                                            let has_loop = chunk.call_metadata().has_loop;
                                             // Check if we can use fast arg passing (≤4 immediate args)
                                             let use_fast_args = !has_loop
                                                 && args.len() <= 4
@@ -4679,10 +4662,7 @@ impl VM {
                                     let var_names_ptr: *mut HashMap<u64, String> =
                                         &mut var_names_mut;
 
-                                    let has_loop = chunk
-                                        .instructions
-                                        .iter()
-                                        .any(|op| matches!(op, OpCode::JumpBack(_)));
+                                    let has_loop = chunk.call_metadata().has_loop;
                                     // Check if we can use fast arg passing (≤4 immediate args)
                                     let use_fast_args = !has_loop
                                         && args.len() <= 4
@@ -4809,29 +4789,12 @@ impl VM {
                                 let call_count = *count;
 
                                 // Check if we should JIT-compile this function
-                                let has_loop = chunk
-                                    .instructions
-                                    .iter()
-                                    .any(|op| matches!(op, OpCode::JumpBack(_)));
+                                let has_loop = chunk.call_metadata().has_loop;
 
-                                let has_map_fusion_op = chunk.instructions.iter().any(|op| {
-                                    matches!(
-                                        op,
-                                        OpCode::SumIntMapUntilLocalInPlace(_, _, _, _)
-                                            | OpCode::FillIntMapWithDoubleUntilLocalInPlace(
-                                                _,
-                                                _,
-                                                _
-                                            )
-                                    )
-                                });
-
-                                let allow_function_jit = std::env::var("DISABLE_FUNCTION_JIT")
-                                    .is_err()
-                                    && !has_map_fusion_op;
-                                if allow_function_jit
-                                    && (call_count == JIT_FUNCTION_THRESHOLD
-                                        || (has_loop && call_count == 1))
+                                if (call_count == JIT_FUNCTION_THRESHOLD
+                                    || (has_loop && call_count == 1))
+                                    && std::env::var("DISABLE_FUNCTION_JIT").is_err()
+                                    && !chunk.call_metadata().has_map_fusion
                                     && self.ensure_jit_compiler()
                                 {
                                     if std::env::var("DEBUG_JIT").is_ok() {
@@ -7025,18 +6988,11 @@ impl VM {
                 }
             }
 
-            // Prepare captured variables HashMap for mutable access
-            let mut captured_map = HashMap::new();
-            for (name, value_ref) in &captured {
-                captured_map.insert(name.clone(), value_ref.clone());
-            }
-            let captured_binding_kinds_map = captured_binding_kinds.clone();
-
             if std::env::var("DEBUG_VM").is_ok() {
                 eprintln!(
                     "CallFrame has {} captured variables: {:?}",
-                    captured_map.len(),
-                    captured_map.keys().collect::<Vec<_>>()
+                    captured.len(),
+                    captured.keys().collect::<Vec<_>>()
                 );
             }
 
@@ -7048,8 +7004,8 @@ impl VM {
                 local_slots,
                 local_slot_binding_kinds,
                 local_slot_initialized,
-                captured: captured_map,
-                captured_binding_kinds: captured_binding_kinds_map,
+                captured,
+                captured_binding_kinds,
                 captured_slots: Vec::new(),
                 prev_chunk: if chunk.is_generator {
                     None

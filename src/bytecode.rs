@@ -504,6 +504,7 @@ pub(crate) struct CallMetadata {
     pub(crate) requires_closure_vm: bool,
     pub(crate) has_loop: bool,
     pub(crate) has_try: bool,
+    pub(crate) has_map_fusion: bool,
 }
 
 impl std::fmt::Debug for BytecodeStorage {
@@ -637,6 +638,10 @@ impl BytecodeChunk {
                     OpCode::MakeClosure(_) => metadata.requires_closure_vm = true,
                     OpCode::JumpBack(_) => metadata.has_loop = true,
                     OpCode::BeginTry(_) => metadata.has_try = true,
+                    OpCode::SumIntMapUntilLocalInPlace(_, _, _, _)
+                    | OpCode::FillIntMapWithDoubleUntilLocalInPlace(_, _, _) => {
+                        metadata.has_map_fusion = true;
+                    }
                     _ => {}
                 }
             }
@@ -798,13 +803,21 @@ mod sharing_tests {
             OpCode::MakeClosure(0),
             OpCode::JumpBack(0),
             OpCode::BeginTry(0),
+            OpCode::SumIntMapUntilLocalInPlace(0, 1, 2, 3),
         ]);
         assert!(edited.0.call_metadata.get().is_none());
         assert_eq!(
             *edited.call_metadata(),
-            CallMetadata { requires_closure_vm: true, has_loop: true, has_try: true }
+            CallMetadata {
+                requires_closure_vm: true,
+                has_loop: true,
+                has_try: true,
+                has_map_fusion: true
+            }
         );
         assert_eq!(*original.call_metadata(), CallMetadata::default());
+        edited.instructions = vec![OpCode::FillIntMapWithDoubleUntilLocalInPlace(0, 1, 2)];
+        assert!(edited.call_metadata().has_map_fusion);
         edited.instructions.clear();
         assert_eq!(*edited.call_metadata(), CallMetadata::default());
         assert_eq!(original, edited, "cache state is not code identity");

@@ -12084,7 +12084,7 @@ impl JitCompiler {
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
             translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
 
-            let has_loop = chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
+            let has_loop = chunk.call_metadata().has_loop;
             // Initialize parameter slots with values from the func_locals HashMap
             // This copies parameter values from the HashMap into fast stack slots
             // at function entry, enabling fast access during function execution
