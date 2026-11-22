@@ -5,8 +5,80 @@
 use super::super::persistent_queue::PersistentQueue as VecDeque;
 use crate::builtins;
 use crate::interpreter::{DictMap, IntDictMap, Interpreter, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+const SET_INDEX_MIN_ITEMS: usize = 32;
+
+#[derive(Eq, Hash, PartialEq)]
+enum ExactSetKey<'a> {
+    Int(i64),
+    Bool(bool),
+    String(&'a str),
+    Null,
+}
+
+impl<'a> ExactSetKey<'a> {
+    fn from_value(value: &'a Value) -> Option<Self> {
+        match value {
+            Value::Int(value) => Some(Self::Int(*value)),
+            Value::Bool(value) => Some(Self::Bool(*value)),
+            Value::Str(value) => Some(Self::String(value)),
+            Value::Null => Some(Self::Null),
+            _ => None,
+        }
+    }
+}
+
+fn can_index_set(items: &[Value]) -> bool {
+    items.iter().all(|item| ExactSetKey::from_value(item).is_some())
+}
+
+fn extend_ordered_set(initial: &[Value], items: &[Value]) -> Vec<Value> {
+    let mut result = initial.to_vec();
+    // Float equality is approximate and also compares across numeric types.
+    // Use the existing ordered scan for floats and other non-indexed values.
+    if items.len() >= SET_INDEX_MIN_ITEMS && can_index_set(initial) && can_index_set(items) {
+        let mut seen: HashSet<_> = initial.iter().filter_map(ExactSetKey::from_value).collect();
+        for (item, key) in
+            items.iter().filter_map(|item| ExactSetKey::from_value(item).map(|key| (item, key)))
+        {
+            if seen.insert(key) {
+                result.push(item.clone());
+            }
+        }
+    } else {
+        for item in items {
+            if !result.iter().any(|value| Interpreter::values_equal(value, item)) {
+                result.push(item.clone());
+            }
+        }
+    }
+    result
+}
+
+fn filter_ordered_set(left: &[Value], right: &[Value], retain_matches: bool) -> Vec<Value> {
+    if left.len().min(right.len()) >= SET_INDEX_MIN_ITEMS
+        && can_index_set(left)
+        && can_index_set(right)
+    {
+        let index: HashSet<_> = right.iter().filter_map(ExactSetKey::from_value).collect();
+        return left
+            .iter()
+            .filter(|item| {
+                ExactSetKey::from_value(item).is_some_and(|key| index.contains(&key))
+                    == retain_matches
+            })
+            .cloned()
+            .collect();
+    }
+    left.iter()
+        .filter(|item| {
+            right.iter().any(|other| Interpreter::values_equal(item, other)) == retain_matches
+        })
+        .cloned()
+        .collect()
+}
 
 fn strict_arity_error(function_name: &str, expected: usize, got: usize) -> Value {
     Value::Error(format!(
@@ -1369,15 +1441,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if arg_values.len() > 1 {
                 Value::Error("Set constructor takes at most 1 argument".to_string())
             } else if let Some(Value::Array(items)) = arg_values.first() {
-                let mut set_items: Vec<Value> = Vec::new();
-                for item in items.iter() {
-                    let exists =
-                        set_items.iter().any(|value| Interpreter::values_equal(value, item));
-                    if !exists {
-                        set_items.push(item.clone());
-                    }
-                }
-                Value::Set(set_items)
+                Value::Set(extend_ordered_set(&[], items))
             } else if arg_values.is_empty() {
                 Value::Set(Vec::new())
             } else {
@@ -1423,14 +1487,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if let (Some(Value::Set(set1)), Some(Value::Set(set2))) =
                 (arg_values.first(), arg_values.get(1))
             {
-                let mut result = set1.clone();
-                for item in set2 {
-                    let exists = result.iter().any(|v| Interpreter::values_equal(v, item));
-                    if !exists {
-                        result.push(item.clone());
-                    }
-                }
-                Value::Set(result)
+                Value::Set(extend_ordered_set(set1, set2))
             } else {
                 Value::Set(Vec::new())
             }
@@ -1440,12 +1497,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if let (Some(Value::Set(set1)), Some(Value::Set(set2))) =
                 (arg_values.first(), arg_values.get(1))
             {
-                let result: Vec<Value> = set1
-                    .iter()
-                    .filter(|v| set2.iter().any(|v2| Interpreter::values_equal(v, v2)))
-                    .cloned()
-                    .collect();
-                Value::Set(result)
+                Value::Set(filter_ordered_set(set1, set2, true))
             } else {
                 Value::Set(Vec::new())
             }
@@ -1455,12 +1507,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if let (Some(Value::Set(set1)), Some(Value::Set(set2))) =
                 (arg_values.first(), arg_values.get(1))
             {
-                let result: Vec<Value> = set1
-                    .iter()
-                    .filter(|v| !set2.iter().any(|v2| Interpreter::values_equal(v, v2)))
-                    .cloned()
-                    .collect();
-                Value::Set(result)
+                Value::Set(filter_ordered_set(set1, set2, false))
             } else {
                 Value::Set(Vec::new())
             }
@@ -1627,6 +1674,54 @@ mod tests {
     use super::handle;
     use crate::interpreter::{Interpreter, LeakyFunctionBody, Value};
     use std::sync::Arc;
+
+    #[test]
+    fn ordered_set_operations_preserve_fast_and_fallback_equality() {
+        let mut interpreter = Interpreter::new();
+        let make_set = |interpreter: &mut Interpreter, items| {
+            handle(interpreter, "Set", &[Value::Array(Arc::new(items))]).unwrap()
+        };
+        let assert_set = |result, expected: &[Value]| {
+            let Value::Set(items) = result else { panic!("expected a set") };
+            assert_eq!(items.len(), expected.len());
+            assert!(items.iter().zip(expected).all(|(a, b)| Value::equals(a, b)));
+        };
+        let left: Vec<_> = (0..64).rev().map(Value::Int).collect();
+        let right: Vec<_> = (32..96).map(Value::Int).collect();
+        let mut duplicates = left.clone();
+        duplicates.extend(left.iter().cloned());
+        duplicates.extend([Value::Bool(false), Value::Int(0), Value::Null, Value::Null]);
+        let mut expected = left.clone();
+        expected.extend([Value::Bool(false), Value::Null]);
+        assert_set(make_set(&mut interpreter, duplicates), &expected);
+
+        let args = [Value::Set(left.clone()), Value::Set(right)];
+        let mut union = left.clone();
+        union.extend((64..96).map(Value::Int));
+        for (name, expected) in [
+            ("set_union", union.as_slice()),
+            ("set_intersect", &left[..32]),
+            ("set_difference", &left[32..]),
+        ] {
+            assert_set(handle(&mut interpreter, name, &args).unwrap(), expected);
+        }
+
+        let mut floats: Vec<_> = (32..96).map(|n| Value::Float(n as f64)).collect();
+        floats.push(Value::Float(f64::EPSILON / 2.0));
+        let args = [Value::Set(left.clone()), Value::Set(floats)];
+        let intersection = handle(&mut interpreter, "set_intersect", &args).unwrap();
+        assert_set(intersection, &[&left[..32], &[Value::Int(0)]].concat());
+        assert_set(handle(&mut interpreter, "set_difference", &args).unwrap(), &left[32..63]);
+        assert_eq!(
+            handle(&mut interpreter, "set_union", &args).and_then(|result| {
+                match result {
+                    Value::Set(items) => Some(items.len()),
+                    _ => None,
+                }
+            }),
+            Some(96)
+        );
+    }
 
     #[test]
     fn test_array_and_higher_order_collection_strict_arity_contracts() {
