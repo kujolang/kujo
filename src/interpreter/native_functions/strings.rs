@@ -7,6 +7,7 @@ use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::fmt::Write as _;
 use std::sync::Arc;
 
 // Native port of the SSG's inline-markdown pass, with HTML/attribute escaping
@@ -1135,18 +1136,32 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             if let (Some(Value::Array(arr)), Some(Value::Str(separator))) =
                 (args.first(), args.get(1))
             {
-                // Convert array elements to strings
-                let strings: Vec<String> = arr
+                let text_bytes: usize = arr
                     .iter()
-                    .map(|v| match v {
-                        Value::Str(s) => (&**s).to_string(),
-                        Value::Int(n) => n.to_string(),
-                        Value::Float(n) => n.to_string(),
-                        Value::Bool(b) => b.to_string(),
-                        _ => format!("{:?}", v),
+                    .filter_map(|item| match item {
+                        Value::Str(text) => Some(text.len()),
+                        _ => None,
                     })
-                    .collect();
-                Value::Str(Arc::new(builtins::join(&strings, &**separator)))
+                    .sum();
+                let separator_bytes = separator.len() * arr.len().saturating_sub(1);
+                let mut joined = String::with_capacity(text_bytes + separator_bytes);
+                for (index, item) in arr.iter().enumerate() {
+                    if index != 0 {
+                        joined.push_str(separator);
+                    }
+                    match item {
+                        Value::Str(text) => joined.push_str(text),
+                        Value::Int(number) => write!(joined, "{number}").expect("write to String"),
+                        Value::Float(number) => {
+                            write!(joined, "{number}").expect("write to String")
+                        }
+                        Value::Bool(value) => {
+                            joined.push_str(if *value { "true" } else { "false" })
+                        }
+                        other => write!(joined, "{other:?}").expect("write to String"),
+                    }
+                }
+                Value::Str(Arc::new(joined))
             } else {
                 Value::Error("join() requires array and separator string arguments".to_string())
             }
@@ -1734,6 +1749,31 @@ mod tests {
             }
             _ => panic!("Expected Value::Array from regex_find_all"),
         }
+    }
+
+    #[test]
+    fn test_join_and_split_preserve_empty_parts_and_mixed_value_formatting() {
+        let parts = handle("split", &[str_value("é🦀"), str_value("")]).unwrap();
+        let Value::Array(values) = &parts else { panic!("expected split parts") };
+        assert_eq!(values.len(), 4);
+        for (value, expected) in values.iter().zip(["", "é", "🦀", ""]) {
+            assert!(matches!(value, Value::Str(text) if text.as_str() == expected));
+        }
+        let joined = handle("join", &[parts, str_value("|")]).unwrap();
+        assert!(matches!(joined, Value::Str(text) if text.as_str() == "|é|🦀|"));
+
+        let mixed = vec![
+            str_value(""),
+            Value::Int(-3),
+            Value::Float(1.25),
+            Value::Bool(true),
+            Value::Bool(false),
+            Value::Null,
+        ];
+        let joined = handle("join", &[Value::Array(Arc::new(mixed)), str_value("|")]).unwrap();
+        assert!(matches!(joined, Value::Str(text) if text.as_str() == "|-3|1.25|true|false|Null"));
+        let empty = handle("join", &[Value::Array(Arc::new(Vec::new())), str_value("|")]).unwrap();
+        assert!(matches!(empty, Value::Str(text) if text.is_empty()));
     }
 
     #[test]

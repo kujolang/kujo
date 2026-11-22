@@ -366,6 +366,8 @@ pub fn split(s: &str, delimiter: &str) -> Vec<String> {
     s.split(delimiter).map(|s| s.to_string()).collect()
 }
 
+// Public library compatibility API. The runtime joins its Values directly.
+#[allow(dead_code)]
 pub fn join(arr: &[String], separator: &str) -> String {
     arr.join(separator)
 }
