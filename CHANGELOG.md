@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Use indexed membership for large sets of integers, booleans, strings, and nulls while preserving insertion order and mixed-value equality.
+- Reduce repeated query scaling, diagnostics formatting, and result-key allocation in `vec_top_k`.
+- Reuse plain text in `escape_xml` and avoid repeated escaping and temporary argument copies in native listing cards.
 - Reuse bytecode call metadata for JIT dispatch and move captured bindings into VM frames.
 - Validate interpreter function and method arity without copying parameter metadata on valid calls.
 - Avoid copying and allocating temporary strings in the `join` builtin.

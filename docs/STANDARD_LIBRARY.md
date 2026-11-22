@@ -112,6 +112,7 @@ Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / 
 - `vec_top_k` scores rows by cosine similarity, returns dictionaries `{index, score}`, sorts by descending score with stable ascending-index tie-breaks, and returns all rows when `k` exceeds row count.
 - Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
 - `vec_top_k` uses Rayon parallel scoring for large matrices and orders only the selected rows when `k` is smaller than the matrix. Vector helpers have no capability gate and do not store or index vectors.
+- `vec_top_k` scales the query once per call and accumulates each row's cosine products in dimension order. Matrix validation still runs when `k` is zero.
 
 Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 
@@ -810,6 +811,15 @@ fail the operation. Callback errors stop further calls; callback side effects
 already performed remain. Ordinary capability and call-depth checks apply.
 Input, output and the combined captured text per match are each limited to 8 MiB;
 at most 1,000,000 matches are replaced. `regex_replace` remains unchanged.
+
+### Ordered sets
+
+`Set(items)` preserves the first occurrence of each value. `set_union(left, right)`
+keeps the left set's order and appends new values in right-set order.
+`set_intersect(left, right)` and `set_difference(left, right)` preserve left-set
+order. Large inputs containing only integers, booleans, strings and null can use
+a temporary membership index. Inputs containing floats or other value types use
+the runtime's ordinary equality checks, including comparisons across numeric types.
 
 ### Comparator sorting
 
