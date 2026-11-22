@@ -4,6 +4,7 @@
 
 use crate::interpreter::{DictMap, Value};
 use rayon::prelude::*;
+use std::fmt::Display;
 use std::sync::Arc;
 
 const MAX_VECTOR_DIMENSIONS: usize = 100_000;
@@ -128,7 +129,7 @@ fn handle_vec_top_k(arg_values: &[Value]) -> Value {
         return Value::Array(Arc::new(Vec::new()));
     }
 
-    let mut scored = top_k_scores(&query, &matrix);
+    let mut scored = top_k_scores(query, &matrix);
     if scored.iter().any(|(_, score)| !score.is_finite()) {
         return Value::Error("vec_top_k() score is not finite; reduce input magnitude".to_string());
     }
@@ -141,14 +142,37 @@ fn handle_vec_top_k(arg_values: &[Value]) -> Value {
     }
     scored.sort_unstable_by(score_order);
 
-    Value::Array(Arc::new(scored.into_iter().map(score_entry_value).collect()))
+    let index_key = Arc::<str>::from("index");
+    let score_key = Arc::<str>::from("score");
+    let entries = scored
+        .into_iter()
+        .map(|(index, score)| {
+            let mut map = DictMap::default();
+            map.insert(Arc::clone(&index_key), Value::Int(index as i64));
+            map.insert(Arc::clone(&score_key), Value::Float(score));
+            Value::Dict(Arc::new(map))
+        })
+        .collect();
+    Value::Array(Arc::new(entries))
 }
 
-fn top_k_scores(query: &[f64], matrix: &[Vec<f64>]) -> Vec<(usize, f64)> {
-    // The query norm is invariant across all rows, including the parallel path.
-    let query_norm = ScaledNorm::new(query);
+fn top_k_scores(mut query: Vec<f64>, matrix: &[Vec<f64>]) -> Vec<(usize, f64)> {
+    // Scale the query once. Each row still accumulates products in input order.
+    let query_norm = ScaledNorm::new(&query);
+    if query_norm.scale == 0.0 {
+        return (0..matrix.len()).map(|index| (index, 0.0)).collect();
+    }
+    for value in &mut query {
+        *value /= query_norm.scale;
+    }
     let score = |(index, row): (usize, &Vec<f64>)| {
-        (index, cosine_with_norms(query, row, query_norm, ScaledNorm::new(row)))
+        let row_norm = ScaledNorm::new(row);
+        if row_norm.scale == 0.0 {
+            return (index, 0.0);
+        }
+        let scaled_dot: f64 = query.iter().zip(row).map(|(a, b)| a * (b / row_norm.scale)).sum();
+        let cosine = (scaled_dot / (query_norm.length * row_norm.length)).clamp(-1.0, 1.0);
+        (index, cosine)
     };
     if matrix.len() >= VEC_TOP_K_PARALLEL_THRESHOLD {
         matrix.par_iter().enumerate().map(score).collect()
@@ -157,7 +181,11 @@ fn top_k_scores(query: &[f64], matrix: &[Vec<f64>]) -> Vec<(usize, f64)> {
     }
 }
 
-fn numeric_vector(function: &str, arg_name: &str, value: &Value) -> Result<Vec<f64>, Value> {
+fn numeric_vector(
+    function: &str,
+    arg_name: impl Display + Copy,
+    value: &Value,
+) -> Result<Vec<f64>, Value> {
     let Value::Array(values) = value else {
         return Err(Value::Error(format!(
             "{function}() expects '{arg_name}' to be an array of finite numbers"
@@ -204,7 +232,7 @@ fn numeric_matrix(
     rows.iter()
         .enumerate()
         .map(|(row_index, row)| {
-            let vector = numeric_vector(function, &format!("{arg_name}[{row_index}]"), row)?;
+            let vector = numeric_vector(function, format_args!("{arg_name}[{row_index}]"), row)?;
             if vector.len() != expected_dimensions {
                 return Err(Value::Error(format!(
                     "{function}() dimension mismatch: query has {expected_dimensions} dimensions but matrix row {row_index} has {}",
@@ -218,7 +246,7 @@ fn numeric_matrix(
 
 fn finite_number(
     function: &str,
-    vector_name: &str,
+    vector_name: impl Display,
     index: usize,
     value: &Value,
 ) -> Result<f64, Value> {
@@ -325,16 +353,9 @@ fn ensure_finite(function: &str, value: f64) -> Result<f64, Value> {
     }
 }
 
-fn score_entry_value((index, score): (usize, f64)) -> Value {
-    let mut map = DictMap::default();
-    map.insert(Arc::<str>::from("index"), Value::Int(index as i64));
-    map.insert(Arc::<str>::from("score"), Value::Float(score));
-    Value::Dict(Arc::new(map))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{handle, VEC_TOP_K_PARALLEL_THRESHOLD};
+    use super::{cosine_raw, handle, top_k_scores, VEC_TOP_K_PARALLEL_THRESHOLD};
     use crate::interpreter::Value;
     use std::sync::Arc;
 
@@ -466,6 +487,23 @@ mod tests {
             result,
             Value::Error(message) if message == "vec_top_k() expects matrix[1][0] to be a finite number"
         ));
+    }
+
+    #[test]
+    fn vector_top_k_prescaling_matches_scalar_cosine_bits() {
+        let rows = [
+            vec![0.0, -0.0, 0.0],
+            vec![f64::MAX, -f64::MAX, f64::MAX],
+            vec![0.5, -0.3, 0.9],
+            vec![f64::from_bits(1), f64::from_bits(2), -f64::from_bits(1)],
+        ];
+        let matrix: Vec<_> =
+            rows.iter().cycle().take(VEC_TOP_K_PARALLEL_THRESHOLD).cloned().collect();
+        for query in &rows {
+            for (index, score) in top_k_scores(query.clone(), &matrix) {
+                assert_eq!(score.to_bits(), cosine_raw(query, &matrix[index]).to_bits());
+            }
+        }
     }
 
     #[test]
