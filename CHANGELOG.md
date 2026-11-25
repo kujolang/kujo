@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid redundant array copies in `insert`, `remove`, and `remove_at`, and reuse sorted entries in dictionary `values` and `items`.
+- Reduce string traversal and temporary allocations in `char_at`, `truncate`, and `slugify`.
+
 - Use indexed membership for large sets of integers, booleans, strings, and nulls while preserving insertion order and mixed-value equality.
 - Reduce repeated query scaling, diagnostics formatting, and result-key allocation in `vec_top_k`.
 - Reuse plain text in `escape_xml` and avoid repeated escaping and temporary argument copies in native listing cards.

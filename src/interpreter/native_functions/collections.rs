@@ -98,6 +98,19 @@ fn fixed_dict_to_dict(keys: &[Arc<str>], values: &[Value]) -> DictMap {
     dict
 }
 
+fn array_without_index(arr: &[Value], index: usize) -> Vec<Value> {
+    let mut result = Vec::with_capacity(arr.len() - 1);
+    result.extend_from_slice(&arr[..index]);
+    result.extend_from_slice(&arr[index + 1..]);
+    result
+}
+
+fn sorted_dict_entries(dict: &DictMap) -> Vec<(&Arc<str>, &Value)> {
+    let mut entries: Vec<_> = dict.iter().collect();
+    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    entries
+}
+
 fn parse_slice_bound(value: &Value, label: &str) -> Result<i64, Value> {
     match value {
         Value::Int(number) => Ok(*number),
@@ -284,7 +297,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if 3 != arg_values.len() {
                 strict_arity_error("insert", 3, arg_values.len())
             } else if let (Some(Value::Array(arr)), Some(index_val), Some(item)) =
-                (arg_values.first().cloned(), arg_values.get(1), arg_values.get(2).cloned())
+                (arg_values.first(), arg_values.get(1), arg_values.get(2))
             {
                 let index = match index_val {
                     Value::Int(n) => *n,
@@ -292,9 +305,15 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     _ => return Some(Value::Error("insert() index must be a number".to_string())),
                 };
 
-                match builtins::array_insert((*arr).clone(), index, item) {
-                    Ok(new_arr) => Value::Array(Arc::new(new_arr)),
-                    Err(e) => Value::Error((*e).clone()),
+                match builtins::array_insert_index(arr.len(), index) {
+                    Ok(index) => {
+                        let mut result = Vec::with_capacity(arr.len() + 1);
+                        result.extend_from_slice(&arr[..index]);
+                        result.push(item.clone());
+                        result.extend_from_slice(&arr[index..]);
+                        Value::array(result)
+                    }
+                    Err(error) => Value::Error(error),
                 }
             } else {
                 Value::Error("insert() requires 3 arguments: array, index, and item".to_string())
@@ -307,7 +326,10 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             } else {
                 match (arg_values.first().cloned(), dictionary_key) {
                     (Some(Value::Array(arr)), Some(item)) => {
-                        Value::Array(Arc::new(builtins::array_remove((*arr).clone(), item)))
+                        match builtins::array_item_position(&arr, item) {
+                            Some(index) => Value::array(array_without_index(&arr, index)),
+                            None => Value::Array(arr),
+                        }
                     }
                     (Some(Value::Dict(dict)), Some(Value::Str(key))) => {
                         let mut dict_clone = dict.clone();
@@ -440,7 +462,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if 2 != arg_values.len() {
                 strict_arity_error("remove_at", 2, arg_values.len())
             } else if let (Some(Value::Array(arr)), Some(index_val)) =
-                (arg_values.first().cloned(), arg_values.get(1))
+                (arg_values.first(), arg_values.get(1))
             {
                 let index = match index_val {
                     Value::Int(n) => *n,
@@ -450,11 +472,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     }
                 };
 
-                match builtins::array_remove_at((*arr).clone(), index) {
-                    Ok((new_arr, removed)) => {
-                        Value::Array(Arc::new(vec![Value::Array(Arc::new(new_arr)), removed]))
-                    }
-                    Err(e) => Value::Error((*e).clone()),
+                match builtins::array_remove_index(arr.len(), index) {
+                    Ok(index) => Value::array(vec![
+                        Value::array(array_without_index(arr, index)),
+                        arr[index].clone(),
+                    ]),
+                    Err(error) => Value::Error(error),
                 }
             } else {
                 Value::Error("remove_at() requires 2 arguments: array and index".to_string())
@@ -930,14 +953,9 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
 
         "values" => {
             if let Some(Value::Dict(dict)) = arg_values.first() {
-                let mut keys: Vec<&Arc<str>> = Vec::with_capacity(dict.len());
-                for key in dict.keys() {
-                    keys.push(key);
-                }
-                keys.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
-                let vals: Vec<Value> =
-                    keys.iter().map(|k| dict.get(k.as_ref()).unwrap().clone()).collect();
-                Value::Array(Arc::new(vals))
+                Value::array(
+                    sorted_dict_entries(dict).into_iter().map(|(_, value)| value.clone()).collect(),
+                )
             } else if let Some(Value::FixedDict { keys, values }) = arg_values.first() {
                 let mut pairs: Vec<(&Arc<str>, &Value)> = keys.iter().zip(values.iter()).collect();
                 pairs.sort_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
@@ -1026,21 +1044,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
 
         "items" => {
             if let Some(Value::Dict(dict)) = arg_values.first() {
-                let mut keys: Vec<&Arc<str>> = Vec::with_capacity(dict.len());
-                for key in dict.keys() {
-                    keys.push(key);
-                }
-                keys.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
-                let items: Vec<Value> = keys
-                    .iter()
-                    .map(|k| {
-                        Value::Array(Arc::new(vec![
-                            Value::Str(Arc::new(k.to_string())),
-                            dict.get(k.as_ref()).unwrap().clone(),
-                        ]))
-                    })
-                    .collect();
-                Value::Array(Arc::new(items))
+                Value::array(
+                    sorted_dict_entries(dict)
+                        .into_iter()
+                        .map(|(key, value)| Value::array(vec![Value::str_ref(key), value.clone()]))
+                        .collect(),
+                )
             } else if let Some(Value::FixedDict { keys, values }) = arg_values.first() {
                 let mut pairs: Vec<(&Arc<str>, &Value)> = keys.iter().zip(values.iter()).collect();
                 pairs.sort_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));

@@ -16,6 +16,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "runtime-network")]
 use sha2::{Digest, Sha256};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -347,6 +348,7 @@ pub fn repeat(s: &str, count: f64) -> String {
     s.repeat(count)
 }
 
+#[allow(dead_code)] // Public library API
 pub fn char_at(s: &str, index: f64) -> String {
     let idx = index as usize;
     s.chars().nth(idx).map(|c| c.to_string()).unwrap_or_default()
@@ -418,40 +420,46 @@ pub fn str_reverse(s: &str) -> String {
 
 /// Convert string to URL-friendly slug
 pub fn str_slugify(s: &str) -> String {
-    s.to_lowercase()
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() {
-                c
-            } else if c.is_whitespace() || c == '_' {
-                '-'
-            } else {
-                ' ' // Will be filtered out
+    // Lowercase the whole string so contextual Unicode mappings are preserved.
+    let lowercase = s.to_lowercase();
+    let mut result = String::new();
+    let mut pending_separators = 0usize;
+    for c in lowercase.chars() {
+        if c.is_alphanumeric() {
+            if pending_separators > 0 {
+                // Match non-overlapping replacements of "--" with "-".
+                result.extend(std::iter::repeat_n('-', pending_separators.div_ceil(2)));
+                pending_separators = 0;
             }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join("")
-        .replace("--", "-")
-        .trim_matches('-')
-        .to_string()
+            result.push(c);
+        } else if (c.is_whitespace() || c == '_') && !result.is_empty() {
+            pending_separators += 1;
+        }
+    }
+    result
 }
 
 /// Truncate string to specified length with optional suffix
+#[allow(dead_code)] // Public library API
 pub fn str_truncate(s: &str, max_len: i64, suffix: &str) -> String {
-    let len = s.chars().count();
-    let max_len = max_len as usize;
+    truncate_text(s, max_len as usize, suffix).into_owned()
+}
 
-    if len <= max_len {
-        return s.to_string();
+pub(crate) fn truncate_text<'a>(s: &'a str, max_len: usize, suffix: &str) -> Cow<'a, str> {
+    if s.len() <= max_len || s.chars().nth(max_len).is_none() {
+        return Cow::Borrowed(s);
     }
 
-    let suffix_len = suffix.chars().count();
-    let truncate_at = max_len.saturating_sub(suffix_len);
-
-    let truncated: String = s.chars().take(truncate_at).collect();
-    format!("{}{}", truncated, suffix)
+    let keep = max_len.saturating_sub(suffix.chars().count());
+    let mut chars = s.chars();
+    if keep > 0 {
+        chars.nth(keep - 1);
+    }
+    let prefix = &s[..s.len() - chars.as_str().len()];
+    let mut result = String::with_capacity(prefix.len() + suffix.len());
+    result.push_str(prefix);
+    result.push_str(suffix);
+    Cow::Owned(result)
 }
 
 /// Convert string to camelCase
@@ -1707,57 +1715,55 @@ pub fn regex_split(text: &str, pattern: &str) -> Vec<String> {
 }
 
 /// Array functions
-/// Insert an item at a specific index
-pub fn array_insert(arr: Vec<Value>, index: i64, item: Value) -> Result<Vec<Value>, Arc<String>> {
-    let idx = index as usize;
-    let mut new_arr = arr;
-
-    if idx > new_arr.len() {
-        return Err(Arc::new(format!(
-            "insert() index {} out of bounds for array of length {}",
-            idx,
-            new_arr.len()
-        )));
+pub(crate) fn array_insert_index(len: usize, index: i64) -> Result<usize, String> {
+    let index = index as usize;
+    if index > len {
+        return Err(format!("insert() index {} out of bounds for array of length {}", index, len));
     }
+    Ok(index)
+}
 
-    new_arr.insert(idx, item);
-    Ok(new_arr)
+/// Insert an item at a specific index
+#[allow(dead_code)] // Public library API
+pub fn array_insert(
+    mut arr: Vec<Value>,
+    index: i64,
+    item: Value,
+) -> Result<Vec<Value>, Arc<String>> {
+    let index = array_insert_index(arr.len(), index).map_err(Arc::new)?;
+    arr.insert(index, item);
+    Ok(arr)
 }
 
 /// Remove the first occurrence of an item
-pub fn array_remove(arr: Vec<Value>, item: &Value) -> Vec<Value> {
-    let mut new_arr = arr;
-    // Find position manually since Value doesn't implement PartialEq
-    let pos = new_arr.iter().position(|x| match (x, item) {
-        (Value::Int(a), Value::Int(b)) => a == b,
-        (Value::Float(a), Value::Float(b)) => a == b,
-        (Value::Str(a), Value::Str(b)) => a.as_ref() == b.as_ref(),
-        (Value::Bool(a), Value::Bool(b)) => a == b,
-        (Value::Null, Value::Null) => true,
-        _ => false,
-    });
-
-    if let Some(idx) = pos {
-        new_arr.remove(idx);
+#[allow(dead_code)] // Public library API
+pub fn array_remove(mut arr: Vec<Value>, item: &Value) -> Vec<Value> {
+    if let Some(index) = array_item_position(&arr, item) {
+        arr.remove(index);
     }
-    new_arr
+    arr
+}
+
+pub(crate) fn array_remove_index(len: usize, index: i64) -> Result<usize, String> {
+    let index = index as usize;
+    if index >= len {
+        return Err(format!(
+            "remove_at() index {} out of bounds for array of length {}",
+            index, len
+        ));
+    }
+    Ok(index)
 }
 
 /// Remove an item at a specific index
-pub fn array_remove_at(arr: Vec<Value>, index: i64) -> Result<(Vec<Value>, Value), Arc<String>> {
-    let idx = index as usize;
-    let mut new_arr = arr;
-
-    if idx >= new_arr.len() {
-        return Err(Arc::new(format!(
-            "remove_at() index {} out of bounds for array of length {}",
-            idx,
-            new_arr.len()
-        )));
-    }
-
-    let removed = new_arr.remove(idx);
-    Ok((new_arr, removed))
+#[allow(dead_code)] // Public library API
+pub fn array_remove_at(
+    mut arr: Vec<Value>,
+    index: i64,
+) -> Result<(Vec<Value>, Value), Arc<String>> {
+    let index = array_remove_index(arr.len(), index).map_err(Arc::new)?;
+    let removed = arr.remove(index);
+    Ok((arr, removed))
 }
 
 /// Clear all items from an array
@@ -1765,18 +1771,20 @@ pub fn array_clear() -> Vec<Value> {
     Vec::new()
 }
 
-/// Find the index of the first occurrence of an item
-pub fn array_index_of(arr: &[Value], item: &Value) -> i64 {
-    let pos = arr.iter().position(|x| match (x, item) {
+pub(crate) fn array_item_position(arr: &[Value], item: &Value) -> Option<usize> {
+    arr.iter().position(|x| match (x, item) {
         (Value::Int(a), Value::Int(b)) => a == b,
         (Value::Float(a), Value::Float(b)) => a == b,
-        (Value::Str(a), Value::Str(b)) => a == b,
+        (Value::Str(a), Value::Str(b)) => a.as_ref() == b.as_ref(),
         (Value::Bool(a), Value::Bool(b)) => a == b,
         (Value::Null, Value::Null) => true,
         _ => false,
-    });
+    })
+}
 
-    pos.map(|i| i as i64).unwrap_or(-1)
+/// Find the index of the first occurrence of an item
+pub fn array_index_of(arr: &[Value], item: &Value) -> i64 {
+    array_item_position(arr, item).map_or(-1, |index| index as i64)
 }
 
 /// Check if an array contains an item

@@ -863,15 +863,17 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
         }
 
         "char_at" => {
-            let s = match require_string_arg(args, 0, "char_at", "value") {
-                Ok(value) => value,
-                Err(error) => return Some(error),
+            let Some(Value::Str(s)) = args.first() else {
+                return Some(Value::Error("char_at() requires a string argument for value".into()));
             };
             let index = match require_number_arg(args, 1, "char_at", "index") {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            Value::Str(Arc::new(builtins::char_at(s, index)))
+            let result = crate::interpreter::string_access::char_at_nonnegative(s, index as usize)
+                .map(|character| character.to_string())
+                .unwrap_or_default();
+            Value::Str(Arc::new(result))
         }
 
         "is_empty" => {
@@ -1397,7 +1399,10 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                         "truncate() length must be greater than or equal to 0".to_string(),
                     ));
                 }
-                Value::Str(Arc::new(builtins::str_truncate(&**s, max_len, &**suffix)))
+                match builtins::truncate_text(s, max_len as usize, suffix) {
+                    Cow::Borrowed(_) => Value::Str(Arc::clone(s)),
+                    Cow::Owned(result) => Value::Str(Arc::new(result)),
+                }
             } else {
                 Value::Error("truncate() requires 3 arguments: string, length, suffix".to_string())
             }

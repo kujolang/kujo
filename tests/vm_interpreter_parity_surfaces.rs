@@ -102,6 +102,50 @@ fn assert_interpreter_and_vm_error_contains(script: &str, expected: &str) {
     );
 }
 
+#[test]
+fn optimized_collection_and_string_builtins_preserve_results() {
+    let script = r#"
+        let source := [1, 2, 1, 3]
+        assert_equal(insert(source, 2.8, 9), [1, 2, 9, 1, 3])
+        assert_equal(insert(source, 4, 9), [1, 2, 1, 3, 9])
+        assert_equal(remove(source, 1), [2, 1, 3])
+        assert_equal(remove(source, 1.0), source)
+        assert_equal(remove_at(source, 0), [[2, 1, 3], 1])
+        assert_equal(remove_at(source, 3), [[1, 2, 1], 3])
+        assert_equal(source, [1, 2, 1, 3])
+        mut dict := {}
+        dict["é"] = 3
+        dict["aa"] = 2
+        dict["a"] = 1
+        assert_equal(values(dict), [1, 2, 3])
+        assert_equal(items(dict), [["a", 1], ["aa", 2], ["é", 3]])
+
+        let text := "aé🙂bc"
+        assert_equal(substring(text, 1, 3), "é🙂")
+        assert_equal(substring(text, 2, 99), "🙂bc")
+        assert_equal(substring(text, 99, 99), "")
+        assert_equal(truncate(text, 3, "…"), "aé…")
+        assert_equal(truncate(text, 1, "🙂!"), "🙂!")
+        assert_equal(truncate(text, 5, "!"), text)
+        assert_equal(char_at(text, -1), "a")
+        assert_equal(char_at(text, 2.9), "🙂")
+        assert_equal(char_at(text, 5), "")
+        let ascii := repeat("a", 64) + "b"
+        assert_equal(char_at(ascii, 64), "b")
+        assert_equal(char_at(ascii, 65), "")
+        let unicode := repeat("é", 64) + "🙂"
+        assert_equal(char_at(unicode, 64), "🙂")
+        assert_equal(slugify(" _ΟΣ__!_  Café___ "), "ος---café")
+        assert_equal(slugify(" ___!? "), "")
+    "#;
+    let interpreter = run_interpreter(script);
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    run_vm(script, vm_env_with_builtins()).unwrap();
+
+    assert_interpreter_and_vm_error_contains("insert([1], 2, 9)", "index 2 out of bounds");
+    assert_interpreter_and_vm_error_contains("remove_at([1], 1)", "index 1 out of bounds");
+}
+
 fn unique_spawn_key() -> String {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)

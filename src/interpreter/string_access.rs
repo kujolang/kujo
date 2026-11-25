@@ -55,6 +55,16 @@ pub(crate) fn char_at(text: &Arc<String>, index: i64) -> Option<char> {
     }
 }
 
+pub(crate) fn char_at_nonnegative(text: &Arc<String>, index: usize) -> Option<char> {
+    if index >= text.len() {
+        None
+    } else if index >= (text.len() / 4).max(32) && len(text) == text.len() {
+        Some(char::from(text.as_bytes()[index]))
+    } else {
+        text.chars().nth(index)
+    }
+}
+
 pub(crate) fn substring(text: &Arc<String>, start: usize, end: usize) -> String {
     let count = len(text);
     let start = start.min(count);
