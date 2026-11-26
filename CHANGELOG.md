@@ -6,6 +6,7 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Count decoded text incrementally during string lexing and move plain string text directly into its token.
 - Avoid redundant array copies in `insert`, `remove`, and `remove_at`, and reuse sorted entries in dictionary `values` and `items`.
 - Reduce string traversal and temporary allocations in `char_at`, `truncate`, and `slugify`.
 

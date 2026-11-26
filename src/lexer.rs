@@ -255,6 +255,7 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
 
                 let mut parts = Vec::new();
                 let mut current_text = String::new();
+                let mut current_text_chars = 0;
                 let mut has_interpolation = false;
                 let mut terminated = false;
                 let mut string_error = false;
@@ -277,13 +278,11 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
                         if let Some(esc) = peek(&chars, idx) {
                             bump(&chars, &mut idx);
                             advance_position(esc, &mut line, &mut col);
-                            match esc {
-                                'n' => current_text.push('\n'),
-                                't' => current_text.push('\t'),
-                                'r' => current_text.push('\r'),
-                                '\\' => current_text.push('\\'),
-                                '"' => current_text.push('"'),
-                                '$' => current_text.push('$'),
+                            let decoded = match esc {
+                                'n' => '\n',
+                                't' => '\t',
+                                'r' => '\r',
+                                '\\' | '"' | '$' => esc,
                                 _ => {
                                     string_error = true;
                                     push_diag(
@@ -295,8 +294,11 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
                                         escape_offset,
                                         file,
                                     );
+                                    continue;
                                 }
-                            }
+                            };
+                            current_text.push(decoded);
+                            current_text_chars += 1;
                         } else {
                             string_error = true;
                             push_diag(
@@ -320,6 +322,7 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
                         if !current_text.is_empty() {
                             parts.push(InterpolatedPart::Text(std::mem::take(&mut current_text)));
                         }
+                        current_text_chars = 0;
 
                         let mut expr = String::new();
                         let mut brace_depth = 1usize;
@@ -373,9 +376,10 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
                         bump(&chars, &mut idx);
                         advance_position(ch, &mut line, &mut col);
                         current_text.push(ch);
+                        current_text_chars += 1;
 
-                        if current_text.chars().count() > MAX_STRING_LITERAL_LENGTH
-                            && !string_too_long_reported
+                        if !string_too_long_reported
+                            && current_text_chars > MAX_STRING_LITERAL_LENGTH
                         {
                             string_too_long_reported = true;
                             string_error = true;
@@ -413,32 +417,16 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
                     }
                 }
 
-                if !current_text.is_empty() {
-                    parts.push(InterpolatedPart::Text(current_text));
-                }
-
                 if !string_error {
-                    if has_interpolation {
-                        push_token(
-                            &mut tokens,
-                            TokenKind::InterpolatedString(parts),
-                            start_line,
-                            start_col,
-                            start_offset,
-                        );
+                    let kind = if has_interpolation {
+                        if !current_text.is_empty() {
+                            parts.push(InterpolatedPart::Text(current_text));
+                        }
+                        TokenKind::InterpolatedString(parts)
                     } else {
-                        let text = match parts.first() {
-                            Some(InterpolatedPart::Text(value)) => value.clone(),
-                            _ => String::new(),
-                        };
-                        push_token(
-                            &mut tokens,
-                            TokenKind::String(text),
-                            start_line,
-                            start_col,
-                            start_offset,
-                        );
-                    }
+                        TokenKind::String(current_text)
+                    };
+                    push_token(&mut tokens, kind, start_line, start_col, start_offset);
                 }
             }
             '0'..='9' => {
@@ -1022,8 +1010,9 @@ fn tokenize_with_diagnostics_and_file(source: &str, file: Option<&str>) -> LexOu
 #[cfg(test)]
 mod tests {
     use super::{
-        tokenize, tokenize_with_diagnostics, tokenize_with_file, LexerDiagnosticKind, TokenKind,
-        MAX_IDENTIFIER_LENGTH, MAX_NUMERIC_LITERAL_LENGTH, MAX_STRING_LITERAL_LENGTH,
+        tokenize, tokenize_with_diagnostics, tokenize_with_file, InterpolatedPart,
+        LexerDiagnosticKind, TokenKind, MAX_IDENTIFIER_LENGTH, MAX_NUMERIC_LITERAL_LENGTH,
+        MAX_STRING_LITERAL_LENGTH,
     };
 
     #[test]
@@ -1114,6 +1103,29 @@ mod tests {
         let result = tokenize(&source);
         let diagnostics = result.expect_err("expected string limit diagnostic");
         assert!(diagnostics.iter().any(|d| d.kind == LexerDiagnosticKind::StringLiteralTooLong));
+    }
+
+    #[test]
+    fn string_limits_count_decoded_scalars_and_reset_at_interpolation() {
+        let prefix = "界".repeat(MAX_STRING_LITERAL_LENGTH - 2);
+        let source = format!(r#""{prefix}\n界${{1}}{prefix}\n界""#);
+        let expected = format!("{prefix}\n界");
+        let tokens = tokenize(&source).expect("segments at the scalar limit should tokenize");
+        assert_eq!(
+            tokens[0].kind,
+            TokenKind::InterpolatedString(vec![
+                InterpolatedPart::Text(expected.clone()),
+                InterpolatedPart::Expression("1".into()),
+                InterpolatedPart::Text(expected),
+            ])
+        );
+
+        let oversized = format!(r#""{prefix}\n界界界" 7"#);
+        let output = tokenize_with_diagnostics(&oversized);
+        assert_eq!(output.diagnostics.len(), 1);
+        assert_eq!(output.diagnostics[0].kind, LexerDiagnosticKind::StringLiteralTooLong);
+        assert_eq!((output.diagnostics[0].line, output.diagnostics[0].column), (1, 1));
+        assert_eq!(output.tokens[0].kind, TokenKind::Int(7));
     }
 
     #[test]
