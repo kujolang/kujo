@@ -1050,6 +1050,17 @@ mod tests {
         }
     }
     #[test]
+    fn url_components_reports_tuple_and_opaque_origins() {
+        for (url, origin) in [
+            ("https://example.com/path", "https://example.com"),
+            ("blob:https://example.com/id", "https://example.com"),
+            ("blob:ws://example.com/id", "null"),
+        ] {
+            assert_eq!(call("url_components", vec![s(url)]).unwrap()["origin"], origin);
+        }
+    }
+
+    #[test]
     fn rate_limit_rejects_corrupted_or_future_channel_state() {
         for timestamp in [f64::NAN, f64::INFINITY, -1.0, f64::MAX] {
             let mut interpreter = Interpreter::new();
