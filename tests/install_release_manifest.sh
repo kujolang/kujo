@@ -61,4 +61,33 @@ if bash "$repo_root/install.sh" --dry-run --source --package dispatch --release-
 fi
 grep -F "release manifests must use HTTPS" "$temp_root/http.out" >/dev/null
 
+mkdir "$temp_root/fixture-bin"
+cat > "$temp_root/fixture-bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+authenticated=no
+while (( $# )); do
+	case "$1" in
+		-H) [[ "$2" == 'Authorization: Bearer fixture-token' ]]; authenticated=yes; shift ;;
+		--proto-redir) [[ "$2" == '=https' ]]; shift ;;
+		-o) output="$2"; shift ;;
+	esac
+	shift
+done
+[[ "$authenticated" == "$EXPECTED_AUTHENTICATION" ]]
+cp "$FIXTURE_MANIFEST" "$output"
+EOF
+chmod +x "$temp_root/fixture-bin/curl"
+
+check_remote_manifest() {
+	PATH="$temp_root/fixture-bin:$PATH" KUJO_GITHUB_TOKEN=fixture-token \
+		EXPECTED_AUTHENTICATION="$2" FIXTURE_MANIFEST="$manifest" \
+		bash "$repo_root/install.sh" --dry-run --source --package dispatch --release-manifest "$1" \
+		--prefix "$temp_root/root" --bin-dir "$temp_root/bin" > "$temp_root/remote.out"
+	grep -F 'would download kujolang/dispatch at v1.1.0' "$temp_root/remote.out" >/dev/null
+}
+
+check_remote_manifest 'https://example.invalid/release.refs' no
+check_remote_manifest 'https://raw.githubusercontent.com/kujolang/dispatch/main/release.refs' yes
+
 echo "installer release-manifest contract passed"

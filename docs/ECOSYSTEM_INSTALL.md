@@ -38,7 +38,7 @@ bash install.sh --package dispatch \
   --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.2.0/release/dispatch-v1.2.0.refs
 ```
 
-Remote manifests must use HTTPS. Unknown repositories, invalid refs, duplicate pins, and missing required dependency pins fail before downloads begin. The install receipt records the manifest source and resolved per-repository refs. `--repo-ref repo=ref` is available for controlled development overrides; release automation should use a reviewed manifest.
+Remote manifests and their redirects must use HTTPS. The installer sends `KUJO_GITHUB_TOKEN` only to supported GitHub hosts. Unknown repositories, invalid refs, duplicate pins, and missing required dependency pins fail before package downloads begin. The install receipt records the manifest source and resolved per-repository refs. `--repo-ref repo=ref` is available for controlled development overrides. Release automation should use a reviewed manifest.
 
 If the GitHub repositories are still private during a pre-launch test, provide a short-lived GitHub token through the environment rather than putting it in a URL:
 

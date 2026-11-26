@@ -60,7 +60,7 @@ Examples:
 
 Environment overrides:
   KUJO_ECOSYSTEM_REF, KUJO_RELEASE_VERSION, KUJO_INSTALL_ROOT, KUJO_BIN_DIR, KUJO_GITHUB_OWNER,
-  KUJO_GITHUB_TOKEN (only needed while repositories are private)
+  KUJO_GITHUB_TOKEN (sent only to supported GitHub hosts)
 EOF
 }
 
@@ -123,11 +123,17 @@ require_command() {
 }
 
 github_curl() {
-	if [[ -n "${KUJO_GITHUB_TOKEN:-}" ]]; then
-		curl -fsSL --retry 3 -H "Authorization: Bearer $KUJO_GITHUB_TOKEN" "$@"
-	else
-		curl -fsSL --retry 3 "$@"
-	fi
+	local url="$1"
+	shift
+	case "$url" in
+		https://github.com/*|https://api.github.com/*|https://raw.githubusercontent.com/*|https://codeload.github.com/*)
+			if [[ -n "${KUJO_GITHUB_TOKEN:-}" ]]; then
+				curl -fsSL --retry 3 --proto-redir '=https' -H "Authorization: Bearer $KUJO_GITHUB_TOKEN" "$url" "$@"
+				return
+			fi
+			;;
+	esac
+	curl -fsSL --retry 3 --proto-redir '=https' "$url" "$@"
 }
 
 has_group() {
