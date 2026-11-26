@@ -58,3 +58,5 @@ The [harness](evidence/kujo-string-lexer-2026-11-25.py) compiles the actual base
 ## Follow-up
 
 Keep the published installer in sync with canonical `install.sh`. Source-tree replacement still uses portable backup and move operations. A full install transaction spanning sources, shims and the executable would require a separate compatibility design.
+
+The full Linux runtime workflow passed formatting, lint, MSRV, minimal release, and VM/interpreter parity. Its release gate flagged stale generated unsafe inventory rows. The baseline workflow reported the same freshness failure before the installer and lexer changes. Regenerating both projections from current source passed the focused Rust freshness test. [Baseline run](https://github.com/kujolang/kujo/actions/runs/45703739710) [Hardening run](https://github.com/kujolang/kujo/actions/runs/45745910947)
