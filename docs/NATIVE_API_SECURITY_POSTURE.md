@@ -301,6 +301,7 @@ Key defaults and controls:
 - Single-pass percent-decoding with malformed encoding/null-byte rejection.
 - Hidden/private path blocking (`.env`, `.git`, backup/swap-style names).
 - Deterministic request limits (line/header/body sizes, header count, max connections).
+- `--read-timeout-ms` and `--write-timeout-ms` set socket I/O timeouts before HTTP parsing and TLS negotiation. Request size limits are evaluated after the transport parses the request line and headers.
 - Safe MIME fallback (`application/octet-stream`) for unknown/extensionless paths.
 - Baseline response headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`).
 - Hardened-mode headers with `--hardened`.

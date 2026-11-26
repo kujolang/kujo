@@ -87,6 +87,14 @@ impl Connection {
 		}
 	}
 
+    pub(crate) fn set_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        match self {
+            Self::Tcp(s) => s.set_write_timeout(timeout),
+            #[cfg(unix)]
+            Self::Unix(s) => s.set_write_timeout(timeout),
+        }
+    }
+
     /// Gets the peer's address. Some for TCP, None for Unix sockets.
     pub(crate) fn peer_addr(&mut self) -> std::io::Result<Option<SocketAddr>> {
         match self {

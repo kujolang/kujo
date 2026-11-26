@@ -838,6 +838,21 @@ fn serve_custom_timeout_flags_still_serve_normal_requests() {
 }
 
 #[test]
+fn serve_applies_the_read_timeout_to_accepted_connections() {
+    let root = tempfile::tempdir().unwrap();
+    let server = spawn_server_or_skip!(spawn_serve_process_with_extra_args(
+        root.path(),
+        &["--read-timeout-ms", "100", "--write-timeout-ms", "1000"],
+    ));
+    let mut client = TcpStream::connect((TEST_HOST, server.port)).unwrap();
+    client.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+    assert_eq!(408, parse_http_response(&response).status_code);
+}
+
+#[test]
 fn serve_query_string_does_not_change_filesystem_resolution() {
     let root = unique_temp_dir("serve_query_string_path_resolution");
     fs::write(root.join("index.html"), "<h1>Hello Query</h1>").expect("failed to write index.html");

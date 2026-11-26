@@ -266,6 +266,16 @@ impl Server {
 		ssl_config: Option<SslConfig>,
 		read_timeout: Option<Duration>,
 	) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
+        Self::from_listener_with_timeouts(listener, ssl_config, read_timeout, None)
+    }
+
+    /// Applies optional socket read and write timeouts before TLS and HTTP parsing.
+    pub fn from_listener_with_timeouts<L: Into<Listener>>(
+        listener: L,
+        ssl_config: Option<SslConfig>,
+        read_timeout: Option<Duration>,
+        write_timeout: Option<Duration>,
+    ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
         let listener = listener.into();
         // building the "close" variable
         let close_trigger = Arc::new(AtomicBool::new(false));
@@ -322,6 +332,12 @@ impl Server {
 								continue;
 							}
 						}
+                        if let Some(timeout) = write_timeout {
+                            if let Err(error) = sock.set_write_timeout(Some(timeout)) {
+                                log::warn!("Failed to configure client write timeout: {}", error);
+                                continue;
+                            }
+                        }
                         use util::RefinedTcpStream;
                         let (read_closable, write_closable) = match ssl {
                             None => RefinedTcpStream::new(sock),

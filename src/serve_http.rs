@@ -89,18 +89,26 @@ pub fn run_static_server(
     let listener = std::net::TcpListener::bind(&bind_addr)
         .map_err(|err| format!("Failed to bind {}: {}", bind_addr, err))?;
 
-    let server = if tls_enabled {
+    let ssl_config = if tls_enabled {
         let certificate = fs::read(options.tls_cert.as_ref().expect("tls cert exists"))
             .map_err(|err| format!("Failed to read TLS certificate file: {}", err))?;
         let private_key = fs::read(options.tls_key.as_ref().expect("tls key exists"))
             .map_err(|err| format!("Failed to read TLS private key file: {}", err))?;
 
-        Server::from_listener(listener, Some(tiny_http::SslConfig { certificate, private_key }))
-            .map_err(|err| format!("Failed to start HTTPS server on {}: {}", bind_addr, err))?
+        Some(tiny_http::SslConfig { certificate, private_key })
     } else {
-        Server::from_listener(listener, None)
-            .map_err(|err| format!("Failed to start server on {}: {}", bind_addr, err))?
+        None
     };
+    let server = Server::from_listener_with_timeouts(
+        listener,
+        ssl_config,
+        Some(options.read_timeout),
+        Some(options.write_timeout),
+    )
+    .map_err(|err| {
+        let server_kind = if tls_enabled { "HTTPS server" } else { "server" };
+        format!("Failed to start {} on {}: {}", server_kind, bind_addr, err)
+    })?;
 
     let scheme = if tls_enabled { "https" } else { "http" };
     println!("Serving {} on {}://{}", root_dir.display(), scheme, bind_addr);
