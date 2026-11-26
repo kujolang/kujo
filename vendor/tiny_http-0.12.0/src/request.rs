@@ -3,7 +3,6 @@ use std::io::{self, BufWriter, Cursor, ErrorKind, Read, Write};
 
 use std::fmt;
 use std::net::SocketAddr;
-use std::str::FromStr;
 
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
@@ -108,6 +107,9 @@ pub enum RequestCreationError {
     /// The client sent an `Expect` header that was not recognized by tiny-http.
     ExpectationFailed,
 
+    /// The request did not unambiguously describe a supported body framing.
+    InvalidFraming,
+
     /// Error while reading data from the socket during the creation of the `Request`.
     CreationIoError(IoError),
 }
@@ -115,6 +117,77 @@ pub enum RequestCreationError {
 impl From<IoError> for RequestCreationError {
     fn from(err: IoError) -> RequestCreationError {
         RequestCreationError::CreationIoError(err)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum BodyFraming {
+    Empty,
+    Fixed(usize),
+    Chunked,
+}
+
+fn body_framing(
+    version: &HTTPVersion,
+    headers: &[Header],
+) -> Result<BodyFraming, RequestCreationError> {
+    use RequestCreationError::InvalidFraming;
+
+    let mut chunked = false;
+    let mut content_length = None;
+    for header in headers {
+        if header.field.equiv("Transfer-Encoding") {
+            if chunked
+                || *version < (1, 1)
+                || !header.value.as_str().eq_ignore_ascii_case("chunked")
+            {
+                return Err(InvalidFraming);
+            }
+            chunked = true;
+        } else if header.field.equiv("Content-Length") {
+            for value in header.value.as_str().split(',') {
+                let value = value.trim_matches([' ', '\t']);
+                if !value.bytes().all(|byte| byte.is_ascii_digit()) {
+                    return Err(InvalidFraming);
+                }
+                let length = value.parse::<usize>().map_err(|_| InvalidFraming)?;
+                if content_length.is_some_and(|known| known != length) {
+                    return Err(InvalidFraming);
+                }
+                content_length = Some(length);
+            }
+        }
+    }
+
+    match (chunked, content_length) {
+        (true, Some(_)) => Err(InvalidFraming),
+        (true, None) => Ok(BodyFraming::Chunked),
+        (false, Some(length)) => Ok(BodyFraming::Fixed(length)),
+        (false, None) => Ok(BodyFraming::Empty),
+    }
+}
+
+#[cfg(test)]
+mod framing_tests {
+    use super::{body_framing, BodyFraming, HTTPVersion, Header, RequestCreationError};
+
+    #[test]
+    fn body_framing_accepts_fixed_and_chunked_requests() {
+        let version = HTTPVersion(1, 1);
+        let lengths = ["Content-Length: 4, 4".parse::<Header>().unwrap()];
+        let chunked = ["Transfer-Encoding: Chunked".parse::<Header>().unwrap()];
+        assert_eq!(body_framing(&version, &[]).unwrap(), BodyFraming::Empty);
+        assert_eq!(body_framing(&version, &lengths).unwrap(), BodyFraming::Fixed(4));
+        assert_eq!(body_framing(&version, &chunked).unwrap(), BodyFraming::Chunked);
+    }
+
+    #[test]
+    fn body_framing_rejects_invalid_length() {
+        let headers = ["Content-Length: unknown".parse::<Header>().unwrap()];
+        assert!(matches!(
+            body_framing(&HTTPVersion(1, 1), &headers),
+            Err(RequestCreationError::InvalidFraming)
+        ));
     }
 }
 
@@ -142,31 +215,15 @@ where
     R: Read + Send + 'static,
     W: Write + Send + 'static,
 {
-    // finding the transfer-encoding header
-    let transfer_encoding = headers
-        .iter()
-        .find(|h: &&Header| h.field.equiv("Transfer-Encoding"))
-        .map(|h| h.value.clone());
-
-    // finding the content-length header
-    let content_length = if transfer_encoding.is_some() {
-        // if transfer-encoding is specified, the Content-Length
-        // header must be ignored (RFC2616 #4.4)
-        None
-    } else {
-        headers
-            .iter()
-            .find(|h: &&Header| h.field.equiv("Content-Length"))
-            .and_then(|h| FromStr::from_str(h.value.as_str()).ok())
+    let framing = body_framing(&version, &headers)?;
+    let content_length = match framing {
+        BodyFraming::Fixed(length) => Some(length),
+        _ => None,
     };
 
     // true if the client sent a `Expect: 100-continue` header
     let expects_continue = {
-        match headers
-            .iter()
-            .find(|h: &&Header| h.field.equiv("Expect"))
-            .map(|h| h.value.as_str())
-        {
+        match headers.iter().find(|h: &&Header| h.field.equiv("Expect")).map(|h| h.value.as_str()) {
             None => false,
             Some(v) if v.eq_ignore_ascii_case("100-continue") => true,
             _ => return Err(RequestCreationError::ExpectationFailed),
@@ -217,9 +274,7 @@ where
             let (data_reader, _) = EqualReader::new(source_data, content_length); // TODO:
             Box::new(FusedReader::new(data_reader)) as Box<dyn Read + Send + 'static>
         }
-    } else if transfer_encoding.is_some() {
-        // if a transfer-encoding was specified, then "chunked" is ALWAYS applied
-        // over the message (RFC2616 #3.6)
+    } else if framing == BodyFraming::Chunked {
         Box::new(FusedReader::new(Decoder::new(source_data))) as Box<dyn Read + Send + 'static>
     } else {
         // if we have neither a Content-Length nor a Transfer-Encoding,
@@ -326,10 +381,7 @@ impl Request {
 
         let stream = CustomStream::new(self.extract_reader_impl(), self.extract_writer_impl());
         if let Some(sender) = self.notify_when_responded.take() {
-            let stream = NotifyOnDrop {
-                sender,
-                inner: stream,
-            };
+            let stream = NotifyOnDrop { sender, inner: stream };
             Box::new(stream) as Box<dyn ReadWrite + Send>
         } else {
             Box::new(stream) as Box<dyn ReadWrite + Send>
@@ -393,10 +445,7 @@ impl Request {
     pub fn into_writer(mut self) -> Box<dyn Write + Send + 'static> {
         let writer = self.extract_writer_impl();
         if let Some(sender) = self.notify_when_responded.take() {
-            let writer = NotifyOnDrop {
-                sender,
-                inner: writer,
-            };
+            let writer = NotifyOnDrop { sender, inner: writer };
             Box::new(writer) as Box<dyn Write + Send + 'static>
         } else {
             writer
@@ -500,11 +549,7 @@ impl Request {
 
 impl fmt::Debug for Request {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(
-            formatter,
-            "Request({} {} from {:?})",
-            self.method, self.path, self.remote_addr
-        )
+        write!(formatter, "Request({} {} from {:?})", self.method, self.path, self.remote_addr)
     }
 }
 

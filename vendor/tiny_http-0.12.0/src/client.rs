@@ -6,7 +6,6 @@ use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
 use std::time::{Duration, Instant};
 
 use std::net::SocketAddr;
-use std::str::FromStr;
 
 use crate::common::{HTTPVersion, Header, Method};
 use crate::util::RefinedTcpStream;
@@ -145,6 +144,7 @@ impl ClientConnection {
                 request::RequestCreationError::ExpectationFailed => {
                     ReadError::ExpectationFailed(version)
                 }
+                request::RequestCreationError::InvalidFraming => ReadError::WrongHeader(version),
             }
         })?;
 
@@ -268,7 +268,10 @@ fn read_request_head(
     limits: RequestHeadLimits,
 ) -> Result<(Method, String, HTTPVersion, Vec<Header>), ReadError> {
     let line = read_line(reader, limits.request_line_bytes)
-        .map_err(ReadError::ReadIoError)?
+        .map_err(|error| match error.kind() {
+            ErrorKind::InvalidInput => ReadError::WrongRequestLine,
+            _ => ReadError::ReadIoError(error),
+        })?
         .ok_or(ReadError::RequestLineTooLong)?;
     let (method, path, version) = parse_request_line(line.as_str().trim())?;
 
@@ -278,17 +281,33 @@ fn read_request_head(
         // Allow the empty CRLF even after consuming the full byte or field limit.
         let line_limit = if headers.len() == limits.header_count { 2 } else { remaining.max(2) };
         let line = read_line(reader, line_limit)
-            .map_err(ReadError::ReadIoError)?
+            .map_err(|error| match error.kind() {
+                ErrorKind::InvalidInput => ReadError::WrongHeader(version.clone()),
+                _ => ReadError::ReadIoError(error),
+            })?
             .ok_or_else(|| ReadError::HeadersTooLarge(version.clone()))?;
         if line.is_empty() {
             return Ok((method, path, version, headers));
         }
         remaining -= line.len() + 2;
         headers.push(
-            FromStr::from_str(line.as_str().trim())
-                .map_err(|_| ReadError::WrongHeader(version.clone()))?,
+            parse_header(line.as_str()).ok_or_else(|| ReadError::WrongHeader(version.clone()))?,
         );
     }
+}
+
+fn parse_header(line: &str) -> Option<Header> {
+    let (field, value) = line.split_once(':')?;
+    // Validate the wire form before the generic Header parser trims the value.
+    if field.is_empty()
+        || !field
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&byte))
+        || !value.bytes().all(|byte| matches!(byte, b'\t' | b' '..=b'~'))
+    {
+        return None;
+    }
+    Header::from_bytes(field.as_bytes(), value.trim_matches([' ', '\t']).as_bytes()).ok()
 }
 
 /// Parses a "HTTP/1.1" string.

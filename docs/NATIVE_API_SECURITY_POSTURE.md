@@ -95,6 +95,8 @@ The static and routed HTTP servers enforce request-line bytes, total header fiel
 
 Each request head must complete within one read timeout, including on a reused connection. HTTP 408 is returned on timeout. `kujo serve` sets the interval with `--read-timeout-ms`. For both routed runtimes, `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds. Body reads retain their socket read timeout. Buffered routed handlers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies and read at most one byte beyond the limit to detect overflow before dispatch.
 
+Inbound requests with invalid header syntax or ambiguous body framing receive HTTP 400 and the connection closes. A request can use a valid decimal `Content-Length` or a single `chunked` transfer coding in HTTP/1.1. Repeated length declarations must agree. [RFC 9112, message body length](https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3)
+
 Large raw uploads must use `HttpServer.route_upload`, not an increased buffered
 limit. An upload route invokes its authorization callback with request metadata
 and `body_mode="preflight"` before reading the body. Only boolean `true`
