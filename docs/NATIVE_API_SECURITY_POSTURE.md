@@ -297,7 +297,7 @@ Operational guidance:
 
 Key defaults and controls:
 
-- Root-bound canonical path checks and traversal rejection.
+- Root-bound canonical path checks and traversal rejection. The server opens static assets, precompressed variants and custom 404 pages beneath the directory handle captured at startup, with no symlink following after canonical path validation. Response size and ETag metadata come from the opened file.
 - Single-pass percent-decoding with malformed encoding/null-byte rejection.
 - Hidden/private path blocking (`.env`, `.git`, backup/swap-style names).
 - Deterministic request limits (line/header/body sizes, header count, max connections).

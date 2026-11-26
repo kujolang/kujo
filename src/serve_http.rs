@@ -1,7 +1,9 @@
 use crate::path_security;
+use cap_fs_ext::{DirExt, FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
+use cap_std::fs::{Dir, OpenOptions};
 use std::fs;
 use std::io::{Cursor, Read, Seek, SeekFrom};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -37,6 +39,11 @@ struct PlannedResponse {
     content_length: Option<usize>,
 }
 
+struct ServeRoot {
+    path: PathBuf,
+    directory: Dir,
+}
+
 #[derive(Debug)]
 enum RequestTargetValidationError {
     BadRequest,
@@ -66,6 +73,10 @@ pub fn run_static_server(
     if !root_dir.is_dir() {
         return Err(format!("Serve target is not a directory: {}", root_dir.display()));
     }
+    let directory =
+        Dir::open_ambient_dir(&root_dir, cap_std::ambient_authority()).map_err(|err| {
+            format!("Failed to open serve directory '{}': {}", root_dir.display(), err)
+        })?;
 
     let tls_enabled = options.tls_cert.is_some() || options.tls_key.is_some();
     if tls_enabled && (options.tls_cert.is_none() || options.tls_key.is_none()) {
@@ -95,7 +106,7 @@ pub fn run_static_server(
     println!("Serving {} on {}://{}", root_dir.display(), scheme, bind_addr);
     println!("Press Ctrl+C to stop");
 
-    let root_dir = Arc::new(root_dir);
+    let root_dir = Arc::new(ServeRoot { path: root_dir, directory });
     let options = Arc::new(options);
     let active_requests = Arc::new(AtomicUsize::new(0));
 
@@ -226,10 +237,11 @@ fn planned_to_http_response(plan: PlannedResponse) -> tiny_http::ResponseBox {
 }
 
 fn build_response(
-    root_dir: &Path,
+    root: &ServeRoot,
     options: &ServeServerOptions,
     request: &Request,
 ) -> PlannedResponse {
+    let root_dir = &root.path;
     let method = request.method();
     let is_head = method == &Method::Head;
 
@@ -294,7 +306,7 @@ fn build_response(
         Ok(path) => path,
         Err(error) => {
             let response = if error.kind() == std::io::ErrorKind::NotFound {
-                custom_not_found_response(root_dir, options, request.secure())
+                custom_not_found_response(root, options, request.secure())
             } else {
                 status_mapped_error(&error, options, request.secure())
             };
@@ -314,11 +326,11 @@ fn build_response(
     let accept_encoding = header_value(request.headers(), "Accept-Encoding");
     let selected_target = choose_precompressed_path(&canonical_target, accept_encoding.as_deref());
 
-    let (mut file, file_len) = match open_file_nofollow(&selected_target) {
+    let (mut file, file_len, modified) = match root.open_file(&selected_target) {
         Ok(file_info) => file_info,
         Err(error) => {
             let response = if error.kind() == std::io::ErrorKind::NotFound {
-                custom_not_found_response(root_dir, options, request.secure())
+                custom_not_found_response(root, options, request.secure())
             } else {
                 status_mapped_error(&error, options, request.secure())
             };
@@ -326,7 +338,7 @@ fn build_response(
         }
     };
 
-    let etag = weak_etag(&selected_target, file_len);
+    let etag = weak_etag(modified, file_len);
     if let Some(if_none_match) = header_value(request.headers(), "If-None-Match") {
         if if_none_match_matches(&if_none_match, &etag) {
             let mut response = PlannedResponse {
@@ -517,10 +529,11 @@ fn status_mapped_error(
 }
 
 fn custom_not_found_response(
-    root_dir: &Path,
+    root: &ServeRoot,
     options: &ServeServerOptions,
     secure: bool,
 ) -> PlannedResponse {
+    let root_dir = &root.path;
     let not_found_path = root_dir.join("404.html");
     let canonical_path = match fs::canonicalize(&not_found_path) {
         Ok(path) => path,
@@ -532,7 +545,7 @@ fn custom_not_found_response(
         return static_text_response(404, "Not Found", options, secure, &[]);
     }
 
-    let (file, file_len) = match open_file_nofollow(&canonical_path) {
+    let (file, file_len, _) = match root.open_file(&canonical_path) {
         Ok(file_info) => file_info,
         Err(_) => return static_text_response(404, "Not Found", options, secure, &[]),
     };
@@ -692,40 +705,42 @@ fn headify(mut response: PlannedResponse, is_head: bool) -> PlannedResponse {
     response
 }
 
-fn open_file_nofollow(path: &Path) -> std::io::Result<(fs::File, usize)> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
+impl ServeRoot {
+    fn open_file(&self, path: &Path) -> std::io::Result<(fs::File, usize, Option<SystemTime>)> {
+        use std::io::{Error, ErrorKind};
 
-        let file = fs::OpenOptions::new().read(true).custom_flags(libc::O_NOFOLLOW).open(path)?;
-        let metadata = file.metadata()?;
-        if !metadata.is_file() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Requested path is not a regular file",
-            ));
-        }
-
-        let file_len = usize::try_from(metadata.len()).map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "Requested file is too large")
+        let relative = path.strip_prefix(&self.path).map_err(|_| {
+            Error::new(ErrorKind::PermissionDenied, "File is outside the serve root")
         })?;
-        Ok((file, file_len))
-    }
-
-    #[cfg(not(unix))]
-    {
-        let file = fs::File::open(path)?;
-        let metadata = fs::metadata(path)?;
-        if !metadata.is_file() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Requested path is not a regular file",
-            ));
+        let mut components = relative.components().peekable();
+        let mut parent = None;
+        while let Some(component) = components.next() {
+            let Component::Normal(name) = component else {
+                return Err(Error::new(
+                    ErrorKind::PermissionDenied,
+                    "Invalid serve path component",
+                ));
+            };
+            let directory = parent.as_ref().unwrap_or(&self.directory);
+            if components.peek().is_some() {
+                parent = Some(directory.open_dir_nofollow(name)?);
+                continue;
+            }
+            let mut options = OpenOptions::new();
+            options.read(true).follow(FollowSymlinks::No).nonblock(true);
+            let file = directory.open_with(name, &options)?.into_std();
+            let metadata = file.metadata()?;
+            if !metadata.is_file() {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    "Requested path is not a regular file",
+                ));
+            }
+            let length = usize::try_from(metadata.len())
+                .map_err(|_| Error::new(ErrorKind::InvalidData, "Requested file is too large"))?;
+            return Ok((file, length, metadata.modified().ok()));
         }
-        let file_len = usize::try_from(metadata.len()).map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "Requested file is too large")
-        })?;
-        Ok((file, file_len))
+        Err(Error::new(ErrorKind::InvalidInput, "Requested path is not a regular file"))
     }
 }
 
@@ -834,10 +849,8 @@ fn parse_single_range(range_header: &str, total_len: usize) -> Result<Option<(us
     Ok(Some((start, end.min(total_len - 1))))
 }
 
-fn weak_etag(path: &Path, file_len: usize) -> String {
-    let modified_secs = fs::metadata(path)
-        .and_then(|metadata| metadata.modified())
-        .ok()
+fn weak_etag(modified: Option<SystemTime>, file_len: usize) -> String {
+    let modified_secs = modified
         .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
         .map(|duration| duration.as_secs())
         .unwrap_or(0);
@@ -1237,6 +1250,28 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
+    fn open_file_stays_anchored_to_the_original_serve_directory() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("site");
+        fs::create_dir_all(path.join("assets")).unwrap();
+        fs::write(path.join("assets/index.html"), "original").unwrap();
+        let directory = Dir::open_ambient_dir(&path, cap_std::ambient_authority()).unwrap();
+        let root = ServeRoot { path: path.clone(), directory };
+
+        fs::rename(&path, temp.path().join("previous")).unwrap();
+        fs::create_dir_all(path.join("assets")).unwrap();
+        fs::write(path.join("assets/index.html"), "replacement").unwrap();
+
+        let (mut file, size, modified) = root.open_file(&path.join("assets/index.html")).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        assert_eq!(contents, "original");
+        assert_eq!(size, contents.len());
+        assert_eq!(modified, file.metadata().unwrap().modified().ok());
+    }
+
+    #[test]
     fn custom_not_found_response_serves_root_404_html_with_404_status() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -1248,7 +1283,10 @@ mod tests {
             .expect("custom 404 should be written");
         let canonical_root = fs::canonicalize(&test_root).expect("test root should resolve");
 
-        let mut response = custom_not_found_response(&canonical_root, &test_options(), false);
+        let directory =
+            Dir::open_ambient_dir(&canonical_root, cap_std::ambient_authority()).unwrap();
+        let root = ServeRoot { path: canonical_root, directory };
+        let mut response = custom_not_found_response(&root, &test_options(), false);
         assert_eq!(404, response.status_code);
         assert_eq!(b"<h1>Custom missing page</h1>", planned_body_bytes(&mut response).as_slice());
         assert!(response.headers.iter().any(|(name, value)| {
