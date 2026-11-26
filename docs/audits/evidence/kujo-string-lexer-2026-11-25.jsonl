@@ -1,0 +1,4 @@
+{"case": "ASCII 512", "sourceBytes": 817578, "baselineMs": [123.76, 120.63, 131.56, 123.08, 133.38], "candidateMs": [50.33, 51.43, 53.8, 47.21, 46.93], "baselineMedianMs": 123.76, "candidateMedianMs": 50.33}
+{"case": "ASCII 4096", "sourceBytes": 790162, "baselineMs": [373.97, 384.33, 389.08, 400.77, 434.56], "candidateMs": [42.03, 39.83, 45.79, 40.14, 41.79], "baselineMedianMs": 389.08, "candidateMedianMs": 41.79}
+{"case": "ASCII 8192", "sourceBytes": 788246, "baselineMs": [719.4, 730.04, 819.33, 735.19, 709.54], "candidateMs": [42.33, 44.52, 43.95, 44.76, 42.5], "baselineMedianMs": 730.04, "candidateMedianMs": 43.95}
+{"case": "Unicode 8192", "sourceBytes": 787030, "baselineMs": [640.85, 652.96, 674.63, 712.35, 755.27], "candidateMs": [21.01, 17.27, 21.9, 21.58, 23.11], "baselineMedianMs": 674.63, "candidateMedianMs": 21.58}
