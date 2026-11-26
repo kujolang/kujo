@@ -40,6 +40,8 @@ bash install.sh --package dispatch \
 
 Remote manifests and their redirects must use HTTPS. The installer sends `KUJO_GITHUB_TOKEN` only to supported GitHub hosts. Unknown repositories, invalid refs, duplicate pins, and missing required dependency pins fail before package downloads begin. The install receipt records the manifest source and resolved per-repository refs. `--repo-ref repo=ref` is available for controlled development overrides. Release automation should use a reviewed manifest.
 
+If a release artifact is unavailable for an explicitly selected ref, the installer falls back to building from source. If a downloaded release fails checksum validation, extraction, or executable staging, the installer exits with an error and preserves the previous executable. The staged executable replaces the installed path after the copy and permission changes succeed.
+
 If the GitHub repositories are still private during a pre-launch test, provide a short-lived GitHub token through the environment rather than putting it in a URL:
 
 ```bash

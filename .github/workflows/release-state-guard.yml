@@ -20,3 +20,6 @@ jobs:
 
       - name: Validate CLI/LSP/language contract metadata sync
         run: bash .github/scripts/check-contract-version-sync.sh
+
+      - name: Verify installer release and manifest handling
+        run: bash tests/install_release_manifest.sh

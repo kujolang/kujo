@@ -21,6 +21,16 @@ WITH_DEPS=0
 INSTALL_SOURCE=0
 SHOW_LIST=0
 SELECTED_GROUPS="core operating"
+INSTALL_TEMP_PATH=""
+
+cleanup_install_temp() {
+	if [[ -n "$INSTALL_TEMP_PATH" ]]; then
+		rm -rf -- "$INSTALL_TEMP_PATH"
+		INSTALL_TEMP_PATH=""
+	fi
+}
+
+trap cleanup_install_temp EXIT
 
 usage() {
 	cat <<'EOF'
@@ -197,9 +207,9 @@ load_release_manifest() {
 	local line
 	local line_number=0
 	if [[ "$source" == https://* ]]; then
-		temp_file="$(mktemp "${TMPDIR:-/tmp}/kujo-release-manifest.XXXXXX")"
-		trap '[[ -z "$temp_file" ]] || rm -f "$temp_file"' RETURN
-		github_curl "$source" -o "$temp_file"
+		temp_file="$(mktemp "${TMPDIR:-/tmp}/kujo-release-manifest.XXXXXX")" || die "cannot stage release manifest"
+		INSTALL_TEMP_PATH="$temp_file"
+		github_curl "$source" -o "$temp_file" || die "cannot download release manifest"
 		manifest_file="$temp_file"
 	elif [[ "$source" == http://* ]]; then
 		die "release manifests must use HTTPS or a local file"
@@ -213,8 +223,7 @@ load_release_manifest() {
 		[[ "$line" == *=* ]] || die "invalid release manifest entry at line $line_number"
 		set_repo_ref "$line"
 	done < "$manifest_file"
-	[[ -z "$temp_file" ]] || rm -f "$temp_file"
-	trap - RETURN
+	cleanup_install_temp
 }
 
 require_package_pins() {
@@ -249,8 +258,8 @@ fetch_repo() {
 		return 0
 	fi
 
-	temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/kujo-install.XXXXXX")"
-	trap 'rm -rf "$temp_dir"' RETURN
+	temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/kujo-install.XXXXXX")" || die "cannot stage source for $repo"
+	INSTALL_TEMP_PATH="$temp_dir"
 	archive="$temp_dir/source.tar.gz"
 
 	log "downloading $GITHUB_OWNER/$repo at $selected_ref"
@@ -260,19 +269,18 @@ fetch_repo() {
 		[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/$selected_ref" ;;
 		*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/refs/heads/$selected_ref" ;;
 	esac
-	github_curl "$archive_url" -o "$archive"
-	tar -xzf "$archive" -C "$temp_dir"
-	extracted="$(find "$temp_dir" -mindepth 1 -maxdepth 1 -type d -print -quit)"
+	github_curl "$archive_url" -o "$archive" || die "cannot download source for $repo"
+	tar -xzf "$archive" -C "$temp_dir" || die "cannot extract source for $repo"
+	extracted="$(find "$temp_dir" -mindepth 1 -maxdepth 1 -type d -print -quit)" || die "cannot find extracted source for $repo"
 	[[ -n "$extracted" ]] || die "GitHub archive for $repo did not contain a source directory"
 
-	mkdir -p "$(dirname "$destination")"
+	mkdir -p "$(dirname "$destination")" || die "cannot create source directory for $repo"
 	if [[ -e "$destination" || -L "$destination" ]]; then
-		mv "$destination" "${destination}.previous.$(date +%Y%m%d%H%M%S)"
+		mv "$destination" "${destination}.previous.$(date +%Y%m%d%H%M%S)" || die "cannot back up existing source for $repo"
 	fi
-	mv "$extracted" "$destination"
-	printf '%s\n' "$selected_ref" > "$marker"
-	rm -rf "$temp_dir"
-	trap - RETURN
+	mv "$extracted" "$destination" || die "cannot install source for $repo"
+	printf '%s\n' "$selected_ref" > "$marker" || die "cannot record installed ref for $repo"
+	cleanup_install_temp
 }
 
 verify_sha256() {
@@ -290,6 +298,17 @@ verify_sha256() {
 	fi
 	[[ "$actual" == "$expected" ]] || die "checksum mismatch for Kujo release artifact"
 }
+
+publish_kujo_binary() (
+	local source="$1"
+	local staged_dir=""
+	trap '[[ -z "$staged_dir" ]] || rm -rf -- "$staged_dir"' EXIT
+	mkdir -p "$BIN_DIR" || exit 1
+	staged_dir="$(mktemp -d "$BIN_DIR/.kujo-stage.XXXXXX")" || exit 1
+	cp "$source" "$staged_dir/kujo" || exit 1
+	chmod 755 "$staged_dir/kujo" || exit 1
+	mv -f "$staged_dir/kujo" "$BIN_DIR/" || exit 1
+)
 
 install_kujo_from_release() {
 	local version="$1"
@@ -316,29 +335,25 @@ install_kujo_from_release() {
 	target="$os-$arch"
 	archive_name="kujo-$version-$target.tar.gz"
 	base_url="https://github.com/$GITHUB_OWNER/kujo/releases/download/$version"
-	temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/kujo-release.XXXXXX")"
-	trap 'rm -rf "$temp_dir"' RETURN
+	temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/kujo-release.XXXXXX")" || die "cannot stage Kujo release"
+	INSTALL_TEMP_PATH="$temp_dir"
 	archive="$temp_dir/$archive_name"
 	checksum_file="$archive.sha256"
 
 	if ! github_curl "$base_url/$archive_name" -o "$archive"; then
-		rm -rf "$temp_dir"
-		trap - RETURN
+		cleanup_install_temp
 		return 1
 	fi
 	github_curl "$base_url/$archive_name.sha256" -o "$checksum_file" || die "release artifact downloaded but checksum is unavailable"
 	verify_sha256 "$archive" "$checksum_file"
-	tar -xzf "$archive" -C "$temp_dir"
+	tar -xzf "$archive" -C "$temp_dir" || die "cannot extract Kujo release artifact"
 	extracted="$temp_dir/kujo"
 	# The archive is only staged here. Do not require execution permission on the
 	# temporary directory: hardened sandbox runners commonly mount /tmp with
 	# noexec, even though the final user bin directory is executable.
 	[[ -f "$extracted" ]] || die "Kujo release artifact did not contain a file named kujo"
-	mkdir -p "$BIN_DIR"
-	cp "$extracted" "$BIN_DIR/kujo"
-	chmod 755 "$BIN_DIR/kujo"
-	rm -rf "$temp_dir"
-	trap - RETURN
+	publish_kujo_binary "$extracted" || die "cannot install Kujo release executable"
+	cleanup_install_temp
 	# Several ecosystem tools import modules/cli.kujo. A release artifact only
 	# contains the runtime binary, so retain the selected Kujo source tree for
 	# those shared modules while keeping the executable checksum-verified.
@@ -361,9 +376,7 @@ install_kujo_from_source() {
 		cd "$source_dir"
 		cargo build --release --locked
 	)
-	mkdir -p "$BIN_DIR"
-	cp "$source_dir/target/release/kujo" "$BIN_DIR/kujo"
-	chmod 755 "$BIN_DIR/kujo"
+	publish_kujo_binary "$source_dir/target/release/kujo" || die "cannot install source-built Kujo executable"
 	log "installed source-built Kujo to $BIN_DIR/kujo"
 }
 

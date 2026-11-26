@@ -90,4 +90,66 @@ check_remote_manifest() {
 check_remote_manifest 'https://example.invalid/release.refs' no
 check_remote_manifest 'https://raw.githubusercontent.com/kujolang/dispatch/main/release.refs' yes
 
+cat > "$temp_root/fixture-bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+while (( $# )); do
+	case "$1" in
+		https://*) url="$1" ;;
+		-o) output="$2"; shift ;;
+	esac
+	shift
+done
+case "$url" in
+	*.tar.gz) printf 'fixture archive' > "$output" ;;
+	*.tar.gz.sha256) printf 'fixture archive' | shasum -a 256 > "$output" ;;
+	*) exit 1 ;;
+esac
+EOF
+cat > "$temp_root/fixture-bin/tar" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$3" == -C ]]
+printf 'candidate executable' > "$4/kujo"
+exit "$EXTRACTION_STATUS"
+EOF
+chmod +x "$temp_root/fixture-bin/tar"
+mkdir "$temp_root/downloads" "$temp_root/existing-bin"
+printf 'existing executable' > "$temp_root/existing-bin/kujo"
+
+check_failed_install() {
+	if PATH="$temp_root/fixture-bin:$PATH" TMPDIR="$temp_root/downloads" EXTRACTION_STATUS="$1" \
+		bash "$repo_root/install.sh" --repo-ref kujo=v1.0.2 --prefix "$temp_root/root" \
+		--bin-dir "$temp_root/existing-bin" > "$temp_root/install.out" 2>&1; then
+		echo 'installer reported success after a failed release install' >&2
+		exit 1
+	fi
+	grep -F "$2" "$temp_root/install.out" >/dev/null
+	[[ "$(<"$temp_root/existing-bin/kujo")" == 'existing executable' ]]
+	[[ -z "$(find "$temp_root/downloads" -mindepth 1 -print -quit)" ]]
+	[[ -z "$(find "$temp_root/existing-bin" -name '.kujo-stage.*' -print -quit)" ]]
+}
+
+check_failed_install 1 'cannot extract Kujo release artifact'
+while IFS='=' read -r repo ref; do
+	[[ -n "$ref" ]] || continue
+	mkdir -p "$temp_root/root/sources/$repo"
+	printf '%s\n' "$ref" > "$temp_root/root/sources/$repo/.kujo-install-ref"
+done < "$manifest"
+PATH="$temp_root/fixture-bin:$PATH" TMPDIR="$temp_root/downloads" EXTRACTION_STATUS=0 \
+	bash "$repo_root/install.sh" --package dispatch --release-manifest "$manifest" \
+	--prefix "$temp_root/root" --bin-dir "$temp_root/existing-bin" > "$temp_root/install.out" 2>&1
+[[ "$(<"$temp_root/existing-bin/kujo")" == 'candidate executable' && -x "$temp_root/existing-bin/kujo" ]]
+[[ -z "$(find "$temp_root/downloads" -mindepth 1 -print -quit)" ]]
+[[ -z "$(find "$temp_root/existing-bin" -name '.kujo-stage.*' -print -quit)" ]]
+
+printf 'existing executable' > "$temp_root/existing-bin/kujo"
+cat > "$temp_root/fixture-bin/cp" <<'EOF'
+#!/usr/bin/env bash
+printf 'partial executable' > "$2"
+exit 1
+EOF
+chmod +x "$temp_root/fixture-bin/cp"
+check_failed_install 0 'cannot install Kujo release executable'
+
 echo "installer release-manifest contract passed"
