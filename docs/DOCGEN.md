@@ -237,7 +237,7 @@ Optional local-anchor validation mode is available with `--validate-local-anchor
 
 Optional external-link validation mode is available with `--validate-external-links`:
 1. Validation only runs for hosts in `--external-link-allowlist`.
-2. Private/loopback/link-local/multicast targets are blocked by default (including DNS-resolved hostnames) to reduce SSRF risk.
+2. By default, validation connects directly and checks both IP literals and the DNS addresses used by the HTTP connector. It rejects private, loopback, link-local, multicast and unspecified addresses, including their IPv4-mapped IPv6 forms where applicable.
 3. Use `--allow-private-network-links` to opt in when private-network link validation is intentionally required.
 4. Allowlist confinement is enforced on every redirect hop; if a redirect leaves the allowlist, the link is reported as broken with mode `external-redirect-allowlist`.
 5. Validation requests use `--external-link-timeout-ms`.

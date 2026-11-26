@@ -1,12 +1,17 @@
 use crate::docgen::model::{DocGap, DocGapKind, DocProject, DocSymbol, DocVisibility};
+#[cfg(feature = "runtime-network")]
+use crate::network_policy::{blocked_http_literal_ip, BlockedDnsAddresses, StrictDnsResolver};
 #[cfg(test)]
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
 #[cfg(feature = "runtime-network")]
-use std::net::{IpAddr, ToSocketAddrs};
+use std::error::Error;
+use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 #[cfg(test)]
 use std::sync::atomic::{AtomicUsize, Ordering};
+#[cfg(feature = "runtime-network")]
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -317,7 +322,10 @@ pub fn detect_broken_doc_links(
     let mut local_anchor_cache: BTreeMap<PathBuf, Option<AnchorValidationIndex>> = BTreeMap::new();
     let external_client =
         if options.validate_external_links && !options.external_link_allowlist.is_empty() {
-            build_external_link_client(options.external_link_timeout_ms)
+            build_external_link_client(
+                options.external_link_timeout_ms,
+                options.allow_private_network_links,
+            )
         } else {
             None
         };
@@ -392,7 +400,10 @@ pub fn detect_broken_doc_links(
                             host,
                             blocked_addresses,
                         } => {
-                            let blocked = blocked_addresses.join(", ");
+                            let mut blocked =
+                                blocked_addresses.iter().map(IpAddr::to_string).collect::<Vec<_>>();
+                            blocked.sort_unstable();
+                            let blocked = blocked.join(", ");
                             broken.push(BrokenLinkFinding {
                                 symbol: symbol.qualified_name.clone(),
                                 target: format!(
@@ -574,7 +585,19 @@ enum ExternalLinkCheck {
     Reachable,
     Unreachable,
     RedirectDisallowed { next_url: String, blocked_host: String },
-    PrivateAddressBlocked { url: String, host: String, blocked_addresses: Vec<String> },
+    PrivateAddressBlocked { url: String, host: String, blocked_addresses: Vec<IpAddr> },
+}
+
+#[cfg(feature = "runtime-network")]
+fn private_address_blocked(
+    url: &reqwest::Url,
+    blocked_addresses: Vec<IpAddr>,
+) -> ExternalLinkCheck {
+    ExternalLinkCheck::PrivateAddressBlocked {
+        url: url.to_string(),
+        host: url.host_str().unwrap_or_default().to_string(),
+        blocked_addresses,
+    }
 }
 
 #[cfg(feature = "runtime-network")]
@@ -584,17 +607,25 @@ type ExternalLinkClient = reqwest::blocking::Client;
 struct ExternalLinkClient;
 
 #[cfg(feature = "runtime-network")]
-fn build_external_link_client(timeout_ms: u64) -> Option<ExternalLinkClient> {
+fn build_external_link_client(
+    timeout_ms: u64,
+    allow_private_network_links: bool,
+) -> Option<ExternalLinkClient> {
     increment_external_http_client_build_count();
-    reqwest::blocking::Client::builder()
+    let mut builder = reqwest::blocking::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_millis(timeout_ms.max(1)))
-        .build()
-        .ok()
+        .timeout(Duration::from_millis(timeout_ms.max(1)));
+    if !allow_private_network_links {
+        builder = builder.no_proxy().dns_resolver(Arc::new(StrictDnsResolver));
+    }
+    builder.build().ok()
 }
 
 #[cfg(not(feature = "runtime-network"))]
-fn build_external_link_client(_timeout_ms: u64) -> Option<ExternalLinkClient> {
+fn build_external_link_client(
+    _timeout_ms: u64,
+    _allow_private_network_links: bool,
+) -> Option<ExternalLinkClient> {
     None
 }
 
@@ -615,23 +646,24 @@ fn external_link_check(
     };
 
     for _ in 0..10usize {
-        if !allow_private_network_links {
-            match blocked_private_addresses_for_url(&current_url) {
-                Ok(blocked_addresses) if !blocked_addresses.is_empty() => {
-                    return ExternalLinkCheck::PrivateAddressBlocked {
-                        url: current_url.to_string(),
-                        host: current_url.host_str().unwrap_or_default().to_string(),
-                        blocked_addresses,
-                    };
-                }
-                Ok(_) => {}
-                Err(_) => return ExternalLinkCheck::Unreachable,
-            }
+        if let Some(ip) =
+            blocked_http_literal_ip(&current_url).filter(|_| !allow_private_network_links)
+        {
+            return private_address_blocked(&current_url, vec![ip]);
         }
 
         let response = match client.get(current_url.clone()).send() {
             Ok(response) => response,
-            Err(_) => return ExternalLinkCheck::Unreachable,
+            Err(error) => {
+                let mut cause = error.source();
+                while let Some(error) = cause {
+                    if let Some(blocked) = error.downcast_ref::<BlockedDnsAddresses>() {
+                        return private_address_blocked(&current_url, blocked.0.clone());
+                    }
+                    cause = error.source();
+                }
+                return ExternalLinkCheck::Unreachable;
+            }
         };
         let status = response.status();
         if status.is_success() {
@@ -675,46 +707,6 @@ fn external_link_check(
     _allow_private_network_links: bool,
 ) -> ExternalLinkCheck {
     ExternalLinkCheck::Unreachable
-}
-
-#[cfg(feature = "runtime-network")]
-fn blocked_private_addresses_for_url(url: &reqwest::Url) -> Result<Vec<String>, ()> {
-    let Some(host) = url.host_str() else {
-        return Err(());
-    };
-
-    let mut blocked = BTreeSet::new();
-    if let Ok(ip) = host.parse::<IpAddr>() {
-        if is_blocked_external_ip(ip) {
-            blocked.insert(ip.to_string());
-        }
-        return Ok(blocked.into_iter().collect());
-    }
-
-    let port = url.port_or_known_default().ok_or(())?;
-    let addrs = (host, port).to_socket_addrs().map_err(|_| ())?;
-    for addr in addrs {
-        if is_blocked_external_ip(addr.ip()) {
-            blocked.insert(addr.ip().to_string());
-        }
-    }
-
-    Ok(blocked.into_iter().collect())
-}
-
-#[cfg(feature = "runtime-network")]
-fn is_blocked_external_ip(ip: IpAddr) -> bool {
-    match ip {
-        IpAddr::V4(ipv4) => {
-            ipv4.is_private() || ipv4.is_loopback() || ipv4.is_link_local() || ipv4.is_multicast()
-        }
-        IpAddr::V6(ipv6) => {
-            ipv6.is_unique_local()
-                || ipv6.is_loopback()
-                || ipv6.is_unicast_link_local()
-                || ipv6.is_multicast()
-        }
-    }
 }
 
 fn extract_markdown_links(text: &str) -> Vec<String> {
@@ -867,6 +859,21 @@ mod tests {
             external_client_builds, 0,
             "local-anchor validation should not build external HTTP clients"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "runtime-network")]
+    fn external_link_validation_reports_blocked_connector_addresses() {
+        let client = build_external_link_client(5_000, false).unwrap();
+        for (link, host) in [("http://localhost/", "localhost"), ("http://[::1]/", "[::1]")] {
+            let result =
+                external_link_check(Some(&client), link, &BTreeSet::from([host.to_owned()]), false);
+            let ExternalLinkCheck::PrivateAddressBlocked { blocked_addresses, .. } = result else {
+                panic!("expected the private-address diagnostic for {host}");
+            };
+            assert!(!blocked_addresses.is_empty());
+            assert!(blocked_addresses.iter().all(IpAddr::is_loopback));
+        }
     }
 
     #[test]

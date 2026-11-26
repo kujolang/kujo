@@ -84,18 +84,27 @@ fn deny_private_destinations() -> Result<bool, String> {
 }
 
 fn check_destination_addresses(addresses: &[SocketAddr], surface: &str) -> Result<(), String> {
-    let mut blocked: Vec<_> =
-        addresses.iter().map(SocketAddr::ip).filter(|ip| is_blocked_destination(*ip)).collect();
-    blocked.sort_unstable();
-    blocked.dedup();
+    let blocked = blocked_destination_ips(addresses.iter().map(SocketAddr::ip));
     if blocked.is_empty() {
         return Ok(());
     }
-    Err(format!(
+    Err(blocked_destination_message(surface, &blocked))
+}
+
+fn blocked_destination_message(surface: &str, blocked: &[IpAddr]) -> String {
+    format!(
         "{} blocked by outbound destination policy 'deny_private' (resolved to blocked addresses: {}). Set {}=1 to allow trusted local/private destinations.",
         surface, blocked.iter().map(IpAddr::to_string).collect::<Vec<_>>().join(", "),
         ALLOW_PRIVATE_DESTINATIONS_ENV
-    ))
+    )
+}
+
+fn blocked_destination_ips(addresses: impl IntoIterator<Item = IpAddr>) -> Vec<IpAddr> {
+    let mut blocked: Vec<_> =
+        addresses.into_iter().filter(|ip| is_blocked_destination(*ip)).collect();
+    blocked.sort_unstable();
+    blocked.dedup();
+    blocked
 }
 
 fn checked_socket_addresses(
@@ -125,20 +134,31 @@ pub(crate) fn udp_destination(host: &str, port: i64) -> Result<SocketAddr, Strin
 
 // Validate the address set returned to reqwest's connector, rather than a
 // separate DNS lookup whose answer can change before the socket opens.
-struct StrictDnsResolver;
+pub(crate) struct StrictDnsResolver;
+
+#[derive(Debug)]
+pub(crate) struct BlockedDnsAddresses(pub(crate) Vec<IpAddr>);
+
+impl std::fmt::Display for BlockedDnsAddresses {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&blocked_destination_message("HTTP DNS", &self.0))
+    }
+}
+
+impl std::error::Error for BlockedDnsAddresses {}
 
 impl reqwest::dns::Resolve for StrictDnsResolver {
     fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
         let host = name.as_str().to_owned();
         Box::pin(async move {
             let addresses = tokio::task::spawn_blocking(move || {
-                let addresses: Vec<_> = (host.as_str(), 0).to_socket_addrs()?.collect();
-                check_destination_addresses(&addresses, "HTTP DNS").map_err(|error| {
-                    std::io::Error::new(std::io::ErrorKind::PermissionDenied, error)
-                })?;
-                Ok::<_, std::io::Error>(addresses)
+                (host.as_str(), 0).to_socket_addrs().map(|addrs| addrs.collect::<Vec<_>>())
             })
             .await??;
+            let blocked = blocked_destination_ips(addresses.iter().map(SocketAddr::ip));
+            if !blocked.is_empty() {
+                return Err(BlockedDnsAddresses(blocked).into());
+            }
             Ok(Box::new(addresses.into_iter()) as reqwest::dns::Addrs)
         })
     }
@@ -156,11 +176,16 @@ fn strict_redirect_policy() -> reqwest::redirect::Policy {
 }
 
 fn blocked_http_literal(url: &reqwest::Url) -> bool {
-    match url.host() {
-        Some(url::Host::Ipv4(ip)) => is_blocked_destination(IpAddr::V4(ip)),
-        Some(url::Host::Ipv6(ip)) => is_blocked_destination(IpAddr::V6(ip)),
-        _ => false,
-    }
+    blocked_http_literal_ip(url).is_some()
+}
+
+pub(crate) fn blocked_http_literal_ip(url: &reqwest::Url) -> Option<IpAddr> {
+    let ip = match url.host()? {
+        url::Host::Ipv4(ip) => IpAddr::V4(ip),
+        url::Host::Ipv6(ip) => IpAddr::V6(ip),
+        url::Host::Domain(_) => return None,
+    };
+    is_blocked_destination(ip).then_some(ip)
 }
 
 fn check_initial_http_literal(url: Option<&str>) -> Result<(), String> {
