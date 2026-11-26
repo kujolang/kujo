@@ -5,7 +5,7 @@ use std::os::unix::net as unix_net;
 use std::{
     net::{Shutdown, SocketAddr, TcpListener, TcpStream, ToSocketAddrs},
     path::PathBuf,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 /// Unified listener. Either a [`TcpListener`] or [`std::os::unix::net::UnixListener`]
@@ -25,9 +25,7 @@ impl Listener {
 
     pub(crate) fn accept(&self) -> std::io::Result<(Connection, Option<SocketAddr>)> {
         match self {
-            Self::Tcp(l) => l
-                .accept()
-                .map(|(conn, addr)| (Connection::from(conn), Some(addr))),
+            Self::Tcp(l) => l.accept().map(|(conn, addr)| (Connection::from(conn), Some(addr))),
             #[cfg(unix)]
             Self::Unix(l) => l.accept().map(|(conn, _)| (Connection::from(conn), None)),
         }
@@ -47,88 +45,134 @@ impl From<unix_net::UnixListener> for Listener {
 
 /// Unified connection. Either a [`TcpStream`] or [`std::os::unix::net::UnixStream`].
 #[derive(Debug)]
-pub(crate) enum Connection {
+enum Socket {
     Tcp(TcpStream),
     #[cfg(unix)]
     Unix(unix_net::UnixStream),
 }
+
+#[derive(Debug)]
+pub(crate) struct Connection {
+    socket: Socket,
+    head_budget: Option<(Instant, Duration)>,
+}
+
 impl std::io::Read for Connection {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        match self {
-            Self::Tcp(s) => s.read(buf),
+        if let Some((started, timeout)) = self.head_budget {
+            let remaining = timeout.saturating_sub(started.elapsed());
+            if remaining.is_zero() {
+                return Err(std::io::ErrorKind::TimedOut.into());
+            }
+            self.set_read_timeout(Some(remaining.max(Duration::from_millis(1))))?;
+        }
+        match &mut self.socket {
+            Socket::Tcp(s) => s.read(buf),
             #[cfg(unix)]
-            Self::Unix(s) => s.read(buf),
+            Socket::Unix(s) => s.read(buf),
         }
     }
 }
 impl std::io::Write for Connection {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        match self {
-            Self::Tcp(s) => s.write(buf),
+        match &mut self.socket {
+            Socket::Tcp(s) => s.write(buf),
             #[cfg(unix)]
-            Self::Unix(s) => s.write(buf),
+            Socket::Unix(s) => s.write(buf),
         }
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        match self {
-            Self::Tcp(s) => s.flush(),
+        match &mut self.socket {
+            Socket::Tcp(s) => s.flush(),
             #[cfg(unix)]
-            Self::Unix(s) => s.flush(),
+            Socket::Unix(s) => s.flush(),
         }
     }
 }
 impl Connection {
-	pub(crate) fn set_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
-		match self {
-			Self::Tcp(s) => s.set_read_timeout(timeout),
-			#[cfg(unix)]
-			Self::Unix(s) => s.set_read_timeout(timeout),
-		}
-	}
+    pub(crate) fn configure_request_head(
+        &mut self,
+        started: Option<Instant>,
+        timeout: Duration,
+    ) -> std::io::Result<()> {
+        self.head_budget = started.map(|started| (started, timeout));
+        if started.is_none() {
+            self.set_read_timeout(Some(timeout))?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn set_read_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
+        match &self.socket {
+            Socket::Tcp(s) => s.set_read_timeout(timeout),
+            #[cfg(unix)]
+            Socket::Unix(s) => s.set_read_timeout(timeout),
+        }
+    }
 
     pub(crate) fn set_write_timeout(&self, timeout: Option<Duration>) -> std::io::Result<()> {
-        match self {
-            Self::Tcp(s) => s.set_write_timeout(timeout),
+        match &self.socket {
+            Socket::Tcp(s) => s.set_write_timeout(timeout),
             #[cfg(unix)]
-            Self::Unix(s) => s.set_write_timeout(timeout),
+            Socket::Unix(s) => s.set_write_timeout(timeout),
         }
     }
 
     /// Gets the peer's address. Some for TCP, None for Unix sockets.
     pub(crate) fn peer_addr(&mut self) -> std::io::Result<Option<SocketAddr>> {
-        match self {
-            Self::Tcp(s) => s.peer_addr().map(Some),
+        match &self.socket {
+            Socket::Tcp(s) => s.peer_addr().map(Some),
             #[cfg(unix)]
-            Self::Unix(_) => Ok(None),
+            Socket::Unix(_) => Ok(None),
         }
     }
 
     pub(crate) fn shutdown(&self, how: Shutdown) -> std::io::Result<()> {
-        match self {
-            Self::Tcp(s) => s.shutdown(how),
+        match &self.socket {
+            Socket::Tcp(s) => s.shutdown(how),
             #[cfg(unix)]
-            Self::Unix(s) => s.shutdown(how),
+            Socket::Unix(s) => s.shutdown(how),
         }
     }
 
     pub(crate) fn try_clone(&self) -> std::io::Result<Self> {
-        match self {
-            Self::Tcp(s) => s.try_clone().map(Self::from),
+        match &self.socket {
+            Socket::Tcp(s) => s.try_clone().map(Self::from),
             #[cfg(unix)]
-            Self::Unix(s) => s.try_clone().map(Self::from),
+            Socket::Unix(s) => s.try_clone().map(Self::from),
         }
     }
 }
 impl From<TcpStream> for Connection {
     fn from(s: TcpStream) -> Self {
-        Self::Tcp(s)
+        Self { socket: Socket::Tcp(s), head_budget: None }
     }
 }
 #[cfg(unix)]
 impl From<unix_net::UnixStream> for Connection {
     fn from(s: unix_net::UnixStream) -> Self {
-        Self::Unix(s)
+        Self { socket: Socket::Unix(s), head_budget: None }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::io::{ErrorKind, Read, Write};
+
+    #[test]
+    fn expired_head_budget_stops_reads_until_the_body_timeout_is_restored() {
+        let (socket, mut peer) = unix_net::UnixStream::pair().unwrap();
+        peer.write_all(b"x").unwrap();
+        let mut connection = Connection::from(socket);
+        connection.configure_request_head(Some(Instant::now()), Duration::ZERO).unwrap();
+        let mut buf = [0];
+        assert_eq!(connection.read(&mut buf).unwrap_err().kind(), ErrorKind::TimedOut);
+
+        connection.configure_request_head(None, Duration::from_secs(1)).unwrap();
+        connection.read_exact(&mut buf).unwrap();
+        assert_eq!(&buf, b"x");
     }
 }
 

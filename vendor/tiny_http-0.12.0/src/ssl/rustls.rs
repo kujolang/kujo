@@ -4,6 +4,7 @@ use std::error::Error;
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use zeroize::Zeroizing;
 
 /// A wrapper around an owned Rustls connection and corresponding stream.
@@ -14,20 +15,20 @@ pub(crate) struct RustlsStream(
 );
 
 impl RustlsStream {
+    pub(crate) fn configure_request_head(
+        &mut self,
+        started: Option<Instant>,
+        timeout: Duration,
+    ) -> std::io::Result<()> {
+        self.0.lock().unwrap().sock.configure_request_head(started, timeout)
+    }
+
     pub(crate) fn peer_addr(&mut self) -> std::io::Result<Option<SocketAddr>> {
-        self.0
-            .lock()
-            .expect("Failed to lock SSL stream mutex")
-            .sock
-            .peer_addr()
+        self.0.lock().expect("Failed to lock SSL stream mutex").sock.peer_addr()
     }
 
     pub(crate) fn shutdown(&mut self, how: Shutdown) -> std::io::Result<()> {
-        self.0
-            .lock()
-            .expect("Failed to lock SSL stream mutex")
-            .sock
-            .shutdown(how)
+        self.0.lock().expect("Failed to lock SSL stream mutex").sock.shutdown(how)
     }
 }
 
@@ -39,26 +40,17 @@ impl Clone for RustlsStream {
 
 impl Read for RustlsStream {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        self.0
-            .lock()
-            .expect("Failed to lock SSL stream mutex")
-            .read(buf)
+        self.0.lock().expect("Failed to lock SSL stream mutex").read(buf)
     }
 }
 
 impl Write for RustlsStream {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0
-            .lock()
-            .expect("Failed to lock SSL stream mutex")
-            .write(buf)
+        self.0.lock().expect("Failed to lock SSL stream mutex").write(buf)
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        self.0
-            .lock()
-            .expect("Failed to lock SSL stream mutex")
-            .flush()
+        self.0.lock().expect("Failed to lock SSL stream mutex").flush()
     }
 }
 
@@ -107,9 +99,7 @@ impl RustlsContext {
         stream: Connection,
     ) -> Result<RustlsStream, Box<dyn Error + Send + Sync + 'static>> {
         let connection = rustls::ServerConnection::new(self.0.clone())?;
-        Ok(RustlsStream(Arc::new(Mutex::new(
-            rustls::StreamOwned::new(connection, stream),
-        ))))
+        Ok(RustlsStream(Arc::new(Mutex::new(rustls::StreamOwned::new(connection, stream)))))
     }
 }
 

@@ -91,7 +91,9 @@ caller must keep the trusted root path itself stable; it is not a process
 sandbox, a snapshot of mutable file contents, or a defense against a root-path
 swap before the handle opens.
 
-Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers. Accepted sockets receive a read deadline before headers or bodies are parsed; stalled headers and incomplete bodies return HTTP 408 without route dispatch. `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds.
+The static and routed HTTP servers enforce request-line bytes, total header field bytes, and header count during transport parsing. Defaults are 8,192 request-line bytes, 16,384 header bytes, and 100 fields. Wire byte counts include each line's CRLF and exclude the final empty line. `kujo serve` uses its existing `--max-request-line-bytes`, `--max-header-bytes`, and `--max-header-count` flags. The transport closes rejected connections after returning HTTP 414 for request-line overflow or HTTP 413 for header overflow.
+
+Each request head must complete within one read timeout, including on a reused connection. HTTP 408 is returned on timeout. `kujo serve` sets the interval with `--read-timeout-ms`. For both routed runtimes, `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds. Body reads retain their socket read timeout. Buffered routed handlers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies and read at most one byte beyond the limit to detect overflow before dispatch.
 
 Large raw uploads must use `HttpServer.route_upload`, not an increased buffered
 limit. An upload route invokes its authorization callback with request metadata

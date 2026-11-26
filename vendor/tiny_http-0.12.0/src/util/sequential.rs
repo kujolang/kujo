@@ -58,18 +58,13 @@ where
 
 impl<R: Read + Send> SequentialReaderBuilder<R> {
     pub fn new(reader: R) -> SequentialReaderBuilder<R> {
-        SequentialReaderBuilder {
-            inner: SequentialReaderBuilderInner::First(reader),
-        }
+        SequentialReaderBuilder { inner: SequentialReaderBuilderInner::First(reader) }
     }
 }
 
 impl<W: Write + Send> SequentialWriterBuilder<W> {
     pub fn new(writer: W) -> SequentialWriterBuilder<W> {
-        SequentialWriterBuilder {
-            writer: Arc::new(Mutex::new(writer)),
-            next_trigger: None,
-        }
+        SequentialWriterBuilder { writer: Arc::new(Mutex::new(writer)), next_trigger: None }
     }
 
     pub(crate) fn shared_writer(&self) -> Arc<Mutex<W>> {
@@ -86,15 +81,13 @@ impl<R: Read + Send> Iterator for SequentialReaderBuilder<R> {
         let inner = mem::replace(&mut self.inner, SequentialReaderBuilderInner::NotFirst(rx));
 
         match inner {
-            SequentialReaderBuilderInner::First(reader) => Some(SequentialReader {
-                inner: SequentialReaderInner::MyTurn(reader),
-                next: tx,
-            }),
+            SequentialReaderBuilderInner::First(reader) => {
+                Some(SequentialReader { inner: SequentialReaderInner::MyTurn(reader), next: tx })
+            }
 
-            SequentialReaderBuilderInner::NotFirst(previous) => Some(SequentialReader {
-                inner: SequentialReaderInner::Waiting(previous),
-                next: tx,
-            }),
+            SequentialReaderBuilderInner::NotFirst(previous) => {
+                Some(SequentialReader { inner: SequentialReaderInner::Waiting(previous), next: tx })
+            }
         }
     }
 }
@@ -114,17 +107,22 @@ impl<W: Write + Send> Iterator for SequentialWriterBuilder<W> {
     }
 }
 
+impl<R: Read + Send> SequentialReader<R> {
+    pub(crate) fn reader_mut(&mut self) -> &mut R {
+        if let SequentialReaderInner::Waiting(ref recv) = self.inner {
+            self.inner = SequentialReaderInner::MyTurn(recv.recv().unwrap());
+        }
+        match &mut self.inner {
+            SequentialReaderInner::MyTurn(reader) => reader,
+            SequentialReaderInner::Waiting(_) => unreachable!(),
+            SequentialReaderInner::Empty => unreachable!(),
+        }
+    }
+}
+
 impl<R: Read + Send> Read for SequentialReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
-        let mut reader = match self.inner {
-            SequentialReaderInner::MyTurn(ref mut reader) => return reader.read(buf),
-            SequentialReaderInner::Waiting(ref mut recv) => recv.recv().unwrap(),
-            SequentialReaderInner::Empty => unreachable!(),
-        };
-
-        let result = reader.read(buf);
-        self.inner = SequentialReaderInner::MyTurn(reader);
-        result
+        self.reader_mut().read(buf)
     }
 }
 

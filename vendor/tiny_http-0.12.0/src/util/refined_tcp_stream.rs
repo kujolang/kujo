@@ -1,6 +1,7 @@
 use std::io::Result as IoResult;
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr};
+use std::time::{Duration, Instant};
 
 use crate::connection::Connection;
 #[cfg(any(feature = "ssl-openssl", feature = "ssl-rustls"))]
@@ -89,6 +90,18 @@ pub struct RefinedTcpStream {
 }
 
 impl RefinedTcpStream {
+    pub(crate) fn configure_request_head(
+        &mut self,
+        started: Option<Instant>,
+        timeout: Duration,
+    ) -> IoResult<()> {
+        match &mut self.stream {
+            Stream::Http(stream) => stream.configure_request_head(started, timeout),
+            #[cfg(any(feature = "ssl-openssl", feature = "ssl-rustls"))]
+            Stream::Https(stream) => stream.configure_request_head(started, timeout),
+        }
+    }
+
     pub(crate) fn new<S>(stream: S) -> (RefinedTcpStream, RefinedTcpStream)
     where
         S: Into<Stream>,
@@ -97,17 +110,9 @@ impl RefinedTcpStream {
 
         let (read, write) = (stream.clone(), stream);
 
-        let read = RefinedTcpStream {
-            stream: read,
-            close_read: true,
-            close_write: false,
-        };
+        let read = RefinedTcpStream { stream: read, close_read: true, close_write: false };
 
-        let write = RefinedTcpStream {
-            stream: write,
-            close_read: false,
-            close_write: true,
-        };
+        let write = RefinedTcpStream { stream: write, close_read: false, close_write: true };
 
         (read, write)
     }

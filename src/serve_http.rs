@@ -51,14 +51,6 @@ enum RequestTargetValidationError {
     UriTooLong,
 }
 
-#[derive(Debug)]
-enum RequestLimitsError {
-    RequestLineTooLong,
-    HeadersTooLarge,
-    TooManyHeaders,
-    PayloadTooLarge,
-}
-
 pub fn run_static_server(
     dir: PathBuf,
     host: String,
@@ -99,11 +91,16 @@ pub fn run_static_server(
     } else {
         None
     };
-    let server = Server::from_listener_with_timeouts(
+    let server = Server::from_listener_with_limits(
         listener,
         ssl_config,
         Some(options.read_timeout),
         Some(options.write_timeout),
+        tiny_http::RequestHeadLimits {
+            request_line_bytes: options.max_request_line_bytes,
+            header_bytes: options.max_header_bytes,
+            header_count: options.max_header_count,
+        },
     )
     .map_err(|err| {
         let server_kind = if tls_enabled { "HTTPS server" } else { "server" };
@@ -253,15 +250,9 @@ fn build_response(
     let method = request.method();
     let is_head = method == &Method::Head;
 
-    if let Err(error) = validate_request_limits(request, options) {
-        let (status_code, body) = match error {
-            RequestLimitsError::RequestLineTooLong => (414, "URI Too Long"),
-            RequestLimitsError::HeadersTooLarge => (413, "Payload Too Large"),
-            RequestLimitsError::TooManyHeaders => (413, "Payload Too Large"),
-            RequestLimitsError::PayloadTooLarge => (413, "Payload Too Large"),
-        };
+    if request.body_length().unwrap_or(0) > options.max_request_body_bytes {
         return headify(
-            static_text_response(status_code, body, options, request.secure(), &[]),
+            static_text_response(413, "Payload Too Large", options, request.secure(), &[]),
             is_head,
         );
     }
@@ -435,36 +426,6 @@ fn build_response(
         request.secure(),
     );
     headify(response, is_head)
-}
-
-fn validate_request_limits(
-    request: &Request,
-    options: &ServeServerOptions,
-) -> Result<(), RequestLimitsError> {
-    let request_line =
-        format!("{} {} HTTP/{}", request.method().as_str(), request.url(), request.http_version());
-    if request_line.len() + 2 > options.max_request_line_bytes {
-        return Err(RequestLimitsError::RequestLineTooLong);
-    }
-
-    if request.headers().len() > options.max_header_count {
-        return Err(RequestLimitsError::TooManyHeaders);
-    }
-
-    let header_bytes: usize = request
-        .headers()
-        .iter()
-        .map(|header| header.field.as_str().as_str().len() + 2 + header.value.as_str().len() + 2)
-        .sum();
-    if header_bytes > options.max_header_bytes {
-        return Err(RequestLimitsError::HeadersTooLarge);
-    }
-
-    if request.body_length().unwrap_or(0) > options.max_request_body_bytes {
-        return Err(RequestLimitsError::PayloadTooLarge);
-    }
-
-    Ok(())
 }
 
 fn add_common_success_headers(

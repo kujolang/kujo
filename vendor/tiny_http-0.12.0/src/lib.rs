@@ -110,6 +110,7 @@ use client::ClientConnection;
 use connection::Connection;
 use util::MessagesQueue;
 
+pub use client::RequestHeadLimits;
 pub use common::{HTTPVersion, Header, HeaderField, Method, StatusCode};
 pub use connection::{ConfigListenAddr, ListenAddr, Listener};
 pub use request::{ReadWrite, Request};
@@ -195,24 +196,21 @@ impl Server {
     where
         A: ToSocketAddrs,
     {
-        Server::new(ServerConfig {
-            addr: ConfigListenAddr::from_socket_addrs(addr)?,
-            ssl: None,
-        })
+        Server::new(ServerConfig { addr: ConfigListenAddr::from_socket_addrs(addr)?, ssl: None })
     }
 
-	/// Starts a plain HTTP server and applies a read timeout to every accepted
-	/// socket before request headers or bodies are parsed.
-	pub fn http_with_read_timeout<A>(
-		addr: A,
-		read_timeout: Duration,
-	) -> Result<Server, Box<dyn Error + Send + Sync + 'static>>
-	where
-		A: ToSocketAddrs,
-	{
-		let listener = ConfigListenAddr::from_socket_addrs(addr)?.bind()?;
-		Self::from_listener_with_read_timeout(listener, None, Some(read_timeout))
-	}
+    /// Starts a plain HTTP server and applies a read timeout to every accepted
+    /// socket before request headers or bodies are parsed.
+    pub fn http_with_read_timeout<A>(
+        addr: A,
+        read_timeout: Duration,
+    ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>>
+    where
+        A: ToSocketAddrs,
+    {
+        let listener = ConfigListenAddr::from_socket_addrs(addr)?.bind()?;
+        Self::from_listener_with_read_timeout(listener, None, Some(read_timeout))
+    }
 
     /// Shortcut for an HTTPS server on a specific address.
     #[cfg(any(feature = "ssl-openssl", feature = "ssl-rustls"))]
@@ -236,10 +234,7 @@ impl Server {
     pub fn http_unix(
         path: &std::path::Path,
     ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
-        Server::new(ServerConfig {
-            addr: ConfigListenAddr::unix_from_path(path),
-            ssl: None,
-        })
+        Server::new(ServerConfig { addr: ConfigListenAddr::unix_from_path(path), ssl: None })
     }
 
     /// Builds a new server that listens on the specified address.
@@ -256,16 +251,16 @@ impl Server {
         listener: L,
         ssl_config: Option<SslConfig>,
     ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
-		Self::from_listener_with_read_timeout(listener, ssl_config, None)
-	}
+        Self::from_listener_with_read_timeout(listener, ssl_config, None)
+    }
 
-	/// Builds a server with an optional read timeout applied to every accepted
-	/// connection before HTTP parsing begins.
-	pub fn from_listener_with_read_timeout<L: Into<Listener>>(
-		listener: L,
-		ssl_config: Option<SslConfig>,
-		read_timeout: Option<Duration>,
-	) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
+    /// Builds a server with an optional read timeout applied to every accepted
+    /// connection before HTTP parsing begins.
+    pub fn from_listener_with_read_timeout<L: Into<Listener>>(
+        listener: L,
+        ssl_config: Option<SslConfig>,
+        read_timeout: Option<Duration>,
+    ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
         Self::from_listener_with_timeouts(listener, ssl_config, read_timeout, None)
     }
 
@@ -275,6 +270,23 @@ impl Server {
         ssl_config: Option<SslConfig>,
         read_timeout: Option<Duration>,
         write_timeout: Option<Duration>,
+    ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
+        Self::from_listener_with_limits(
+            listener,
+            ssl_config,
+            read_timeout,
+            write_timeout,
+            RequestHeadLimits::default(),
+        )
+    }
+
+    /// Applies socket timeouts and bounds each request head before dispatch.
+    pub fn from_listener_with_limits<L: Into<Listener>>(
+        listener: L,
+        ssl_config: Option<SslConfig>,
+        read_timeout: Option<Duration>,
+        write_timeout: Option<Duration>,
+        head_limits: RequestHeadLimits,
     ) -> Result<Server, Box<dyn Error + Send + Sync + 'static>> {
         let listener = listener.into();
         // building the "close" variable
@@ -326,12 +338,12 @@ impl Server {
             while !inside_close_trigger.load(Relaxed) {
                 let new_client = match server.accept() {
                     Ok((sock, _)) => {
-						if let Some(timeout) = read_timeout {
-							if let Err(error) = sock.set_read_timeout(Some(timeout)) {
-								log::warn!("Failed to configure client read timeout: {}", error);
-								continue;
-							}
-						}
+                        if let Some(timeout) = read_timeout {
+                            if let Err(error) = sock.set_read_timeout(Some(timeout)) {
+                                log::warn!("Failed to configure client read timeout: {}", error);
+                                continue;
+                            }
+                        }
                         if let Some(timeout) = write_timeout {
                             if let Err(error) = sock.set_write_timeout(Some(timeout)) {
                                 log::warn!("Failed to configure client write timeout: {}", error);
@@ -356,7 +368,12 @@ impl Server {
                             Some(ref _ssl) => unreachable!(),
                         };
 
-                        Ok(ClientConnection::new(write_closable, read_closable))
+                        Ok(ClientConnection::new(
+                            write_closable,
+                            read_closable,
+                            head_limits,
+                            read_timeout,
+                        ))
                     }
                     Err(e) => Err(e),
                 };
@@ -394,11 +411,7 @@ impl Server {
         });
 
         // result
-        Ok(Server {
-            messages,
-            close: close_trigger,
-            listening_addr: local_addr,
-        })
+        Ok(Server { messages, close: close_trigger, listening_addr: local_addr })
     }
 
     /// Returns an iterator for all the incoming requests.

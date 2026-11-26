@@ -301,11 +301,11 @@ enum Commands {
         #[arg(long)]
         tls_key: Option<PathBuf>,
 
-        /// Maximum HTTP request line size in bytes.
+        /// Maximum HTTP request line size in bytes, including its CRLF.
         #[arg(long, default_value_t = 8192)]
         max_request_line_bytes: usize,
 
-        /// Maximum combined HTTP header bytes.
+        /// Maximum combined HTTP header field bytes, including each field's CRLF.
         #[arg(long, default_value_t = 16384)]
         max_header_bytes: usize,
 
@@ -317,7 +317,7 @@ enum Commands {
         #[arg(long, default_value_t = 1048576)]
         max_request_body_bytes: usize,
 
-        /// Per-connection read timeout in milliseconds.
+        /// Request-head deadline and socket read timeout in milliseconds.
         #[arg(long, default_value_t = 5000)]
         read_timeout_ms: u64,
 

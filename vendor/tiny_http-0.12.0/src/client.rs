@@ -2,15 +2,31 @@ use ascii::AsciiString;
 
 use std::io::Error as IoError;
 use std::io::Result as IoResult;
-use std::io::{BufReader, BufWriter, ErrorKind, Read};
+use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::time::{Duration, Instant};
 
 use std::net::SocketAddr;
 use std::str::FromStr;
 
-use crate::common::{HTTPVersion, Method};
+use crate::common::{HTTPVersion, Header, Method};
 use crate::util::RefinedTcpStream;
 use crate::util::{SequentialReader, SequentialReaderBuilder, SequentialWriterBuilder};
 use crate::Request;
+
+/// Maximum wire size of the request line and header fields, including each
+/// line's CRLF and excluding the empty line that terminates the request head.
+#[derive(Clone, Copy, Debug)]
+pub struct RequestHeadLimits {
+    pub request_line_bytes: usize,
+    pub header_bytes: usize,
+    pub header_count: usize,
+}
+
+impl Default for RequestHeadLimits {
+    fn default() -> Self {
+        Self { request_line_bytes: 8192, header_bytes: 16384, header_count: 100 }
+    }
+}
 
 /// A ClientConnection is an object that will store a socket to a client
 /// and return Request objects.
@@ -34,6 +50,8 @@ pub struct ClientConnection {
 
     // true if the connection goes through SSL
     secure: bool,
+    head_limits: RequestHeadLimits,
+    read_timeout: Option<Duration>,
 }
 
 /// Error that can happen when reading a request.
@@ -41,6 +59,8 @@ pub struct ClientConnection {
 enum ReadError {
     WrongRequestLine,
     WrongHeader(HTTPVersion),
+    RequestLineTooLong,
+    HeadersTooLarge(HTTPVersion),
     /// the client sent an unrecognized `Expect` header
     ExpectationFailed(HTTPVersion),
     ReadIoError(IoError),
@@ -51,6 +71,8 @@ impl ClientConnection {
     pub fn new(
         write_socket: RefinedTcpStream,
         mut read_socket: RefinedTcpStream,
+        head_limits: RequestHeadLimits,
+        read_timeout: Option<Duration>,
     ) -> ClientConnection {
         let remote_addr = read_socket.peer_addr();
         let secure = read_socket.secure();
@@ -65,6 +87,8 @@ impl ClientConnection {
             next_header_source: first_header,
             no_more_requests: false,
             secure,
+            head_limits,
+            read_timeout,
         }
     }
 
@@ -73,68 +97,28 @@ impl ClientConnection {
         self.secure
     }
 
-    /// Reads the next line from self.next_header_source.
-    ///
-    /// Reads until `CRLF` is reached. The next read will start
-    ///  at the first byte of the new line.
-    fn read_next_line(&mut self) -> IoResult<AsciiString> {
-        let mut buf = Vec::new();
-        let mut prev_byte_was_cr = false;
-
-        loop {
-            let byte = self.next_header_source.by_ref().bytes().next();
-
-            let byte = match byte {
-                Some(b) => b?,
-                None => return Err(IoError::new(ErrorKind::ConnectionAborted, "Unexpected EOF")),
-            };
-
-            if byte == b'\n' && prev_byte_was_cr {
-                buf.pop(); // removing the '\r'
-                return AsciiString::from_ascii(buf)
-                    .map_err(|_| IoError::new(ErrorKind::InvalidInput, "Header is not in ASCII"));
-            }
-
-            prev_byte_was_cr = byte == b'\r';
-
-            buf.push(byte);
-        }
-    }
-
-    /// Reads a request from the stream.
-    /// Blocks until the header has been read.
+    /// Reads the request head before allocating a request or handing off its body.
     fn read(&mut self) -> Result<Request, ReadError> {
-        let (method, path, version, headers) = {
-            // reading the request line
-            let (method, path, version) = {
-                let line = self.read_next_line().map_err(ReadError::ReadIoError)?;
-
-                parse_request_line(
-                    line.as_str().trim(), // TODO: remove this conversion
-                )?
-            };
-
-            // getting all headers
-            let headers = {
-                let mut headers = Vec::new();
-                loop {
-                    let line = self.read_next_line().map_err(ReadError::ReadIoError)?;
-
-                    if line.is_empty() {
-                        break;
-                    };
-                    headers.push(match FromStr::from_str(line.as_str().trim()) {
-                        // TODO: remove this conversion
-                        Ok(h) => h,
-                        _ => return Err(ReadError::WrongHeader(version)),
-                    });
-                }
-
-                headers
-            };
-
-            (method, path, version, headers)
-        };
+        // Wait for the previous request's body to release the reader before
+        // starting this request's independent head budget.
+        let reader = self.next_header_source.reader_mut();
+        let started = Instant::now();
+        if let Some(timeout) = self.read_timeout {
+            reader
+                .get_mut()
+                .configure_request_head(Some(started), timeout)
+                .map_err(ReadError::ReadIoError)?;
+        }
+        let (method, path, version, headers) = read_request_head(reader, self.head_limits)?;
+        if let Some(timeout) = self.read_timeout {
+            if started.elapsed() >= timeout {
+                return Err(ReadError::ReadIoError(ErrorKind::TimedOut.into()));
+            }
+            reader
+                .get_mut()
+                .configure_request_head(None, timeout)
+                .map_err(ReadError::ReadIoError)?;
+        }
 
         // building the writer for the request
         let writer = self.sink.next().unwrap();
@@ -167,6 +151,16 @@ impl ClientConnection {
         // return the request
         Ok(request.with_connection_writer(self.sink.shared_writer()))
     }
+
+    fn reject_request_head(&mut self, status: u16, version: HTTPVersion) -> Option<Request> {
+        self.no_more_requests = true;
+        let mut writer = self.sink.next().unwrap();
+        crate::Response::new_empty(crate::StatusCode(status))
+            .raw_print(&mut writer, version, &[], false, None)
+            .and_then(|()| writer.flush())
+            .ok();
+        None
+    }
 }
 
 impl Iterator for ClientConnection {
@@ -186,33 +180,21 @@ impl Iterator for ClientConnection {
         loop {
             let rq = match self.read() {
                 Err(ReadError::WrongRequestLine) => {
-                    let writer = self.sink.next().unwrap();
-                    let response = Response::new_empty(StatusCode(400));
-                    response
-                        .raw_print(writer, HTTPVersion(1, 1), &[], false, None)
-                        .ok();
-                    return None; // we don't know where the next request would start,
-                                 // se we have to close
+                    return self.reject_request_head(400, HTTPVersion(1, 1));
                 }
-
-                Err(ReadError::WrongHeader(ver)) => {
-                    let writer = self.sink.next().unwrap();
-                    let response = Response::new_empty(StatusCode(400));
-                    response.raw_print(writer, ver, &[], false, None).ok();
-                    return None; // we don't know where the next request would start,
-                                 // se we have to close
+                Err(ReadError::WrongHeader(version)) => {
+                    return self.reject_request_head(400, version);
                 }
-
+                Err(ReadError::RequestLineTooLong) => {
+                    return self.reject_request_head(414, HTTPVersion(1, 1));
+                }
+                Err(ReadError::HeadersTooLarge(version)) => {
+                    return self.reject_request_head(413, version);
+                }
                 Err(ReadError::ReadIoError(ref err))
                     if matches!(err.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) =>
                 {
-                    // request timeout
-                    let writer = self.sink.next().unwrap();
-                    let response = Response::new_empty(StatusCode(408));
-                    response
-                        .raw_print(writer, HTTPVersion(1, 1), &[], false, None)
-                        .ok();
-                    return None; // closing the connection
+                    return self.reject_request_head(408, HTTPVersion(1, 1));
                 }
 
                 Err(ReadError::ExpectationFailed(ver)) => {
@@ -234,18 +216,13 @@ impl Iterator for ClientConnection {
                     "This server only supports HTTP versions 1.0 and 1.1".to_owned(),
                 )
                 .with_status_code(StatusCode(505));
-                response
-                    .raw_print(writer, HTTPVersion(1, 1), &[], false, None)
-                    .ok();
+                response.raw_print(writer, HTTPVersion(1, 1), &[], false, None).ok();
                 continue;
             }
 
             // updating the status of the connection
-            let connection_header = rq
-                .headers()
-                .iter()
-                .find(|h| h.field.equiv("Connection"))
-                .map(|h| h.value.as_str());
+            let connection_header =
+                rq.headers().iter().find(|h| h.field.equiv("Connection")).map(|h| h.value.as_str());
 
             let lowercase = connection_header.map(|h| h.to_ascii_lowercase());
 
@@ -264,6 +241,53 @@ impl Iterator for ClientConnection {
             // returning the request
             return Some(rq);
         }
+    }
+}
+
+// Returns None as soon as the wire limit is exhausted without a complete line.
+fn read_line(reader: &mut impl Read, limit: usize) -> IoResult<Option<AsciiString>> {
+    let mut bytes = Vec::new();
+    for byte in reader.bytes().take(limit) {
+        let byte = byte?;
+        if byte == b'\n' && bytes.last() == Some(&b'\r') {
+            bytes.pop();
+            return AsciiString::from_ascii(bytes)
+                .map(Some)
+                .map_err(|_| IoError::new(ErrorKind::InvalidInput, "Header is not in ASCII"));
+        }
+        bytes.push(byte);
+    }
+    if bytes.len() == limit {
+        return Ok(None);
+    }
+    Err(IoError::new(ErrorKind::ConnectionAborted, "Unexpected EOF"))
+}
+
+fn read_request_head(
+    reader: &mut impl Read,
+    limits: RequestHeadLimits,
+) -> Result<(Method, String, HTTPVersion, Vec<Header>), ReadError> {
+    let line = read_line(reader, limits.request_line_bytes)
+        .map_err(ReadError::ReadIoError)?
+        .ok_or(ReadError::RequestLineTooLong)?;
+    let (method, path, version) = parse_request_line(line.as_str().trim())?;
+
+    let mut headers = Vec::new();
+    let mut remaining = limits.header_bytes;
+    loop {
+        // Allow the empty CRLF even after consuming the full byte or field limit.
+        let line_limit = if headers.len() == limits.header_count { 2 } else { remaining.max(2) };
+        let line = read_line(reader, line_limit)
+            .map_err(ReadError::ReadIoError)?
+            .ok_or_else(|| ReadError::HeadersTooLarge(version.clone()))?;
+        if line.is_empty() {
+            return Ok((method, path, version, headers));
+        }
+        remaining -= line.len() + 2;
+        headers.push(
+            FromStr::from_str(line.as_str().trim())
+                .map_err(|_| ReadError::WrongHeader(version.clone()))?,
+        );
     }
 }
 
@@ -290,13 +314,30 @@ fn parse_request_line(line: &str) -> Result<(Method, String, HTTPVersion), ReadE
     let path = parts.next().map(ToOwned::to_owned);
     let version = parts.next().and_then(|w| parse_http_version(w).ok());
 
-    method
-        .and_then(|method| Some((method, path?, version?)))
-        .ok_or(ReadError::WrongRequestLine)
+    method.and_then(|method| Some((method, path?, version?))).ok_or(ReadError::WrongRequestLine)
 }
 
 #[cfg(test)]
 mod test {
+    use super::{read_request_head, RequestHeadLimits};
+
+    #[test]
+    fn exact_head_limits_leave_following_bytes_for_the_body() {
+        let request_line = b"POST / HTTP/1.1\r\n";
+        let headers = b"Host: localhost\r\nContent-Length: 4\r\n";
+        let data = [request_line.as_slice(), headers, b"\r\nbody"].concat();
+        let limits = RequestHeadLimits {
+            request_line_bytes: request_line.len(),
+            header_bytes: headers.len(),
+            header_count: 2,
+        };
+        let mut reader = data.as_slice();
+        let (method, _, _, fields) = read_request_head(&mut reader, limits).unwrap();
+        assert_eq!(method, crate::Method::Post);
+        assert_eq!(fields.len(), 2);
+        assert_eq!(reader, b"body");
+    }
+
     #[test]
     fn test_parse_request_line() {
         let (method, path, ver) = super::parse_request_line("GET /hello HTTP/1.1").unwrap();

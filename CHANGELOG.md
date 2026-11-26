@@ -6,6 +6,7 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Enforce HTTP request-line and header limits during parsing, with a deadline for each static or routed request head.
 - Update `url` to 2.5.9 to address RUSTSEC-2026-0592 in URL origin handling.
 - Enforce DocGen's private-address policy on the DNS answers used for external link validation, with direct connections in the default mode.
 - Open `kujo serve` files relative to the startup directory handle and derive response metadata from the opened file.

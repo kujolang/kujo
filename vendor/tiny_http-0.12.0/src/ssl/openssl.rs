@@ -4,6 +4,7 @@ use std::error::Error;
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use zeroize::Zeroizing;
 
 pub(crate) struct OpenSslStream {
@@ -15,6 +16,14 @@ pub(crate) struct SplitOpenSslStream(Arc<Mutex<OpenSslStream>>);
 
 // These struct methods form the implict contract for swappable TLS implementations
 impl SplitOpenSslStream {
+    pub(crate) fn configure_request_head(
+        &mut self,
+        started: Option<Instant>,
+        timeout: Duration,
+    ) -> std::io::Result<()> {
+        self.0.lock().unwrap().inner.get_mut().configure_request_head(started, timeout)
+    }
+
     pub(crate) fn peer_addr(&mut self) -> std::io::Result<Option<SocketAddr>> {
         self.0.lock().unwrap().inner.get_mut().peer_addr()
     }
